@@ -1,0 +1,122 @@
+{
+  "function": "s3dCollideMovingSphereWithHSprite",
+  "original": "0x100025d6",
+  "sources": [
+    "src/eqgfx/unit_10001000.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "collision_state",
+      "type": "ptr"
+    },
+    {
+      "name": "transform",
+      "type": "ptr"
+    },
+    {
+      "name": "sprites",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "arena": {
+      "size": "0x8000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "@arena", "size": "0x8000", "fill": "zero"},
+    {"addr": "@arena", "offset": "0x1034", "f32": 1.0},
+    {"addr": "@arena", "offset": "0x2020", "u32": 1},
+    {"addr": "@arena", "offset": "0x2024", "u32": "@arena+0x3000"},
+    {"addr": "@arena", "offset": "0x3008", "u32": "@arena+0x4000"},
+    {"addr": "@arena", "offset": "0x3038", "f32": 1.0},
+    {"addr": "@arena", "offset": "0x3150", "u32": "@arena+0x4000"},
+    {"addr": "@arena", "offset": "0x3180", "f32": 1.0},
+    {"addr": "@arena", "offset": "0x5000", "u32": 2},
+    {"addr": "@arena", "offset": "0x5018", "u32": "@arena+0x6000"},
+    {"addr": "@arena", "offset": "0x6014", "f32": 1.0},
+    {"addr": "@arena", "offset": "0x6018", "u32": 1},
+    {"addr": "@arena", "offset": "0x601c", "u32": "@arena+0x7000"}
+  ],
+  "callees": {
+    "0x1001b263": {
+      "name": "t3dGetSpriteCenterOffset",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore"],
+      "writes": [{"arg": 1, "offset": 0, "hex": "000000000000000000000000"}]
+    },
+    "0x1001b20b": {
+      "name": "t3dGetSpriteCollisionVolume",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore"],
+      "writes": [{"arg": 1, "offset": 0, "hex": "00500060"}]
+    },
+    "0x100047c4": {
+      "name": "transformPointByAffineTransform_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore", "ignore"],
+      "writes": [{"arg": 2, "offset": 0, "hex": "000000000000000000000000"}]
+    },
+    "0x1000306a": {
+      "name": "s3dTestMovingSphereAgainstBoundingSphere_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore", "float"],
+      "ret": 1
+    },
+    "0x1000291b": {
+      "name": "s3dTransformMovingSphereByMatrix_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ignore", "ptr", "ignore"]
+    },
+    "0x1000312f": {
+      "name": "s3dCollideMovingSphereWithPolygon_guess",
+      "conv": "cdecl",
+      "args": ["ignore", "ptr"],
+      "ret": 1
+    },
+    "0x10002e9b": {
+      "name": "transformVectorByBasis_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr", "ignore"]
+    }
+  },
+  "cases": [
+    {"name": "single-hit", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"]},
+    {"name": "empty-list", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x2020", "u32": 0}]},
+    {"name": "negative-list-count", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x2020", "u32": "0xffffffff"}]},
+    {"name": "null-sprite", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x3008", "u32": 0}]},
+    {"name": "null-volume", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "callees": {"0x1001b20b": {"name": "t3dGetSpriteCollisionVolume", "conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}]}}},
+    {"name": "wrong-volume-type", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x5000", "u32": 3}]},
+    {"name": "collision-reject", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "callees": {"0x1000306a": {"name": "FUN_1000306a", "conv": "cdecl", "args": ["ptr", "ignore", "float"], "ret": 0}}},
+    {"name": "exact-one-required", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "callees": {"0x1000306a": {"name": "FUN_1000306a", "conv": "cdecl", "args": ["ptr", "ignore", "float"], "ret": 2}}},
+    {"name": "empty-polygons", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x6018", "u32": 0}]},
+    {"name": "negative-polygon-count", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x6018", "u32": "0xffffffff"}]},
+    {"name": "polygon-miss", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "callees": {"0x1000312f": {"name": "FUN_1000312f", "conv": "cdecl", "args": ["ignore", "ptr"], "ret": 0}}},
+    {"name": "second-polygon-hit", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x6018", "u32": 2}], "callees": {"0x1000312f": {"name": "FUN_1000312f", "conv": "cdecl", "args": ["ignore", "ptr"], "ret": [0, 1]}}},
+    {"name": "continue-to-second-entry", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x2020", "u32": 2}]},
+    {"name": "radius-multiply-order", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x1034", "f32": 3.0}, {"addr": "@arena", "offset": "0x3038", "f32": 2.0}, {"addr": "@arena", "offset": "0x6014", "f32": 12.0}]},
+    {"name": "empty-list-with-incoming-eax", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "@arena", "offset": "0x2020", "u32": 0}], "regs": {"eax": 123}},
+    {"name": "empty-list-with-seeded-result-slot", "args": ["@arena", "@arena+0x1000", "@arena+0x2000"], "memory": [{"addr": "0x7f0efe00", "size": "0x200", "fill": "random"}]}
+  ],
+  "fuzz": {
+    "seed": 9686,
+    "count": 40,
+    "args": [
+      {"choices": ["@arena"]},
+      {"choices": ["@arena+0x1000"]},
+      {"choices": ["@arena+0x2000"]}
+    ],
+    "memory": [
+      {"addr": "@arena", "offset": "0x2020", "type": "int", "range": [-1, 3]},
+      {"addr": "@arena", "offset": "0x3008", "type": "ptr", "choices": [0, "@arena+0x4000"], "count": 3, "stride": "0x148"},
+      {"addr": "@arena", "offset": "0x3038", "type": "float", "range": [-2, 2], "count": 3, "stride": "0x148"},
+      {"addr": "@arena", "offset": "0x5000", "type": "int", "choices": [0, 2, 3]},
+      {"addr": "@arena", "offset": "0x6014", "type": "float", "range": [-2, 2]},
+      {"addr": "@arena", "offset": "0x6018", "type": "int", "range": [-1, 3]},
+      {"addr": "@arena", "offset": "0x1034", "type": "float", "range": [-2, 2]}
+    ]
+  }
+}

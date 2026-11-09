@@ -1,0 +1,373 @@
+{
+  "function": "FindOrInsertMemoryBufferKey_guess",
+  "original": "0x10019c11",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "key",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "key": {
+      "size": "0x1c",
+      "fill": "random"
+    },
+    "table": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100aadd4",
+      "u32": "@table"
+    },
+    {
+      "addr": "0x100aadd8",
+      "u32": 0
+    },
+    {
+      "addr": "@table",
+      "offset": "0x4",
+      "u32": "0x7a0000"
+    },
+    {
+      "addr": "0x100aaddc",
+      "u32": "0x7a3000"
+    }
+  ],
+  "callees": {
+    "0x10019e55": {
+      "name": "FindTreeNodeByKey_guess",
+      "conv": "thiscall",
+      "args": [
+        "ignore",
+        "mem:28"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "00007a00"
+        }
+      ]
+    },
+    "0x10019cc9": {
+      "name": "t3dInsertTreeValue_guess",
+      "conv": "thiscall",
+      "args": [
+        "ignore",
+        "mem:28"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: search returns the end node, key is inserted",
+      "args": [
+        "@key"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "table null: returns 0 with a real key",
+      "args": [
+        "@key"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aadd4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "table null and key null: returns 0 before the key is read",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x100aadd4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero key is copied as zeros",
+      "args": [
+        "@key"
+      ],
+      "objects": {
+        "key": {
+          "size": "0x1c",
+          "fill": "zero"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "hit: search returns another node, counter bumps",
+      "args": [
+        "@key"
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00007b00"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "hit: counter at 41 goes to 42",
+      "args": [
+        "@key"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aadd8",
+          "u32": 41
+        }
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00007b00"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "boundary: one below the end node is a hit",
+      "args": [
+        "@key"
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "fcff7900"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "boundary: one above the end node is a hit",
+      "args": [
+        "@key"
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "04007a00"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "boundary: search returns null, not the end node: a hit",
+      "args": [
+        "@key"
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "ordering: search switches the table, compare uses the new table (hit)",
+      "args": [
+        "@key"
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00007a00"
+            },
+            {
+              "addr": "0x100aadd4",
+              "hex": "d8ad0a10"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "ordering: search switches the table, result equals the new end node (insert)",
+      "args": [
+        "@key"
+      ],
+      "callees": {
+        "0x10019e55": {
+          "name": "FUN_10019e55",
+          "conv": "thiscall",
+          "args": [
+            "ignore",
+            "mem:28"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00307a00"
+            },
+            {
+              "addr": "0x100aadd4",
+              "hex": "d8ad0a10"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 105489,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@key"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100aadd4",
+        "type": "u32",
+        "choices": [
+          0,
+          "@table",
+          "0x100aadd8"
+        ]
+      },
+      {
+        "addr": "@table",
+        "offset": "0x4",
+        "type": "u32",
+        "choices": [
+          "0x7a0000",
+          "0x7a0004",
+          "0x79fffc",
+          "0x7b0000",
+          0
+        ]
+      },
+      {
+        "addr": "0x100aaddc",
+        "type": "u32",
+        "choices": [
+          "0x7a3000",
+          "0x7a0000"
+        ]
+      },
+      {
+        "addr": "0x100aadd8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          41,
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

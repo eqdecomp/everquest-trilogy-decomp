@@ -1,0 +1,84 @@
+{
+  "function": "initializeDirectInputKeyboard_guess",
+  "original": "0x004eb737",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "conv": "cdecl",
+  "args": [
+      {"name": "window", "type": "int"},
+    {"name": "instance", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "input": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "@input_vtable"}]},
+    "input_vtable": {"size": "0x10", "fill": "zero", "init": [{"offset": "0xc", "u32": "@fn_create_device"}]},
+    "device": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "@device_vtable"}]},
+    "device_vtable": {"size": "0x38", "fill": "zero", "init": [
+      {"offset": "0x18", "u32": "@fn_set_property"},
+      {"offset": "0x1c", "u32": "@fn_acquire"},
+      {"offset": "0x2c", "u32": "@fn_set_format"},
+      {"offset": "0x34", "u32": "@fn_set_cooperative_level"}
+    ]},
+    "fn_create_device": {"size": "0x10", "fill": "zero"},
+    "fn_set_property": {"size": "0x10", "fill": "zero"},
+    "fn_acquire": {"size": "0x10", "fill": "zero"},
+    "fn_set_format": {"size": "0x10", "fill": "zero"},
+    "fn_set_cooperative_level": {"size": "0x10", "fill": "zero"},
+    "fn_get_last_error": {"size": "0x10", "fill": "zero"},
+    "fn_get_key_state": {"size": "0x10", "fill": "zero"},
+    "device_b": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "@device_b_vtable"}]},
+    "device_b_vtable": {"size": "0x38", "fill": "zero", "init": [{"offset": "0x18", "u32": "@fn_set_property_b"}]},
+    "fn_set_property_b": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006efa38", "u32": "@input"},
+    {"addr": "0x006efc74", "u32": "@device"},
+    {"addr": "0x006efcb0", "u32": "0x11111111"},
+    {"addr": "0x006efcb4", "u32": "0x22222222"},
+    {"addr": "0x006efcb8", "u32": "0x33333333"},
+    {"addr": "0x006efcbc", "u32": "0x44444444"},
+    {"addr": "0x006efcc0", "u32": "0x55555555"},
+    {"addr": "0x005341ac", "u32": "@fn_get_last_error"},
+    {"addr": "0x005341e0", "u32": "@fn_get_key_state"},
+    {"addr": "0x006ee728", "size": 20, "fill": "random"},
+    {"addr": "0x00536ed8", "size": 16, "fill": "random"},
+    {"addr": "0x00536e58", "size": 16, "fill": "random"}
+  ],
+  "callees": {
+    "0x00500404": {"name": "DirectInputCreateA", "conv": "stdcall", "args": ["ptr", "u32", "mem:4", "ptr"], "ret": 0},
+    "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr"], "varargs": "printf", "ret": 0},
+    "0x00521960": {"name": "memset", "conv": "cdecl", "args": ["mem:20", "int", "u32"], "passthrough": true},
+    "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 0},
+    "user32.dll!GetKeyState": {"name": "GetKeyState", "conv": "stdcall", "args": ["int"], "ret": 0},
+    "@fn_create_device": {"name": "CreateDevice", "conv": "stdcall", "args": ["ptr", "ptr", "mem:4", "ptr"], "ret": 0},
+    "@fn_set_property": {"name": "SetProperty", "conv": "stdcall", "args": ["ptr", "u32", "mem:20"], "ret": 0},
+    "@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "@fn_set_format": {"name": "SetDataFormat", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0},
+    "@fn_set_cooperative_level": {"name": "SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "u32"], "ret": 0},
+    "@fn_get_last_error": {"name": "GetLastError indirect", "conv": "stdcall", "args": [], "ret": 0},
+    "@fn_get_key_state": {"name": "GetKeyState indirect", "conv": "stdcall", "args": ["int"], "ret": [20, 144]},
+    "@fn_set_property_b": {"name": "SetProperty changed device", "conv": "stdcall", "args": ["ptr", "u32", "mem:20"], "ret": -1}
+  },
+  "cases": [
+    {"name": "DirectInputCreate negative HRESULT", "args": [1, 2], "callees": {"0x00500404": {"name": "DirectInputCreateA", "conv": "stdcall", "args": ["ptr", "u32", "mem:4", "ptr"], "ret": -1}}, "expect": {"ret": 1}},
+    {"name": "DirectInputCreate minimum success", "args": [1, 2], "callees": {"0x00500404": {"name": "DirectInputCreateA", "conv": "stdcall", "args": ["ptr", "u32", "mem:4", "ptr"], "ret": 0}, "@fn_create_device": {"name": "CreateDevice", "conv": "stdcall", "args": ["ptr", "ptr", "mem:4", "ptr"], "ret": -2147483648}}, "expect": {"ret": 2}},
+    {"name": "CreateDevice negative HRESULT", "args": [3, 4], "callees": {"@fn_create_device": {"name": "CreateDevice", "conv": "stdcall", "args": ["ptr", "ptr", "mem:4", "ptr"], "ret": -1}}, "expect": {"ret": 2}},
+    {"name": "SetDataFormat negative HRESULT", "args": [5, 6], "callees": {"@fn_set_format": {"name": "SetDataFormat", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": -1}}, "expect": {"ret": 3}},
+    {"name": "SetCooperativeLevel negative and last error", "args": [7, 8], "callees": {"@fn_set_cooperative_level": {"name": "SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "u32"], "ret": -1}, "@fn_get_last_error": {"name": "GetLastError indirect", "conv": "stdcall", "args": [], "ret": 305419896}}, "expect": {"ret": 4}},
+    {"name": "SetProperty negative HRESULT", "args": [9, 10], "callees": {"@fn_set_property": {"name": "SetProperty", "conv": "stdcall", "args": ["ptr", "u32", "mem:20"], "ret": -1}}, "expect": {"ret": 5}},
+    {"name": "Acquire zero succeeds and sign extends keys", "args": [11, 12], "callees": {"@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": 0}, "@fn_get_key_state": {"name": "GetKeyState indirect", "conv": "stdcall", "args": ["int"], "ret": [-32768, -1]}}, "expect": {"ret": 0}},
+    {"name": "Acquire positive then negative fails", "args": [13, 14], "callees": {"@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": [1, -1]}}, "expect": {"ret": 1}},
+    {"name": "Acquire negative then positive retries successfully", "args": [15, 16], "callees": {"@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": [-1, 1]}, "@fn_get_key_state": {"name": "GetKeyState indirect", "conv": "stdcall", "args": ["int"], "ret": [32767, -32769]}}, "expect": {"ret": 0}},
+    {"name": "Acquire negative twice fails", "args": [17, 18], "callees": {"@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": [-1, -1]}}, "expect": {"ret": 1}},
+    {"name": "SetProperty clears device before null acquire check", "args": [19, 20], "callees": {"@fn_set_property": {"name": "SetProperty", "conv": "stdcall", "args": ["ptr", "u32", "mem:20"], "ret": 0, "writes": [{"addr": "0x006efc74", "hex": "00000000"}]}, "@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": -1}, "@fn_get_key_state": {"name": "GetKeyState indirect", "conv": "stdcall", "args": ["int"], "ret": [1, 2]}}, "expect": {"ret": 0}},
+    {"name": "SetCooperativeLevel changes device before property reload", "args": [19, 20], "callees": {"@fn_set_cooperative_level": {"name": "SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"addr": "0x006efc74", "hex": "e0000060"}]}}, "expect": {"ret": 5}},
+    {"name": "positive success HRESULTs continue", "args": [21, 22], "callees": {"0x00500404": {"name": "DirectInputCreateA", "conv": "stdcall", "args": ["ptr", "u32", "mem:4", "ptr"], "ret": 1}, "@fn_create_device": {"name": "CreateDevice", "conv": "stdcall", "args": ["ptr", "ptr", "mem:4", "ptr"], "ret": 1}, "@fn_set_format": {"name": "SetDataFormat", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 1}, "@fn_set_cooperative_level": {"name": "SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "u32"], "ret": 1}, "@fn_set_property": {"name": "SetProperty", "conv": "stdcall", "args": ["ptr", "u32", "mem:20"], "ret": 1}, "@fn_acquire": {"name": "Acquire", "conv": "stdcall", "args": ["ptr"], "ret": [1, 0]}}, "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 5158711,
+    "count": 32,
+    "args": [
+      {"range": [-2147483648, 2147483647]},
+      {"range": [-2147483648, 2147483647]}
+    ]
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "function": "t3dSetRenderContextTessellationAngleThreshold",
+  "original": "0x10043629",
+  "sources": [
+    "src/eqgfx/unit_10042A22.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "tessellationAngleThreshold",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x4e8",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076358",
+      "from_image": "0x10076358",
+      "image_size": 4
+    },
+    {
+      "addr": "0x10076314",
+      "from_image": "0x10076314",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x1004eea3": {
+      "name": "t3dFloatCosine",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 0.25
+    }
+  },
+  "cases": [
+    {
+      "name": "ordinary angle calls cosine",
+      "args": [
+        "@rendercontext",
+        1.5
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero angle calls cosine",
+      "args": [
+        "@rendercontext",
+        0.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative angle calls cosine",
+      "args": [
+        "@rendercontext",
+        -12.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "just below limit calls cosine",
+      "args": [
+        "@rendercontext",
+        256.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "exact limit selects fallback",
+      "args": [
+        "@rendercontext",
+        256.0000305175781
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "just above limit selects fallback",
+      "args": [
+        "@rendercontext",
+        256.00006103515625
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "large positive selects fallback",
+      "args": [
+        "@rendercontext",
+        3e+38
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "large negative calls cosine",
+      "args": [
+        "@rendercontext",
+        -3e+38
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "quiet NaN takes unordered cosine branch",
+      "args": [
+        "@rendercontext",
+        "nan"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative quiet NaN takes unordered cosine branch",
+      "args": [
+        "@rendercontext",
+        "-nan"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "positive infinity selects fallback",
+      "args": [
+        "@rendercontext",
+        "inf"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative infinity calls cosine",
+      "args": [
+        "@rendercontext",
+        "-inf"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "changed limit equality selects changed fallback",
+      "args": [
+        "@rendercontext",
+        64.0
+      ],
+      "memory": [
+        {
+          "addr": "0x10076358",
+          "f32": 64.0
+        },
+        {
+          "addr": "0x10076314",
+          "f32": -7.25
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "changed limit above angle calls cosine",
+      "args": [
+        "@rendercontext",
+        64.0
+      ],
+      "memory": [
+        {
+          "addr": "0x10076358",
+          "f32": 65.0
+        },
+        {
+          "addr": "0x10076314",
+          "f32": -7.25
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "changed fallback global is stored",
+      "args": [
+        "@rendercontext",
+        128.0
+      ],
+      "memory": [
+        {
+          "addr": "0x10076358",
+          "f32": 100.0
+        },
+        {
+          "addr": "0x10076314",
+          "f32": 3.5
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative zero calls cosine",
+      "args": [
+        "@rendercontext",
+        -0.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 276009,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x10076358",
+        "type": "float",
+        "choices": [
+          256.0000305175781,
+          64.0,
+          0.0,
+          -8.0
+        ]
+      },
+      {
+        "addr": "0x10076314",
+        "type": "float",
+        "choices": [
+          -1.0,
+          2.5,
+          0.0
+        ]
+      }
+    ]
+  }
+}

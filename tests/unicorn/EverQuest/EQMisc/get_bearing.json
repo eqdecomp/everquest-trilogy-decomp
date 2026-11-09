@@ -1,0 +1,82 @@
+{
+  "function": "get_bearing",
+  "original": "0x004A47F9",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "x1", "type": "float"},
+    {"name": "y1", "type": "float"},
+    {"name": "x2", "type": "float"},
+    {"name": "y2", "type": "float"}
+  ],
+  "ret": "float",
+  "callees": {
+    "0x00523FF0": {"name": "atan2-like helper", "args": ["double", "double"], "ret_float": 0.3125},
+    "0x004A490E": {"name": "get_bearing2_guess", "args": ["float"], "ret_float": 13.75}
+  },
+  "rewrite_aliases": {"get_bearing2_guess": "0x004A490E"},
+  "memory": [
+    {"addr": "0x0053510c", "f32": 0.0},
+    {"addr": "0x00535110", "u8": 63}
+  ],
+  "cases": [
+    {"name": "origin clamps zero x and preserves zero y", "args": [0.0, 0.0, 0.0, 0.0]},
+    {"name": "positive x and y deltas", "args": [5.0, 7.0, 2.0, 3.0]},
+    {"name": "negative x and y deltas", "args": [2.0, 3.0, 5.0, 7.0]},
+    {"name": "quadrant correction 180 minus angle", "args": [2.0, 1.0, 1.0, 3.0]},
+    {"name": "quadrant correction plus 180", "args": [2.0, 3.0, 1.0, 1.0]},
+    {"name": "quadrant correction 360 minus angle", "args": [1.0, 3.0, 2.0, 1.0]},
+    {"name": "unadjusted quadrant", "args": [1.0, 1.0, 2.0, 3.0]},
+    {"name": "equal y boundary in x2 quadrant still corrects angle", "args": [1.0, 2.0, 2.0, 2.0]},
+    {"name": "equal x and y use equality branches", "args": [2.0, 4.0, 2.0, 4.0]},
+    {"name": "signed negative zero deltas pass through", "args": [-0.0, -0.0, 0.0, 0.0]},
+    {"name": "positive zero deltas pass through", "args": [0.0, 0.0, -0.0, -0.0]},
+    {"name": "dx just below epsilon clamps", "args": [5e-7, 0.25, 0.0, 0.0]},
+    {"name": "dx exactly epsilon", "args": [9.999999974752427e-7, 0.25, 0.0, 0.0]},
+    {"name": "dx just above epsilon", "args": [1.0000001111620804e-6, 0.25, 0.0, 0.0]},
+    {"name": "opposite maximum finite x values do not overflow", "args": [3.4028234663852886e38, 1.0, -3.4028234663852886e38, 0.0]},
+    {"name": "reverse opposite maximum finite x values", "args": [-3.4028234663852886e38, 1.0, 3.4028234663852886e38, 0.0]},
+    {"name": "opposite maximum finite y values", "args": [1.0, 3.4028234663852886e38, 0.0, -3.4028234663852886e38]},
+    {"name": "x coordinate NaN exercises unordered quadrant", "args": ["nan", 1.0, 0.0, 2.0]},
+    {"name": "y coordinate NaN exercises unordered quadrant", "args": [2.0, "nan", 1.0, 0.0]},
+    {"name": "NaN deltas are negated and passed to helper", "args": ["nan", "nan", 0.0, 0.0]},
+    {"name": "same positive infinity gives NaN delta", "args": ["inf", 0.0, "inf", 1.0]},
+    {"name": "opposite infinities give infinite delta", "args": ["inf", "-inf", "-inf", "inf"]},
+    {"name": "helper result remains in double arithmetic to conversion", "args": [4.0, 1.0, 1.0, 4.0], "callees": {"0x00523FF0": {"name": "atan2-like helper", "args": ["double", "double"], "ret_float": 0.10000000149011612}}},
+    {"name": "positive x delta just above clamp", "args": [2e-6, 0.25, 0.0, 0.0]},
+    {"name": "positive x delta slightly above clamp", "args": [1.2e-6, 0.25, 0.0, 0.0]},
+    {"name": "positive x delta midway above clamp", "args": [1.5e-6, 0.25, 0.0, 0.0]},
+    {"name": "positive x delta near two times clamp", "args": [1.8e-6, 0.25, 0.0, 0.0]},
+    {"name": "positive x delta above clamp by one decade", "args": [1e-5, 0.25, 0.0, 0.0]},
+    {"name": "positive x delta in the small range", "args": [1e-4, 0.25, 0.0, 0.0]},
+    {"name": "positive x delta at one thousandth", "args": [1e-3, 0.25, 0.0, 0.0]},
+    {"name": "smallest positive y subnormal", "args": [2e-6, 1.401298464324817e-45, 0.0, 0.0]},
+    {"name": "smallest negative y subnormal", "args": [2e-6, -1.401298464324817e-45, 0.0, 0.0]},
+    {"name": "small positive y delta below clamp scale", "args": [2e-6, 2e-7, 0.0, 0.0]},
+    {"name": "small negative y delta below clamp scale", "args": [2e-6, -2e-7, 0.0, 0.0]},
+    {"name": "medium positive y delta below clamp scale", "args": [2e-6, 5e-7, 0.0, 0.0]},
+    {"name": "medium negative y delta below clamp scale", "args": [2e-6, -5e-7, 0.0, 0.0]},
+    {"name": "large positive y delta below clamp scale", "args": [2e-6, 8e-7, 0.0, 0.0]},
+    {"name": "large negative y delta below clamp scale", "args": [2e-6, -8e-7, 0.0, 0.0]},
+    {"name": "second positive y subnormal", "args": [2e-6, 2.802596928649634e-45, 0.0, 0.0]},
+    {"name": "second negative y subnormal", "args": [2e-6, -2.802596928649634e-45, 0.0, 0.0]},
+    {"name": "small positive normal y delta", "args": [2e-6, 1e-38, 0.0, 0.0]},
+    {"name": "small negative normal y delta", "args": [2e-6, -1e-38, 0.0, 0.0]},
+    {"name": "larger small positive y delta", "args": [2e-6, 1e-35, 0.0, 0.0]},
+    {"name": "larger small negative y delta", "args": [2e-6, -1e-35, 0.0, 0.0]},
+    {"name": "positive x delta below the float at 0x0053510d", "args": [0.25, 0.0, 0.0, 0.0]},
+    {"name": "positive y delta below the float at 0x0053510d", "args": [0.0, 0.25, 0.0, 0.0]},
+    {"name": "unordered x with equal y returns a zero heading", "args": ["nan", 0.0, 0.0, 0.0]},
+    {"name": "unordered second x with equal y returns a zero heading", "args": [0.0, 0.0, "nan", 0.0]}
+  ],
+  "fuzz": {
+    "seed": 4868379,
+    "count": 30,
+    "args": [
+      {"choices": [-1000.0, -1.0, -0.000001, 0.0, 0.5, 2.0, 10.0, 1000.0]},
+      {"choices": [-1000.0, -1.0, -0.000001, 0.0, 0.5, 2.0, 10.0, 1000.0]},
+      {"choices": [-1000.0, -1.0, -0.000001, 0.0, 0.5, 2.0, 10.0, 1000.0]},
+      {"choices": [-1000.0, -1.0, -0.000001, 0.0, 0.5, 2.0, 10.0, 1000.0]}
+    ]
+  }
+}

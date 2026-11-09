@@ -1,0 +1,209 @@
+{
+  "function": "rdp_unlock_guess",
+  "original": "0x10028BF0",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c",
+    "src/eqmain/Network/rdp/eventq.c",
+    "src/eqmain/Network/rdp/connhash.c",
+    "src/eqmain/Network/rdp/uevent.c",
+    "src/eqmain/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "removed": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "leave_fn": {
+      "size": 1,
+      "fill": "zero"
+    },
+    "enter_fn": {
+      "size": 1,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10040148",
+      "u32": "@leave_fn"
+    },
+    {
+      "addr": "0x1004014C",
+      "u32": "@enter_fn"
+    }
+  ],
+  "callees": {
+    "@leave_fn": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e800": {
+      "name": "FUN_1002e800",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@removed"
+    },
+    "@enter_fn": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e310": {
+      "name": "removeHeapElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002d210": {
+      "name": "NetworkConnection_CleanupNetworkConnectionResources_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {
+      "name": "hash miss skips heap cleanup",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x1002e800": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary match cleanup order",
+      "args": [
+        "@param_1"
+      ]
+    },
+    {
+      "name": "small nonzero returned pointer",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x1002e800": {
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "heap element offset wraps to zero",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x1002e800": {
+          "ret": "0xffffffdc"
+        }
+      }
+    },
+    {
+      "name": "null manager with hash miss",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1002e800": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "manager offset arithmetic wraps",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0xc",
+          "u32": "0xffffff90"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5173824,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0xc",
+        "type": "ptr",
+        "choices": [
+          "@state",
+          0,
+          "0xfffffff0",
+          "0xffffff90",
+          "@removed"
+        ]
+      }
+    ]
+  }
+}

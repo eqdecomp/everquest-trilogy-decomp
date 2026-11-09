@@ -1,0 +1,332 @@
+{
+  "function": "EQMain_DestroyResourceAndDecrementRefCount_guess",
+  "original": "0x10010e00",
+  "sources": [
+    "src/eqmain/unit_10010DC0.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "blob": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "one": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "two": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "zero": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "neg": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 4294967295
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "minint": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2147483648
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "maxint": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2147483647
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "big": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1000
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "nodata": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    "selfobj": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x0badf00d"
+        },
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@selfobj"
+        }
+      ]
+    },
+    "selfwrite": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@selfwrite"
+        }
+      ]
+    },
+    "fz": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10040dfc",
+      "from_image": "0x10040DFC",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x10033800": {
+      "name": "FUN_10033800",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033e53": {
+      "name": "__purecall (slot 0 of the vtable at 0x10040dfc; pops the 1 it is pushed)",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "refCount 1 -> 0 frees the data and calls slot 0 with 1",
+      "args": [
+        "@one"
+      ]
+    },
+    {
+      "name": "refCount 2 -> 1 frees the data and keeps",
+      "args": [
+        "@two"
+      ]
+    },
+    {
+      "name": "refCount 0 -> -1 keeps",
+      "args": [
+        "@zero"
+      ]
+    },
+    {
+      "name": "refCount -1 -> -2 keeps",
+      "args": [
+        "@neg"
+      ]
+    },
+    {
+      "name": "refCount INT_MIN -> INT_MAX keeps (the decrement wraps)",
+      "args": [
+        "@minint"
+      ]
+    },
+    {
+      "name": "refCount INT_MAX -> INT_MAX-1 keeps",
+      "args": [
+        "@maxint"
+      ]
+    },
+    {
+      "name": "refCount 1000 -> 999 keeps",
+      "args": [
+        "@big"
+      ]
+    },
+    {
+      "name": "refCount 1 -> 0 with a null data pointer: the cdecl call still gets 0, then the slot-0 call",
+      "args": [
+        "@nodata"
+      ]
+    },
+    {
+      "name": "refCount 1 -> 0 with the data pointer at the object: the callee sees the vtable already at 0x10041f68",
+      "args": [
+        "@selfobj"
+      ],
+      "callees": {
+        "0x10033800": {
+          "name": "FUN_10033800",
+          "conv": "cdecl",
+          "args": [
+            "mem:4"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ordering: the callee writes refCount 7 into the object, the decrement reads it after the call (7 -> 6 keeps)",
+      "args": [
+        "@selfwrite"
+      ],
+      "callees": {
+        "0x10033800": {
+          "name": "FUN_10033800",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 4,
+              "hex": "07000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "null pointer faults on the first access",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5242880,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@fz"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@fz",
+        "offset": "0x4",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          1,
+          2,
+          3,
+          -1,
+          5,
+          1000,
+          2147483647,
+          -2147483648
+        ]
+      },
+      {
+        "addr": "@fz",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@blob",
+          "@fz",
+          0
+        ]
+      }
+    ]
+  }
+}

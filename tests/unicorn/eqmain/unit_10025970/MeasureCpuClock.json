@@ -1,0 +1,333 @@
+{
+  "function": "MeasureCpuClock_guess",
+  "original": "0x10027480",
+  "sources": ["src/eqmain/unit_10025970.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "param_1", "type": "ptr"}],
+  "ret": "ptr",
+  "_comment": "QueryPerformanceCounter: the IAT slot 0x100400dc points at a 33-byte stdcall stub at 0x100276ad, in the padding between MeasureCpuClock (ends 0x100276ac) and ReadTimestampCounter (0x100276d0). It is a passthrough callee, so it runs for real. The stub stores the next u32 of the counter table to the low dword of *arg, zeroes the high dword, and advances the index cell. Its two absolute addresses (0x100276b3, 0x100276c7) are patched with the address of the 'qpc' object: index cell at +0x40 (starts at +0x80), counter table at +0x80 (u32 each, 4 bytes apart). The return value is not set: neither side reads EAX after the call. writes hex takes one value per callee, not a per-call list, so each case's counter timeline is a memory table; the top-level table is the default, and a case's table overwrites its first entries (top-level memory is written before case memory). Per sample: base, base+50 (first wait exits), base+50+window (second wait exits). RDTSC cycles per sample = rdtsc_step x that sample's do-while iterations; at 1 MHz a window of W ticks is W microseconds.",
+  "objects": {
+    "param_1": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "qpc": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100276ad", "hex": "8B4424048B0D000000008B118910C740040000000083C104890D00000000C20400"},
+    {"addr": "0x100276b3", "u32": "@qpc+0x40"},
+    {"addr": "0x100276c7", "u32": "@qpc+0x40"},
+    {"addr": "@qpc+0x40", "u32": "@qpc+0x80"},
+    {"addr": "@qpc+0x80", "u32": 0},
+    {"addr": "@qpc+0x84", "u32": 50},
+    {"addr": "@qpc+0x88", "u32": 1050},
+    {"addr": "@qpc+0x8c", "u32": 1050},
+    {"addr": "@qpc+0x90", "u32": 1100},
+    {"addr": "@qpc+0x94", "u32": 2100},
+    {"addr": "@qpc+0x98", "u32": 2100},
+    {"addr": "@qpc+0x9c", "u32": 2150},
+    {"addr": "@qpc+0xa0", "u32": 3150},
+    {"addr": "0x100400dc", "u32": "0x100276ad"}
+  ],
+  "rdtsc_step": 1000000,
+  "callees": {
+    "kernel32.dll!GetCurrentThread": {
+      "name": "GetCurrentThread",
+      "conv": "stdcall",
+      "args": [],
+      "ret": -2
+    },
+    "kernel32.dll!QueryPerformanceFrequency": {
+      "name": "QueryPerformanceFrequency",
+      "conv": "stdcall",
+      "args": ["ignore"],
+      "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "40420f0000000000"}]
+    },
+    "0x100276ad": {
+      "name": "QueryPerformanceCounter_stub",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1,
+      "passthrough": true
+    },
+    "kernel32.dll!GetThreadPriority": {
+      "name": "GetThreadPriority",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!SetThreadPriority": {
+      "name": "SetThreadPriority",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 1 MHz, three samples of 1000 ticks, 1e6 cycles each (rate 1000)",
+      "args": ["@param_1"]
+    },
+    {
+      "name": "one cycle per microsecond: three samples agree at the minimum count",
+      "args": ["@param_1"],
+      "rdtsc_step": 1000
+    },
+    {
+      "name": "QueryPerformanceFrequency fails: four zeroes, no counter reads",
+      "args": ["@param_1"],
+      "callees": {
+        "kernel32.dll!QueryPerformanceFrequency": {"name": "QueryPerformanceFrequency", "conv": "stdcall", "args": ["ignore"], "ret": 0}
+      }
+    },
+    {
+      "name": "thread already at 0x7FFFFFFF: never raised or restored",
+      "args": ["@param_1"],
+      "callees": {
+        "kernel32.dll!GetThreadPriority": {"name": "GetThreadPriority", "conv": "stdcall", "args": ["ptr"], "ret": 2147483647}
+      }
+    },
+    {
+      "name": "0x7FFFFFFF in the middle sample only (restores 5 and 9)",
+      "args": ["@param_1"],
+      "callees": {
+        "kernel32.dll!GetThreadPriority": {"name": "GetThreadPriority", "conv": "stdcall", "args": ["ptr"], "ret": [5, 2147483647, 9]}
+      }
+    },
+    {
+      "name": "restore per sample: priorities 5, 7, 9",
+      "args": ["@param_1"],
+      "callees": {
+        "kernel32.dll!GetThreadPriority": {"name": "GetThreadPriority", "conv": "stdcall", "args": ["ptr"], "ret": [5, 7, 9]}
+      }
+    },
+    {
+      "name": "first wait: 49 ticks is not enough, 50 is",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 49},
+        {"addr": "@qpc+0x88", "u32": 50},
+        {"addr": "@qpc+0x8c", "u32": 1050},
+        {"addr": "@qpc+0x90", "u32": 1050},
+        {"addr": "@qpc+0x94", "u32": 1100},
+        {"addr": "@qpc+0x98", "u32": 2100},
+        {"addr": "@qpc+0x9c", "u32": 2100},
+        {"addr": "@qpc+0xa0", "u32": 2150},
+        {"addr": "@qpc+0xa4", "u32": 3150}
+      ]
+    },
+    {
+      "name": "second wait: 999 ticks is not enough, 1000 is (first sample takes 2 steps: rates 2, 1, 1 agree)",
+      "args": ["@param_1"],
+      "rdtsc_step": 1000,
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 50},
+        {"addr": "@qpc+0x88", "u32": 999},
+        {"addr": "@qpc+0x8c", "u32": 1050},
+        {"addr": "@qpc+0x90", "u32": 1050},
+        {"addr": "@qpc+0x94", "u32": 1100},
+        {"addr": "@qpc+0x98", "u32": 2100},
+        {"addr": "@qpc+0x9c", "u32": 2100},
+        {"addr": "@qpc+0xa0", "u32": 2150},
+        {"addr": "@qpc+0xa4", "u32": 3150}
+      ]
+    },
+    {
+      "name": "4 kHz, 1000-tick window: remainder exactly half the frequency (no round up)",
+      "args": ["@param_1"],
+      "callees": {
+        "kernel32.dll!QueryPerformanceFrequency": {"name": "QueryPerformanceFrequency", "conv": "stdcall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "a00f000000000000"}]}
+      }
+    },
+    {
+      "name": "4 kHz, 1001-tick window: remainder above half the frequency (rounds up)",
+      "args": ["@param_1"],
+      "callees": {
+        "kernel32.dll!QueryPerformanceFrequency": {"name": "QueryPerformanceFrequency", "conv": "stdcall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "a00f000000000000"}]}
+      },
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 50},
+        {"addr": "@qpc+0x88", "u32": 1051},
+        {"addr": "@qpc+0x8c", "u32": 1051},
+        {"addr": "@qpc+0x90", "u32": 1101},
+        {"addr": "@qpc+0x94", "u32": 2102},
+        {"addr": "@qpc+0x98", "u32": 2102},
+        {"addr": "@qpc+0x9c", "u32": 2152},
+        {"addr": "@qpc+0xa0", "u32": 3153}
+      ]
+    },
+    {
+      "name": "10 MHz, 150 cycles per 100 us: rate exactly 1.5 (no per-sample round up)",
+      "args": ["@param_1"],
+      "rdtsc_step": 150,
+      "callees": {
+        "kernel32.dll!QueryPerformanceFrequency": {"name": "QueryPerformanceFrequency", "conv": "stdcall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "8096980000000000"}]}
+      }
+    },
+    {
+      "name": "10 MHz, 156 cycles: per-sample round up, final tenths above 5",
+      "args": ["@param_1"],
+      "rdtsc_step": 156,
+      "callees": {
+        "kernel32.dll!QueryPerformanceFrequency": {"name": "QueryPerformanceFrequency", "conv": "stdcall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "8096980000000000"}]}
+      }
+    },
+    {
+      "name": "10 MHz, 155 cycles: final tenths exactly 5 (no round up)",
+      "args": ["@param_1"],
+      "rdtsc_step": 155,
+      "callees": {
+        "kernel32.dll!QueryPerformanceFrequency": {"name": "QueryPerformanceFrequency", "conv": "stdcall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "8096980000000000"}]}
+      }
+    },
+    {
+      "name": "rates 9, 10, 11: a window exactly 3 apart agrees and stops at sample 3",
+      "args": ["@param_1"],
+      "rdtsc_step": 11000,
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 50},
+        {"addr": "@qpc+0x88", "u32": 1272},
+        {"addr": "@qpc+0x8c", "u32": 1272},
+        {"addr": "@qpc+0x90", "u32": 1322},
+        {"addr": "@qpc+0x94", "u32": 2422},
+        {"addr": "@qpc+0x98", "u32": 2422},
+        {"addr": "@qpc+0x9c", "u32": 2472},
+        {"addr": "@qpc+0xa0", "u32": 3472}
+      ]
+    },
+    {
+      "name": "rates 10, 10, 13, 10, 10, 10: each window slot is the outlier in turn",
+      "args": ["@param_1"],
+      "rdtsc_step": 13000,
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 50},
+        {"addr": "@qpc+0x88", "u32": 1350},
+        {"addr": "@qpc+0x8c", "u32": 1350},
+        {"addr": "@qpc+0x90", "u32": 1400},
+        {"addr": "@qpc+0x94", "u32": 2700},
+        {"addr": "@qpc+0x98", "u32": 2700},
+        {"addr": "@qpc+0x9c", "u32": 2750},
+        {"addr": "@qpc+0xa0", "u32": 3750},
+        {"addr": "@qpc+0xa4", "u32": 3750},
+        {"addr": "@qpc+0xa8", "u32": 3800},
+        {"addr": "@qpc+0xac", "u32": 5100},
+        {"addr": "@qpc+0xb0", "u32": 5100},
+        {"addr": "@qpc+0xb4", "u32": 5150},
+        {"addr": "@qpc+0xb8", "u32": 6450},
+        {"addr": "@qpc+0xbc", "u32": 6450},
+        {"addr": "@qpc+0xc0", "u32": 6500},
+        {"addr": "@qpc+0xc4", "u32": 7800}
+      ]
+    },
+    {
+      "name": "rates 10, 10, 12, 12, 12: a window 4 apart keeps sampling until it agrees",
+      "args": ["@param_1"],
+      "rdtsc_step": 12000,
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 50},
+        {"addr": "@qpc+0x88", "u32": 1250},
+        {"addr": "@qpc+0x8c", "u32": 1250},
+        {"addr": "@qpc+0x90", "u32": 1300},
+        {"addr": "@qpc+0x94", "u32": 2500},
+        {"addr": "@qpc+0x98", "u32": 2500},
+        {"addr": "@qpc+0x9c", "u32": 2550},
+        {"addr": "@qpc+0xa0", "u32": 3550},
+        {"addr": "@qpc+0xa4", "u32": 3550},
+        {"addr": "@qpc+0xa8", "u32": 3600},
+        {"addr": "@qpc+0xac", "u32": 4600},
+        {"addr": "@qpc+0xb0", "u32": 4600},
+        {"addr": "@qpc+0xb4", "u32": 4650},
+        {"addr": "@qpc+0xb8", "u32": 5650}
+      ]
+    },
+    {
+      "name": "never converges: rates alternate 10 and 4, so it stops at the 20-sample cap",
+      "args": ["@param_1"],
+      "rdtsc_step": 10000,
+      "memory": [
+        {"addr": "@qpc+0x80", "u32": 0},
+        {"addr": "@qpc+0x84", "u32": 50},
+        {"addr": "@qpc+0x88", "u32": 1050},
+        {"addr": "@qpc+0x8c", "u32": 1050},
+        {"addr": "@qpc+0x90", "u32": 1100},
+        {"addr": "@qpc+0x94", "u32": 3600},
+        {"addr": "@qpc+0x98", "u32": 3600},
+        {"addr": "@qpc+0x9c", "u32": 3650},
+        {"addr": "@qpc+0xa0", "u32": 4650},
+        {"addr": "@qpc+0xa4", "u32": 4650},
+        {"addr": "@qpc+0xa8", "u32": 4700},
+        {"addr": "@qpc+0xac", "u32": 7200},
+        {"addr": "@qpc+0xb0", "u32": 7200},
+        {"addr": "@qpc+0xb4", "u32": 7250},
+        {"addr": "@qpc+0xb8", "u32": 8250},
+        {"addr": "@qpc+0xbc", "u32": 8250},
+        {"addr": "@qpc+0xc0", "u32": 8300},
+        {"addr": "@qpc+0xc4", "u32": 10800},
+        {"addr": "@qpc+0xc8", "u32": 10800},
+        {"addr": "@qpc+0xcc", "u32": 10850},
+        {"addr": "@qpc+0xd0", "u32": 11850},
+        {"addr": "@qpc+0xd4", "u32": 11850},
+        {"addr": "@qpc+0xd8", "u32": 11900},
+        {"addr": "@qpc+0xdc", "u32": 14400},
+        {"addr": "@qpc+0xe0", "u32": 14400},
+        {"addr": "@qpc+0xe4", "u32": 14450},
+        {"addr": "@qpc+0xe8", "u32": 15450},
+        {"addr": "@qpc+0xec", "u32": 15450},
+        {"addr": "@qpc+0xf0", "u32": 15500},
+        {"addr": "@qpc+0xf4", "u32": 18000},
+        {"addr": "@qpc+0xf8", "u32": 18000},
+        {"addr": "@qpc+0xfc", "u32": 18050},
+        {"addr": "@qpc+0x100", "u32": 19050},
+        {"addr": "@qpc+0x104", "u32": 19050},
+        {"addr": "@qpc+0x108", "u32": 19100},
+        {"addr": "@qpc+0x10c", "u32": 21600},
+        {"addr": "@qpc+0x110", "u32": 21600},
+        {"addr": "@qpc+0x114", "u32": 21650},
+        {"addr": "@qpc+0x118", "u32": 22650},
+        {"addr": "@qpc+0x11c", "u32": 22650},
+        {"addr": "@qpc+0x120", "u32": 22700},
+        {"addr": "@qpc+0x124", "u32": 25200},
+        {"addr": "@qpc+0x128", "u32": 25200},
+        {"addr": "@qpc+0x12c", "u32": 25250},
+        {"addr": "@qpc+0x130", "u32": 26250},
+        {"addr": "@qpc+0x134", "u32": 26250},
+        {"addr": "@qpc+0x138", "u32": 26300},
+        {"addr": "@qpc+0x13c", "u32": 28800},
+        {"addr": "@qpc+0x140", "u32": 28800},
+        {"addr": "@qpc+0x144", "u32": 28850},
+        {"addr": "@qpc+0x148", "u32": 29850},
+        {"addr": "@qpc+0x14c", "u32": 29850},
+        {"addr": "@qpc+0x150", "u32": 29900},
+        {"addr": "@qpc+0x154", "u32": 32400},
+        {"addr": "@qpc+0x158", "u32": 32400},
+        {"addr": "@qpc+0x15c", "u32": 32450},
+        {"addr": "@qpc+0x160", "u32": 33450},
+        {"addr": "@qpc+0x164", "u32": 33450},
+        {"addr": "@qpc+0x168", "u32": 33500},
+        {"addr": "@qpc+0x16c", "u32": 36000}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1027480,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

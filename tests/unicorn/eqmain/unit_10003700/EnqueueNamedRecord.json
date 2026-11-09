@@ -1,0 +1,121 @@
+{
+  "function": "EnqueueNamedRecord_guess",
+  "original": "0x10005cc0",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "u32"},
+    {"name": "param_3", "type": "cstr"},
+    {"name": "param_4", "type": "u32"},
+    {"name": "param_5", "type": "u32"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {"size": "0x40", "fill": "random"},
+    "rec": {"size": "0x20", "fill": "random"},
+    "copy": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@rec"
+    },
+    "0x1003396b": {
+      "name": "__strdup",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "ret": "@copy"
+    },
+    "0x10028330": {
+      "name": "ClearRecord3_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 8, "hex": "00000000"}]
+    },
+    "0x10028340": {
+      "name": "FUN_10028340",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "ptr"],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e",
+    "__strdup": "0x1003396b"
+  },
+  "cases": [
+    {
+      "name": "typical: five fields stored, queued at owner + 0x1c",
+      "args": ["@owner", 287454020, "alpha", 1431655765, 2863311530]
+    },
+    {
+      "name": "_malloc fails: null back, no copy, no clear, no queue",
+      "args": ["@owner", 1, "beta", 2, 3],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "_malloc fails with a null owner",
+      "args": [0, 0, "", 0, 0],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "__strdup fails: null copy pointer stored, record still queued",
+      "args": ["@owner", 4, "gamma", 5, 6],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "__strdup fails with an all-ones owner",
+      "args": [4294967295, 0, "theta", 1, 2],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "null owner: queue argument is 0x1c",
+      "args": [0, 7, "delta", 8, 9]
+    },
+    {
+      "name": "owner + 0x10: queue argument is owner + 0x2c",
+      "args": ["@owner+0x10", 10, "epsilon", 11, 12]
+    },
+    {
+      "name": "owner 0xffffffe4 wraps: queue argument is 0",
+      "args": [4294967268, 13, "zeta", 14, 15]
+    },
+    {
+      "name": "empty name",
+      "args": ["@owner", 0, "", 0, 0]
+    },
+    {
+      "name": "all-ones fields and a long name",
+      "args": ["@owner", 4294967295, "a considerably longer name for the copied string", 4294967295, 4294967295]
+    }
+  ],
+  "fuzz": {
+    "seed": 23744,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner", "@owner+0x10", 0, 4294967268]},
+      {},
+      {"choices": ["", "a", "fuzz name", "a longer name for the copy"]},
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

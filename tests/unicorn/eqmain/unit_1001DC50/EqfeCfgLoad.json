@@ -1,0 +1,200 @@
+{
+  "function": "EqfeCfgLoad_guess",
+  "original": "0x10020b50",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "obj": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "fp": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "fp2": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "blk": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1003407f": {
+      "name": "eqfecfg_open",
+      "conv": "cdecl",
+      "args": ["cstr", "cstr"],
+      "ret": "@fp"
+    },
+    "0x100345ed": {
+      "name": "_fseek",
+      "conv": "cdecl",
+      "args": ["ptr", "long", "int"],
+      "ret": 0
+    },
+    "0x10033e8f": {
+      "name": "_ftell",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 5
+    },
+    "0x100346a6": {
+      "name": "_rewind",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@blk"
+    },
+    "0x100342a2": {
+      "name": "_fread",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: open ok, ftell 5, 6 zeroed bytes, fread 5 from the block",
+      "args": ["@obj"]
+    },
+    {
+      "name": "empty file: ftell 0 gives size 1 and a 2-byte block",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "ftell -1: size stays -1, malloc(0), memset count 0, fread size 0xffffffff",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": -1}
+      }
+    },
+    {
+      "name": "ftell 1: size kept, count 2 (both stosb)",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "ftell 2: count 3 (three stosb)",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 2}
+      }
+    },
+    {
+      "name": "ftell 3: count 4 (one stosd, no stosb)",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 3}
+      }
+    },
+    {
+      "name": "ftell 4: count 5 (one stosd and one stosb)",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 4}
+      }
+    },
+    {
+      "name": "ftell 7: count 8 (two stosd)",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 7}
+      }
+    },
+    {
+      "name": "ftell 0x40: count 0x41 (sixteen stosd and one stosb)",
+      "args": ["@obj"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell", "conv": "cdecl", "args": ["ptr"], "ret": 64}
+      }
+    },
+    {
+      "name": "open returns 0, reopen returns fp2: size 1, 2-byte block, no fseek/fread",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003407f": {"name": "eqfecfg_open", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [0, "@fp2"]}
+      }
+    },
+    {
+      "name": "open returns -1, reopen returns fp2",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003407f": {"name": "eqfecfg_open", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [-1, "@fp2"]}
+      }
+    },
+    {
+      "name": "open returns 0, reopen returns 0: stored without a check",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003407f": {"name": "eqfecfg_open", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [0, 0]}
+      }
+    },
+    {
+      "name": "open returns -1, reopen returns -1: stored without a check",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003407f": {"name": "eqfecfg_open", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [-1, -1]}
+      }
+    },
+    {
+      "name": "open returns 0, reopen returns -1",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003407f": {"name": "eqfecfg_open", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [0, -1]}
+      }
+    },
+    {
+      "name": "malloc returns obj+0x10 (the size field): memset zeroes size, fread gets size 0",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@obj+0x10"}
+      }
+    },
+    {
+      "name": "malloc returns obj (the header): memset zeroes vtable and file's low bytes",
+      "args": ["@obj"],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@obj"}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1002050,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@obj",
+        "size": 32
+      }
+    ]
+  }
+}

@@ -1,0 +1,182 @@
+{
+  "function": "t3dAllocateMemory",
+  "original": "0x10050c48",
+  "sources": [
+    "src/eqgfx/unit_10050AA7.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "byteCount",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "getlast": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076080",
+      "u32": "@getlast"
+    }
+  ],
+  "callees": {
+    "0x1006a15f": {
+      "name": "_calloc",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "u32"
+      ],
+      "ret": "0x12345000"
+    },
+    "@getlast": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0
+    },
+    "0x100509ee": {
+      "name": "logDebugMessage_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "0x10050aa7": {
+      "name": "st_write_mem_error_textfile",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_calloc": "0x1006a15f"
+  },
+  "cases": [
+    {
+      "name": "ordinary_success",
+      "args": [
+        1
+      ],
+      "expect": {
+        "ret": "0x12345000"
+      }
+    },
+    {
+      "name": "zero_byte_success",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": "0x12345000"
+      }
+    },
+    {
+      "name": "large_unsigned_count_success",
+      "args": [
+        4294967295
+      ],
+      "expect": {
+        "ret": "0x12345000"
+      }
+    },
+    {
+      "name": "failure_zero_error_and_zero_count",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x1006a15f": {
+          "name": "_calloc",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "failure_high_last_error",
+      "args": [
+        2147483647
+      ],
+      "callees": {
+        "0x1006a15f": {
+          "name": "_calloc",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "u32"
+          ],
+          "ret": 0
+        },
+        "@getlast": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": "0xdeadbeef"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "failure_unsigned_count_and_nonzero_error",
+      "args": [
+        4294967295
+      ],
+      "callees": {
+        "0x1006a15f": {
+          "name": "_calloc",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "u32"
+          ],
+          "ret": 0
+        },
+        "@getlast": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 12345
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 330824,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          1,
+          4,
+          255,
+          4096,
+          2147483647,
+          2147483648,
+          4294967295
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

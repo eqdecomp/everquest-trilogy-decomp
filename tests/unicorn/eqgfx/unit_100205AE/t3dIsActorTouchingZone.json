@@ -1,0 +1,478 @@
+{
+  "function": "t3dIsActorTouchingZone",
+  "original": "0x100209ab",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@zones"
+        }
+      ]
+    },
+    "zones": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "0x30001000"},
+        {"offset": "0x04", "u32": "0x30001100"},
+        {"offset": "0x08", "u32": "0x30001200"},
+        {"offset": "0x0c", "u32": "0x30001300"},
+        {"offset": "0x10", "u32": "0x30001400"},
+        {"offset": "0x14", "u32": "0x30001500"},
+        {"offset": "0x18", "u32": "0x30001600"},
+        {"offset": "0x1c", "u32": "0x30001700"}
+      ]
+    },
+    "position": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": 1
+        },
+        {
+          "offset": "0x48",
+          "u32": 0
+        },
+        {
+          "offset": "0x50",
+          "u32": "@extras"
+        }
+      ]
+    },
+    "extras": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": 2},
+        {"offset": "0x04", "u32": 3},
+        {"offset": "0x08", "u32": 6},
+        {"offset": "0x0c", "u32": 5},
+        {"offset": "0x10", "u32": 7},
+        {"offset": "0x14", "u32": 4},
+        {"offset": "0x18", "u32": 1},
+        {"offset": "0x1c", "u32": 0}
+      ]
+    },
+    "region": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "mem:4"
+      ],
+      "ret": [0, 0, 1, 0, 2, 0, 0, 1]
+    }
+  },
+  "cases": [
+    {
+      "name": "primary zone holds the list: first call hits, extras not walked",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 6
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [1]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "primary misses, no extra indices: loop not entered",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "primary misses, first extra hits",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0, 1]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "primary misses, second extra hits",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0, 0, 1]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "primary misses, last of three extras hits",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0, 0, 0, 1]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "primary and both extras miss",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0, 0, 0]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "primary and the one extra return 2 (not a hit)",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [2, 2]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "primary returns 2, the one extra returns 1",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [2, 1]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "negative returns are not hits",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [-1]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "last zone index 7, three extras all miss",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 7
+        },
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zone index 0 and extra index 0 hits",
+      "args": [
+        "@actor",
+        "@position",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 0
+        },
+        {
+          "addr": "@position",
+          "offset": "0x48",
+          "u32": 1
+        },
+        {
+          "addr": "@extras",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [0, 1]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 133547,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@position"
+        ]
+      },
+      {
+        "choices": [
+          "@region"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@position",
+        "offset": "0x28",
+        "type": "int",
+        "range": [0, 7]
+      },
+      {
+        "addr": "@position",
+        "offset": "0x48",
+        "type": "int",
+        "range": [0, 6]
+      },
+      {
+        "addr": "@extras",
+        "type": "int",
+        "count": 8,
+        "range": [0, 7]
+      }
+    ]
+  }
+}

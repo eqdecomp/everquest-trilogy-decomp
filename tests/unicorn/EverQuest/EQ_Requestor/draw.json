@@ -1,0 +1,132 @@
+{
+  "function": "EQ_Requestor2::draw_guess",
+  "original": "0x0048226c",
+  "sources": [
+    "src/EverQuest/EQ_Requestor.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_requestor2",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eq_requestor2": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0xa4", "u16": 2},
+        {"offset": "0xac", "u32": 100}
+      ]
+    },
+    "vtable": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@expire_fn"}
+      ]
+    },
+    "render_context": {
+      "size": 8,
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "0x12345678"}
+      ]
+    },
+    "setrect": {
+      "size": 1,
+      "fill": "zero"
+    },
+    "expire_fn": {
+      "size": 1,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x00534248", "u32": "@setrect"},
+    {"addr": "0x006e4e6c", "u32": "@render_context"}
+  ],
+  "callees": {
+    "0x004a461e": {
+      "name": "EqGetTime",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 100
+    },
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "@expire_fn": {
+      "name": "expire_callback",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    },
+    "0x00450125": {
+      "name": "EQ_Overlay::drawPartial_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "ptr", "ptr", "int"]
+    },
+    "0x0048236f": {
+      "name": "EQ_Requestor2::DrawText_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "inactive skips time and drawing",
+      "memory": [
+        {"addr": "@eq_requestor2", "offset": "0x10", "u32": 0},
+        {"addr": "@eq_requestor2", "offset": "0xa4", "u16": 0},
+        {"addr": "@eq_requestor2", "offset": "0xac", "u32": 99}
+      ]
+    },
+    {
+      "name": "expired calls virtual callback",
+      "memory": [
+        {"addr": "@eq_requestor2", "offset": "0x10", "u32": 1},
+        {"addr": "@eq_requestor2", "offset": "0xa4", "u16": 0},
+        {"addr": "@eq_requestor2", "offset": "0xac", "u32": 99}
+      ]
+    },
+    {
+      "name": "expiry equal to current time draws first button",
+      "memory": [
+        {"addr": "@eq_requestor2", "offset": "0x10", "u32": 1},
+        {"addr": "@eq_requestor2", "offset": "0xa4", "u16": 0},
+        {"addr": "@eq_requestor2", "offset": "0xac", "u32": 100}
+      ]
+    },
+    {
+      "name": "later expiry draws second button",
+      "memory": [
+        {"addr": "@eq_requestor2", "offset": "0x10", "u32": 1},
+        {"addr": "@eq_requestor2", "offset": "0xa4", "u16": 1},
+        {"addr": "@eq_requestor2", "offset": "0xac", "u32": 101}
+      ]
+    },
+    {
+      "name": "other button index draws base panel and text only",
+      "memory": [
+        {"addr": "@eq_requestor2", "offset": "0x10", "u32": 1},
+        {"addr": "@eq_requestor2", "offset": "0xa4", "u16": 2},
+        {"addr": "@eq_requestor2", "offset": "0xac", "u32": 101}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4822268,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "@eq_requestor2", "offset": "0x10", "type": "u8", "choices": [0, 1]},
+      {"addr": "@eq_requestor2", "offset": "0xa4", "type": "short", "choices": [-1, 0, 1, 2, 32767]},
+      {"addr": "@eq_requestor2", "offset": "0xac", "type": "u32", "choices": [99, 100, 101]}
+    ]
+  }
+}

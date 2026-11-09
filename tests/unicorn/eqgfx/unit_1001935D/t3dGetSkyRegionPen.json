@@ -1,0 +1,349 @@
+{
+  "function": "t3dGetSkyRegionPen",
+  "original": "0x100198b3",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "levelOfDetailIndex",
+      "type": "u32"
+    },
+    {
+      "name": "renderMethodIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "region": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 40
+        },
+        {
+          "offset": "0x8",
+          "u32": 4
+        },
+        {
+          "offset": "0xc",
+          "u32": "@lodData"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@penTable"
+        }
+      ]
+    },
+    "lodData": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 3
+        },
+        {
+          "offset": "0x4",
+          "u32": "@references"
+        },
+        {
+          "offset": "0x8",
+          "u32": 2
+        },
+        {
+          "offset": "0xc",
+          "u32": "@references"
+        },
+        {
+          "offset": "0x10",
+          "u32": 3
+        },
+        {
+          "offset": "0x14",
+          "u32": "@references"
+        },
+        {
+          "offset": "0x18",
+          "u32": 1
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@references"
+        }
+      ]
+    },
+    "references": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 5
+        },
+        {
+          "offset": "0x14",
+          "u32": 1
+        },
+        {
+          "offset": "0x20",
+          "u32": 7
+        },
+        {
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "offset": "0x38",
+          "u32": 3
+        },
+        {
+          "offset": "0x44",
+          "u32": 2
+        },
+        {
+          "offset": "0x50",
+          "u32": 6
+        },
+        {
+          "offset": "0x5c",
+          "u32": 4
+        }
+      ]
+    },
+    "penTable": {
+      "size": "0x280",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1a",
+          "u8": 17
+        },
+        {
+          "offset": "0x6a",
+          "u8": 34
+        },
+        {
+          "offset": "0xba",
+          "u8": 51
+        },
+        {
+          "offset": "0x10a",
+          "u8": 68
+        },
+        {
+          "offset": "0x15a",
+          "u8": 85
+        },
+        {
+          "offset": "0x1aa",
+          "u8": 102
+        },
+        {
+          "offset": "0x1fa",
+          "u8": 119
+        },
+        {
+          "offset": "0x24a",
+          "u8": 136
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "wrong state type returns region upper bytes",
+      "args": [
+        "@region",
+        1,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "u32": 39
+        }
+      ]
+    },
+    {
+      "name": "first lod and render method entries",
+      "args": [
+        "@region",
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 358
+      }
+    },
+    {
+      "name": "lod index equals action count returns lod index upper bytes",
+      "args": [
+        "@region",
+        4,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero action count rejects lod index zero",
+      "args": [
+        "@region",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "render method index equals count returns index upper bytes",
+      "args": [
+        "@region",
+        0,
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "render method index above byte boundary",
+      "args": [
+        "@region",
+        0,
+        291
+      ],
+      "expect": {
+        "ret": 256
+      }
+    },
+    {
+      "name": "second lod has its own render method count",
+      "args": [
+        "@region",
+        1,
+        1
+      ],
+      "expect": {
+        "ret": 34
+      }
+    },
+    {
+      "name": "pen table index sets upper bytes and pen byte",
+      "args": [
+        "@region",
+        2,
+        2
+      ],
+      "expect": {
+        "ret": 648
+      }
+    },
+    {
+      "name": "last action count entry",
+      "args": [
+        "@region",
+        3,
+        0
+      ],
+      "expect": {
+        "ret": 358
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 104627,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      },
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@state",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          39,
+          40
+        ]
+      },
+      {
+        "addr": "@state",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@lodData",
+        "type": "u32",
+        "count": 4,
+        "stride": 8,
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@references",
+        "offset": "0x8",
+        "type": "u32",
+        "count": 8,
+        "stride": 12,
+        "range": [
+          0,
+          7
+        ]
+      },
+      {
+        "addr": "@penTable",
+        "offset": "0x1a",
+        "type": "u8",
+        "count": 8,
+        "stride": 80,
+        "range": [
+          0,
+          255
+        ]
+      }
+    ]
+  }
+}

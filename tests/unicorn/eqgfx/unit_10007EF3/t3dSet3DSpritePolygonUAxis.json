@@ -1,0 +1,144 @@
+{
+  "function": "t3dSet3DSpritePolygonUAxis",
+  "original": "0x10008cf2",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    },
+    {
+      "name": "uvAxis",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "@frames"},
+        {"offset": "0x2c", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": 4}
+      ]
+    },
+    "frames": {
+      "size": "0x280",
+      "fill": "random"
+    },
+    "uvaxis": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000897d": {
+      "name": "t3dCopy3DSpriteDefinitionFrames_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 24, "hex": "60000060"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "own frames, frame 1",
+      "args": ["@sprite", 1, "@uvaxis"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "own frames, frame 0",
+      "args": ["@sprite", 0, "@uvaxis"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "own frames, last frame 3",
+      "args": ["@sprite", 3, "@uvaxis"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "frame == count",
+      "args": ["@sprite", 4, "@uvaxis"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "frame > count",
+      "args": ["@sprite", 5, "@uvaxis"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "frame 0xffffffff",
+      "args": ["@sprite", "0xffffffff", "@uvaxis"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "count 5, frame 4 valid",
+      "args": ["@sprite", 4, "@uvaxis"],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 5}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0",
+      "args": ["@sprite", 0, "@uvaxis"],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no own frames, frame 2, callee allocates",
+      "args": ["@sprite", 2, "@uvaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no own frames, frame == count, callee not called",
+      "args": ["@sprite", 4, "@uvaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no own frames, callee fails",
+      "args": ["@sprite", 1, "@uvaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "own frames, callee would fail but is not called",
+      "args": ["@sprite", 1, "@uvaxis"],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 36242,
+    "count": 40,
+    "args": [
+      {"choices": ["@sprite"]},
+      {"range": [0, 8]},
+      {"choices": ["@uvaxis"]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 8]},
+      {"addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": ["@frames", "0x0"], "p": 0.5}
+    ]
+  }
+}

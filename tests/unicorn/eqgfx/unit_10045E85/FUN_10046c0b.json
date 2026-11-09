@@ -1,0 +1,127 @@
+{
+  "function": "t3dDeferParticlePoint_guess",
+  "original": "0x10046c0b",
+  "sources": [
+    "src/eqgfx/unit_10045E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "cloud", "type": "ptr"},
+    {"name": "position", "type": "ptr"},
+    {"name": "color", "type": "ptr"},
+    {"name": "flags", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "cloud": {"size": "0x540", "fill": "zero", "init": [
+      {"offset": "0x198", "f32": 320.0},
+      {"offset": "0x19c", "f32": 240.0},
+      {"offset": "0x1a0", "f32": 1.0},
+      {"offset": "0x1a4", "f32": 4.0},
+      {"offset": "0x1a8", "f32": 100.0},
+      {"offset": "0x520", "f32": 16.0},
+      {"offset": "0x524", "f32": 8.0}
+    ]},
+    "position": {"size": "0xc", "fill": "zero", "init": [
+      {"offset": "0x0", "f32": 0.5},
+      {"offset": "0x4", "f32": 0.25},
+      {"offset": "0x8", "f32": 2.0}
+    ]},
+    "color": {"size": "0x4", "fill": "zero", "init": [
+      {"offset": "0x0", "hex": "11223380"}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x100a2674", "u32": 64},
+    {"addr": "0x100a2678", "u32": 128},
+    {"addr": "0x100a267c", "u32": 192},
+    {"addr": "0x100fb8a8", "u32": 2},
+    {"addr": "0x106bf200", "u32": 0},
+    {"addr": "0x1083c020", "u32": 0},
+    {"addr": "0x10377404", "u32": 0},
+    {"addr": "0x100fbb94", "f32": 10.0},
+    {"addr": "0x100fbb98", "f32": 0.05}
+  ],
+  "callees": {
+    "0x1004ec36": {"name": "ftol", "conv": "cdecl", "args": [], "passthrough": true}
+  },
+  "rewrite_aliases": {"__ftol": "0x1004ec36"},
+  "cases": [
+    {"name": "mode 2 buffer A", "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 2 flags 0x100000 alone stays on buffer A", "args": ["@cloud", "@position", "@color", 1048576], "expect": {"ret": 1}},
+    {"name": "mode 2 flags 0x2000000 stays on buffer A", "args": ["@cloud", "@position", "@color", 33554432], "expect": {"ret": 1}},
+    {"name": "mode 2 buffer B (0x1000000)", "args": ["@cloud", "@position", "@color", 16777216], "expect": {"ret": 1}},
+    {"name": "mode 2 buffer C (0x1100000)", "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 2 buffer C with 0x3000000 also set", "args": ["@cloud", "@position", "@color", 51380224], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer A with fog", "memory": [{"addr": "0x100fb8a8", "u32": 1}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 1 flags 0x100000 alone stays on buffer A", "memory": [{"addr": "0x100fb8a8", "u32": 1}], "args": ["@cloud", "@position", "@color", 1048576], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer B with fog", "memory": [{"addr": "0x100fb8a8", "u32": 1}], "args": ["@cloud", "@position", "@color", 16777216], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer C premultiplied color", "memory": [{"addr": "0x100fb8a8", "u32": 1}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer C alpha 0", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@color", "offset": "0x3", "u8": 0}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer C alpha and channels 0xff", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@color", "hex": "ffffffff"}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 3 emits nothing", "memory": [{"addr": "0x100fb8a8", "u32": 3}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 0 emits nothing", "memory": [{"addr": "0x100fb8a8", "u32": 0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "culled: y + z < 0", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.5}, {"addr": "@position", "offset": "0x4", "f32": -3.0}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "culled: z - y < 0", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.5}, {"addr": "@position", "offset": "0x4", "f32": 3.0}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "culled: x + z < 0", "memory": [{"addr": "@position", "offset": "0x0", "f32": -3.0}, {"addr": "@position", "offset": "0x4", "f32": 0.5}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "culled: z - x < 0", "memory": [{"addr": "@position", "offset": "0x0", "f32": 3.0}, {"addr": "@position", "offset": "0x4", "f32": 0.5}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "culled: z below nearZ", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.5}, {"addr": "@position", "offset": "0x4", "f32": 0.25}, {"addr": "@position", "offset": "0x8", "f32": 0.5}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "culled: z beyond farZ", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.5}, {"addr": "@position", "offset": "0x4", "f32": 0.25}, {"addr": "@position", "offset": "0x8", "f32": 150.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "boundary: z == nearZ is kept", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.5}, {"addr": "@position", "offset": "0x4", "f32": 0.25}, {"addr": "@position", "offset": "0x8", "f32": 1.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "boundary: z == farZ is kept", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.5}, {"addr": "@position", "offset": "0x4", "f32": 0.25}, {"addr": "@position", "offset": "0x8", "f32": 100.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "boundary: x == z is kept", "memory": [{"addr": "@position", "offset": "0x0", "f32": 2.0}, {"addr": "@position", "offset": "0x4", "f32": 0.25}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "boundary: x == -z is kept", "memory": [{"addr": "@position", "offset": "0x0", "f32": -2.0}, {"addr": "@position", "offset": "0x4", "f32": 0.25}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "boundary: y == z is kept", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.25}, {"addr": "@position", "offset": "0x4", "f32": 2.0}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "boundary: y == -z is kept", "memory": [{"addr": "@position", "offset": "0x0", "f32": 0.25}, {"addr": "@position", "offset": "0x4", "f32": -2.0}, {"addr": "@position", "offset": "0x8", "f32": 2.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "buffer A full (count 10000)", "memory": [{"addr": "0x106bf200", "u32": 10000}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "buffer A last slot (count 9999)", "memory": [{"addr": "0x106bf200", "u32": 9999}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "buffer B full (count 10000)", "memory": [{"addr": "0x1083c020", "u32": 10000}], "args": ["@cloud", "@position", "@color", 16777216], "expect": {"ret": 0}},
+    {"name": "buffer C full (count 10000)", "memory": [{"addr": "0x10377404", "u32": 10000}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 0}},
+    {"name": "mode 1 buffer A full", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x106bf200", "u32": 10000}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 0}},
+    {"name": "mode 1 buffer B full", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x1083c020", "u32": 10000}], "args": ["@cloud", "@position", "@color", 16777216], "expect": {"ret": 0}},
+    {"name": "mode 1 buffer C full", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x10377404", "u32": 10000}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 0}},
+    {"name": "mode 1 buffer C last slot (count 9999)", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x10377404", "u32": 9999}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 1 fog clamps to 255 (z 50, scale 10)", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb98", "f32": 10.0}, {"addr": "@position", "offset": "0x8", "f32": 50.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 1 fog clamps to 0 (z 2, scale 10)", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb98", "f32": 10.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 1 fog exactly 255 (z 100, offset -155)", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb94", "f32": -155.0}, {"addr": "0x100fbb98", "f32": 1.0}, {"addr": "@position", "offset": "0x8", "f32": 100.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 1 fog 256 clamps to 255", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb94", "f32": -156.0}, {"addr": "0x100fbb98", "f32": 1.0}, {"addr": "@position", "offset": "0x8", "f32": 100.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 1 fog zero at z == offset", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@position", "offset": "0x8", "f32": 10.0}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 1 fog truncates 1.9 to 1", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb98", "f32": 1.0}, {"addr": "@position", "offset": "0x8", "f32": 11.9}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}},
+    {"name": "mode 2 buffer B last slot (count 9999)", "memory": [{"addr": "0x1083c020", "u32": 9999}], "args": ["@cloud", "@position", "@color", 16777216], "expect": {"ret": 1}},
+    {"name": "mode 2 buffer C last slot (count 9999)", "memory": [{"addr": "0x10377404", "u32": 9999}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer C fog clamps to 255 (z 50, scale 10)", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb98", "f32": 10.0}, {"addr": "@position", "offset": "0x8", "f32": 50.0}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "mode 1 buffer C fog clamps to 0 (z 2, scale 10)", "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fbb98", "f32": 10.0}], "args": ["@cloud", "@position", "@color", 17825792], "expect": {"ret": 1}},
+    {"name": "rain red uses the low byte", "memory": [{"addr": "0x100a2674", "u32": 511}], "args": ["@cloud", "@position", "@color", 0], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 1046,
+    "count": 40,
+    "args": [
+      {"choices": ["@cloud"]},
+      {"choices": ["@position"]},
+      {"choices": ["@color"]},
+      {"choices": [0, 16777216, 1048576, 17825792, 33554432, 51380224, 19088743, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "0x100fb8a8", "type": "u32", "choices": [0, 1, 1, 2, 2, 3]},
+      {"addr": "0x106bf200", "type": "u32", "choices": [0, 1, 500, 9998, 9999, 10000, 10001]},
+      {"addr": "0x1083c020", "type": "u32", "choices": [0, 1, 500, 9998, 9999, 10000, 10001]},
+      {"addr": "0x10377404", "type": "u32", "choices": [0, 1, 500, 9998, 9999, 10000, 10001]},
+      {"addr": "0x100a2674", "type": "u32", "range": [0, 511]},
+      {"addr": "0x100a2678", "type": "u32", "range": [0, 511]},
+      {"addr": "0x100a267c", "type": "u32", "range": [0, 511]},
+      {"addr": "0x100fbb94", "type": "float", "choices": [-160.0, -20.0, -5.0, 0.0, 5.0, 10.0, 12.0, 20.0]},
+      {"addr": "0x100fbb98", "type": "float", "choices": [-2.0, -0.5, 0.0, 0.05, 0.5, 1.0, 3.7, 10.0, 12.0]},
+      {"addr": "@cloud", "offset": "0x198", "type": "float", "choices": [0.5, 100.0, 320.0, 400.0]},
+      {"addr": "@cloud", "offset": "0x19c", "type": "float", "choices": [0.5, 240.0, 300.0]},
+      {"addr": "@cloud", "offset": "0x1a0", "type": "float", "choices": [0.0, 0.5, 1.0, 2.0, 3.0]},
+      {"addr": "@cloud", "offset": "0x1a4", "type": "float", "choices": [0.0, 1.0, 4.0, 8.0]},
+      {"addr": "@cloud", "offset": "0x1a8", "type": "float", "choices": [10.0, 50.0, 100.0, 200.0]},
+      {"addr": "@cloud", "offset": "0x520", "type": "float", "choices": [-50.0, 0.0, 16.0, 50.0]},
+      {"addr": "@cloud", "offset": "0x524", "type": "float", "choices": [-50.0, 0.0, 8.0, 50.0]},
+      {"addr": "@position", "type": "float", "count": 2, "choices": [-3.0, -2.0, -1.0, -0.25, 0.0, 0.25, 1.0, 2.0, 3.0]},
+      {"addr": "@position", "offset": "0x8", "type": "float", "choices": [0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 60.0, 99.5, 100.0, 120.0]},
+      {"addr": "@color", "type": "u8", "count": 4, "range": [0, 255]}
+    ]
+  }
+}

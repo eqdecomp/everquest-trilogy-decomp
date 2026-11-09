@@ -1,0 +1,244 @@
+{
+  "function": "t3dFastFileOpen",
+  "original": "0x10021791",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "fileReference",
+      "type": "ptr"
+    },
+    {
+      "name": "filePathName",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "filereference": {
+      "size": "0x8",
+      "fill": "zero"
+    },
+    "filepathname": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "handle": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "object_storage": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "counted_object": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10068c72": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@handle",
+        "@object_storage",
+        "@counted_object"
+      ]
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "ret": "@counted_object"
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x10021b49": {
+      "name": "ConstructSharedHolder_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10021c32": {
+      "name": "t3dAssignSharedPtr_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10021cc5": {
+      "name": "FilePath::FilePath_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10021d3b": {
+      "name": "FfSharedRef_guess::FfSharedRef_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10021c2c": {
+      "name": "getDataPointer_guess",
+      "conv": "fastcall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10052740": {
+      "name": "openPackedFile_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32",
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1002190d": {
+      "name": "decrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "both inputs null",
+      "args": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "reference null",
+      "args": [
+        0,
+        "@filepathname"
+      ]
+    },
+    {
+      "name": "path null",
+      "args": [
+        "@filereference",
+        0
+      ]
+    },
+    {
+      "name": "first allocation fails",
+      "args": [
+        "@filereference",
+        "@filepathname"
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "second allocation fails",
+      "args": [
+        "@filereference",
+        "@filepathname"
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@handle",
+            0,
+            "@counted_object"
+          ]
+        }
+      }
+    },
+    {
+      "name": "allocation and open fail",
+      "args": [
+        "@filereference",
+        "@filepathname"
+      ]
+    },
+    {
+      "name": "packed file opens",
+      "args": [
+        "@filereference",
+        "@filepathname"
+      ],
+      "callees": {
+        "0x10052740": {
+          "name": "openPackedFile_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32",
+            "u32",
+            "u32",
+            "u32"
+          ],
+          "ret": 1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 137105,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@filereference",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@filepathname",
+          0
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

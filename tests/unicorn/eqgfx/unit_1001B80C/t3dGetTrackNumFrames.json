@@ -1,0 +1,145 @@
+{
+  "function": "t3dGetTrackNumFrames",
+  "original": "0x1001ce1e",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "track": {
+      "size": "0x18",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": "@decoy_definition"},
+        {"offset": "0x14", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": "@decoy_list"},
+        {"offset": "0x14", "u32": "@list"},
+        {"offset": "0x18", "u32": "@fallback"},
+        {"offset": "0x1c", "u32": "@decoy_list2"}
+      ]
+    },
+    "decoy_definition": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@decoy_list2"},
+        {"offset": "0x18", "u32": "@decoy_fallback"}
+      ]
+    },
+    "list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 7}
+      ]
+    },
+    "fallback": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 99}
+      ]
+    },
+    "decoy_list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 21845}
+      ]
+    },
+    "decoy_list2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 30583}
+      ]
+    },
+    "decoy_fallback": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 26214}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "instance list wins while the fallback also exists",
+      "args": ["@track"],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "fallback while the instance list is null",
+      "args": ["@track"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": 99}
+    },
+    {
+      "name": "zero frames from the instance list",
+      "args": ["@track"],
+      "memory": [
+        {"addr": "@list", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero frames from the fallback",
+      "args": ["@track"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "max frames from the instance list",
+      "args": ["@track"],
+      "memory": [
+        {"addr": "@list", "u32": "0x7FFFFFFF"}
+      ],
+      "expect": {"ret": "0x7FFFFFFF"}
+    },
+    {
+      "name": "max frames from the fallback",
+      "args": ["@track"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback", "u32": "0x7FFFFFFF"}
+      ],
+      "expect": {"ret": "0x7FFFFFFF"}
+    }
+  ],
+  "fuzz": {
+    "seed": 118302,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@track"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": ["@list", "0"], "p": 0.5},
+      {"addr": "@list", "type": "u32", "range": [0, 2147483647]},
+      {"addr": "@fallback", "type": "u32", "range": [0, 2147483647]}
+    ]
+  }
+}

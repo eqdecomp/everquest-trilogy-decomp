@@ -1,0 +1,275 @@
+{
+  "function": "InitializeDirectInput_guess",
+  "original": "0x00401ef7",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "rewrite": "InitializeDirectInput_guess",
+  "conv": "thiscall",
+  "this": "@p",
+  "args": [
+    {
+      "name": "firstValue",
+      "type": "u32"
+    },
+    {
+      "name": "secondValue",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "p": {
+      "size": "0x30",
+      "fill": "random"
+    },
+    "first": {
+      "size": "0x248",
+      "fill": "random"
+    },
+    "second": {
+      "size": "0x224",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006EE720",
+      "u32": "0x12345678"
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00500404": {
+      "name": "DirectInputCreateA",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "u32",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 2,
+          "offset": 0,
+          "hex": "20e76e00"
+        }
+      ]
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@first",
+        "@second"
+      ]
+    },
+    "0x00403977": {
+      "name": "InitializeObjectDefaults_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": "@first"
+    },
+    "0x00403a06": {
+      "name": "FUN_00403a06_owner_guess::InitializeInterfaceWithBuffer_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004020c5": {
+      "name": "InitWithEntryArray_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": "@second"
+    },
+    "0x004020e2": {
+      "name": "InitializeInterface_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "negative_hresult_one_returns_one_without_allocations",
+      "args": [
+        287454020,
+        1432778632
+      ],
+      "callees": {
+        "0x00500404": {
+          "name": "DirectInputCreateA",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "u32",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1,
+          "writes": []
+        }
+      }
+    },
+    {
+      "name": "minimum_signed_hresult_returns_one",
+      "args": [
+        2147483648,
+        4294967295
+      ],
+      "callees": {
+        "0x00500404": {
+          "name": "DirectInputCreateA",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "u32",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -2147483648,
+          "writes": []
+        }
+      }
+    },
+    {
+      "name": "zero_hresult_constructs_both_objects",
+      "args": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "positive_hresult_is_success",
+      "args": [
+        4294967295,
+        2147483648
+      ],
+      "callees": {
+        "0x00500404": {
+          "name": "DirectInputCreateA",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "u32",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "20e76e00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "first_allocation_null_still_calls_first_helper",
+      "args": [
+        1,
+        2
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            0,
+            "@second"
+          ]
+        }
+      }
+    },
+    {
+      "name": "second_allocation_null_still_calls_second_helper",
+      "args": [
+        3,
+        4
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@first",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "both_allocations_null",
+      "args": [
+        4294967295,
+        0
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            0,
+            0
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4202231,
+    "count": 32,
+    "args": [
+      {
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006EE720",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          305419896,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

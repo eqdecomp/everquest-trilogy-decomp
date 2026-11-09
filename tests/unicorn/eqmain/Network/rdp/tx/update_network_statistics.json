@@ -1,0 +1,313 @@
+{
+  "function": "update_network_statistics_guess",
+  "original": "0x10030a80",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rtt",
+      "type": "ptr"
+    },
+    {
+      "name": "value",
+      "type": "u32"
+    },
+    {
+      "name": "interval",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rtt": {
+      "size": "0x120",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: positive deviation, interval 1 gives weight 1023, low word carries",
+      "args": ["@rtt", 2000, 1],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 1000},
+        {"addr": "@rtt", "offset": "0x2", "u16": 10},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 268435456},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 10000},
+        {"addr": "@rtt", "offset": "0x114", "u16": 10}
+      ]
+    },
+    {
+      "name": "weight_sum 1 after the update: no deviation; interval 0x400 gives weight 0, clamped to 1",
+      "args": ["@rtt", 9, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 300},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 5},
+        {"addr": "@rtt", "offset": "0x118", "u16": 4660}
+      ]
+    },
+    {
+      "name": "weight_sum 2: deviation with divisor 1",
+      "args": ["@rtt", 9, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 300},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 6},
+        {"addr": "@rtt", "offset": "0x118", "u16": 4660}
+      ]
+    },
+    {
+      "name": "weight_sum 0x8001: top bit of the 16-bit weight sum",
+      "args": ["@rtt", 9, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 268435456},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 32773}
+      ]
+    },
+    {
+      "name": "sum above 2^31 with weight_sum 3: unsigned mean division",
+      "args": ["@rtt", 9, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 268435456},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 3221225472},
+        {"addr": "@rtt", "offset": "0x114", "u16": 7}
+      ]
+    },
+    {
+      "name": "negative variance: sqrt of a negative gives NaN, deviation 0",
+      "args": ["@rtt", 1000, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 0},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 0},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 1048576},
+        {"addr": "@rtt", "offset": "0x114", "u16": 6}
+      ]
+    },
+    {
+      "name": "sqrt above 0xFFFF: deviation keeps the low 16 bits of the truncated root",
+      "args": ["@rtt", 4660, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 1},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 0},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 256},
+        {"addr": "@rtt", "offset": "0x110", "u32": 5},
+        {"addr": "@rtt", "offset": "0x114", "u16": 6}
+      ]
+    },
+    {
+      "name": "next 63 wraps to 0",
+      "args": ["@rtt", 20, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0xfc", "u16": 3},
+        {"addr": "@rtt", "offset": "0xfe", "u16": 2},
+        {"addr": "@rtt", "offset": "0x100", "u32": 63},
+        {"addr": "@rtt", "offset": "0x108", "u32": 1048576},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 100},
+        {"addr": "@rtt", "offset": "0x114", "u16": 3}
+      ]
+    },
+    {
+      "name": "sumsq_lo equal to the removed term: no borrow",
+      "args": ["@rtt", 3, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 4},
+        {"addr": "@rtt", "offset": "0x2", "u16": 2},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 32},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 7},
+        {"addr": "@rtt", "offset": "0x110", "u32": 8},
+        {"addr": "@rtt", "offset": "0x114", "u16": 3}
+      ]
+    },
+    {
+      "name": "sumsq_lo one below the removed term: borrow, then carry back on the add",
+      "args": ["@rtt", 3, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 4},
+        {"addr": "@rtt", "offset": "0x2", "u16": 2},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 31},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 7},
+        {"addr": "@rtt", "offset": "0x110", "u32": 8},
+        {"addr": "@rtt", "offset": "0x114", "u16": 3}
+      ]
+    },
+    {
+      "name": "value 0: the new term is zero, no carry, high word unchanged",
+      "args": ["@rtt", 0, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 300},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 5},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 6}
+      ]
+    },
+    {
+      "name": "value 0xfffe is stored as is (not clamped)",
+      "args": ["@rtt", 65534, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 300},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 5},
+        {"addr": "@rtt", "offset": "0x118", "u16": 4660}
+      ]
+    },
+    {
+      "name": "value 0x10000 clamps to 0xffff",
+      "args": ["@rtt", 65536, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 300},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 5},
+        {"addr": "@rtt", "offset": "0x118", "u16": 4660}
+      ]
+    },
+    {
+      "name": "value 0xffffffff clamps to 0xffff",
+      "args": ["@rtt", 4294967295, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 300},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 5},
+        {"addr": "@rtt", "offset": "0x118", "u16": 4660}
+      ]
+    },
+    {
+      "name": "interval 0x10001: only the low 16 bits of interval count (weight 1023)",
+      "args": ["@rtt", 9, 65537],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 7},
+        {"addr": "@rtt", "offset": "0x2", "u16": 5},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 1048576},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 35},
+        {"addr": "@rtt", "offset": "0x114", "u16": 5}
+      ]
+    },
+    {
+      "name": "add carries out of the low word with a full-scale square",
+      "args": ["@rtt", 65535, 1024],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 1},
+        {"addr": "@rtt", "offset": "0x2", "u16": 2},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 4294967293},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 2},
+        {"addr": "@rtt", "offset": "0x114", "u16": 3}
+      ]
+    },
+    {
+      "name": "sumsq borrow wraps the high word: negative variance",
+      "args": ["@rtt", 2000, 1],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 1000},
+        {"addr": "@rtt", "offset": "0x2", "u16": 10},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 0},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 10000},
+        {"addr": "@rtt", "offset": "0x114", "u16": 10}
+      ]
+    },
+    {
+      "name": "all-zero estimator, interval 1",
+      "args": ["@rtt", 0, 1],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x0", "u16": 0},
+        {"addr": "@rtt", "offset": "0x2", "u16": 0},
+        {"addr": "@rtt", "offset": "0x100", "u32": 0},
+        {"addr": "@rtt", "offset": "0x108", "u32": 0},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 0},
+        {"addr": "@rtt", "offset": "0x114", "u16": 0}
+      ]
+    },
+    {
+      "name": "next 64 (out of range): the new value is stored into next, so the second read of next sees it",
+      "args": ["@rtt", 9, 1],
+      "memory": [
+        {"addr": "@rtt", "offset": "0x24", "u16": 5},
+        {"addr": "@rtt", "offset": "0x26", "u16": 7},
+        {"addr": "@rtt", "offset": "0x100", "u32": 64},
+        {"addr": "@rtt", "offset": "0x108", "u32": 1048576},
+        {"addr": "@rtt", "offset": "0x10c", "u32": 0},
+        {"addr": "@rtt", "offset": "0x110", "u32": 1000},
+        {"addr": "@rtt", "offset": "0x114", "u16": 5}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 199296,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rtt"
+        ]
+      },
+      {
+        "range": [0, 131071]
+      },
+      {
+        "choices": [1, 2, 3, 7, 16, 255, 256, 511, 512, 1000, 1022, 1023, 1024, 1025, 4096, 65534, 65535, 65537, 66560, 131075, 2147549185, 4294967294, 4294967295]
+      }
+    ],
+    "memory": [
+      {"addr": "@rtt", "offset": "0x0", "type": "u16", "range": [0, 65535], "count": 64, "stride": 4},
+      {"addr": "@rtt", "offset": "0x2", "type": "u16", "range": [1, 1023], "count": 64, "stride": 4},
+      {"addr": "@rtt", "offset": "0x100", "type": "u32", "range": [0, 63]},
+      {"addr": "@rtt", "offset": "0x108", "type": "u32"},
+      {"addr": "@rtt", "offset": "0x10c", "type": "u32", "range": [0, 256]},
+      {"addr": "@rtt", "offset": "0x110", "type": "u32"},
+      {"addr": "@rtt", "offset": "0x114", "type": "u16", "range": [4096, 32767]},
+      {"addr": "@rtt", "offset": "0x116", "type": "u16"},
+      {"addr": "@rtt", "offset": "0x118", "type": "u16"}
+    ]
+  }
+}

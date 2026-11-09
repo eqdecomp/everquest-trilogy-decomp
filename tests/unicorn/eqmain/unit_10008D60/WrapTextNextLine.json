@@ -1,0 +1,223 @@
+{
+  "function": "WrapTextNextLine_guess",
+  "original": "0x100095e0",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "cstr",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100093d0": {
+      "name": "WrapTextIntoRecords_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    },
+    "0x10033670": {
+      "name": "strchr",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "no newline",
+      "args": [
+        "@param_1",
+        "abc"
+      ]
+    },
+    {
+      "name": "empty text",
+      "args": [
+        "@param_1",
+        ""
+      ]
+    },
+    {
+      "name": "param_1 is passed on, never read",
+      "args": [
+        0,
+        "abc"
+      ]
+    },
+    {
+      "name": "newline cuts the line",
+      "args": [
+        "@param_1",
+        "abc\ndef"
+      ]
+    },
+    {
+      "name": "newline last",
+      "args": [
+        "@param_1",
+        "abc\n"
+      ]
+    },
+    {
+      "name": "CR before LF stays in the line",
+      "args": [
+        "@param_1",
+        "a\r\nb"
+      ]
+    },
+    {
+      "name": "rest starts with LF, not skipped",
+      "args": [
+        "@param_1",
+        "abc\n\n"
+      ]
+    },
+    {
+      "name": "CRLF last",
+      "args": [
+        "@param_1",
+        "abc\r\n"
+      ]
+    },
+    {
+      "name": "lone LF",
+      "args": [
+        "@param_1",
+        "\n"
+      ]
+    },
+    {
+      "name": "lone CR",
+      "args": [
+        "@param_1",
+        "\r"
+      ]
+    },
+    {
+      "name": "LF LF skips two",
+      "args": [
+        "@param_1",
+        "\n\n"
+      ]
+    },
+    {
+      "name": "LF CR skips two",
+      "args": [
+        "@param_1",
+        "\n\rabc"
+      ]
+    },
+    {
+      "name": "CR LF skips two",
+      "args": [
+        "@param_1",
+        "\r\nabc\n"
+      ]
+    },
+    {
+      "name": "CR CR skips two",
+      "args": [
+        "@param_1",
+        "\r\rabc"
+      ]
+    },
+    {
+      "name": "CR then text skips one",
+      "args": [
+        "@param_1",
+        "\rabc\ndef"
+      ]
+    },
+    {
+      "name": "LF then text skips one",
+      "args": [
+        "@param_1",
+        "\nabc"
+      ]
+    },
+    {
+      "name": "three LF: two records",
+      "args": [
+        "@param_1",
+        "\n\n\nabc"
+      ]
+    },
+    {
+      "name": "mixed run then cut",
+      "args": [
+        "@param_1",
+        "\r\n\r\nx\ny"
+      ]
+    },
+    {
+      "name": "three CR, no newline",
+      "args": [
+        "@param_1",
+        "\r\r\r"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 38368,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "abc",
+          "\n",
+          "\r",
+          "\n\n",
+          "\r\n",
+          "\n\r",
+          "\r\r",
+          "\nabc",
+          "\rabc",
+          "\n\nabc",
+          "\r\nabc",
+          "\n\rabc",
+          "\r\rabc",
+          "abc\n",
+          "abc\r\n",
+          "abc\ndef",
+          "abc\n\n",
+          "a\r\nb",
+          "\n\n\n",
+          "\r\n\r\nxyz\nw",
+          "x\ry\nz",
+          "abc\rdef",
+          "one two\nthree",
+          "\n \nq",
+          "line1\nline2\nline3\n",
+          "long line without newline here"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

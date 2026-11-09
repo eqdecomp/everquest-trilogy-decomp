@@ -1,0 +1,206 @@
+{
+  "function": "tx_get_stall_time_guess",
+  "original": "0x004f46c0",
+  "sources": [
+    "src/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "conn": {
+      "size": "0x7e4",
+      "fill": "random",
+      "init": [
+        {"offset": "0x5c8", "u32": "@link"},
+        {"offset": "0x746", "u16": 100},
+        {"offset": "0x748", "u16": 20}
+      ]
+    },
+    "link": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@item"}
+      ]
+    },
+    "item": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f7e50": {
+      "name": "get_min_packet_time_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 10000
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 50000
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: age 40000, rto 140",
+      "args": ["@conn"]
+    },
+    {
+      "name": "no head link",
+      "args": ["@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x5c8", "u32": 0}]
+    },
+    {
+      "name": "head link without data",
+      "args": ["@conn"],
+      "memory": [{"addr": "@link", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "rto 0 -> 50",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 0},
+        {"addr": "@conn", "offset": "0x748", "u16": 0}
+      ]
+    },
+    {
+      "name": "rto 50",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 50},
+        {"addr": "@conn", "offset": "0x748", "u16": 0}
+      ]
+    },
+    {
+      "name": "rto 51",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 49},
+        {"addr": "@conn", "offset": "0x748", "u16": 1}
+      ]
+    },
+    {
+      "name": "rto 0xfffe, deviation doubled",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 0},
+        {"addr": "@conn", "offset": "0x748", "u16": "0x7fff"}
+      ],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 131072}
+      }
+    },
+    {
+      "name": "rto 0xffff",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 1},
+        {"addr": "@conn", "offset": "0x748", "u16": "0x7fff"}
+      ],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 131072}
+      }
+    },
+    {
+      "name": "rto 0x10000 clamps to 0xffff",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 2},
+        {"addr": "@conn", "offset": "0x748", "u16": "0x7fff"}
+      ],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 131072}
+      }
+    },
+    {
+      "name": "rto max 0x2fffd clamps",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": "0xffff"},
+        {"addr": "@conn", "offset": "0x748", "u16": "0xffff"}
+      ],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 131072}
+      }
+    },
+    {
+      "name": "age == timeout -> 0",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 10000},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 10140}
+      }
+    },
+    {
+      "name": "age == timeout + 1 -> 1",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 10000},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 10141}
+      }
+    },
+    {
+      "name": "age == timeout - 1 -> 0",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 10000},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 10139}
+      }
+    },
+    {
+      "name": "sent time ahead of now: unsigned age wraps",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 20000},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 10000}
+      }
+    },
+    {
+      "name": "timer wrap",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f7e50": {"name": "get_min_packet_time_guess", "conv": "cdecl", "args": ["ptr"], "ret": 4294967000},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 1000}
+      }
+    },
+    {
+      "name": "high mean only",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x746", "u16": 39000},
+        {"addr": "@conn", "offset": "0x748", "u16": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5195456,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x746", "type": "u16", "range": [0, 65535]},
+      {"addr": "@conn", "offset": "0x748", "type": "u16", "choices": [0, 1, 25, 100, 10000, 20000, 32767, 65535]},
+      {"addr": "@link", "offset": "0x8", "type": "u32", "choices": ["@item", "@item", "@item", 0]}
+    ]
+  }
+}

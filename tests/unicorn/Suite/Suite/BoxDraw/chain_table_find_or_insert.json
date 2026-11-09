@@ -1,0 +1,163 @@
+{
+  "function": "chain_table_find_or_insert_guess",
+  "original": "0x0040455a",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    { "name": "t", "type": "ptr" },
+    { "name": "edx_unused", "type": "int" },
+    { "name": "entry", "type": "ptr" }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "t": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": "@buckets" },
+        { "offset": "0x8", "u32": "@buckets+0x10" },
+        { "offset": "0x10", "u32": 0 }
+      ]
+    },
+    "buckets": { "size": "0x10", "fill": "zero" },
+    "entry": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@wanted" },
+        { "offset": "0x4", "u32": "@value" }
+      ]
+    },
+    "wanted": { "size": "0x20", "fill": "zero" },
+    "other": { "size": "0x20", "fill": "zero" },
+    "value": { "size": "0x4", "fill": "zero" },
+    "match": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 0 },
+        { "offset": "0x4", "u32": "@wanted" }
+      ]
+    },
+    "miss": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 0 },
+        { "offset": "0x4", "u32": "@other" }
+      ]
+    },
+    "deep": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@match" },
+        { "offset": "0x4", "u32": "@other" }
+      ]
+    },
+    "newnode": { "size": "0xc", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "@wanted", "cstr": "Wanted" },
+    { "addr": "@other", "cstr": "Different" }
+  ],
+  "callees": {
+    "0x00404791": {
+      "name": "FUN_00404791",
+      "conv": "thiscall",
+      "args": [ "u32" ]
+    },
+    "0x004037d4": {
+      "name": "hash_key_guess",
+      "conv": "thiscall",
+      "args": [ "ptr" ],
+      "ret": 0
+    },
+    "0x00404631": {
+      "name": "FUN_00404631",
+      "conv": "thiscall",
+      "args": [ "ptr" ],
+      "ret": "@newnode"
+    }
+  },
+  "cases": [
+    {
+      "name": "empty bucket zero",
+      "args": [ "@t", 0, "@entry" ]
+    },
+    {
+      "name": "empty bucket three with wrapped hash",
+      "args": [ "@t", -7, "@entry" ],
+      "callees": {
+        "0x004037d4": {
+          "name": "hash_key_guess",
+          "conv": "thiscall",
+          "args": [ "ptr" ],
+          "ret": 7
+        }
+      }
+    },
+    {
+      "name": "prepend after one collision",
+      "args": [ "@t", 1, "@entry" ],
+      "memory": [ { "addr": "@buckets+0x8", "u32": "@miss" } ],
+      "callees": {
+        "0x004037d4": {
+          "name": "hash_key_guess",
+          "conv": "thiscall",
+          "args": [ "ptr" ],
+          "ret": 6
+        }
+      }
+    },
+    {
+      "name": "case insensitive match at head",
+      "args": [ "@t", 0, "@entry" ],
+      "memory": [
+        { "addr": "@buckets+0xc", "u32": "@match" },
+        { "addr": "@other", "cstr": "wAnTeD" }
+      ],
+      "callees": {
+        "0x004037d4": {
+          "name": "hash_key_guess",
+          "conv": "thiscall",
+          "args": [ "ptr" ],
+          "ret": 3
+        }
+      }
+    },
+    {
+      "name": "match after collision",
+      "args": [ "@t", 0, "@entry" ],
+      "memory": [ { "addr": "@buckets+0x4", "u32": "@deep" } ],
+      "callees": {
+        "0x004037d4": {
+          "name": "hash_key_guess",
+          "conv": "thiscall",
+          "args": [ "ptr" ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "increment wraps at uint boundary",
+      "args": [ "@t", 0, "@entry" ],
+      "memory": [ { "addr": "@t+0x10", "u32": 4294967295 } ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4212058,
+    "count": 40,
+    "args": [
+      { "choices": [ "@t" ] },
+      { "range": [ -100, 100 ] },
+      { "choices": [ "@entry" ] }
+    ],
+    "memory": [
+      { "addr": "@t+0x10", "type": "u32", "range": [ 0, 4294967295 ] },
+      { "addr": "@buckets", "type": "ptr", "choices": [ 0, "@match", "@miss", "@deep" ] }
+    ]
+  }
+}

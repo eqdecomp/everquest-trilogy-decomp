@@ -1,0 +1,326 @@
+{
+  "function": "t3dCalculateAccurateHeadingPitchRollFromCoefficients",
+  "original": "0x1004f165",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "coefficients",
+      "type": "ptr"
+    },
+    {
+      "name": "heading",
+      "type": "ptr"
+    },
+    {
+      "name": "pitch",
+      "type": "ptr"
+    },
+    {
+      "name": "roll",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "coefficients": {
+      "size": "0x24",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "f32": 0.5},
+        {"offset": "0x04", "f32": 0.5},
+        {"offset": "0x08", "f32": 0.5},
+        {"offset": "0x0C", "f32": 0.3},
+        {"offset": "0x10", "f32": -0.7},
+        {"offset": "0x14", "f32": 0.2},
+        {"offset": "0x18", "f32": 0.0},
+        {"offset": "0x1C", "f32": 0.0},
+        {"offset": "0x20", "f32": 0.9}
+      ]
+    },
+    "heading": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "pitch": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "roll": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "startup": {
+      "size": "0x6100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100f3ff4", "u32": "@startup"}
+  ],
+  "callees": {
+    "0x1004ef68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "passthrough": true
+    },
+    "0x10069fd0": {
+      "name": "FUN_10069fd0",
+      "conv": "cdecl",
+      "args": [
+        "double",
+        "double"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: the object's init, all three angles from the horizontal part",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero: no horizontal part and z == 0: returns -1 and zeroes the three angles",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x00", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x04", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "zero with z = -0.0: -0.0 compares equal to 0.0, still the -1 case",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x00", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x04", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x08", "f32": -0.0}
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "no horizontal part, z = 0.5: pitch from z alone, roll 0, heading from m3 and m4",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x00", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x04", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x08", "f32": 0.5}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "no horizontal part, z = -0.5: pitch is negative and wraps by 512",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x00", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x04", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x08", "f32": -0.5}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "no horizontal part, m3 = 0.0 (-m3 is -0.0) and m4 < 0: heading -256 wraps to 256",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x00", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x04", "f32": 0.0},
+        {"addr": "@coefficients", "offset": "0x08", "f32": 0.5},
+        {"addr": "@coefficients", "offset": "0x0C", "f32": 0.0}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "heading negative (y < 0, x > 0): wraps by 512",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x04", "f32": -0.5}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "heading +0.0 (y = 0.0, x > 0) stays 0: the wrap tests < 0, not <= 0",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x04", "f32": 0.0}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "pitch -0.0 (z = -0.0, horizontal part) stays -0.0: not below zero",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x08", "f32": -0.0}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "z = 0.0 with a horizontal part: pitch +0.0, heading and roll from the horizontal part",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "roll negative (m5 < 0, m8 > 0): wraps by 512",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x14", "f32": -0.2}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "second quadrant (x < 0, y > 0): heading near 384 and no wrap",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x00", "f32": -0.5}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "all three angles negative: each wraps by 512 on its own",
+      "args": [
+        "@coefficients",
+        "@heading",
+        "@pitch",
+        "@roll"
+      ],
+      "memory": [
+        {"addr": "@coefficients", "offset": "0x04", "f32": -0.5},
+        {"addr": "@coefficients", "offset": "0x08", "f32": -0.5},
+        {"addr": "@coefficients", "offset": "0x14", "f32": -0.2}
+      ],
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 323941,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@coefficients"
+        ]
+      },
+      {
+        "choices": [
+          "@heading"
+        ]
+      },
+      {
+        "choices": [
+          "@pitch"
+        ]
+      },
+      {
+        "choices": [
+          "@roll"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@coefficients", "offset": "0x00", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x04", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x08", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x0C", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x10", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x14", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x18", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x1C", "type": "float"},
+      {"addr": "@coefficients", "offset": "0x20", "type": "float"}
+    ]
+  }
+}

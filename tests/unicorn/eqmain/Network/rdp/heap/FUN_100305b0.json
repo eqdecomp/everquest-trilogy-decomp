@@ -1,0 +1,148 @@
+{
+  "function": "CompareRdpKeys_guess",
+  "original": "0x100305b0",
+  "sources": [
+    "src/eqmain/Network/rdp/heap.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "left", "type": "ptr"},
+    {"name": "right", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "left": {"size": "0x10", "fill": "zero"},
+    "right": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "firsts differ, left larger",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "u32": 10},
+        {"addr": "@right", "u32": 3}
+      ],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "firsts differ, left smaller",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "u32": 3},
+        {"addr": "@right", "u32": 10}
+      ],
+      "expect": {"ret": -7}
+    },
+    {
+      "name": "firsts differ, left zero",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "u32": 0},
+        {"addr": "@right", "u32": 5},
+        {"addr": "@left", "offset": 4, "u32": 100},
+        {"addr": "@right", "offset": 4, "u32": 1}
+      ],
+      "expect": {"ret": -5}
+    },
+    {
+      "name": "firsts equal nonzero ignores seconds",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "u32": 9},
+        {"addr": "@right", "u32": 9},
+        {"addr": "@left", "offset": 4, "u32": 100},
+        {"addr": "@right", "offset": 4, "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "both zero, left second larger returns 1",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "offset": 4, "u32": 100},
+        {"addr": "@right", "offset": 4, "u32": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "both zero, left second smaller returns -1",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "offset": 4, "u32": 1},
+        {"addr": "@right", "offset": 4, "u32": 100}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "both zero, seconds equal returns 0",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "offset": 4, "u32": 77},
+        {"addr": "@right", "offset": 4, "u32": 77}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "both zero, seconds differ by one",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "offset": 4, "u32": 6},
+        {"addr": "@right", "offset": 4, "u32": 5}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "both zero, seconds wrap (signed difference)",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "offset": 4, "u32": 4294967295},
+        {"addr": "@right", "offset": 4, "u32": 1}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "both zero, seconds difference overflows to negative",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "offset": 4, "u32": 2147483647},
+        {"addr": "@right", "offset": 4, "u32": 4294967295}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "firsts differ by wrap",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@left", "u32": 4294967295},
+        {"addr": "@right", "u32": 1}
+      ],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "left zero first, right nonzero, seconds ignored",
+      "args": ["@left", "@right"],
+      "memory": [
+        {"addr": "@right", "u32": 4294967295},
+        {"addr": "@left", "offset": 4, "u32": 9},
+        {"addr": "@right", "offset": 4, "u32": 1}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 198064,
+    "count": 40,
+    "args": [
+      {"choices": ["@left"]},
+      {"choices": ["@right"]}
+    ],
+    "memory": [
+      {"addr": "@left", "type": "u32", "choices": [0, 0, 0, 1, 5, 4294967295]},
+      {"addr": "@right", "type": "u32", "choices": [0, 0, 0, 1, 5, 4294967295]},
+      {"addr": "@left", "offset": 4, "type": "int", "range": [-3, 3]},
+      {"addr": "@right", "offset": 4, "type": "int", "range": [-3, 3]}
+    ]
+  }
+}

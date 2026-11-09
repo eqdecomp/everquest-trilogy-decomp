@@ -1,0 +1,113 @@
+{
+  "function": "SoundQueueObject_guess::cleanupCollectionResources_guess",
+  "original": "0x004ee5e4",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@soundqueueobject",
+  "args": [
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "soundqueueobject": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "param_2": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "selectednode": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004eeab7": {
+      "name": "FUN_004eeab7",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "writes": [{"arg": 0, "offset": 0, "hex": "00020060"}]
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004eea52": {
+      "name": "FUN_004eea52",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "selected node equals stored node: preserve resource",
+      "args": ["@param_2"],
+      "memory": [
+        {"addr": "@soundqueueobject", "offset": "0x30", "u32": "@selectednode"},
+        {"addr": "@selectednode", "offset": "0x10", "u32": "0x12345678"}
+      ]
+    },
+    {
+      "name": "different node with null resource: clear then notify",
+      "args": ["@param_2"],
+      "memory": [
+        {"addr": "@soundqueueobject", "offset": "0x30", "u32": "0x60000300"},
+        {"addr": "@selectednode", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "different node with resource: delete, clear, then notify",
+      "args": ["@param_2"],
+      "memory": [
+        {"addr": "@soundqueueobject", "offset": "0x30", "u32": "0x60000300"},
+        {"addr": "@selectednode", "offset": "0x10", "u32": "0x12345678"}
+      ]
+    },
+    {
+      "name": "resource low bytes zero distinguishes offset 0x10 from 0x0f",
+      "args": ["@param_2"],
+      "memory": [
+        {"addr": "@soundqueueobject", "offset": "0x30", "u32": "0x60000300"},
+        {"addr": "@selectednode", "offset": "0x10", "u32": "0x01000000"}
+      ]
+    },
+    {
+      "name": "different node when stored node is null",
+      "args": ["@param_2"],
+      "memory": [
+        {"addr": "@soundqueueobject", "offset": "0x30", "u32": 0},
+        {"addr": "@selectednode", "offset": "0x10", "u32": "0x12345678"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5170660,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_2"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@soundqueueobject", "offset": "0x30", "type": "u32", "choices": [0, "@selectednode", "0x60000300", "0xffffffff"]},
+      {"addr": "@selectednode", "offset": "0x10", "type": "u32", "choices": [0, "0x12345678", "0xffffffff"]}
+    ]
+  }
+}

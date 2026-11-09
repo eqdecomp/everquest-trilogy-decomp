@@ -1,0 +1,566 @@
+{
+  "function": "s3dUndefineDMTrack",
+  "original": "0x10010a1f",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "track": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        }
+      ]
+    },
+    "ownedBlock": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@ownedData"
+        }
+      ]
+    },
+    "ownedData": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@payload"
+        }
+      ]
+    },
+    "payload": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "key": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 74565
+    }
+  },
+  "cases": [
+    {
+      "name": "use count 1 returns the in-use error before cleanup",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "whole use count dword is compared, not its low word",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 65536
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "negative use count is also in use",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zero count and no owned block frees the track after the helper",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "dictionary entry is removed even without an owned block",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "owned block gates freeing a nonnull key after the helper",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        },
+        {
+          "addr": "@ownedBlock",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "owned data is freed before the helper when present",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        },
+        {
+          "addr": "@ownedBlock",
+          "offset": "0x8",
+          "u32": "@ownedData"
+        },
+        {
+          "addr": "@ownedData",
+          "offset": "0x0",
+          "u32": "@payload"
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "present owned-data slot can contain null and cleanup order still holds",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 129
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        },
+        {
+          "addr": "@ownedBlock",
+          "offset": "0x8",
+          "u32": "@ownedData"
+        },
+        {
+          "addr": "@ownedData",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "a set low flag bit removes even when other flag bits are set",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 255
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "a nonzero flag without bit zero does not remove the entry",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 254
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        },
+        {
+          "addr": "@ownedBlock",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "set flag removes a null dictionary key",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "complete cleanup includes entry removal and frees key last",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x14",
+          "u32": "@ownedBlock"
+        },
+        {
+          "addr": "@ownedBlock",
+          "offset": "0x8",
+          "u32": "@ownedData"
+        },
+        {
+          "addr": "@ownedData",
+          "offset": "0x0",
+          "u32": "@payload"
+        }
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 68127,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@track"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@track",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@key"
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0xc",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x10",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          -1,
+          2,
+          65536
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@ownedBlock"
+        ]
+      },
+      {
+        "addr": "@ownedBlock",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@ownedData"
+        ]
+      },
+      {
+        "addr": "@ownedData",
+        "offset": "0x0",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@payload"
+        ]
+      }
+    ]
+  }
+}

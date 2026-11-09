@@ -1,0 +1,96 @@
+{
+  "function": "EQMsgQueueAppendOwner_guess::AppendValue_guess",
+  "original": "0x0040229e",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "thiscall",
+  "this": "@owner",
+  "args": [{"name": "value", "type": "int"}],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x218",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": "@owner+0x18"},
+        {"offset": "0x1c", "u32": "@owner+0x20"},
+        {"offset": "0x24", "u32": 0}
+      ]
+    }
+  },
+  "callees": {
+    "0x0040233c": {
+      "name": "AllocateEntryBlock_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": 0,
+      "writes": [{"addr": "0x6000000c", "hex": "10000060"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty queue allocates and adopts node",
+      "args": [305419896],
+      "memory": [{"addr": "@owner", "offset": "0x0", "u32": 4}]
+    },
+    {
+      "name": "allocates while preserving existing head",
+      "args": [-1],
+      "memory": [
+        {"addr": "@owner", "offset": "0x0", "u32": 5},
+        {"addr": "@owner", "offset": "0x4", "u32": "@owner+0x30"},
+        {"addr": "@owner", "offset": "0x8", "u32": "@owner+0x30"},
+        {"addr": "@owner", "offset": "0x214", "u32": 9},
+        {"addr": "@owner", "offset": "0x34", "u32": 0}
+      ]
+    },
+    {
+      "name": "free list with empty queue",
+      "args": [-2147483648],
+      "memory": [
+        {"addr": "@owner", "offset": "0x0", "u32": 0},
+        {"addr": "@owner", "offset": "0xc", "u32": "@owner+0x10"},
+        {"addr": "@owner", "offset": "0x214", "u32": 0}
+      ]
+    },
+    {
+      "name": "free list with tail and head; count wraps",
+      "args": [2147483647],
+      "memory": [
+        {"addr": "@owner", "offset": "0x0", "u32": 1073741824},
+        {"addr": "@owner", "offset": "0x4", "u32": "@owner+0x18"},
+        {"addr": "@owner", "offset": "0x8", "u32": "@owner+0x20"},
+        {"addr": "@owner", "offset": "0xc", "u32": "@owner+0x10"},
+        {"addr": "@owner", "offset": "0x214", "u32": 2147483647}
+      ]
+    },
+    {
+      "name": "free list with tail but null head",
+      "args": [0],
+      "memory": [
+        {"addr": "@owner", "offset": "0x0", "u32": 1},
+        {"addr": "@owner", "offset": "0x4", "u32": 0},
+        {"addr": "@owner", "offset": "0x8", "u32": "@owner+0x30"},
+        {"addr": "@owner", "offset": "0xc", "u32": "@owner+0x18"},
+        {"addr": "@owner", "offset": "0x214", "u32": -1},
+        {"addr": "@owner", "offset": "0x34", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero capacity expands to zero capacity",
+      "args": [42],
+      "memory": [{"addr": "@owner", "offset": "0x0", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4203166,
+    "count": 40,
+    "args": [{"range": [-2147483648, 2147483647]}],
+    "memory": [
+      {"addr": "@owner", "offset": "0x0", "type": "u32", "choices": [0, 1, 4, 1073741824, 2147483647, 2147483648, 4294967295]},
+      {"addr": "@owner", "offset": "0x4", "type": "ptr", "choices": [0, "@owner+0x10", "@owner+0x18", "@owner+0x20", "@owner+0x30"]},
+      {"addr": "@owner", "offset": "0x8", "type": "ptr", "choices": [0, "@owner+0x10", "@owner+0x18", "@owner+0x20", "@owner+0x30"]},
+      {"addr": "@owner", "offset": "0xc", "type": "ptr", "choices": [0, "@owner+0x10", "@owner+0x18", "@owner+0x20", "@owner+0x30"]},
+      {"addr": "@owner", "offset": "0x214", "type": "i32", "choices": [-1, 0, 1, 2147483647]}
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "function": "EQ_Book_Deactivate_guess",
+  "original": "0x00418b71",
+  "sources": [
+    "src/EverQuest/EQ_Book.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "book",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "book": {"size": "0x3800", "fill": "random"},
+    "child": {"size": "0x100", "fill": "random"},
+    "main": {"size": "0x1000", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": "@main"},
+    {"addr": "0x0058fba4", "cstr": ""},
+    {"addr": "@book", "offset": "0x37ac", "u32": "@child"},
+    {"addr": "@book", "offset": "0x88", "u32": -1},
+    {"addr": "@book", "offset": "0x8c", "u32": -1},
+    {"addr": "@book", "offset": "0x98", "u32": -1},
+    {"addr": "@book", "offset": "0x9c", "cstr": "Spell book text"},
+    {"addr": "@child", "offset": "0xad", "u8": 255},
+    {"addr": "@main", "offset": "0xeb8", "u32": 0}
+  ],
+  "callees": {
+    "0x004504ba": {
+      "name": "EQ_Overlay::Deactivate_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {"name": "with child clears its byte at plus ad", "args": ["@book"]},
+    {"name": "null child skips the byte clear", "args": ["@book"], "memory": [{"addr": "@book", "offset": "0x37ac", "u32": 0}]},
+    {"name": "child pointer with only high byte set is non-null", "args": ["@book"], "memory": [{"addr": "@book", "offset": "0x37ac", "u32": "0x7a0000"}]},
+    {"name": "nonempty source string is copied into text", "args": ["@book"], "memory": [{"addr": "0x0058fba4", "cstr": "AB"}]},
+    {"name": "long source string overwrites beyond old text", "args": ["@book"], "memory": [{"addr": "0x0058fba4", "cstr": "A much longer replacement string here"}]},
+    {"name": "fields already zero stay zero", "args": ["@book"], "memory": [{"addr": "@book", "offset": "0x88", "u32": 0}, {"addr": "@book", "offset": "0x8c", "u32": 0}, {"addr": "@book", "offset": "0x98", "u32": 0}]},
+    {"name": "main flag already set to other value becomes one", "args": ["@book"], "memory": [{"addr": "@main", "offset": "0xeb8", "u32": -1}]},
+    {"name": "main pointer aliased to book writes eb8 inside book", "args": ["@book"], "memory": [{"addr": "0x006e4e44", "u32": "@book"}]},
+    {"name": "child aliased to book clears book byte ad", "args": ["@book"], "memory": [{"addr": "@book", "offset": "0x37ac", "u32": "@book"}]},
+    {"name": "child aliased into text area is overwritten by strcpy afterwards", "args": ["@book"], "memory": [{"addr": "@book", "offset": "0x37ac", "u32": "@book"}, {"addr": "0x0058fba4", "cstr": "XYZ"}]}
+  ],
+  "fuzz": {
+    "seed": 4295537,
+    "count": 40,
+    "args": [
+      {"choices": ["@book"]}
+    ],
+    "memory": [
+      {"addr": "@book", "offset": "0x37ac", "type": "ptr", "choices": ["@child", "0x0", "@book", "@main"]},
+      {"addr": "0x006e4e44", "type": "ptr", "choices": ["@main", "@book", "@child"]},
+      {"addr": "0x0058fba4", "type": "u32", "choices": [0, 65, 16961, 4407873, 1684234849, 256]},
+      {"addr": "@book", "offset": "0x88", "type": "int", "choices": [0, 1, -1]},
+      {"addr": "@book", "offset": "0x8c", "type": "int", "choices": [0, 1, -1]},
+      {"addr": "@book", "offset": "0x98", "type": "int", "choices": [0, 1, -1]},
+      {"addr": "@child", "offset": "0xad", "type": "u8", "choices": [0, 1, 255]},
+      {"addr": "@main", "offset": "0xeb8", "type": "int", "choices": [0, 1, -1]}
+    ]
+  }
+}

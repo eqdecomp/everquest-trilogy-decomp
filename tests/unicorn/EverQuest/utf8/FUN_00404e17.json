@@ -1,0 +1,244 @@
+{
+  "function": "HandleTextBufferKeyEvent_guess",
+  "original": "0x00404e17",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "event",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "object": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x2b",
+          "u8": 165
+        },
+        {
+          "offset": "0x80",
+          "u8": 68
+        }
+      ]
+    },
+    "event": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x00404a7f": {
+      "name": "AppendWideChar_guess",
+      "conv": "thiscall",
+      "args": [
+        "short"
+      ]
+    },
+    "0x00404a36": {
+      "name": "CopyWideBuffer_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x00404e80": {
+      "name": "ResetWideBuffer_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x00404eb3": {
+      "name": "RemoveLastWideChar_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "different event code skips dispatch",
+      "args": [
+        "@object",
+        1,
+        "@event"
+      ],
+      "memory": [
+        {
+          "addr": "@event",
+          "offset": "0x0",
+          "u32": 20
+        },
+        {
+          "addr": "@event",
+          "offset": "0xc",
+          "u32": 13
+        }
+      ]
+    },
+    {
+      "name": "selector 8",
+      "args": [
+        "@object",
+        0,
+        "@event"
+      ],
+      "memory": [
+        {
+          "addr": "@event",
+          "offset": "0x0",
+          "u32": 21
+        },
+        {
+          "addr": "@event",
+          "offset": "0xc",
+          "u32": 8
+        }
+      ]
+    },
+    {
+      "name": "selector 13",
+      "args": [
+        "@object",
+        -1,
+        "@event"
+      ],
+      "memory": [
+        {
+          "addr": "@event",
+          "offset": "0x0",
+          "u32": 21
+        },
+        {
+          "addr": "@event",
+          "offset": "0xc",
+          "u32": 13
+        }
+      ]
+    },
+    {
+      "name": "selector 7 calls value handler",
+      "args": [
+        "@object",
+        0,
+        "@event"
+      ],
+      "memory": [
+        {
+          "addr": "@event",
+          "offset": "0x0",
+          "u32": 21
+        },
+        {
+          "addr": "@event",
+          "offset": "0xc",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "low word selects 8",
+      "args": [
+        "@object",
+        1,
+        "@event"
+      ],
+      "memory": [
+        {
+          "addr": "@event",
+          "offset": "0x0",
+          "u32": 21
+        },
+        {
+          "addr": "@event",
+          "offset": "0xc",
+          "u32": 65544
+        }
+      ]
+    },
+    {
+      "name": "unsigned high selector reaches value handler",
+      "args": [
+        "@object",
+        0,
+        "@event"
+      ],
+      "memory": [
+        {
+          "addr": "@event",
+          "offset": "0x0",
+          "u32": 21
+        },
+        {
+          "addr": "@event",
+          "offset": "0xc",
+          "u32": 65535
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4214295,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      },
+      {
+        "choices": [
+          -1,
+          0,
+          1
+        ]
+      },
+      {
+        "choices": [
+          "@event"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@event",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          20,
+          21,
+          22,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@event",
+        "offset": "0xc",
+        "type": "u16",
+        "choices": [
+          7,
+          8,
+          9,
+          12,
+          13,
+          14,
+          32768,
+          65535
+        ]
+      }
+    ]
+  }
+}

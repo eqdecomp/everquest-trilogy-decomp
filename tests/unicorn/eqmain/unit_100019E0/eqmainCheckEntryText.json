@@ -1,0 +1,128 @@
+{
+  "function": "eqmainCheckEntryText_guess",
+  "original": "0x100023b0",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "uchar",
+  "objects": {
+    "state": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x20", "u32": "@text"}]},
+    "text": {"size": "0x80", "fill": "zero", "init": [{"offset": "0", "cstr": "Bob"}]},
+    "held": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x20", "u32": "@heldText"}]},
+    "heldText": {"size": "0x80", "fill": "zero", "init": [{"offset": "0", "cstr": "Zed"}]},
+    "dlg": {"size": "0x40", "fill": "zero"},
+    "okText": {"size": "0x10", "fill": "zero", "init": [{"offset": "0", "cstr": "OK"}]},
+    "msgA": {"size": "0x40", "fill": "zero", "init": [{"offset": "0", "cstr": "Enter text."}]},
+    "msgB": {"size": "0x40", "fill": "zero", "init": [{"offset": "0", "cstr": "Held text is empty."}]}
+  },
+  "memory": [
+    {"addr": "0x1004CE2C", "u32": "@state"},
+    {"addr": "0x1004CEB8", "u32": "@dlg"},
+    {"addr": "0x10055888", "u32": "@okText"},
+    {"addr": "0x10055708", "u32": "@msgA"},
+    {"addr": "0x1005570C", "u32": "@msgB"},
+    {"addr": "0x1004CE3C", "u32": 0},
+    {"addr": "0x1004CE40", "cstr": "Default"}
+  ],
+  "callees": {
+    "0x10033330": {"name": "_strncpy", "conv": "cdecl", "args": ["ptr", "cstr", "int"], "passthrough": true},
+    "0x10023c10": {"name": "FUN_10023c10", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x10001ff0": {"name": "FUN_10001ff0", "conv": "cdecl", "args": ["ptr", "cstr", "cstr", "ptr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "empty text, no held object: dialog A, returns 0",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": ""}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "text Bob, no held object: copies the default text, returns 1",
+      "args": [],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "text Bob, held text Zed: returns 1",
+      "args": [],
+      "memory": [{"addr": "0x1004CE3C", "u32": "@held"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "held text empty: dialog B, returns 0",
+      "args": [],
+      "memory": [{"addr": "0x1004CE3C", "u32": "@held"}, {"addr": "@heldText", "cstr": ""}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty text with a held object: held not consulted, dialog A",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": ""}, {"addr": "0x1004CE3C", "u32": "@held"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no held object and empty default text: no emptiness check, returns 1",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": ""}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "held text of only spaces: second check does not trim, returns 1",
+      "args": [],
+      "memory": [{"addr": "0x1004CE3C", "u32": "@held"}, {"addr": "@heldText", "cstr": "   "}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "text of only spaces, no held object",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": "   "}]
+    },
+    {
+      "name": "text with leading spaces",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": "   Al"}]
+    },
+    {
+      "name": "text of 44 chars: fits, returns 1",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "text of 45 chars: strncpy fills the buffer, byte 44 forced to 0",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrs"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "text of 60 chars: truncated to 44",
+      "args": [],
+      "memory": [{"addr": "@text", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "held text of 40 chars, copied to the result buffer",
+      "args": [],
+      "memory": [{"addr": "0x1004CE3C", "u32": "@held"}, {"addr": "@heldText", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "held text of 60 chars, copied in full",
+      "args": [],
+      "memory": [{"addr": "0x1004CE3C", "u32": "@held"}, {"addr": "@heldText", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567"}],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 9136,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@text", "type": "u8", "count": 48, "choices": [0, 0, 32, 65, 66, 97, 98, 126]},
+      {"addr": "@heldText", "type": "u8", "count": 48, "choices": [0, 0, 32, 65, 66, 97, 98, 126]},
+      {"addr": "0x1004CE40", "type": "u8", "count": 48, "choices": [0, 0, 32, 65, 66, 97, 98, 126]},
+      {"addr": "0x1004CE3C", "type": "ptr", "choices": ["@held", 0]}
+    ]
+  }
+}

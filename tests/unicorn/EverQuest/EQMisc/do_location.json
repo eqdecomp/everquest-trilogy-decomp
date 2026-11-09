@@ -1,0 +1,92 @@
+{
+  "function": "ShowGameAndEarthTime_guess",
+  "original": "0x004dd038",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "rewrite": "ShowGameAndEarthTime_guess",
+  "conv": "fastcall",
+  "args": [
+    {"name": "pThis", "type": "ptr"},
+    {"name": "unused", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "pthis": {"size": "0x20", "fill": "zero"},
+    "pthis2": {"size": "0x20", "fill": "zero"},
+    "worlddata": {"size": "0x20", "fill": "zero"},
+    "worlddata2": {"size": "0x20", "fill": "zero"},
+    "ctime_typical": {"size": "0x40", "fill": "zero", "init": [{"offset": "0", "cstr": "Thu Jan  1 00:00:00 1970\n"}]},
+    "ctime_no_newline": {"size": "0x40", "fill": "zero", "init": [{"offset": "0", "cstr": "STAMP"}]},
+    "ctime_empty": {"size": "0x40", "fill": "zero", "init": [{"offset": "0", "cstr": ""}]}
+  },
+  "memory": [
+    {"addr": "0x006e4d54", "u32": "@worlddata"}
+  ],
+  "callees": {
+    "0x004be864": {
+      "name": "EQWorldData::CurrentGameTime_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": ["cstr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "hex": "47616d652074696d653a2030313a303220"}]
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": ["cstr"],
+      "ret": 0
+    },
+    "0x005213e9": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 1704067200
+    },
+    "0x005213d0": {
+      "name": "_ctime",
+      "conv": "cdecl",
+      "args": ["mem:4"],
+      "ret": "@ctime_typical"
+    }
+  },
+  "rewrite_aliases": {
+    "_ctime": "0x005213d0"
+  },
+  "cases": [
+    {
+      "name": "ordinary time and chat order",
+      "args": ["@pthis", 0]
+    },
+    {
+      "name": "alternate receiver and unused register values",
+      "args": ["@pthis2", -1]
+    },
+    {
+      "name": "ctime without newline loses its final character",
+      "args": ["@pthis", 2147483647],
+      "callees": {"0x005213d0": {"ret": "@ctime_no_newline"}}
+    },
+    {
+      "name": "empty ctime string strips the formatted trailing space",
+      "args": ["@pthis2", -2147483648],
+      "callees": {"0x005213d0": {"ret": "@ctime_empty"}}
+    },
+    {
+      "name": "global world data pointer boundary",
+      "args": ["@pthis", 1],
+      "memory": [{"addr": "0x006e4d54", "u32": "@worlddata2"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5099576,
+    "count": 32,
+    "args": [
+      {"choices": ["@pthis", "@pthis2"]},
+      {"choices": [-2147483648, -1, 0, 1, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "0x006e4d54", "type": "ptr", "choices": ["@worlddata", "@worlddata2"]}
+    ]
+  }
+}

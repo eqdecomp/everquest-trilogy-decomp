@@ -1,0 +1,192 @@
+{
+  "function": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+  "original": "0x1004f2dd",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "heading",
+      "type": "float"
+    },
+    {
+      "name": "pitch",
+      "type": "float"
+    },
+    {
+      "name": "roll",
+      "type": "float"
+    },
+    {
+      "name": "coefficients",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "coefficients": {
+      "size": "0x24",
+      "fill": "random"
+    },
+    "startup": {
+      "size": "0x2000",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1000",
+          "f32": 1.0
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100f3ff4",
+      "u32": "@startup"
+    }
+  ],
+  "callees": {
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "identity: index 0 everywhere (cos 1, sin 0) gives the identity matrix; zero entries keep their sign",
+      "args": [0.0, 0.0, 0.0, "@coefficients"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "heading 128 (quarter turn, cos 0 sin 1): m[1] = 1, m[3] = -1, m[0] = m[4] = 0",
+      "args": [128.0, 0.0, 0.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1200", "f32": 0.0},
+        {"addr": "@startup", "offset": "0x1A00", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "pitch 128 (cos 0 sin 1): m[2] = sin(pitch) = 1, and m[0], m[1], m[5], m[8] are zero",
+      "args": [0.0, 128.0, 0.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1200", "f32": 0.0},
+        {"addr": "@startup", "offset": "0x1A00", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "roll 128 (cos 0 sin 1): m[5] = sin(roll) = 1, m[8] = cos(roll) cos(pitch) = 0",
+      "args": [0.0, 0.0, 128.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1200", "f32": 0.0},
+        {"addr": "@startup", "offset": "0x1A00", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "wrap: pitch -1.0 reads index 511 (9-bit mask), cos 0.6 sin -0.8 give m[0] = 0.6 and m[2] = -0.8; heading 512.0 reads index 0",
+      "args": [512.0, -1.0, 0.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x17FC", "f32": 0.6},
+        {"addr": "@startup", "offset": "0x1FFC", "f32": -0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mask: heading -512.0 and roll 512.0 both mask to index 0, so the identity comes out again",
+      "args": [-512.0, 0.0, 512.0, "@coefficients"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ties: 1.5 -> index 2, -1.5 -> index 510, 2.5 -> index 2 (as FUN_1004ec36 rounds them); entries 2 and 510 are read",
+      "args": [1.5, -1.5, 2.5, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1008", "f32": 0.25},
+        {"addr": "@startup", "offset": "0x1808", "f32": 0.5},
+        {"addr": "@startup", "offset": "0x17F8", "f32": -0.25},
+        {"addr": "@startup", "offset": "0x1FF8", "f32": 0.9}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "negative zero: sin(pitch) = -0.0 gives negSinPitch +0.0, so m[2] = -0.0 (the sign of the zero is kept)",
+      "args": [0.0, 256.0, 0.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1400", "f32": 1.0},
+        {"addr": "@startup", "offset": "0x1C00", "f32": -0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "float store: cos(roll) 0.1 times -sin(pitch) 0.7 is stored as a float before m[6] and m[7] use it (m[3] and m[4] keep the wide product)",
+      "args": [0.0, 5.0, 3.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x100C", "f32": 0.1},
+        {"addr": "@startup", "offset": "0x180C", "f32": 0.3},
+        {"addr": "@startup", "offset": "0x1014", "f32": 0.5},
+        {"addr": "@startup", "offset": "0x1814", "f32": 0.7}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "half turn on all three axes (index 256: cos -1, sin 0) gives m[0] = m[4] = m[8] = 1",
+      "args": [256.0, 256.0, 256.0, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1400", "f32": -1.0},
+        {"addr": "@startup", "offset": "0x1C00", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "fractional: 0.6 -> index 1, 0.4 -> index 0, -0.6 -> index 511; cos and sin of each are read from their own entries",
+      "args": [0.6, 0.4, -0.6, "@coefficients"],
+      "memory": [
+        {"addr": "@startup", "offset": "0x1004", "f32": 0.5},
+        {"addr": "@startup", "offset": "0x1804", "f32": 0.25},
+        {"addr": "@startup", "offset": "0x17FC", "f32": 0.6},
+        {"addr": "@startup", "offset": "0x1FFC", "f32": -0.8}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 324317,
+    "count": 40,
+    "args": [
+      {
+        "range": [-600, 600]
+      },
+      {
+        "range": [-600, 600]
+      },
+      {
+        "range": [-600, 600]
+      },
+      {
+        "choices": [
+          "@coefficients"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@startup",
+        "offset": "0x1000",
+        "type": "float",
+        "count": 512,
+        "choices": [-1.0, -0.9, -0.8660254, -0.7, -0.7071068, -0.5, -0.3, -0.3420201, -0.1736482, -0.1, -0.0, 0.0, 0.1, 0.1736482, 0.3, 0.3420201, 0.5, 0.7, 0.7071068, 0.8660254, 0.9, 1.0]
+      },
+      {
+        "addr": "@startup",
+        "offset": "0x1800",
+        "type": "float",
+        "count": 512,
+        "choices": [-1.0, -0.9, -0.8660254, -0.7, -0.7071068, -0.5, -0.3, -0.3420201, -0.1736482, -0.1, -0.0, 0.0, 0.1, 0.1736482, 0.3, 0.3420201, 0.5, 0.7, 0.7071068, 0.8660254, 0.9, 1.0]
+      }
+    ]
+  }
+}

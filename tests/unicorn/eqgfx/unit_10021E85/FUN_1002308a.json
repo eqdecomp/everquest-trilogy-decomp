@@ -1,0 +1,169 @@
+{
+  "function": "createBlitSpriteFromParserContext_guess",
+  "original": "0x1002308A",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@dictionary"},
+        {"offset": "0x38", "u32": 256},
+        {"offset": "0x8044", "u32": "@definitionContext"},
+        {"offset": "0x804c", "u32": "@pointerTable"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "definitionContext": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": 0},
+        {"offset": "0xc", "u32": 5}
+      ]
+    },
+    "dictionary": {"size": "0x100", "fill": "random"},
+    "pointerTable": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@pointer"},
+        {"offset": "0x4", "u32": "@secondPointer"},
+        {"offset": "0x8", "u32": "@pointer"},
+        {"offset": "0xc", "u32": "@secondPointer"}
+      ]
+    },
+    "pointer": {"size": "0x40", "fill": "random"},
+    "secondPointer": {"size": "0x40", "fill": "random"},
+    "dictionaryPointer": {"size": "0x40", "fill": "random"},
+    "sprite": {
+      "size": "0x18",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@associated"}
+      ]
+    },
+    "associated": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@dictionaryPointer"
+    },
+    "0x1000cdc8": {
+      "name": "t3dDefineBlitSprite",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int", "ptr"],
+      "ret": "@sprite"
+    }
+  },
+  "cases": [
+    {
+      "name": "zero pointer and tag offsets use table slot zero with flag clear",
+      "args": ["@context"]
+    },
+    {
+      "name": "negative pointer and tag offsets resolve through the dictionary and set both flags",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x38", "u32": 256},
+        {"addr": "@context", "offset": "0x8064", "u32": 1},
+        {"addr": "@definitionContext", "offset": "0x0", "u32": -1},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": -1}
+      ]
+    },
+    {
+      "name": "large negative offsets remain signed and use dictionary size arithmetic",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x38", "u32": 512},
+        {"addr": "@context", "offset": "0x8064", "u32": 16},
+        {"addr": "@definitionContext", "offset": "0x0", "u32": -64},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": -128}
+      ]
+    },
+    {
+      "name": "positive pointer and tag offsets select slot one and clear the tag offset",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": -1},
+        {"addr": "@definitionContext", "offset": "0x0", "u32": 17},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "largest valid pointer-table index uses slot three",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 1},
+        {"addr": "@definitionContext", "offset": "0x0", "u32": 0},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "null sprite return skips context flag updates",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 1},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": -9}
+      ],
+      "callees": {
+        "0x1000cdc8": {
+          "name": "t3dDefineBlitSprite",
+          "conv": "cdecl",
+          "args": ["ptr", "int", "int", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "non-null sprite with zero context flag leaves flags alone",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 0},
+        {"addr": "@definitionContext", "offset": "0x0", "u32": -5},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": 2}
+      ]
+    },
+    {
+      "name": "negative pointer with positive tag and nonzero context flag",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x38", "u32": 1024},
+        {"addr": "@context", "offset": "0x8064", "u32": 16},
+        {"addr": "@definitionContext", "offset": "0x0", "u32": 32},
+        {"addr": "@definitionContext", "offset": "0x8", "u32": -4}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 143498,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]}
+    ],
+    "memory": [
+      {"addr": "@context", "offset": "0x38", "type": "int", "range": [0, 4096]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "choices": [0, 1, -1, 16, 1024]},
+      {"addr": "@definitionContext", "offset": "0x0", "type": "int", "range": [-64, 64]},
+      {"addr": "@definitionContext", "offset": "0x8", "type": "int", "range": [-64, 3]},
+      {"addr": "@definitionContext", "offset": "0xc", "type": "int", "range": [-16, 32]}
+    ]
+  }
+}

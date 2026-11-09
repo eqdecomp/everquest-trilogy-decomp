@@ -1,0 +1,131 @@
+{
+  "function": "TickInputSystem_guess",
+  "original": "0x00402ae3",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "win": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x0058fb50", "u32": 3735928559}
+  ],
+  "callees": {
+    "0x0040101d": {
+      "name": "resize_window__resetwindows_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x00401fe8": {
+      "name": "ProcessQueuedValues_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ]
+    },
+    "0x004019ec": {
+      "name": "EQStubOwner_guess::FUN_004019ec_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    },
+    "0x0040240f": {
+      "name": "EQFoldedStubs_guess::Nop_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: +0x20 saved to +0x24, global stored to +0x20, forwarded",
+      "args": ["@win"],
+      "memory": [
+        {"addr": "@win", "offset": "0x20", "u32": 305419896},
+        {"addr": "0x0058fb50", "u32": 2864434397}
+      ]
+    },
+    {
+      "name": "zero object fields and zero global",
+      "args": ["@win"],
+      "memory": [
+        {"addr": "@win", "offset": "0x20", "u32": 0},
+        {"addr": "@win", "offset": "0x24", "u32": 0},
+        {"addr": "0x0058fb50", "u32": 0}
+      ]
+    },
+    {
+      "name": "old +0x20 value only reaches +0x24, not the forwarded argument",
+      "args": ["@win"],
+      "memory": [
+        {"addr": "@win", "offset": "0x20", "u32": 1},
+        {"addr": "0x0058fb50", "u32": 2}
+      ]
+    },
+    {
+      "name": "resize writes +0x20: the copy to +0x24 sees the new value",
+      "args": ["@win"],
+      "memory": [{"addr": "0x0058fb50", "u32": 7}],
+      "callees": {
+        "0x0040101d": {"name": "resize_window__resetwindows_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@win+0x20", "hex": "99000000"}]}
+      }
+    },
+    {
+      "name": "0x00401fe8 writes +0x20: Nop_guess and 0x004019ec get the written value",
+      "args": ["@win"],
+      "memory": [{"addr": "0x0058fb50", "u32": 7}],
+      "callees": {
+        "0x00401fe8": {"name": "FUN_00401fe8", "conv": "thiscall", "args": ["u32"], "writes": [{"addr": "@win+0x20", "hex": "efbeadde"}]}
+      }
+    },
+    {
+      "name": "0x00401fe8 writes +0x20 in the same way for the forwarded value",
+      "args": ["@win"],
+      "memory": [{"addr": "0x0058fb50", "u32": 7}],
+      "callees": {
+        "0x00401fe8": {"name": "FUN_00401fe8", "conv": "thiscall", "args": ["u32"], "writes": [{"addr": "@win+0x20", "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "global with high bit set passes through unchanged",
+      "args": ["@win"],
+      "memory": [{"addr": "0x0058fb50", "u32": 2147483648}]
+    },
+    {
+      "name": "other object fields are not touched",
+      "args": ["@win"],
+      "memory": [
+        {"addr": "@win", "offset": "0x0", "u32": 3735928559},
+        {"addr": "@win", "offset": "0x4", "u32": 3735928559},
+        {"addr": "@win", "offset": "0x18", "u32": 305419896},
+        {"addr": "@win", "offset": "0x3c", "u32": 305419896}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4205283,
+    "count": 40,
+    "args": [
+      {"choices": ["@win"]}
+    ],
+    "memory": [
+      {"addr": "0x0058fb50", "type": "u32"},
+      {"addr": "@win", "offset": "0x20", "type": "u32"},
+      {"addr": "@win", "offset": "0x24", "type": "u32"},
+      {"addr": "@win", "offset": "0x8", "type": "u32"},
+      {"addr": "@win", "offset": "0xc", "type": "u32"},
+      {"addr": "@win", "offset": "0x10", "type": "u32"},
+      {"addr": "@win", "offset": "0x1c", "type": "u32"}
+    ]
+  }
+}

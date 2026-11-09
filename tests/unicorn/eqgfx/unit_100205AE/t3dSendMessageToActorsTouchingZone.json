@@ -1,0 +1,353 @@
+{
+  "function": "t3dSendMessageToActorsTouchingZone",
+  "original": "0x10020b94",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actorList",
+      "type": "ptr"
+    },
+    {
+      "name": "zone",
+      "type": "ptr"
+    },
+    {
+      "name": "message",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actorlist": {
+      "size": "0x400",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x348",
+          "u32": 2
+        },
+        {
+          "offset": "0x350",
+          "u32": "@actors"
+        }
+      ]
+    },
+    "actors": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "zone": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "message": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10020aff": {
+      "name": "t3dGetActorsTouchingZone",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000a553": {
+      "name": "t3dSendMessageToActor",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: two actors, get returns 0",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no actors (count 0)",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@actorlist",
+          "offset": "0x348",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one actor",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@actorlist",
+          "offset": "0x348",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "six actors (the array's capacity)",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@actorlist",
+          "offset": "0x348",
+          "u32": 6
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "get returns 1: failure, nothing sent (0xffff3d3e)",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "callees": {
+        "0x10020aff": {
+          "name": "t3dGetActorsTouchingZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "get returns -1: failure (0xffff3d3e)",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "callees": {
+        "0x10020aff": {
+          "name": "t3dGetActorsTouchingZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "get returns 2 with two actors: failure, nothing sent",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "callees": {
+        "0x10020aff": {
+          "name": "t3dGetActorsTouchingZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "get returns 1 with no actors: still failure",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@actorlist",
+          "offset": "0x348",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10020aff": {
+          "name": "t3dGetActorsTouchingZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zone null: passed through, not read",
+      "args": [
+        "@actorlist",
+        0,
+        "@message"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "message null: passed through to each send",
+      "args": [
+        "@actorlist",
+        "@zone",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no actors and actors null: the array is never read",
+      "args": [
+        "@actorlist",
+        "@zone",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@actorlist",
+          "offset": "0x348",
+          "u32": 0
+        },
+        {
+          "addr": "@actorlist",
+          "offset": "0x350",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "actorList null, get fails: the list is not read",
+      "args": [
+        0,
+        "@zone",
+        "@message"
+      ],
+      "callees": {
+        "0x10020aff": {
+          "name": "t3dGetActorsTouchingZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 134036,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actorlist"
+        ]
+      },
+      {
+        "choices": [
+          "@zone",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@message",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actorlist",
+        "offset": "0x348",
+        "type": "u32",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@actorlist",
+        "offset": "0x350",
+        "type": "ptr",
+        "choices": [
+          "@actors"
+        ]
+      },
+      {
+        "addr": "@actors",
+        "size": 32
+      }
+    ]
+  }
+}

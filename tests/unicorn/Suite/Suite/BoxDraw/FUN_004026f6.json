@@ -1,0 +1,86 @@
+{
+  "function": "ReallocateAndInsertFillVector_guess",
+  "original": "0x004026f6",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "vec", "type": "ptr"},
+    {"name": "edx_dummy", "type": "u32"},
+    {"name": "position", "type": "ptr"},
+    {"name": "value", "type": "ptr"},
+    {"name": "count", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "vec": {"size": "0xc", "fill": "zero", "init": [
+      {"offset": "0", "u32": "@old"},
+      {"offset": "4", "u32": "@old+0x10"},
+      {"offset": "8", "u32": "@old+0x20"}
+    ]},
+    "old": {"size": "0x400", "fill": "random"},
+    "new": {"size": "0x400", "fill": "zero"},
+    "value": {"size": "4", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x0058fb58", "size": 64, "fill": "random"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x00401366": {"name": "pool_alloc_guess", "conv": "cdecl", "args": ["u32"], "ret": "@new"},
+    "0x00402836": {"name": "uninit_copy_dwords_guess", "conv": "cdecl", "args": ["ptr", "ptr", "ptr", "u32"], "passthrough": true},
+    "0x00402855": {"name": "uninit_fill_dwords_guess", "conv": "cdecl", "args": ["ptr", "u32", "ptr", "u32"], "passthrough": true},
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "empty null vector, zero copies", "args": ["@vec", 0, 0, "@value", 0], "memory": [
+      {"addr": "@vec", "offset": "0", "u32": 0},
+      {"addr": "@vec", "offset": "4", "u32": 0},
+      {"addr": "@vec", "offset": "8", "u32": 0}
+    ]},
+    {"name": "empty null vector, one copy", "args": ["@vec", 0, 0, "@value", 1], "memory": [
+      {"addr": "@vec", "offset": "0", "u32": 0},
+      {"addr": "@vec", "offset": "4", "u32": 0},
+      {"addr": "@vec", "offset": "8", "u32": 0}
+    ]},
+    {"name": "zero copies at middle", "args": ["@vec", 0, "@old+0x8", "@value", 0]},
+    {"name": "one copy at beginning", "args": ["@vec", 0, "@old", "@value", 1]},
+    {"name": "one copy in middle", "args": ["@vec", 0, "@old+0x8", "@value", 1]},
+    {"name": "one copy at end", "args": ["@vec", 0, "@old+0x10", "@value", 1]},
+    {"name": "two copies at beginning", "args": ["@vec", 0, "@old", "@value", 2]},
+    {"name": "two copies in middle", "args": ["@vec", 0, "@old+0x8", "@value", 2]},
+    {"name": "two copies at end", "args": ["@vec", 0, "@old+0x10", "@value", 2]},
+    {"name": "requested count exceeds old length", "args": ["@vec", 0, "@old+0x4", "@value", 5]},
+    {"name": "zero length with reserved storage", "args": ["@vec", 0, "@old", "@value", 1], "memory": [
+      {"addr": "@vec", "offset": "4", "u32": "@old"},
+      {"addr": "@vec", "offset": "8", "u32": "@old+0x20"}
+    ]},
+    {"name": "zero copies with reserved storage", "args": ["@vec", 0, "@old", "@value", 0], "memory": [
+      {"addr": "@vec", "offset": "4", "u32": "@old"},
+      {"addr": "@vec", "offset": "8", "u32": "@old+0x20"}
+    ]},
+    {"name": "free list capacity 124 bytes", "args": ["@vec", 0, "@old+0x8", "@value", 1], "memory": [
+      {"addr": "@vec", "offset": "8", "u32": "@old+0x7c"}
+    ]},
+    {"name": "free list capacity 128 bytes", "args": ["@vec", 0, "@old+0x8", "@value", 2], "memory": [
+      {"addr": "@vec", "offset": "8", "u32": "@old+0x80"}
+    ]},
+    {"name": "delete capacity 132 bytes", "args": ["@vec", 0, "@old+0x8", "@value", 2], "memory": [
+      {"addr": "@vec", "offset": "8", "u32": "@old+0x84"}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4204278,
+    "count": 40,
+    "args": [
+      {"choices": ["@vec"]},
+      {"choices": [0, "0x13579bdf", "0xffffffff"]},
+      {"choices": ["@old", "@old+0x4", "@old+0x8", "@old+0xc", "@old+0x10"]},
+      {"choices": ["@value"]},
+      {"range": [0, 8]}
+    ],
+    "memory": [
+      {"addr": "@vec", "offset": "8", "type": "ptr", "choices": ["@old+0x10", "@old+0x20", "@old+0x7c", "@old+0x80", "@old+0x84"]}
+    ]
+  }
+}

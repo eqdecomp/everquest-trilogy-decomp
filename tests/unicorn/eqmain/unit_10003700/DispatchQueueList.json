@@ -1,0 +1,109 @@
+{
+  "function": "DispatchQueueList_guess",
+  "original": "0x10004e10",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "owner_empty": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": 0}
+    ]},
+    "owner_one": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": "@n_one"}
+    ]},
+    "owner_three": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": "@n1"}
+    ]},
+    "owner_null_rec": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": "@n_null_rec"}
+    ]},
+    "owner_clear": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": "@n_clear"}
+    ]},
+    "fuzz_owner": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": 0}
+    ]},
+    "n1": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "0x10000001"},
+      {"offset": "0x8", "u32": "@n2"}
+    ]},
+    "n2": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "0x20000002"},
+      {"offset": "0x8", "u32": "@n3"}
+    ]},
+    "n3": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "0x30000003"},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "n_one": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "0x40000004"},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "n_null_rec": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": 0},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "n_clear": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "@n_clear+0x8"},
+      {"offset": "0x8", "u32": "@n_tail"}
+    ]},
+    "n_tail": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "@scratch"},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "scratch": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10004e40": {
+      "name": "FUN_10004e40",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "null owner does nothing", "args": [0]},
+    {"name": "empty list (head null): nothing dispatched", "args": ["@owner_empty"]},
+    {"name": "single node: its record dispatched once", "args": ["@owner_one"]},
+    {"name": "three nodes: records dispatched in list order", "args": ["@owner_three"]},
+    {"name": "null record pointer is still dispatched", "args": ["@owner_null_rec"]},
+    {
+      "name": "dispatch overwrites the visited node's next link: traversal follows the link read before the call",
+      "args": ["@owner_clear"],
+      "callees": {
+        "0x10004e40": {
+          "name": "FUN_10004e40",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 19984,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@fuzz_owner", "@owner_empty", "@owner_one", "@owner_three", "@owner_null_rec", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "@fuzz_owner", "offset": "0x1c", "type": "ptr", "choices": ["@n1", "@n_one", "@n_null_rec", 0]},
+      {"addr": "@n1", "offset": "0x8", "type": "ptr", "choices": ["@n2", "@n3", 0]},
+      {"addr": "@n2", "offset": "0x8", "type": "ptr", "choices": ["@n3", 0]},
+      {"addr": "@n1", "offset": "0x4", "type": "u32", "range": [0, 64]},
+      {"addr": "@n2", "offset": "0x4", "type": "u32", "range": [0, 64]}
+    ]
+  }
+}

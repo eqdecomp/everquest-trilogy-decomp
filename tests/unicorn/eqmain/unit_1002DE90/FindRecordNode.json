@@ -1,0 +1,179 @@
+{
+  "function": "FindRecordNode_guess",
+  "original": "0x1002e0c0",
+  "sources": [
+    "src/eqmain/unit_1002DE90.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "record", "type": "ptr"},
+    {"name": "arg", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "rec": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@arena+0x10"},
+        {"offset": "0x8", "u32": "@arena"},
+        {"offset": "0xc", "u32": 4096},
+        {"offset": "0x14", "u32": "@cb"}
+      ]
+    },
+    "arena": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@arena+0x10"},
+        {"offset": "0x10", "u32": "@arena+0x40"},
+        {"offset": "0x40", "u32": "@arena+0x80"},
+        {"offset": "0x80", "u32": 0}
+      ]
+    },
+    "cb": {"size": "0x10", "fill": "random"},
+    "cb2": {"size": "0x10", "fill": "random"},
+    "cb3": {"size": "0x10", "fill": "random"},
+    "cb4": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, -1, 0]},
+    "@cb2": {"name": "cb_positive_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, 1]},
+    "@cb3": {"name": "cb_negative_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1]},
+    "@cb4": {"name": "cb_zero_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0]}
+  },
+  "coverage_ok": {"1002E0DF-1002E0E3": "dead: the loop only runs on a non-null node (the entry test and the advance both return on null), so the null branch inside the loop never runs"},
+  "cases": [
+    {
+      "name": "typical: three nodes, callback 0 on the last returns its offset",
+      "args": ["@rec", 5],
+      "expect": {"ret": 128}
+    },
+    {
+      "name": "null head returns 0 without a callback",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "head at the base: offset 0 gives the callback 0, callback 0 returns offset 0",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x0", "u32": "@arena"}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "head at the base, callback negative: base passes 0, walks to the last node",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x0", "u32": "@arena"}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, -1, -1, 0]}},
+      "expect": {"ret": 128}
+    },
+    {
+      "name": "first node: callback 0 returns its offset, value is added offset plus offset",
+      "args": ["@rec", 5],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0]}},
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "callback positive on the first node stops with 0",
+      "args": ["@rec", 5],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [1]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "callback negative on every node walks to the end and returns 0",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x14", "u32": "@cb3"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "callback -1 then 0 on the second node returns 0x40",
+      "args": ["@rec", 5],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, 0]}},
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "callback -1 then positive on the second node stops with 0",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x14", "u32": "@cb2"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "int minimum is negative: walks on to the second node",
+      "args": ["@rec", 5],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-2147483648, 0]}},
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "int maximum is positive: stops at the first node",
+      "args": ["@rec", 5],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [2147483647, 0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "added offset 0: callback gets the bare offset",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0xc", "u32": 0}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0]}},
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "base above the first node: negative offset -0x70, callback 0 returns it",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x8", "u32": "@arena+0x80"}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0]}},
+      "expect": {"ret": -112}
+    },
+    {
+      "name": "base above the first node: walks on, second node returns -0x40",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x8", "u32": "@arena+0x80"}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, 0]}},
+      "expect": {"ret": -64}
+    },
+    {
+      "name": "head at the last node returns its offset",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x0", "u32": "@arena+0x80"}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0]}},
+      "expect": {"ret": 128}
+    },
+    {
+      "name": "head at the middle node skips the first",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@rec", "offset": "0x0", "u32": "@arena+0x40"}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, 0]}},
+      "expect": {"ret": 128}
+    },
+    {
+      "name": "param 2 is passed to every callback",
+      "args": ["@rec", -7],
+      "expect": {"ret": 128}
+    },
+    {
+      "name": "next pointer of the first node is null: list ends after one call",
+      "args": ["@rec", 5],
+      "memory": [{"addr": "@arena", "offset": "0x10", "u32": 0}],
+      "callees": {"@cb": {"name": "cb_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [-1, 0]}},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 4711,
+    "count": 48,
+    "args": [
+      {"choices": ["@rec"]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@rec", "offset": "0x0", "type": "ptr", "choices": ["@arena", "@arena+0x10", "@arena+0x40", "@arena+0x80", 0]},
+      {"addr": "@rec", "offset": "0x8", "type": "ptr", "choices": ["@arena", "@arena+0x10", "@arena+0x40", "@arena+0x80"]},
+      {"addr": "@rec", "offset": "0xc", "type": "int", "range": [-4096, 4096]},
+      {"addr": "@rec", "offset": "0x14", "type": "ptr", "choices": ["@cb", "@cb2", "@cb3", "@cb4"]},
+      {"addr": "@arena", "offset": "0x10", "type": "ptr", "choices": ["@arena+0x40", 0], "p": 0.5},
+      {"addr": "@arena", "offset": "0x40", "type": "ptr", "choices": ["@arena+0x80", 0], "p": 0.5}
+    ]
+  }
+}

@@ -1,0 +1,469 @@
+{
+  "function": "EQ_Item_ValueSBuy_guess",
+  "original": "0x00438701",
+  "sources": [
+    "src/EverQuest/EQ_Item.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "item",
+      "type": "ptr"
+    },
+    {
+      "name": "edx",
+      "type": "int"
+    },
+    {
+      "name": "rate",
+      "type": "float"
+    },
+    {
+      "name": "count",
+      "type": "int"
+    }
+  ],
+  "ret": "cstr",
+  "objects": {
+    "item": {
+      "size": "0xac",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8c",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x005591fc",
+      "from_image": "0x005591FC",
+      "image_size": 9
+    },
+    {
+      "addr": "0x0058fba4",
+      "cstr": ""
+    },
+    {
+      "addr": "0x00591f7c",
+      "size": 128,
+      "fill": "zero"
+    }
+  ],
+  "callees": {
+    "0x00438550": {
+      "name": "EQ_Item::ValueBuy",
+      "conv": "thiscall",
+      "args": [
+        "float",
+        "int"
+      ],
+      "ret": 1234567
+    }
+  },
+  "cases": [
+    {
+      "name": "negative item cost returns static zero-money string",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@item",
+          "offset": "0x8c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": {
+          "from_image": "0x005591FC",
+          "image_size": 8,
+          "as": "cstr"
+        }
+      }
+    },
+    {
+      "name": "zero item cost returns static zero-money string",
+      "args": [
+        "@item",
+        0,
+        0.0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@item",
+          "offset": "0x8c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": {
+          "from_image": "0x005591FC",
+          "image_size": 8,
+          "as": "cstr"
+        }
+      }
+    },
+    {
+      "name": "smallest positive item cost calls ValueBuy",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@item",
+          "offset": "0x8c",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": ""
+      }
+    },
+    {
+      "name": "copper one",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": " 1 copper"
+      }
+    },
+    {
+      "name": "copper maximum",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 9
+        }
+      },
+      "expect": {
+        "ret": " 9 copper"
+      }
+    },
+    {
+      "name": "silver lower boundary",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 10
+        }
+      },
+      "expect": {
+        "ret": " 1 silver"
+      }
+    },
+    {
+      "name": "silver and copper maximum",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 99
+        }
+      },
+      "expect": {
+        "ret": " 9 silver 9 copper"
+      }
+    },
+    {
+      "name": "gold lower boundary",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 100
+        }
+      },
+      "expect": {
+        "ret": " 1 gold"
+      }
+    },
+    {
+      "name": "gold silver copper maximum",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 999
+        }
+      },
+      "expect": {
+        "ret": " 9 gold 9 silver 9 copper"
+      }
+    },
+    {
+      "name": "platinum lower boundary",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 1000
+        }
+      },
+      "expect": {
+        "ret": " 1 platinum"
+      }
+    },
+    {
+      "name": "all four denominations appear in order",
+      "args": [
+        "@item",
+        0,
+        0.75,
+        3
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 1234567
+        }
+      },
+      "expect": {
+        "ret": " 1234 platinum 5 gold 6 silver 7 copper"
+      }
+    },
+    {
+      "name": "negative result stays omitted by less-than-one branches",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": ""
+      }
+    },
+    {
+      "name": "negative remainder behavior",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": -1234567
+        }
+      },
+      "expect": {
+        "ret": ""
+      }
+    },
+    {
+      "name": "largest signed result preserves local-buffer overrun",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": 2147483647
+        }
+      },
+      "expect": {
+        "ret": " 2147483 platinu 6 gold 6 gold 4 silver 7 copper"
+      }
+    },
+    {
+      "name": "smallest signed result",
+      "args": [
+        "@item",
+        0,
+        1.0,
+        1
+      ],
+      "callees": {
+        "0x00438550": {
+          "name": "EQ_Item::ValueBuy_guess",
+          "conv": "thiscall",
+          "args": [
+            "float",
+            "int"
+          ],
+          "ret": -2147483648
+        }
+      },
+      "expect": {
+        "ret": ""
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4425473,
+    "count": 36,
+    "args": [
+      {
+        "choices": [
+          "@item"
+        ]
+      },
+      {
+        "range": [
+          -8,
+          8
+        ]
+      },
+      {
+        "choices": [
+          -4.0,
+          0.0,
+          0.5,
+          1.5,
+          4.0
+        ]
+      },
+      {
+        "range": [
+          -8,
+          32
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@item",
+        "offset": "0x8c",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2,
+          999,
+          1000,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

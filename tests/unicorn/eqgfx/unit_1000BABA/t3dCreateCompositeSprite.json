@@ -1,0 +1,204 @@
+{
+  "function": "t3dCreateCompositeSprite",
+  "original": "0x1000d4e2",
+  "sources": ["src/eqgfx/unit_1000BABA.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "definition", "type": "ptr"},
+    {"name": "volume", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [{"offset": "0x8", "u32": 7}]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x10", "u32": 4},
+        {"offset": "0x18", "u32": 1},
+        {"offset": "0x24", "u32": "@template"}
+      ]
+    },
+    "volume": {"size": "0x20", "fill": "zero"},
+    "template": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@fallbackvolume"},
+        {"offset": "0x28", "u32": "@sourceComponents"}
+      ]
+    },
+    "fallbackvolume": {"size": "0x20", "fill": "zero"},
+    "sourceComponents": {"size": "0x400", "fill": "random"},
+    "createdSprite": {"size": "0x40", "fill": "zero"},
+    "componentData": {"size": "0x400", "fill": "zero"},
+    "duplicateVolume": {"size": "0x20", "fill": "zero"},
+    "emptySprite": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0", "u32": 0}]
+    },
+    "sharedSprite": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0", "u32": 12}]
+    },
+    "invalidSprite": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0", "u32": 5}]
+    },
+    "debugbreak": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x100760bc", "u32": "@debugbreak"}
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@createdSprite", "@componentData"]
+    },
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": "@duplicateVolume"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "@debugbreak": {
+      "name": "DebugBreak",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "initial sprite allocation fails before reading either object",
+      "args": ["@context", "@definition", 0],
+      "callees": {"0x10050c48": {"ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "volume duplication failure frees the copied sprite",
+      "args": ["@context", "@definition", "@volume"],
+      "callees": {"0x1001d516": {"ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "component allocation failure frees the copied sprite",
+      "args": ["@context", "@definition", "@volume"],
+      "callees": {
+        "0x10050c48": {"ret": ["@createdSprite", 0]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "initializer failure frees component storage before sprite",
+      "args": ["@context", "@definition", "@volume"],
+      "callees": {"0x1001564b": {"ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero components use fallback volume and still initialize",
+      "args": ["@context", "@definition", 0],
+      "memory": [{"addr": "@definition", "offset": "0x18", "u32": 0}]
+    },
+    {
+      "name": "one component has a null sprite pointer",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 1},
+        {"addr": "@sourceComponents", "offset": "0", "u32": 0}
+      ]
+    },
+    {
+      "name": "one component points to an object of type zero",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 1},
+        {"addr": "@sourceComponents", "offset": "0", "u32": "@emptySprite"}
+      ]
+    },
+    {
+      "name": "one component shares a type 0x0c object",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 1},
+        {"addr": "@sourceComponents", "offset": "0", "u32": "@sharedSprite"}
+      ]
+    },
+    {
+      "name": "one component of another type calls DebugBreak",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 1},
+        {"addr": "@sourceComponents", "offset": "0", "u32": "@invalidSprite"}
+      ]
+    },
+    {
+      "name": "three component checks preserve order around an invalid type",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 3},
+        {"addr": "@sourceComponents", "offset": "0", "u32": "@sharedSprite"},
+        {"addr": "@sourceComponents", "offset": "0xa0", "u32": "@invalidSprite"},
+        {"addr": "@sourceComponents", "offset": "0x140", "u32": "@sharedSprite"}
+      ]
+    },
+    {
+      "name": "negative component count wraps byte size and fails allocation",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [{"addr": "@definition", "offset": "0x18", "u32": "0xffffffff"}],
+      "callees": {"0x10050c48": {"ret": ["@createdSprite", 0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "explicit volume takes precedence over template volume",
+      "args": ["@context", "@definition", "@volume"],
+      "memory": [{"addr": "@definition", "offset": "0x18", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 54498,
+    "count": 32,
+    "args": [
+      {"choices": ["@context"]},
+      {"choices": ["@definition"]},
+      {"choices": [0, "@volume"]}
+    ],
+    "memory": [
+      {"addr": "@context", "offset": "0x8", "type": "int", "range": [-8, 8]},
+      {"addr": "@definition", "offset": "0x18", "type": "int", "range": [0, 4]},
+      {
+        "addr": "@sourceComponents",
+        "type": "ptr",
+        "count": 4,
+        "stride": "0xa0",
+        "choices": [0, "@emptySprite", "@sharedSprite", "@invalidSprite"]
+      }
+    ]
+  }
+}

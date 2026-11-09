@@ -1,0 +1,186 @@
+{
+  "function": "gen_huffman_codes_guess",
+  "original": "0x1000d510",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "tree",
+      "type": "ptr"
+    },
+    {
+      "name": "max_code",
+      "type": "int"
+    },
+    {
+      "name": "bl_count",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "no return value: the Ghidra signature is void and the EAX evidence is inconclusive (0 of 1 caller sites read EAX after the call; that caller returns right after it, so EAX passes through, unverified). EAX on return is param_2 or the last reverse_low_bits return, not compared",
+  "objects": {
+    "tree": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "bl": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e3a0": {
+      "name": "reverse_low_bits_guess",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "int"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "max_code -1: returns before any entry, no call, tree untouched (len 1 and bl[0] 1 would call if the guard were wrong)",
+      "args": ["@tree", -1, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 1},
+        {"addr": "@bl", "offset": "0x0", "u16": 1}
+      ]
+    },
+    {
+      "name": "max_code INT_MIN: signed guard, no call",
+      "args": ["@tree", -2147483648, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 1},
+        {"addr": "@bl", "offset": "0x0", "u16": 1}
+      ]
+    },
+    {
+      "name": "max_code -2: still negative, no call",
+      "args": ["@tree", -2, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 1},
+        {"addr": "@bl", "offset": "0x0", "u16": 1}
+      ]
+    },
+    {
+      "name": "max_code 0, len 0: code kept, no call",
+      "args": ["@tree", 0, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x0", "u16": 4660},
+        {"addr": "@tree", "offset": "0x2", "u16": 0}
+      ]
+    },
+    {
+      "name": "max_code 0, len 1, empty counts: code 0, one call",
+      "args": ["@tree", 0, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 1}
+      ]
+    },
+    {
+      "name": "max_code 0, len 15, bl[14] 1: next_code[15] 2 reversed over 15 bits",
+      "args": ["@tree", 0, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 15},
+        {"addr": "@bl", "offset": "0x1c", "u16": 1}
+      ]
+    },
+    {
+      "name": "four symbols of len 3, empty counts: codes 0,1,2,3 bit-reversed to 0,4,2,6",
+      "args": ["@tree", 3, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 3},
+        {"addr": "@tree", "offset": "0x6", "u16": 3},
+        {"addr": "@tree", "offset": "0xa", "u16": 3},
+        {"addr": "@tree", "offset": "0xe", "u16": 3}
+      ]
+    },
+    {
+      "name": "zero-length entry between two len 2: next code counts only the used ones",
+      "args": ["@tree", 2, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 2},
+        {"addr": "@tree", "offset": "0x6", "u16": 0},
+        {"addr": "@tree", "offset": "0xa", "u16": 2},
+        {"addr": "@bl", "offset": "0x2", "u16": 1}
+      ]
+    },
+    {
+      "name": "RFC 1951 example: lengths 3,3,3,3,3,2,4,4 give codes 2,6,1,5,3,0,7,15",
+      "args": ["@tree", 7, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 3},
+        {"addr": "@tree", "offset": "0x6", "u16": 3},
+        {"addr": "@tree", "offset": "0xa", "u16": 3},
+        {"addr": "@tree", "offset": "0xe", "u16": 3},
+        {"addr": "@tree", "offset": "0x12", "u16": 3},
+        {"addr": "@tree", "offset": "0x16", "u16": 2},
+        {"addr": "@tree", "offset": "0x1a", "u16": 4},
+        {"addr": "@tree", "offset": "0x1e", "u16": 4},
+        {"addr": "@bl", "offset": "0x4", "u16": 1},
+        {"addr": "@bl", "offset": "0x6", "u16": 5},
+        {"addr": "@bl", "offset": "0x8", "u16": 2}
+      ]
+    },
+    {
+      "name": "16-bit wrap: next_code[1] 0xfffe, three len 1 symbols get 0xfffe, 0xffff, then 0 after the increment wraps",
+      "args": ["@tree", 2, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 1},
+        {"addr": "@tree", "offset": "0x6", "u16": 1},
+        {"addr": "@tree", "offset": "0xa", "u16": 1},
+        {"addr": "@bl", "offset": "0x0", "u16": 32767}
+      ]
+    },
+    {
+      "name": "16-bit running sum: next_code[2] is 0x8002 (0x18002 truncated)",
+      "args": ["@tree", 0, "@bl"],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 2},
+        {"addr": "@bl", "offset": "0x0", "u16": 16384},
+        {"addr": "@bl", "offset": "0x2", "u16": 16385}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 54544,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@tree"
+        ]
+      },
+      {
+        "range": [-4, 40]
+      },
+      {
+        "choices": [
+          "@bl"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@tree",
+        "offset": "0x2",
+        "type": "u16",
+        "count": 42,
+        "stride": 4,
+        "choices": [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+      },
+      {
+        "addr": "@bl",
+        "type": "short",
+        "count": 16,
+        "stride": 2
+      }
+    ]
+  }
+}

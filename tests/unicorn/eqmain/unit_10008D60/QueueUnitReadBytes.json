@@ -1,0 +1,315 @@
+{
+  "function": "QueueUnitReadBytes_guess",
+  "original": "0x10009a90",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unit",
+      "type": "ptr"
+    },
+    {
+      "name": "dst",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "rd": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "@src"
+        },
+        {
+          "offset": "0x04",
+          "u32": 32
+        },
+        {
+          "offset": "0x08",
+          "u32": 256
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@ctl"
+        },
+        {
+          "offset": "0x30",
+          "u32": 1
+        }
+      ]
+    },
+    "ctl": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": 0
+        }
+      ]
+    },
+    "src": {
+      "size": "0x4000",
+      "fill": "random"
+    },
+    "dst": {
+      "size": "0x4000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10009650": {
+      "name": "calculate_adler32_checksum_guess",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "zero count returns 0",
+      "args": ["@rd", "@dst", 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one byte",
+      "args": ["@rd", "@dst", 1],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three bytes, no whole dword",
+      "args": ["@rd", "@dst", 3],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "one whole dword",
+      "args": ["@rd", "@dst", 4],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "dword and three bytes",
+      "args": ["@rd", "@dst", 7],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "thirteen bytes from an unaligned cursor",
+      "args": ["@rd", "@dst", 13],
+      "memory": [
+        {"addr": "@rd", "offset": "0x00", "u32": "@src+0x3"}
+      ],
+      "expect": {"ret": 13}
+    },
+    {
+      "name": "count equals bytes left",
+      "args": ["@rd", "@dst", 32],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "count one below bytes left",
+      "args": ["@rd", "@dst", 31],
+      "expect": {"ret": 31}
+    },
+    {
+      "name": "count one above bytes left clamps",
+      "args": ["@rd", "@dst", 33],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "all-ones count clamps to bytes left",
+      "args": ["@rd", "@dst", "0xffffffff"],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "one byte left, all-ones count",
+      "args": ["@rd", "@dst", "0xffffffff"],
+      "memory": [
+        {"addr": "@rd", "offset": "0x04", "u32": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "nothing left returns 0 and copies nothing",
+      "args": ["@rd", "@dst", 5],
+      "memory": [
+        {"addr": "@rd", "offset": "0x04", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "flag 1 skips the checksum",
+      "args": ["@rd", "@dst", 5],
+      "memory": [
+        {"addr": "@ctl", "offset": "0x18", "u32": 1}
+      ],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "flag high bit skips the checksum",
+      "args": ["@rd", "@dst", 8],
+      "memory": [
+        {"addr": "@ctl", "offset": "0x18", "u32": "0x80000000"}
+      ],
+      "expect": {"ret": 8}
+    },
+    {
+      "name": "flag set and nothing left",
+      "args": ["@rd", "@dst", 0],
+      "memory": [
+        {"addr": "@ctl", "offset": "0x18", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "checksum seed all ones",
+      "args": ["@rd", "@dst", 32],
+      "memory": [
+        {"addr": "@rd", "offset": "0x30", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "checksum seed zero",
+      "args": ["@rd", "@dst", 8],
+      "memory": [
+        {"addr": "@rd", "offset": "0x30", "u32": 0}
+      ],
+      "expect": {"ret": 8}
+    },
+    {
+      "name": "checksum block of exactly 0x15b0",
+      "args": ["@rd", "@dst", 5552],
+      "memory": [
+        {"addr": "@rd", "offset": "0x04", "u32": 8192}
+      ],
+      "expect": {"ret": 5552}
+    },
+    {
+      "name": "checksum block of 0x15b1 splits",
+      "args": ["@rd", "@dst", 5553],
+      "memory": [
+        {"addr": "@rd", "offset": "0x04", "u32": 8192}
+      ],
+      "expect": {"ret": 5553}
+    },
+    {
+      "name": "checksum over 0x1800 bytes",
+      "args": ["@rd", "@dst", 6144],
+      "memory": [
+        {"addr": "@rd", "offset": "0x04", "u32": 8192}
+      ],
+      "expect": {"ret": 6144}
+    },
+    {
+      "name": "dst is the checksum slot (stored value is overwritten by the copy)",
+      "args": ["@rd", "@rd+0x30", 4],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "dst is the cursor (re-read after the copy)",
+      "args": ["@rd", "@rd", 4],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "dst is the bytes-left slot (stored value is overwritten)",
+      "args": ["@rd", "@rd+0x04", 4],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "dst is the total-read slot (re-read after the copy)",
+      "args": ["@rd", "@rd+0x08", 4],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "dst is the flag object pointer",
+      "args": ["@rd", "@rd+0x1c", 4],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "total-read counter wraps",
+      "args": ["@rd", "@dst", 32],
+      "memory": [
+        {"addr": "@rd", "offset": "0x08", "u32": "0xfffffff0"}
+      ],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "bytes left all-ones, short count",
+      "args": ["@rd", "@dst", 16],
+      "memory": [
+        {"addr": "@rd", "offset": "0x04", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 16}
+    }
+  ],
+  "fuzz": {
+    "seed": 39568,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rd"
+        ]
+      },
+      {
+        "choices": [
+          "@dst",
+          "@dst+0x3",
+          "@dst+0x10",
+          "@rd",
+          "@rd+0x4",
+          "@rd+0x8",
+          "@rd+0x1c",
+          "@rd+0x30"
+        ]
+      },
+      {
+        "choices": [0, 1, 2, 3, 4, 5, 7, 8, 13, 31, 32, 33, 64, 256, 4294967295]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rd",
+        "offset": "0x00",
+        "type": "ptr",
+        "choices": ["@src", "@src+0x1", "@src+0x3", "@src+0x100"]
+      },
+      {
+        "addr": "@rd",
+        "offset": "0x04",
+        "type": "u32",
+        "choices": [0, 1, 3, 4, 7, 8, 32, 33, 64]
+      },
+      {
+        "addr": "@rd",
+        "offset": "0x08",
+        "type": "u32",
+        "choices": [0, 32, 4294967280, 4294967295]
+      },
+      {
+        "addr": "@rd",
+        "offset": "0x30",
+        "type": "u32"
+      },
+      {
+        "addr": "@ctl",
+        "offset": "0x18",
+        "type": "u32",
+        "choices": [0, 0, 1, 2147483648]
+      }
+    ]
+  }
+}

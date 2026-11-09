@@ -1,0 +1,118 @@
+{
+  "function": "eqmainShowOkDialog_guess",
+  "original": "0x10002b30",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {"size": "0x100", "fill": "zero"},
+    "okText": {"size": "0x20", "fill": "zero"},
+    "other": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004CEB8", "u32": "@obj"},
+    {"addr": "0x10055888", "u32": "@okText"},
+    {"addr": "@okText", "cstr": "OK"}
+  ],
+  "callees": {
+    "0x10001ff0": {
+      "name": "eqmainRunDialog_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr",
+        "cstr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical message, OK text from the global",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "empty message",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "long message (over 210 characters)",
+      "args": [
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+      ]
+    },
+    {
+      "name": "message with format characters and a newline",
+      "args": [
+        "100%s \\n %d"
+      ]
+    },
+    {
+      "name": "null message pointer is still passed through",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "null object global",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x1004CEB8", "u32": 0}
+      ]
+    },
+    {
+      "name": "null OK text global",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x10055888", "u32": 0}
+      ]
+    },
+    {
+      "name": "OK text global aliases the object",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x10055888", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "OK text global points at another string",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x10055888", "u32": "@other"},
+        {"addr": "@other", "cstr": "Accept"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 11056,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "0x1004CEB8", "type": "ptr", "choices": [0, "@obj", "@okText", "@other"]},
+      {"addr": "0x10055888", "type": "ptr", "choices": [0, "@okText", "@obj", "@other"]}
+    ]
+  }
+}

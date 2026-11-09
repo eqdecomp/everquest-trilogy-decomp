@@ -1,0 +1,94 @@
+{
+  "function": "CpuidFeatureFlags_guess",
+  "original": "0x10024520",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u32",
+  "objects": {},
+  "memory": [
+    {"addr": "0x101258F4", "u32": 0}
+  ],
+  "callees": {
+    "0x10024490": {
+      "name": "FUN_10024490",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "HasCpuid returns 0: no CPUID, returns 0 and DAT_101258F4 is untouched",
+      "callees": {"0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": 0}},
+      "memory": [{"addr": "0x101258F4", "u32": "0x12345678"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "HasCpuid returns 0x10000: AX is zero, so the no-CPUID path runs although EAX is not",
+      "callees": {"0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": 65536}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "HasCpuid returns 0xFFFF0000: AX is zero again",
+      "callees": {"0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": -65536}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "HasCpuid returns 0x8000: AX is nonzero (negative as a short)",
+      "callees": {"0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": 32768}}
+    },
+    {
+      "name": "HasCpuid returns -1: AX is 0xFFFF",
+      "callees": {"0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": -1}}
+    },
+    {
+      "name": "HasCpuid returns 0x10001: AX is 1 with bits set above 16",
+      "callees": {"0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": 65537}}
+    },
+    {
+      "name": "CPUID path, vendor matches GenuineIntel, DAT_101258F4 already 1 stays 1",
+      "memory": [{"addr": "0x101258F4", "u32": 1}]
+    },
+    {
+      "name": "CPUID path, vendor matches GenuineIntel, DAT_101258F4 = 0xDEADBEEF is left alone",
+      "memory": [{"addr": "0x101258F4", "u32": "0xDEADBEEF"}]
+    },
+    {
+      "name": "reference string AuthenticAMD: every byte differs, DAT_101258F4 set to 1",
+      "memory": [{"addr": "0x100486FC", "cstr": "AuthenticAMD"}]
+    },
+    {
+      "name": "reference string AuthenticAMD with DAT_101258F4 = 0xDEADBEEF: the store writes 1, it does not or in",
+      "memory": [{"addr": "0x100486FC", "cstr": "AuthenticAMD"}, {"addr": "0x101258F4", "u32": "0xDEADBEEF"}]
+    },
+    {
+      "name": "reference string XenuineIntel: only byte 0 differs (the loop starts at 0)",
+      "memory": [{"addr": "0x100486FC", "cstr": "XenuineIntel"}]
+    },
+    {
+      "name": "reference string GenuineIntem: only byte 11 differs (the loop reaches byte 11)",
+      "memory": [{"addr": "0x100486FC", "cstr": "GenuineIntem"}]
+    },
+    {
+      "name": "reference string GXnuineIntel: only byte 1 differs (the loop steps by one)",
+      "memory": [{"addr": "0x100486FC", "cstr": "GXnuineIntel"}]
+    },
+    {
+      "name": "reference byte 12 is X, not the NUL: the compare stops at byte 11, so no write",
+      "memory": [{"addr": "0x10048708", "u8": 88}]
+    }
+  ],
+  "fuzz": {
+    "seed": 148768,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x101258F4", "type": "u32"},
+      {"addr": "0x100486FC", "type": "u8", "count": 12, "choices": [71, 101, 110, 117, 105, 73, 116, 108, 88]},
+      {"addr": "0x10048708", "type": "u8", "choices": [0, 88], "p": 0.5}
+    ]
+  }
+}

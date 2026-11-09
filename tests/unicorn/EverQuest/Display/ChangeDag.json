@@ -1,0 +1,170 @@
+{
+  "function": "CDisplay::ChangeDag",
+  "original": "0x004119A6",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": ["ptr", "cstr"],
+  "ret": "ptr",
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "zero"},
+    "world1": {"size": "0x100", "fill": "zero"},
+    "world2": {"size": "0x100", "fill": "zero"},
+    "world3": {"size": "0x100", "fill": "zero"},
+    "world4": {"size": "0x100", "fill": "zero"},
+    "dag": {"size": "0x20", "fill": "zero"},
+    "tag": {"size": "0x20", "fill": "zero"},
+    "definition": {"size": "0x20", "fill": "zero"},
+    "fallback_definition": {"size": "0x20", "fill": "zero"},
+    "wrong_definition": {"size": "0x20", "fill": "zero"},
+    "sprite_dm": {"size": "0x20", "fill": "zero"},
+    "sprite_hier": {"size": "0x20", "fill": "zero"},
+    "dict1": {"size": "0x20", "fill": "zero"},
+    "dict2": {"size": "0x20", "fill": "zero"},
+    "get_dag": {"size": "0x10", "fill": "zero"},
+    "create_dm": {"size": "0x10", "fill": "zero"},
+    "create_hier": {"size": "0x10", "fill": "zero"},
+    "get_radius": {"size": "0x10", "fill": "zero"},
+    "set_radius": {"size": "0x10", "fill": "zero"},
+    "set_dag": {"size": "0x10", "fill": "zero"},
+    "destroy_dm": {"size": "0x10", "fill": "zero"},
+    "destroy_hier": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E52B8", "u32": "@get_dag"},
+    {"addr": "0x006E52E0", "u32": "@dict1"},
+    {"addr": "0x006E50CC", "u32": "@create_dm"},
+    {"addr": "0x006E518C", "u32": "@create_hier"},
+    {"addr": "0x006E52D0", "u32": "@get_radius"},
+    {"addr": "0x006E53E8", "u32": "@set_radius"},
+    {"addr": "0x006E53CC", "u32": "@set_dag"},
+    {"addr": "0x006E50D8", "u32": "@destroy_dm"},
+    {"addr": "0x006E5210", "u32": "@destroy_hier"},
+    {"addr": "@display", "offset": "0x4", "u32": "@world1"},
+    {"addr": "@tag", "u32": "0x14"}
+  ],
+  "callees": {
+    "0x005224FB": {"name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "@get_dag": {"name": "t3dGetDagSprite", "conv": "cdecl", "args": ["ptr"], "ret": "@tag"},
+    "@dict1": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [0, 0]},
+    "@dict2": {"name": "replacement dictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@wrong_definition"},
+    "@create_dm": {"name": "s3dCreateDMSprite", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": "@sprite_dm"},
+    "@create_hier": {"name": "t3dCreateHierarchicalSprite", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": "@sprite_hier"},
+    "@get_radius": {"name": "t3dGetHierarchicalSpriteDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr"], "ret_float": 3.0},
+    "@set_radius": {"name": "t3dSetHierarchicalSpriteDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr", "float"], "ret": 0},
+    "@set_dag": {"name": "t3dSetDagSprite", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "@destroy_dm": {"name": "s3dDestroyDMSprite", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "@destroy_hier": {"name": "t3dDestroyHierarchicalSprite", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "null dag returns without looking up or replacing a sprite", "args": [0, "IT4"], "expect": {"ret": 0}},
+    {"name": "null name installs no sprite and destroys a DM old sprite", "args": ["@dag", 0], "memory": [{"addr": "@tag", "u32": "0x48"}], "expect": {"ret": 0}},
+    {"name": "stale registers do not become the sprite when the name is null", "args": ["@dag", 0], "regs": {"eax": "0x0badf00d", "edx": "0x0badf00d", "ebx": "0x0badf00d", "esi": "0x0badf00d", "edi": "0x0badf00d", "ebp": "0x0badf00d"}, "expect": {"ret": 0}},
+    {
+      "name": "hierarchical lookup creates a sprite and preserves a hierarchical old sprite",
+      "args": ["@dag", "orc"],
+      "callees": {"@dict1": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition"}},
+      "expect": {}
+    },
+    {
+      "name": "hierarchical lookup reloads world for creation and releases after set-DAG changes the world",
+      "args": ["@dag", "orc"],
+      "callees": {
+        "@dict1": {
+          "name": "t3dGetPointerFromDictionary",
+          "conv": "cdecl",
+          "args": ["ptr", "cstr"],
+          "ret": "@definition",
+          "writes": [{"addr": "@display+0x4", "hex": "002f0060"}]
+        },
+        "@set_dag": {
+          "name": "t3dSetDagSprite",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 0,
+          "writes": [{"addr": "@display+0x4", "hex": "00300060"}]
+        }
+      }
+    },
+    {
+      "name": "IT4 radius exactly three skips the radius setter",
+      "args": ["@dag", "IT4"],
+      "callees": {
+        "@dict1": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition"},
+        "@get_radius": {"name": "t3dGetHierarchicalSpriteDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr"], "ret_float": 3.0}
+      },
+      "expect": {}
+    },
+    {
+      "name": "IT4 non-three radius is set to three",
+      "args": ["@dag", "IT4"],
+      "callees": {
+        "@dict1": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition"},
+        "@get_radius": {"name": "t3dGetHierarchicalSpriteDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr"], "ret_float": 2.75}
+      },
+      "expect": {}
+    },
+    {
+      "name": "IT4 unordered radius follows the original JZ and skips setter",
+      "args": ["@dag", "IT4"],
+      "callees": {
+        "@dict1": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition"},
+        "@get_radius": {"name": "t3dGetHierarchicalSpriteDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr"], "ret_float": "nan"}
+      },
+      "expect": {}
+    },
+    {
+      "name": "fallback uses cached dictionary function with reloaded world and reloads tag after replacement",
+      "args": ["@dag", "orc"],
+      "callees": {
+        "@dict1": {
+          "name": "t3dGetPointerFromDictionary",
+          "conv": "cdecl",
+          "args": ["ptr", "cstr"],
+          "ret": [0, "@fallback_definition"],
+          "writes": [
+            {"addr": "0x006E52E0", "hex": "00330060"},
+            {"addr": "@display+0x4", "hex": "002f0060"}
+          ]
+        },
+        "@create_dm": {
+          "name": "s3dCreateDMSprite",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": "@sprite_dm",
+          "writes": [{"addr": "@display+0x4", "hex": "00300060"}]
+        },
+        "@set_dag": {
+          "name": "t3dSetDagSprite",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 0,
+          "writes": [
+            {"addr": "@tag", "hex": "48000000"},
+            {"addr": "@display+0x4", "hex": "00310060"}
+          ]
+        }
+      },
+      "expect": {}
+    },
+    {
+      "name": "both dictionary lookups may miss",
+      "args": ["@dag", "missing"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unrecognized old sprite type is not destroyed",
+      "args": ["@dag", 0],
+      "memory": [{"addr": "@tag", "u32": "0x51"}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 4119,
+    "count": 30,
+    "args": [
+      {"choices": ["@dag", 0]},
+      {"choices": [0, "", "IT4", "skeleton", "missing"]}
+    ]
+  }
+}

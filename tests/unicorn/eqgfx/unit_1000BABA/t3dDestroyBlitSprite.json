@@ -1,0 +1,362 @@
+{
+  "function": "t3dDestroyBlitSprite",
+  "original": "0x1000d06a",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "int"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@entry"
+        },
+        {
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "offset": "0x68",
+          "u32": "@referenceA"
+        },
+        {
+          "offset": "0x6c",
+          "u32": "@referenceB"
+        }
+      ]
+    },
+    "entry": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "referenceA": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "referenceB": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 9
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": "0x13579bdf"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "refuse positive state",
+      "args": [
+        17,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "refuse negative state",
+      "args": [
+        29,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "destroy without dictionary removal",
+      "args": [
+        37,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@referenceA",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@referenceB",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10015d81": {
+          "ret": "0x2468ace0"
+        }
+      }
+    },
+    {
+      "name": "remove dictionary entry and free it",
+      "args": [
+        -4,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@referenceA",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@referenceB",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "flag low bit among other bits",
+      "args": [
+        0,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "other flags do not remove",
+      "args": [
+        8,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 254
+        }
+      ]
+    },
+    {
+      "name": "null dictionary entry still removes but is not freed",
+      "args": [
+        12,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "shared reference count wraps",
+      "args": [
+        15,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x68",
+          "u32": "@referenceA"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x6c",
+          "u32": "@referenceA"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@referenceA",
+          "offset": "0x10",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "destroy state zero boundary",
+      "args": [
+        21,
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 53354,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -20,
+          20
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          1,
+          -1,
+          2,
+          "0x7fffffff"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0xc",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@entry",
+          0
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x68",
+        "type": "ptr",
+        "choices": [
+          "@referenceA",
+          "@referenceB"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x6c",
+        "type": "ptr",
+        "choices": [
+          "@referenceA",
+          "@referenceB"
+        ]
+      },
+      {
+        "addr": "@referenceA",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          -2,
+          2
+        ]
+      },
+      {
+        "addr": "@referenceB",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          -2,
+          2
+        ]
+      }
+    ]
+  }
+}

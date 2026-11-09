@@ -1,0 +1,226 @@
+{
+  "function": "FindNamedBlockBody_guess",
+  "original": "0x10024cd0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "cstr",
+  "objects": {
+    "text": {"size": "0x200", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10125904", "u32": "@text"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "flag zero returns NULL before any search",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 0},
+        {"addr": "@text", "cstr": "Name {\nBody"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "flag all ones counts as set",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 4294967295},
+        {"addr": "@text", "cstr": "Name {\nBody"}
+      ],
+      "expect": {"ret": "Body"}
+    },
+    {
+      "name": "basic: name, brace, then body",
+      "args": ["Layout"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Layout {\nBody"}
+      ],
+      "expect": {"ret": "Body"}
+    },
+    {
+      "name": "name missing returns NULL",
+      "args": ["Other"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Layout {\nBody"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "brace only before the name returns NULL",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "{ Name\nBody"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no brace after the name returns NULL",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Name\nBody"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "brace followed by the terminator",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Name {"}
+      ],
+      "expect": {"ret": ""}
+    },
+    {
+      "name": "blanks after the brace run into the terminator",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Name {\n \r "}
+      ],
+      "expect": {"ret": ""}
+    },
+    {
+      "name": "blanks after the brace stop at the first other character",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Name {\n \r X"}
+      ],
+      "expect": {"ret": "X"}
+    },
+    {
+      "name": "tab after the brace is not skipped",
+      "args": ["Sect"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Sect{ \r\n\t x"}
+      ],
+      "expect": {"ret": "\t x"}
+    },
+    {
+      "name": "first occurrence of the name and its own brace",
+      "args": ["X"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "X {a} X {b}"}
+      ],
+      "expect": {"ret": "a} X {b}"}
+    },
+    {
+      "name": "brace search starts at the name, not the buffer start",
+      "args": ["B"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "{1} B {\n2}"}
+      ],
+      "expect": {"ret": "2}"}
+    },
+    {
+      "name": "empty name matches the buffer start",
+      "args": [""],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "{ a"}
+      ],
+      "expect": {"ret": "a"}
+    },
+    {
+      "name": "name inside a longer word",
+      "args": ["Layout"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "xLayout {\nB"}
+      ],
+      "expect": {"ret": "B"}
+    },
+    {
+      "name": "high-bit byte after the brace is not whitespace",
+      "args": ["S"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "S {"},
+        {"addr": "@text", "offset": 3, "hex": "c3"}
+      ],
+      "expect": {"ret": "Ã"}
+    },
+    {
+      "name": "newlines after the brace are all skipped",
+      "args": ["A"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "A {\n\n\n\nQ"}
+      ],
+      "expect": {"ret": "Q"}
+    },
+    {
+      "name": "carriage returns and spaces mixed",
+      "args": ["Z"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Z {\r \r \nK"}
+      ],
+      "expect": {"ret": "K"}
+    },
+    {
+      "name": "name after an earlier brace",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "{x} Name {\nQ"}
+      ],
+      "expect": {"ret": "Q"}
+    },
+    {
+      "name": "name is the whole text, no brace",
+      "args": ["Name"],
+      "memory": [
+        {"addr": "0x10125904", "u32": "@text"},
+        {"addr": "0x10125900", "u32": 1},
+        {"addr": "@text", "cstr": "Name"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 7310442,
+    "count": 40,
+    "args": [
+      {"choices": ["Name", "A", "B", "AB", "X", "", "{", " ", "\n", "A {"]}
+    ],
+    "memory": [
+      {"addr": "0x10125900", "type": "u32", "choices": [0, 1, 2, 4294967295]},
+      {"addr": "@text", "type": "u8", "count": 40, "choices": [0, 32, 9, 10, 13, 123, 125, 65, 66, 88, 195]}
+    ]
+  }
+}

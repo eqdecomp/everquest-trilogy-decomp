@@ -1,0 +1,297 @@
+{
+  "function": "t3dSetCompositeSpriteDefinitionTransformation",
+  "original": "0x1000d893",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "frameData", "type": "ptr"},
+    {"name": "partIndex", "type": "u32"},
+    {"name": "frameIndex", "type": "u32"},
+    {"name": "scale", "type": "float"},
+    {"name": "heading", "type": "float"},
+    {"name": "pitch", "type": "float"},
+    {"name": "roll", "type": "float"},
+    {"name": "translation", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "framedata": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": 4},
+        {"offset": "0x18", "u32": 3},
+        {"offset": "0x1c", "u32": "@parts"}
+      ]
+    },
+    "parts": {"size": "0x500", "fill": "zero"},
+    "translation": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1004f2dd": {
+      "name": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+      "conv": "cdecl",
+      "args": ["float", "float", "float", "ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "frame 2 part 1 is element 7 (partsPerFrame * frame + part)",
+      "args": ["@framedata", 1, 2, 1.5, 0.25, 0.5, 0.75, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0x16c", "f32": 1.0},
+        {"addr": "@parts", "offset": "0x170", "f32": 2.0},
+        {"addr": "@parts", "offset": "0x174", "f32": 3.0},
+        {"addr": "@parts", "offset": "0x178", "f32": 4.0},
+        {"addr": "@parts", "offset": "0x17c", "f32": 5.0},
+        {"addr": "@parts", "offset": "0x180", "f32": 6.0},
+        {"addr": "@parts", "offset": "0x184", "f32": 7.0},
+        {"addr": "@parts", "offset": "0x188", "f32": 8.0},
+        {"addr": "@parts", "offset": "0x18c", "f32": 9.0},
+        {"addr": "@translation", "offset": "0x0", "f32": 10.0},
+        {"addr": "@translation", "offset": "0x4", "f32": 20.0},
+        {"addr": "@translation", "offset": "0x8", "f32": 30.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "last frame and last part (element 11), negative scale",
+      "args": ["@framedata", 2, 3, -2.0, 1.0, -1.0, 0.5, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0x23c", "f32": 0.5},
+        {"addr": "@parts", "offset": "0x240", "f32": -0.25},
+        {"addr": "@parts", "offset": "0x244", "f32": 2.0},
+        {"addr": "@parts", "offset": "0x248", "f32": 4.0},
+        {"addr": "@parts", "offset": "0x24c", "f32": -8.0},
+        {"addr": "@parts", "offset": "0x250", "f32": 0.125},
+        {"addr": "@parts", "offset": "0x254", "f32": 1.0},
+        {"addr": "@parts", "offset": "0x258", "f32": -1.5},
+        {"addr": "@parts", "offset": "0x25c", "f32": 3.0},
+        {"addr": "@translation", "offset": "0x0", "f32": -1.5},
+        {"addr": "@translation", "offset": "0x4", "f32": 0.0},
+        {"addr": "@translation", "offset": "0x8", "f32": 2.5}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "zero scale: signed zeros and infinite scale field (element 0)",
+      "args": ["@framedata", 0, 0, 0.0, 0.0, 0.0, 0.0, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0x0", "f32": -1.5},
+        {"addr": "@parts", "offset": "0x4", "f32": 2.0},
+        {"addr": "@parts", "offset": "0x8", "f32": -3.25},
+        {"addr": "@parts", "offset": "0xc", "f32": 4.0},
+        {"addr": "@parts", "offset": "0x10", "f32": 0.0},
+        {"addr": "@parts", "offset": "0x14", "f32": -0.0},
+        {"addr": "@parts", "offset": "0x18", "f32": 7.0},
+        {"addr": "@parts", "offset": "0x1c", "f32": 8.0},
+        {"addr": "@parts", "offset": "0x20", "f32": -9.0},
+        {"addr": "@translation", "offset": "0x0", "f32": 1.0},
+        {"addr": "@translation", "offset": "0x4", "f32": 2.0},
+        {"addr": "@translation", "offset": "0x8", "f32": 3.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "frame index equal to frameCount is out of range",
+      "args": ["@framedata", 0, 4, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "part index equal to partsPerFrame is out of range",
+      "args": ["@framedata", 3, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "last valid part of frame 0 (element 2) with denormal and negative-zero translation",
+      "args": ["@framedata", 2, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0x68", "f32": 0.5},
+        {"addr": "@parts", "offset": "0x6c", "f32": -0.5},
+        {"addr": "@parts", "offset": "0x70", "f32": 1.0},
+        {"addr": "@parts", "offset": "0x74", "f32": -1.0},
+        {"addr": "@parts", "offset": "0x78", "f32": 2.0},
+        {"addr": "@parts", "offset": "0x7c", "f32": -2.0},
+        {"addr": "@parts", "offset": "0x80", "f32": 4.0},
+        {"addr": "@parts", "offset": "0x84", "f32": -4.0},
+        {"addr": "@parts", "offset": "0x88", "f32": 0.25},
+        {"addr": "@translation", "offset": "0x0", "f32": 1e-40},
+        {"addr": "@translation", "offset": "0x4", "f32": -0.0},
+        {"addr": "@translation", "offset": "0x8", "f32": 3.5}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "part index 0xffffffff is never below partsPerFrame (unsigned)",
+      "args": ["@framedata", 4294967295, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "frame index 0x80000000 is not below frameCount (unsigned)",
+      "args": ["@framedata", 0, 2147483648, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "callee returns -1: error code, element untouched, null translation never read",
+      "args": ["@framedata", 1, 1, 2.0, 1.0, 1.0, 1.0, 0],
+      "callees": {
+        "0x1004f2dd": {
+          "name": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+          "conv": "cdecl",
+          "args": ["float", "float", "float", "ptr"],
+          "ret": -1
+        }
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "callee returns INT_MIN: still an error",
+      "args": ["@framedata", 1, 1, 2.0, 1.0, 1.0, 1.0, "@translation"],
+      "callees": {
+        "0x1004f2dd": {
+          "name": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+          "conv": "cdecl",
+          "args": ["float", "float", "float", "ptr"],
+          "ret": -2147483648
+        }
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "callee returns 0: success, status 0 is returned",
+      "args": ["@framedata", 1, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "callees": {
+        "0x1004f2dd": {
+          "name": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+          "conv": "cdecl",
+          "args": ["float", "float", "float", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "callee returns 0x7fffffff: returned as is",
+      "args": ["@framedata", 1, 1, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "callees": {
+        "0x1004f2dd": {
+          "name": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+          "conv": "cdecl",
+          "args": ["float", "float", "float", "ptr"],
+          "ret": 2147483647
+        }
+      },
+      "expect": {"ret": 2147483647}
+    },
+    {
+      "name": "callee returns 5: returned as is",
+      "args": ["@framedata", 1, 1, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "callees": {
+        "0x1004f2dd": {
+          "name": "t3dCalculateCoefficientsFromHeadingPitchRoll",
+          "conv": "cdecl",
+          "args": ["float", "float", "float", "ptr"],
+          "ret": 5
+        }
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "scale 1e20: square is 1e40 in extended precision (element 4)",
+      "args": ["@framedata", 1, 1, 1e20, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0xd0", "f32": 1.5},
+        {"addr": "@parts", "offset": "0xd4", "f32": -2.0},
+        {"addr": "@parts", "offset": "0xd8", "f32": 3.0},
+        {"addr": "@parts", "offset": "0xdc", "f32": 0.5},
+        {"addr": "@parts", "offset": "0xe0", "f32": -0.25},
+        {"addr": "@parts", "offset": "0xe4", "f32": 4.0},
+        {"addr": "@parts", "offset": "0xe8", "f32": 1.25},
+        {"addr": "@parts", "offset": "0xec", "f32": -1.0},
+        {"addr": "@parts", "offset": "0xf0", "f32": 2.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "scale 1e-20: square is a float denormal (element 5)",
+      "args": ["@framedata", 2, 1, 1e-20, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0x104", "f32": 1.5},
+        {"addr": "@parts", "offset": "0x108", "f32": -2.0},
+        {"addr": "@parts", "offset": "0x10c", "f32": 3.0},
+        {"addr": "@parts", "offset": "0x110", "f32": 0.5},
+        {"addr": "@parts", "offset": "0x114", "f32": -0.25},
+        {"addr": "@parts", "offset": "0x118", "f32": 4.0},
+        {"addr": "@parts", "offset": "0x11c", "f32": 1.25},
+        {"addr": "@parts", "offset": "0x120", "f32": -1.0},
+        {"addr": "@parts", "offset": "0x124", "f32": 2.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "scale 1.1: square is inexact in float (element 9)",
+      "args": ["@framedata", 0, 3, 1.1, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@parts", "offset": "0x1d4", "f32": 1.5},
+        {"addr": "@parts", "offset": "0x1d8", "f32": -2.0},
+        {"addr": "@parts", "offset": "0x1dc", "f32": 3.0},
+        {"addr": "@parts", "offset": "0x1e0", "f32": 0.5},
+        {"addr": "@parts", "offset": "0x1e4", "f32": -0.25},
+        {"addr": "@parts", "offset": "0x1e8", "f32": 4.0},
+        {"addr": "@parts", "offset": "0x1ec", "f32": 1.25},
+        {"addr": "@parts", "offset": "0x1f0", "f32": -1.0},
+        {"addr": "@parts", "offset": "0x1f4", "f32": 2.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "partsPerFrame zero: no part is in range",
+      "args": ["@framedata", 0, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@framedata", "offset": "0x18", "u32": 0}
+      ],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "frameCount zero: no frame is in range",
+      "args": ["@framedata", 0, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@framedata", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "single frame and single part (element 0)",
+      "args": ["@framedata", 0, 0, 1.5, 1.0, 1.0, 1.0, "@translation"],
+      "memory": [
+        {"addr": "@framedata", "offset": "0x14", "u32": 1},
+        {"addr": "@framedata", "offset": "0x18", "u32": 1}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 1000893,
+    "count": 40,
+    "args": [
+      {"choices": ["@framedata"]},
+      {"range": [0, 4]},
+      {"range": [0, 5]},
+      {},
+      {},
+      {},
+      {},
+      {"choices": ["@translation"]}
+    ],
+    "memory": [
+      {"addr": "@framedata", "offset": "0x14", "type": "u32", "range": [0, 5]},
+      {"addr": "@framedata", "offset": "0x18", "type": "u32", "range": [0, 4]},
+      {"addr": "@parts", "type": "float", "count": 260},
+      {"addr": "@translation", "type": "float", "count": 3}
+    ]
+  }
+}

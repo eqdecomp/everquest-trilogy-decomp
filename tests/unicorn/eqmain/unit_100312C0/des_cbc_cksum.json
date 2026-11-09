@@ -1,0 +1,195 @@
+{
+  "function": "des_cbc_cksum_guess",
+  "original": "0x10031b40",
+  "sources": [
+    "src/eqmain/unit_100312C0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "input",
+      "type": "ptr"
+    },
+    {
+      "name": "output",
+      "type": "ptr"
+    },
+    {
+      "name": "length",
+      "type": "int"
+    },
+    {
+      "name": "schedule",
+      "type": "ptr"
+    },
+    {
+      "name": "ivec",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "input": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "output": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "schedule": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "ivec": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10031ce0": {
+      "name": "DesCryptBlock_guess",
+      "conv": "cdecl",
+      "args": [
+        "mem:8",
+        "ptr",
+        "int"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "partial 1 byte (case 1)",
+      "args": ["@input", "@output", 1, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 2 bytes (case 2)",
+      "args": ["@input", "@output", 2, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 3 bytes (case 3)",
+      "args": ["@input", "@output", 3, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 4 bytes (case 4)",
+      "args": ["@input", "@output", 4, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 5 bytes (case 5)",
+      "args": ["@input", "@output", 5, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 6 bytes (case 6)",
+      "args": ["@input", "@output", 6, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 7 bytes (case 7)",
+      "args": ["@input", "@output", 7, "@schedule", "@ivec"]
+    },
+    {
+      "name": "one full block (length 8 takes the full read)",
+      "args": ["@input", "@output", 8, "@schedule", "@ivec"]
+    },
+    {
+      "name": "one full block then 1 byte",
+      "args": ["@input", "@output", 9, "@schedule", "@ivec"]
+    },
+    {
+      "name": "one full block then 7 bytes",
+      "args": ["@input", "@output", 15, "@schedule", "@ivec"]
+    },
+    {
+      "name": "two full blocks",
+      "args": ["@input", "@output", 16, "@schedule", "@ivec"]
+    },
+    {
+      "name": "two full blocks then 4 bytes",
+      "args": ["@input", "@output", 20, "@schedule", "@ivec"]
+    },
+    {
+      "name": "three full blocks",
+      "args": ["@input", "@output", 24, "@schedule", "@ivec"]
+    },
+    {
+      "name": "length 0 writes the untouched ivec",
+      "args": ["@input", "@output", 0, "@schedule", "@ivec"]
+    },
+    {
+      "name": "length -1 does no block",
+      "args": ["@input", "@output", -1, "@schedule", "@ivec"]
+    },
+    {
+      "name": "length -8 does no block",
+      "args": ["@input", "@output", -8, "@schedule", "@ivec"]
+    },
+    {
+      "name": "length 0 with no output",
+      "args": ["@input", 0, 0, "@schedule", "@ivec"]
+    },
+    {
+      "name": "partial 3 bytes with no output",
+      "args": ["@input", 0, 3, "@schedule", "@ivec"]
+    },
+    {
+      "name": "one full block with no output",
+      "args": ["@input", 0, 8, "@schedule", "@ivec"]
+    },
+    {
+      "name": "output aliases input (output is written last)",
+      "args": ["@input", "@input", 16, "@schedule", "@ivec"]
+    },
+    {
+      "name": "output aliases ivec (the chain is read first)",
+      "args": ["@input", "@ivec", 8, "@schedule", "@ivec"]
+    }
+  ],
+  "fuzz": {
+    "seed": 203584,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@input"
+        ]
+      },
+      {
+        "choices": [
+          "@output",
+          0
+        ]
+      },
+      {
+        "range": [
+          -4,
+          30
+        ]
+      },
+      {
+        "choices": [
+          "@schedule"
+        ]
+      },
+      {
+        "choices": [
+          "@ivec"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@input",
+        "size": 64
+      },
+      {
+        "addr": "@ivec",
+        "size": 16
+      },
+      {
+        "addr": "@schedule",
+        "size": 128
+      }
+    ]
+  }
+}

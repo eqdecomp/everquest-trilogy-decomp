@@ -1,0 +1,137 @@
+{
+  "function": "_t3dCreatePolyhedronFromDefinition_guess",
+  "original": "0x1002e37c",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "parser", "type": "ptr"},
+    {"name": "polyhedronOut", "type": "ptr"},
+    {"name": "definitionName", "type": "cstr"},
+    {"name": "polyhedronTag", "type": "cstr"},
+    {"name": "boundingRadius", "type": "float"}
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {"size": "0x100", "fill": "random", "init": [{"offset": "0x0", "u32": "@world"}]},
+    "world": {"size": "0x100", "fill": "random"},
+    "polyhedronout": {"size": "0x100", "fill": "random"},
+    "definition": {"size": "0x100", "fill": "random"},
+    "polyhedron": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition"},
+    "0x1002902b": {"name": "logParserError_guess", "conv": "cdecl", "args": ["ptr", "cstr"], "varargs": "printf"},
+    "0x10018cf8": {"name": "t3dCreatePolyhedron", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": "@polyhedron"},
+    "0x10018deb": {"name": "t3dSetPolyhedronTag", "conv": "cdecl", "args": ["ptr", "ptr", "cstr"], "ret": 0},
+    "0x1001b0bb": {"name": "t3dSetPolyhedronDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr", "float"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "no definition: the lookup returns null, logs the name, returns 1 without creating",
+      "args": ["@parser", "@polyhedronout", "abc", "abc", 1.5],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "no definition with null tag and zero radius: same log, returns 1",
+      "args": ["@parser", "@polyhedronout", "abc", 0, 0.0],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "create returns null: stores null in the out slot, logs 'could not create', returns 1",
+      "args": ["@parser", "@polyhedronout", "abc", "abc", 1.5],
+      "callees": {"0x10018cf8": {"name": "t3dCreatePolyhedron", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null tag and zero radius: nothing else is set, returns 0",
+      "args": ["@parser", "@polyhedronout", "abc", 0, 0.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null tag and negative zero radius: -0.0 counts as zero, returns 0",
+      "args": ["@parser", "@polyhedronout", "abc", 0, -0.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null tag, radius 1.5: the radius call gets the stored polyhedron, returns 0",
+      "args": ["@parser", "@polyhedronout", "abc", 0, 1.5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null tag, radius call returns 1: logs the scale message, returns 1",
+      "args": ["@parser", "@polyhedronout", "abc", 0, 1.5],
+      "callees": {"0x1001b0bb": {"name": "t3dSetPolyhedronDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr", "float"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null tag, radius call returns -1: any nonzero is a failure",
+      "args": ["@parser", "@polyhedronout", "abc", 0, 1.5],
+      "callees": {"0x1001b0bb": {"name": "t3dSetPolyhedronDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr", "float"], "ret": -1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag set, zero radius: the radius call is skipped, returns 0",
+      "args": ["@parser", "@polyhedronout", "abc", "tag", 0.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tag set, radius 1.5: both calls made, returns 0",
+      "args": ["@parser", "@polyhedronout", "abc", "tag", 1.5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty tag string is still passed to the tag call (only a null tag is skipped), returns 0",
+      "args": ["@parser", "@polyhedronout", "abc", "", 1.5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tag set, radius call returns 1: logs the scale message, returns 1",
+      "args": ["@parser", "@polyhedronout", "abc", "tag", 1.5],
+      "callees": {"0x1001b0bb": {"name": "t3dSetPolyhedronDefinitionBoundingRadius", "conv": "cdecl", "args": ["ptr", "float"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag call returns 1: logs the tag message, returns 1, radius call skipped",
+      "args": ["@parser", "@polyhedronout", "abc", "tag", 1.5],
+      "callees": {"0x10018deb": {"name": "t3dSetPolyhedronTag", "conv": "cdecl", "args": ["ptr", "ptr", "cstr"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag call returns -1: any nonzero is a failure, radius call skipped",
+      "args": ["@parser", "@polyhedronout", "abc", "tag", 1.5],
+      "callees": {"0x10018deb": {"name": "t3dSetPolyhedronTag", "conv": "cdecl", "args": ["ptr", "ptr", "cstr"], "ret": -1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag call overwrites the stored polyhedron: radius call gets the overwritten value, returns 0",
+      "args": ["@parser", "@polyhedron", "abc", "tag", 1.5],
+      "callees": {"0x10018deb": {"name": "t3dSetPolyhedronTag", "conv": "cdecl", "args": ["ptr", "ptr", "cstr"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "efbeadde"}]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null world is passed on unchecked",
+      "args": ["@parser", "@polyhedronout", "abc", "abc", 1.5],
+      "memory": [{"addr": "@parser", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 189308,
+    "count": 40,
+    "args": [
+      {"choices": ["@parser"]},
+      {"choices": ["@polyhedronout", "@polyhedron"]},
+      {"choices": ["abc", "a longer definition name", "x"]},
+      {"choices": ["tag", "", 0]},
+      {"choices": [0.0, -0.0, 1.5, -2.5, 0.001]}
+    ],
+    "memory": [
+      {"addr": "@parser", "offset": "0x0", "type": "u32", "choices": ["@world", 0]}
+    ]
+  }
+}

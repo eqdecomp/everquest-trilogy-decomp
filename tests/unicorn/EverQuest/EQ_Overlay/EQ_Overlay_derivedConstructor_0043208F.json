@@ -1,0 +1,192 @@
+{
+  "function": "EQ_Columns::EQ_Columns",
+  "original": "0x0043208f",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_columns",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "eq_columns": {
+      "size": "0x1190",
+      "fill": "random"
+    },
+    "setrect": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00534248",
+      "u32": "@setrect"
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450049": {
+      "name": "EQ_Overlay::EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004334af": {
+      "name": "EQ_Columns::ReadHighScores_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": [0, 1]
+    },
+    "0x004503be": {
+      "name": "EQ_Overlay_AddButton_guess",
+      "conv": "thiscall",
+      "args": ["int", "mem:16", "int", "int", "int", "int"],
+      "ret": 0
+    },
+    "0x00432264": {
+      "name": "EQ_Columns::Restart_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "random initial fields",
+      "args": []
+    },
+    {
+      "name": "zero-filled object",
+      "args": [],
+      "objects": {
+        "eq_columns": {
+          "size": "0x1190",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "rectangle and state boundaries",
+      "args": [],
+      "objects": {
+        "eq_columns": {
+          "size": "0x1190",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x4", "u32": "0x7fffffff" },
+            { "offset": "0x80", "u32": "0x0" },
+            { "offset": "0x84", "u32": "0x5" },
+            { "offset": "0x90", "u32": "0x80000000" },
+            { "offset": "0x94", "u32": "0x7fffffff" },
+            { "offset": "0x98", "u32": "0xffffffff" },
+            { "offset": "0x9c", "u32": "0x0" },
+            { "offset": "0xa8", "u32": "0x12345678" },
+            { "offset": "0xac", "u32": "0x9abcdef0" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "wrapping rectangle edges",
+      "args": [],
+      "objects": {
+        "eq_columns": {
+          "size": "0x1190",
+          "fill": "random",
+          "init": [
+            { "offset": "0x94", "u32": "0x80000000" },
+            { "offset": "0x98", "u32": "0x7ffffffe" },
+            { "offset": "0x9c", "u32": "0x17" },
+            { "offset": "0xa8", "u32": "0xffffffff" },
+            { "offset": "0xac", "u32": "0x80000001" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "AddButton writes the play rectangle before the SetRect that reads it",
+      "args": [],
+      "callees": {
+        "0x004503be": {
+          "name": "EQ_Overlay_AddButton_guess",
+          "conv": "thiscall",
+          "args": ["int", "mem:16", "int", "int", "int", "int"],
+          "ret": 0,
+          "writes": [{"arg": 1, "offset": 0, "hex": "78563412"}]
+        }
+      }
+    },
+    {
+      "name": "Restart writes the next state",
+      "args": [],
+      "callees": {
+        "0x00432264": {
+          "name": "EQ_Columns::Restart_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [{"addr": "@eq_columns", "offset": 132, "hex": "07000000"}]
+        }
+      }
+    },
+    {
+      "name": "ReadHighScores writes fields the constructor sets afterwards",
+      "args": [],
+      "callees": {
+        "0x004334af": {
+          "name": "EQ_Columns::ReadHighScores_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {"addr": "@eq_columns", "offset": 112, "hex": "11111111"},
+            {"addr": "@eq_columns", "offset": 2464, "hex": "22222222"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "base constructor writes the vtable slot",
+      "args": [],
+      "callees": {
+        "0x00450049": {
+          "name": "EQ_Overlay::EQ_Overlay_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [{"addr": "@eq_columns", "offset": 0, "hex": "44332211"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4399247,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@eq_columns",
+        "offset": "0x80",
+        "type": "u32"
+      },
+      {
+        "addr": "@eq_columns",
+        "offset": "0x84",
+        "type": "u32"
+      },
+      {
+        "addr": "@eq_columns",
+        "offset": "0x90",
+        "size": 48
+      }
+    ]
+  }
+}

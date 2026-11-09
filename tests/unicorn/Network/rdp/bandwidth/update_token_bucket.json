@@ -1,0 +1,212 @@
+{
+  "function": "update_token_bucket_guess",
+  "original": "0x004f7bd0",
+  "sources": [
+    "src/Network/rdp/bandwidth.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "bw",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "bw": {
+      "size": "0x10",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1000
+        },
+        {
+          "offset": "0x4",
+          "u32": 2000
+        },
+        {
+          "offset": "0x8",
+          "u32": 3000
+        }
+      ]
+    }
+  },
+  "callees": {
+    "0x00525040": {
+      "name": "__aulldiv",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        2100,
+        2200
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__aulldiv": "0x00525040"
+  },
+  "cases": [
+    {
+      "name": "equal drain with overflowing 32-bit product",
+      "args": ["@bw"],
+      "objects": {
+        "bw": {
+          "size": "0x10",
+          "init": [
+            {"offset": "0x0", "u32": 4294967},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 65536}
+          ]
+        }
+      },
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [65536, 65537]
+        }
+      }
+    },
+    {
+      "name": "partly drained",
+      "args": [
+        "@bw"
+      ]
+    },
+    {
+      "name": "fully drained",
+      "args": [
+        "@bw"
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            9000,
+            9100
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0x10",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 3000
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "64-bit product",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0x10",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 4294967280
+            },
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x8",
+              "u32": 2147483647
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            65536,
+            65537
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 23,
+    "count": 150,
+    "args": [
+      {
+        "choices": [
+          "@bw"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@bw",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          100,
+          5000,
+          2147483647,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@bw",
+        "offset": 4,
+        "type": "u32",
+        "range": [
+          0,
+          2100
+        ]
+      },
+      {
+        "addr": "@bw",
+        "offset": 8,
+        "type": "u32",
+        "choices": [
+          1,
+          3000,
+          100000,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

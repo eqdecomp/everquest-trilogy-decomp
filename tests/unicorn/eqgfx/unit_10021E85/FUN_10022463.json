@@ -1,0 +1,493 @@
+{
+  "function": "t3dReadBytesFromQueue_guess",
+  "original": "0x10022463",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "queue",
+      "type": "u32"
+    },
+    {
+      "name": "dst",
+      "type": "ptr"
+    },
+    {
+      "name": "size",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "queue": {
+      "size": "0x8040",
+      "fill": "random"
+    },
+    "dst": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!Sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "size zero returns 0 without touching the queue",
+      "args": [
+        "0x76543210",
+        "@dst",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "whole request in one pass",
+      "args": [
+        "@queue",
+        "@dst",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 256
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 8
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x13c",
+          "hex": "aabbccdd11223344"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "position+count exactly 0x8000 copies once and the position wraps",
+      "args": [
+        "@queue",
+        "@dst",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 32760
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 16
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x8034",
+          "hex": "0102030405060708"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "position+count one past 0x8000 wraps a single byte",
+      "args": [
+        "@queue",
+        "@dst",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 32761
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 16
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x8035",
+          "hex": "a1a2a3a4a5a6a7"
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x3c",
+          "hex": "aa"
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x803c",
+          "hex": "bb"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "copy wraps from the ring end to its start",
+      "args": [
+        "@queue",
+        "@dst",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 32764
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 8
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x8038",
+          "hex": "a1a2a3a4"
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x3c",
+          "hex": "b1b2b3b4"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty queue refilled while waiting",
+      "args": [
+        "@queue",
+        "@dst",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x3c",
+          "hex": "0a0b0c0d"
+        }
+      ],
+      "callees": {
+        "kernel32.dll!LeaveCriticalSection": {
+          "name": "LeaveCriticalSection",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 28,
+              "hex": "00010000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "short read topped up by the refill",
+      "args": [
+        "@queue",
+        "@dst",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 3
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x3c",
+          "hex": "314159"
+        }
+      ],
+      "callees": {
+        "kernel32.dll!LeaveCriticalSection": {
+          "name": "LeaveCriticalSection",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 28,
+              "hex": "00010000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "sleep, then aborted",
+      "args": [
+        "@queue",
+        "@dst",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "kernel32.dll!LeaveCriticalSection": {
+          "name": "LeaveCriticalSection",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 32,
+              "hex": "01000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0xFFFF3D3E"
+      }
+    },
+    {
+      "name": "aborted while empty",
+      "args": [
+        "@queue",
+        "@dst",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFF3D3E"
+      }
+    },
+    {
+      "name": "wrap with available beyond the request",
+      "args": [
+        "@queue",
+        "@dst",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x24",
+          "u32": 32766
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x28",
+          "u32": 32768
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x803a",
+          "hex": "eeff"
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x3c",
+          "hex": "0102030405060708"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 140387,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@queue"
+        ]
+      },
+      {
+        "choices": [
+          "@dst"
+        ]
+      },
+      {
+        "range": [
+          0,
+          96
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@queue",
+        "offset": "0x24",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          4096,
+          32760,
+          32764,
+          32766,
+          32767
+        ]
+      },
+      {
+        "addr": "@queue",
+        "offset": "0x28",
+        "type": "u32",
+        "choices": [
+          96,
+          256,
+          4096,
+          32768,
+          65536,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@queue",
+        "offset": "0x2c",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

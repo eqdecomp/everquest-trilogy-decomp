@@ -1,0 +1,711 @@
+{
+  "function": "tx_record_ack_arrival_guess",
+  "original": "0x1002b7b0",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x580",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x488",
+          "u16": 100
+        },
+        {
+          "offset": "0x568",
+          "u32": 1000
+        }
+      ]
+    },
+    "packet": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u16": 4
+        },
+        {
+          "offset": "0x4",
+          "u32": "@payload"
+        }
+      ]
+    },
+    "payload": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u16": 105
+        }
+      ]
+    },
+    "stats": {
+      "size": "0xb0",
+      "fill": "zero"
+    },
+    "entry1": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x12",
+          "u16": 110
+        },
+        {
+          "offset": "0x20",
+          "u32": 7
+        }
+      ]
+    },
+    "entry2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x12",
+          "u16": 112
+        },
+        {
+          "offset": "0x20",
+          "u32": 9
+        }
+      ]
+    },
+    "fresh": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x12",
+          "u16": 300
+        },
+        {
+          "offset": "0x20",
+          "u32": 11
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100498B4",
+      "u32": "@stats"
+    }
+  ],
+  "callees": {
+    "0x100322ba": {
+      "name": "ntohs",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": 105
+    },
+    "0x10030eb0": {
+      "name": "getbit_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": [1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0]
+    },
+    "0x10030e70": {
+      "name": "clear_bit_and_return_previous_value_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": [1, 0, 1, 0]
+    },
+    "0x1002b2d0": {
+      "name": "NetworkConnection_phandle_packet_acknowledgment_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "u16"
+      ]
+    },
+    "0x10030d70": {
+      "name": "copyBitfieldToBuffer_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int",
+        "int"
+      ]
+    },
+    "0x1002e120": {
+      "name": "FUN_1002e120",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e130": {
+      "name": "FUN_1002e130",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002bae0": {
+      "name": "tx_enqueue_outgoing_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "neither ack nor offset flag: header only, count 0, the no-ack counter",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "no ack or offset flag, nibble 1: loop 2 alone, eight bits, zero offset",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 16
+        }
+      ]
+    },
+    {
+      "name": "offset flag: clear bit set, one ack, maskoffset format, no loop 2",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 8
+        }
+      ]
+    },
+    {
+      "name": "offset flag: clear bit returns zero, no ack, no-ack counter",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 8
+        }
+      ],
+      "callees": {
+        "0x10030e70": {
+          "name": "clear_bit_and_return_previous_value_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "offset flag, zero delta: clear bit never called",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 8
+        }
+      ],
+      "callees": {
+        "0x100322ba": {
+          "name": "ntohs",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": 100
+        }
+      }
+    },
+    {
+      "name": "offset flag, negative delta -4: loop 2 runs 8 - 4 times at offset 4",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 24
+        }
+      ],
+      "callees": {
+        "0x100322ba": {
+          "name": "ntohs",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": 96
+        }
+      }
+    },
+    {
+      "name": "negative delta with param_2[10] set: the second stats counter",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 24
+        },
+        {
+          "addr": "@packet",
+          "offset": "0x14",
+          "u16": 1
+        }
+      ],
+      "callees": {
+        "0x100322ba": {
+          "name": "ntohs",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": 96
+        }
+      }
+    },
+    {
+      "name": "ack flag: five bits, copy of five, empty list",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        }
+      ]
+    },
+    {
+      "name": "ack flag, zero delta: no loop, no copy, no list",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        }
+      ],
+      "callees": {
+        "0x100322ba": {
+          "name": "ntohs",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": 100
+        }
+      }
+    },
+    {
+      "name": "ack flag: one expired list entry is removed, subtracted and enqueued",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@entry1",
+            "@entry1",
+            0
+          ]
+        },
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": "@entry1"
+        }
+      }
+    },
+    {
+      "name": "ack flag: list entry not yet expired, the loop condition fails, no remove",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@fresh",
+            "@fresh"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ack flag: remove returns NULL, enqueue still runs with NULL, no subtract",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@entry1",
+            "@entry1",
+            0
+          ]
+        },
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "ack flag: two expired entries removed and enqueued in list order",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@entry1",
+            "@entry1",
+            "@entry2",
+            "@entry2",
+            0
+          ]
+        },
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@entry1",
+            "@entry2"
+          ]
+        }
+      }
+    },
+    {
+      "name": "64-bit counters at 0xffffffff carry into the high dword, no ack",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 4
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x78",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x98",
+          "u32": 4294967295
+        }
+      ],
+      "callees": {
+        "0x10030eb0": {
+          "name": "getbit_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "ack and offset flags with nibble 3: both loops run",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 52
+        }
+      ]
+    },
+    {
+      "name": "ack behind a 16 bit wrap: 0xfff0 minus 100 is a negative delta",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 8
+        }
+      ],
+      "callees": {
+        "0x100322ba": {
+          "name": "ntohs",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": 65520
+        }
+      }
+    },
+    {
+      "name": "largest nibble with no ack flag: loop 2 runs 120 times",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 240
+        }
+      ]
+    },
+    {
+      "name": "all bits set: ack flag wins, both loops run",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "ack and offset flags both set: ack path only, no clear bit",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 12
+        }
+      ]
+    },
+    {
+      "name": "seeded counters: conn+0xa8 and conn+0xac keep their old values and add the increments",
+      "args": [
+        "@conn",
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "u16": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0xa8",
+          "u32": 700
+        },
+        {
+          "addr": "@conn",
+          "offset": "0xac",
+          "u32": 1000
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 178096,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          "@packet"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@packet",
+        "offset": "0x0",
+        "type": "u16"
+      },
+      {
+        "addr": "@packet",
+        "offset": "0x14",
+        "type": "u16",
+        "range": [
+          0,
+          1
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x488",
+        "type": "short",
+        "range": [
+          -40,
+          140
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x568",
+        "type": "u32",
+        "range": [
+          0,
+          5000
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x9c",
+        "type": "u32",
+        "range": [
+          0,
+          100000
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0xa0",
+        "type": "u32",
+        "range": [
+          0,
+          100000
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0xa8",
+        "type": "u32",
+        "range": [
+          0,
+          100000
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0xac",
+        "type": "u32",
+        "range": [
+          0,
+          100000
+        ]
+      }
+    ]
+  }
+}

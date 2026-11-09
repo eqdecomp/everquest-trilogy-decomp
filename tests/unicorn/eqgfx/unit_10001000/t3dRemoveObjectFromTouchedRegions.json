@@ -1,0 +1,184 @@
+{
+  "function": "t3dRemoveObjectFromTouchedRegions",
+  "original": "0x10001091",
+  "sources": [
+    "src/eqgfx/unit_10001000.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "object",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": "@actors"}
+      ]
+    },
+    "actors": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@actor0"},
+        {"offset": "0x4", "u32": "@actor1"},
+        {"offset": "0x8", "u32": "@actor2"},
+        {"offset": "0xc", "u32": "@actor3"}
+      ]
+    },
+    "actor0": {"size": "0x20", "fill": "random"},
+    "actor1": {"size": "0x20", "fill": "random"},
+    "actor2": {"size": "0x20", "fill": "random"},
+    "actor3": {"size": "0x20", "fill": "random"},
+    "object": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {"offset": "0x28", "u32": 2},
+        {"offset": "0x48", "u32": 3},
+        {"offset": "0x50", "u32": "@touched"}
+      ]
+    },
+    "touched": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 3},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": 1},
+        {"offset": "0xc", "u32": 2}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100070bc": {
+      "name": "_t3dDeleteObjectFromList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": [0, -5, 0, -2, 0, -7, 3]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: loop calls 1, 0, 3 then own slot 2",
+      "args": ["@world", "@object"],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "empty touched list: only the own-slot call",
+      "args": ["@world", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x48", "u32": 0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null touched list: loop skipped, own slot still called",
+      "args": ["@world", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x50", "u32": 0}],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [-4]}
+      },
+      "expect": {"ret": -4}
+    },
+    {
+      "name": "all calls return zero: zero is not a failure",
+      "args": ["@world", "@object"],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [0]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "last negative in the loop wins, positive own slot ignored",
+      "args": ["@world", "@object"],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [-3, -5, -7, 4]}
+      },
+      "expect": {"ret": -7}
+    },
+    {
+      "name": "only the own-slot call negative",
+      "args": ["@world", "@object"],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [0, 0, 0, -2]}
+      },
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "minus one is negative",
+      "args": ["@world", "@object"],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [0, -1, 0, 0]}
+      },
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "positive results are never stored",
+      "args": ["@world", "@object"],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [5, 2147483647, 1, 9]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "int minimum is stored",
+      "args": ["@world", "@object"],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [-2147483648, 0, 0, 0]}
+      },
+      "expect": {"ret": -2147483648}
+    },
+    {
+      "name": "one touched entry (loop boundary)",
+      "args": ["@world", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x48", "u32": 1}],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [0, -6]}
+      },
+      "expect": {"ret": -6}
+    },
+    {
+      "name": "four touched entries walked last to first, then own slot",
+      "args": ["@world", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x48", "u32": 4}],
+      "callees": {
+        "0x100070bc": {"name": "FUN_100070bc", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": [0, 0, 0, 0, -8]}
+      },
+      "expect": {"ret": -8}
+    }
+  ],
+  "fuzz": {
+    "seed": 4241,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@object"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@object", "offset": "0x28", "type": "u32", "range": [0, 3]},
+      {"addr": "@object", "offset": "0x48", "type": "u32", "range": [0, 6]},
+      {"addr": "@object", "offset": "0x50", "type": "ptr", "choices": [0], "p": 0.1},
+      {"addr": "@touched", "type": "u32", "range": [0, 3], "count": 8}
+    ]
+  }
+}

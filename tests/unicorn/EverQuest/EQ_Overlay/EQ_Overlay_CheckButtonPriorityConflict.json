@@ -1,0 +1,84 @@
+{
+  "function": "EQ_Overlay_CheckButtonPriorityConflict_guess",
+  "original": "0x004501a4",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "button", "type": "ptr"},
+    {"name": "point", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {"size": "0x80", "fill": "random", "init": [{"offset": "0x70", "u32": "@e1"}]},
+    "button": {"size": "0x24", "fill": "random", "init": [{"offset": "0x1c", "u16": 5}]},
+    "e1": {"size": "0x24", "fill": "random", "init": [{"offset": "0x1c", "u16": 3}, {"offset": "0x20", "u32": "@e2"}]},
+    "e2": {"size": "0x24", "fill": "random", "init": [{"offset": "0x1c", "u16": 6}, {"offset": "0x20", "u32": "@e3"}]},
+    "e3": {"size": "0x24", "fill": "random", "init": [{"offset": "0x1c", "u16": 9}, {"offset": "0x20", "u32": 0}]},
+    "point": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 0, 0]}
+  },
+  "cases": [
+    {"name": "empty list returns 1", "args": ["@self", 1, "@button", "@point"],
+     "memory": [{"addr": "@self", "offset": "0x70", "u32": 0}]},
+    {"name": "higher elements miss returns 1", "args": ["@self", 0, "@button", "@point"]},
+    {"name": "first higher element hits returns 0", "args": ["@self", 0, "@button", "@point"],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [1, 0, 0]}}},
+    {"name": "second higher element hits returns 0", "args": ["@self", 7, "@button", "@point+4"],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 1, 0]}}},
+    {"name": "high bits only in callee result count as hit", "args": ["@self", 0, "@button", "@point"],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [256, 0, 0]}}},
+    {"name": "negative callee result counts as hit", "args": ["@self", 0, "@button", "@point"],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [-2147483648, 0, 0]}}},
+    {"name": "equal priority is skipped", "args": ["@self", 0, "@button", "@point"],
+     "memory": [{"addr": "@e1", "offset": "0x1c", "u16": 5}, {"addr": "@e2", "offset": "0x1c", "u16": 5}, {"addr": "@e3", "offset": "0x1c", "u16": 5}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [1, 1, 1]}}},
+    {"name": "priority one above is checked", "args": ["@self", 0, "@button", "@point"],
+     "memory": [{"addr": "@e1", "offset": "0x1c", "u16": 6}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [1, 1, 1]}}},
+    {"name": "signed compare negative element vs positive button", "args": ["@self", 0, "@button", "@point"],
+     "memory": [{"addr": "@e1", "offset": "0x1c", "u16": 65535}, {"addr": "@e2", "offset": "0x1c", "u16": 32768}, {"addr": "@e3", "offset": "0x1c", "u16": 32769}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [1, 1, 1]}}},
+    {"name": "signed compare positive element vs negative button", "args": ["@self", 0, "@button", "@point"],
+     "memory": [{"addr": "@button", "offset": "0x1c", "u16": 65534}, {"addr": "@e1", "offset": "0x1c", "u16": 65535}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 0, 1]}}},
+    {"name": "16-bit compare ignores high word", "args": ["@self", 0, "@button", "@point"],
+     "memory": [{"addr": "@button", "offset": "0x1c", "u32": 4294901762}, {"addr": "@e1", "offset": "0x1c", "u32": 65537}, {"addr": "@e2", "offset": "0x1c", "u32": 3}, {"addr": "@e3", "offset": "0x1c", "u32": 2}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 1, 1]}}},
+    {"name": "next and button priority reloaded after call", "args": ["@self", 0, "@button", "@point"],
+     "memory": [{"addr": "@e1", "offset": "0x1c", "u16": 6}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 0, 1],
+       "writes": [{"addr": "@e1", "offset": 32, "hex": "00000000"}, {"addr": "@button", "offset": 28, "hex": "0100"}]}}},
+    {"name": "button priority raised by callee stops later checks", "args": ["@self", 0, "@button", "@point"],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 1, 1],
+       "writes": [{"addr": "@button", "offset": 28, "hex": "0900"}]}}},
+    {"name": "button is list element itself", "args": ["@self", 0, "@e2", "@point"],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [1, 1, 1]}}},
+    {"name": "unaligned self and button", "args": ["@self+1", 0, "@button+2", "@point+1"],
+     "memory": [{"addr": "@self", "offset": "0x71", "u32": "@e1"}, {"addr": "@button", "offset": "0x1e", "u16": 4}],
+     "callees": {"0x004195da": {"name": "handleMouseClickInButtonRect_guess", "conv": "thiscall", "args": ["ptr"], "this": "ptr", "ret": [0, 1, 1]}}}
+  ],
+  "fuzz": {
+    "seed": 4522404,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": ["@button", "@e1", "@e3"]},
+      {"choices": ["@point", "@point+4"]}
+    ],
+    "memory": [
+      {"addr": "@button", "offset": "0x1c", "type": "u16", "choices": [0, 1, 5, 6, 9, 32767, 32768, 65535]},
+      {"addr": "@e1", "offset": "0x1c", "type": "u16", "choices": [0, 4, 5, 6, 32767, 32768, 65535]},
+      {"addr": "@e2", "offset": "0x1c", "type": "u16", "choices": [0, 5, 6, 10, 32767, 65534]},
+      {"addr": "@e3", "offset": "0x1c", "type": "u16", "choices": [1, 5, 7, 32767, 32769]},
+      {"addr": "@self", "offset": "0x70", "type": "ptr", "choices": ["@e1", "@e2", "@e3", 0]}
+    ]
+  }
+}

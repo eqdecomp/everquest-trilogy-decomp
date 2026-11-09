@@ -1,0 +1,110 @@
+{
+  "function": "eqmainProbeDirectX_guess",
+  "original": "0x10003340",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "ddQI": {"size": "0x10", "fill": "zero"},
+    "ddQIfail": {"size": "0x10", "fill": "zero"},
+    "surfQI": {"size": "0x10", "fill": "zero"},
+    "surfQIFail": {"size": "0x10", "fill": "zero"},
+    "comRelease": {"size": "0x10", "fill": "zero"},
+    "ddCreateSurface": {"size": "0x10", "fill": "zero"},
+    "ddCreateSurfaceFail": {"size": "0x10", "fill": "zero"},
+    "ddSetCoop": {"size": "0x10", "fill": "zero"},
+    "ddSetCoopFail": {"size": "0x10", "fill": "zero"},
+    "ddCreate": {"size": "0x10", "fill": "zero"},
+    "diCreate": {"size": "0x10", "fill": "zero"},
+    "ddCreateEx": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004d000", "size": 1024, "fill": "zero"},
+    {"addr": "0x1004d000", "u32": "0x1004d100"},
+    {"addr": "0x1004d010", "u32": "0x1004d100"},
+    {"addr": "0x1004d020", "u32": "0x1004d200"},
+    {"addr": "0x1004d030", "u32": "0x1004d100"},
+    {"addr": "0x1004d040", "u32": "0x1004d300"},
+    {"addr": "0x1004d100", "u32": "@ddQI"},
+    {"addr": "0x1004d108", "u32": "@comRelease"},
+    {"addr": "0x1004d118", "u32": "@ddCreateSurface"},
+    {"addr": "0x1004d150", "u32": "@ddSetCoop"},
+    {"addr": "0x1004d200", "u32": "@surfQI"},
+    {"addr": "0x1004d208", "u32": "@comRelease"},
+    {"addr": "0x1004d308", "u32": "@comRelease"}
+  ],
+  "callees": {
+    "kernel32.dll!LoadLibraryA": {"name": "LoadLibraryA", "conv": "stdcall", "args": ["cstr"], "ret": [4096, 8192, 12288]},
+    "kernel32.dll!GetProcAddress": {"name": "GetProcAddress", "conv": "stdcall", "args": ["ptr", "cstr"], "ret": ["@ddCreate", "@diCreate", "@ddCreateEx"]},
+    "kernel32.dll!FreeLibrary": {"name": "FreeLibrary", "conv": "stdcall", "args": ["ptr"], "ret": 1},
+    "kernel32.dll!OutputDebugStringA": {"name": "OutputDebugStringA", "conv": "stdcall", "args": ["cstr"], "ret": 0},
+    "ole32.dll!CoInitialize": {"name": "CoInitialize", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "ole32.dll!CoCreateInstance": {"name": "CoCreateInstance", "conv": "stdcall", "args": ["ptr", "ptr", "int", "ptr", "ignore"], "ret": 0, "writes": [{"arg": 4, "offset": 0, "hex": "40 d0 04 10"}]},
+    "ole32.dll!CoUninitialize": {"name": "CoUninitialize", "conv": "stdcall", "args": [], "ret": 0},
+    "@ddCreate": {"name": "DirectDrawCreate", "conv": "stdcall", "args": ["ptr", "ignore", "ptr"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "00 d0 04 10"}]},
+    "@diCreate": {"name": "DirectInputCreateA", "conv": "stdcall", "args": [], "ret": 0},
+    "@ddCreateEx": {"name": "DirectDrawCreateEx", "conv": "stdcall", "args": ["ptr", "ignore", "ptr", "ptr"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "30 d0 04 10"}]},
+    "@ddQI": {"name": "IDirectDraw::QueryInterface", "conv": "stdcall", "args": ["ptr", "ptr", "ignore"], "ret": 0, "writes": [{"arg": 2, "offset": 0, "hex": "10 d0 04 10"}]},
+    "@ddQIfail": {"name": "IDirectDraw::QueryInterface", "conv": "stdcall", "args": ["ptr", "ptr", "ignore"], "ret": -2147467262},
+    "@surfQI": {"name": "IDirectDrawSurface::QueryInterface", "conv": "stdcall", "args": ["ptr", "ptr", "ignore"], "ret": 0},
+    "@surfQIFail": {"name": "IDirectDrawSurface::QueryInterface", "conv": "stdcall", "args": ["ptr", "ptr", "ignore"], "ret": -2147467262},
+    "@comRelease": {"name": "IUnknown::Release", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "@ddSetCoop": {"name": "IDirectDraw::SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "int"], "ret": 0},
+    "@ddSetCoopFail": {"name": "IDirectDraw::SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "int"], "ret": -2147024891},
+    "@ddCreateSurface": {"name": "IDirectDraw::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:108", "ignore", "ptr"], "ret": 0, "writes": [{"arg": 2, "offset": 0, "hex": "20 d0 04 10"}]},
+    "@ddCreateSurfaceFail": {"name": "IDirectDraw::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:108", "ignore", "ptr"], "ret": -2147467259}
+  },
+  "cases": [
+    {"name": "all DirectX probes load: 0x800", "args": [], "expect": {"ret": 2048}},
+    {"name": "ddraw.dll LoadLibraryA fails: 0", "args": [], "expect": {"ret": 0}, "callees": {
+      "kernel32.dll!LoadLibraryA": {"name": "LoadLibraryA", "conv": "stdcall", "args": ["cstr"], "ret": [0]}}},
+    {"name": "DirectDrawCreate address missing: 0 with debug string", "args": [], "expect": {"ret": 0}, "callees": {
+      "kernel32.dll!GetProcAddress": {"name": "GetProcAddress", "conv": "stdcall", "args": ["ptr", "cstr"], "ret": [0]}}},
+    {"name": "DirectDrawCreate E_FAIL: 0", "args": [], "expect": {"ret": 0}, "callees": {
+      "@ddCreate": {"name": "DirectDrawCreate", "conv": "stdcall", "args": ["ptr", "ignore", "ptr"], "ret": -2147467259}}},
+    {"name": "DirectDrawCreate INT_MIN (sign test): 0", "args": [], "expect": {"ret": 0}, "callees": {
+      "@ddCreate": {"name": "DirectDrawCreate", "conv": "stdcall", "args": ["ptr", "ignore", "ptr"], "ret": -2147483648}}},
+    {"name": "DirectDrawCreate returns 1: still success", "args": [], "expect": {"ret": 2048}, "callees": {
+      "@ddCreate": {"name": "DirectDrawCreate", "conv": "stdcall", "args": ["ptr", "ignore", "ptr"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "00 d0 04 10"}]}}},
+    {"name": "IDirectDraw2 QueryInterface fails: 0x100", "args": [], "expect": {"ret": 256},
+      "memory": [{"addr": "0x1004d100", "u32": "@ddQIfail"}]},
+    {"name": "dinput.dll LoadLibraryA fails: 0x200", "args": [], "expect": {"ret": 512}, "callees": {
+      "kernel32.dll!LoadLibraryA": {"name": "LoadLibraryA", "conv": "stdcall", "args": ["cstr"], "ret": [4096, 0]}}},
+    {"name": "DirectInputCreateA address missing: 0x200", "args": [], "expect": {"ret": 512}, "callees": {
+      "kernel32.dll!GetProcAddress": {"name": "GetProcAddress", "conv": "stdcall", "args": ["ptr", "cstr"], "ret": ["@ddCreate", 0]}}},
+    {"name": "SetCooperativeLevel fails: 0", "args": [], "expect": {"ret": 0},
+      "memory": [{"addr": "0x1004d150", "u32": "@ddSetCoopFail"}]},
+    {"name": "SetCooperativeLevel returns 1: still success", "args": [], "expect": {"ret": 2048}, "callees": {
+      "@ddSetCoop": {"name": "IDirectDraw::SetCooperativeLevel", "conv": "stdcall", "args": ["ptr", "ptr", "int"], "ret": 1}}},
+    {"name": "CreateSurface fails: 0", "args": [], "expect": {"ret": 0},
+      "memory": [{"addr": "0x1004d118", "u32": "@ddCreateSurfaceFail"}]},
+    {"name": "primary surface QI for IID 0x10040380 fails: 0x300", "args": [], "expect": {"ret": 768},
+      "memory": [{"addr": "0x1004d200", "u32": "@surfQIFail"}]},
+    {"name": "primary surface QI for IID 0x10040390 fails: 0x500", "args": [], "expect": {"ret": 1280}, "callees": {
+      "@surfQI": {"name": "IDirectDrawSurface::QueryInterface", "conv": "stdcall", "args": ["ptr", "ptr", "ignore"], "ret": [0, -2147467262]}}},
+    {"name": "CoCreateInstance fails: 0x600", "args": [], "expect": {"ret": 1536}, "callees": {
+      "ole32.dll!CoCreateInstance": {"name": "CoCreateInstance", "conv": "stdcall", "args": ["ptr", "ptr", "int", "ptr", "ignore"], "ret": -2147221164}}},
+    {"name": "CoCreateInstance INT_MIN (sign test): 0x600", "args": [], "expect": {"ret": 1536}, "callees": {
+      "ole32.dll!CoCreateInstance": {"name": "CoCreateInstance", "conv": "stdcall", "args": ["ptr", "ptr", "int", "ptr", "ignore"], "ret": -2147483648}}},
+    {"name": "DirectDrawCreateEx address missing: 0x601", "args": [], "expect": {"ret": 1537}, "callees": {
+      "kernel32.dll!GetProcAddress": {"name": "GetProcAddress", "conv": "stdcall", "args": ["ptr", "cstr"], "ret": ["@ddCreate", "@diCreate", 0]}}},
+    {"name": "DirectDrawCreateEx fails: 0x601", "args": [], "expect": {"ret": 1537}, "callees": {
+      "@ddCreateEx": {"name": "DirectDrawCreateEx", "conv": "stdcall", "args": ["ptr", "ignore", "ptr", "ptr"], "ret": -1}}},
+    {"name": "d3d8.dll LoadLibraryA fails: 0x700", "args": [], "expect": {"ret": 1792}, "callees": {
+      "kernel32.dll!LoadLibraryA": {"name": "LoadLibraryA", "conv": "stdcall", "args": ["cstr"], "ret": [4096, 8192, 0]}}}
+  ],
+  "fuzz": {
+    "seed": 13120,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004d100", "type": "u32", "choices": ["@ddQI", "@ddQIfail"]},
+      {"addr": "0x1004d118", "type": "u32", "choices": ["@ddCreateSurface", "@ddCreateSurfaceFail"]},
+      {"addr": "0x1004d150", "type": "u32", "choices": ["@ddSetCoop", "@ddSetCoopFail"]},
+      {"addr": "0x1004d200", "type": "u32", "choices": ["@surfQI", "@surfQIFail"]}
+    ]
+  }
+}

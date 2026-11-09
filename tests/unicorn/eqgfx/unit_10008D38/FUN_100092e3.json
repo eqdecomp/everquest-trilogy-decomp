@@ -1,0 +1,56 @@
+{
+  "function": "t3dFreeActorNodePool_guess",
+  "original": "0x100092e3",
+  "sources": ["src/eqgfx/unit_10008D38.c"],
+  "conv": "cdecl",
+  "args": [{"name": "world", "type": "ptr"}],
+  "ret": "int",
+  "objects": {
+    "world": {"size": "0x340", "fill": "zero", "init": [{"offset": "0x324", "u32": "@block0"}]},
+    "block0": {"size": "0x2800", "fill": "zero"},
+    "block1": {"size": "0x2800", "fill": "zero"},
+    "act18": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 24}, {"offset": "0x5c", "u32": "0x11111111"}]},
+    "act19": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 25}, {"offset": "0x34", "u32": "0x22222222"}]},
+    "act3a": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 58}, {"offset": "0x2c", "u32": "0x33333333"}]},
+    "act44": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 68}, {"offset": "0x24", "u32": "0x44444444"}]},
+    "actOther": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 32}, {"offset": "0x24", "u32": "0x55555555"}, {"offset": "0x2c", "u32": "0x55555555"}, {"offset": "0x34", "u32": "0x55555555"}, {"offset": "0x5c", "u32": "0x55555555"}]},
+    "actFuzz": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 24}, {"offset": "0x24", "u32": "0xAAAAAAAA"}, {"offset": "0x2c", "u32": "0xBBBBBBBB"}, {"offset": "0x34", "u32": "0xCCCCCCCC"}, {"offset": "0x5c", "u32": "0xDDDDDDDD"}]},
+    "actFuzz2": {"size": "0x60", "fill": "zero", "init": [{"offset": "0x0", "u32": 68}, {"offset": "0x24", "u32": "0xAAAAAAAA"}, {"offset": "0x2c", "u32": "0xBBBBBBBB"}, {"offset": "0x34", "u32": "0xCCCCCCCC"}, {"offset": "0x5c", "u32": "0xDDDDDDDD"}]}
+  },
+  "memory": [
+    {"addr": "@block0", "offset": "0x27f0", "u32": 0},
+    {"addr": "@block1", "offset": "0x27f0", "u32": 0},
+    {"addr": "@block0", "offset": "0x8", "u32": "@actFuzz"},
+    {"addr": "@block0", "offset": "0x1c", "u32": "@actFuzz2"}
+  ],
+  "callees": {
+    "0x100681db": {"name": "_free", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+  },
+  "rewrite_aliases": {"_free": "0x100681db"},
+  "cases": [
+    {"name": "single-all-types", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act18"}, {"addr": "@block0", "offset": "0x1c", "u32": "@act19"}, {"addr": "@block0", "offset": "0x30", "u32": "@act3a"}, {"addr": "@block0", "offset": "0x44", "u32": "@act44"}, {"addr": "@block0", "offset": "0x58", "u32": "@actOther"}]},
+    {"name": "single-empty", "args": ["@world"], "expect": {"ret": 0}},
+    {"name": "single-null-first-nonnull-last", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x27d4", "u32": "@act18"}]},
+    {"name": "single-each-18", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act18"}]},
+    {"name": "single-each-19", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act19"}]},
+    {"name": "single-each-3a", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act3a"}]},
+    {"name": "single-each-44", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act44"}]},
+    {"name": "single-other-keeps-links", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@actOther"}]},
+    {"name": "two-blocks", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act18"}, {"addr": "@block0", "offset": "0x27f0", "u32": "@block1"}, {"addr": "@block1", "offset": "0x8", "u32": "@act44"}, {"addr": "@block1", "offset": "0x1c", "u32": "@act3a"}, {"addr": "@block1", "offset": "0x27f0", "u32": 0}]},
+    {"name": "two-blocks-second-empty", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x8", "u32": "@act19"}, {"addr": "@block0", "offset": "0x27f0", "u32": "@block1"}, {"addr": "@block1", "offset": "0x27f0", "u32": 0}]},
+    {"name": "mid-slot-chain", "args": ["@world"], "expect": {"ret": 0}, "memory": [{"addr": "@block0", "offset": "0x13ec", "u32": "@act3a"}, {"addr": "@block0", "offset": "0x1400", "u32": "@act44"}]}
+  ],
+  "fuzz": {
+    "seed": 37603,
+    "count": 30,
+    "args": [{"choices": ["@world"]}],
+    "memory": [
+      {"addr": "@actFuzz", "offset": "0x0", "type": "u32", "choices": [24, 25, 58, 68, 0, 1, 23, 24, 26, 57, 59, 67, 69, 255]},
+      {"addr": "@actFuzz2", "offset": "0x0", "type": "u32", "choices": [24, 25, 58, 68, 0, 32, 48, 70]},
+      {"addr": "@actFuzz", "offset": "0x24", "type": "u32", "range": [0, 65535]},
+      {"addr": "@actFuzz", "offset": "0x2c", "type": "u32", "range": [0, 65535]},
+      {"addr": "@actFuzz", "offset": "0x34", "type": "u32", "range": [0, 65535]},
+      {"addr": "@actFuzz", "offset": "0x5c", "type": "u32", "range": [0, 65535]}
+    ]
+  }
+}

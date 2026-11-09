@@ -1,0 +1,183 @@
+{
+  "function": "t3dGetHierarchicalSpriteDagByName",
+  "original": "0x1001371f",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 20},
+        {"offset": "0x20", "u32": 4},
+        {"offset": "0x24", "u32": "@dags"}
+      ]
+    },
+    "dags": {
+      "size": "0x520",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@alpha"},
+        {"offset": "0x14c", "u32": "@beta"},
+        {"offset": "0x294", "u32": "@gamma"},
+        {"offset": "0x3dc", "u32": "@delta"}
+      ]
+    },
+    "alpha": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "alpha"}]},
+    "beta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "beta"}]},
+    "gamma": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "gamma"}]},
+    "delta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "delta"}]},
+    "empty": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": ""}]}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "first entry matches (index 0)",
+      "args": ["@sprite", "alpha"]
+    },
+    {
+      "name": "second entry matches (index 1)",
+      "args": ["@sprite", "beta"]
+    },
+    {
+      "name": "last entry matches (index 3)",
+      "args": ["@sprite", "delta"]
+    },
+    {
+      "name": "entry past dagCount is not searched",
+      "args": ["@sprite", "delta"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 3}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last counted entry with dagCount 3",
+      "args": ["@sprite", "gamma"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 3}]
+    },
+    {
+      "name": "dagCount 2 misses the third entry",
+      "args": ["@sprite", "gamma"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dagCount 0 finds nothing",
+      "args": ["@sprite", "alpha"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dagCount 0 with null dagArray",
+      "args": ["@sprite", "alpha"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 0}, {"addr": "@sprite", "offset": "0x24", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dagCount 1 finds the first entry",
+      "args": ["@sprite", "alpha"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 1}]
+    },
+    {
+      "name": "dagCount 1 misses the second entry",
+      "args": ["@sprite", "beta"],
+      "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not found",
+      "args": ["@sprite", "zeta"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "shorter prefix does not match",
+      "args": ["@sprite", "alp"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "longer string does not match",
+      "args": ["@sprite", "alphas"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "match is case-sensitive",
+      "args": ["@sprite", "ALPHA"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type 0x13 is not searched",
+      "args": ["@sprite", "alpha"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 19}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type 0x15 is not searched",
+      "args": ["@sprite", "alpha"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 21}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type 0 is not searched",
+      "args": ["@sprite", "beta"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null entry name is skipped (match at index 1)",
+      "args": ["@sprite", "beta"],
+      "memory": [{"addr": "@dags", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "null entry name never matches",
+      "args": ["@sprite", "alpha"],
+      "memory": [{"addr": "@dags", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first of duplicate names wins (index 0)",
+      "args": ["@sprite", "beta"],
+      "memory": [{"addr": "@dags", "offset": "0x4", "u32": "@beta"}]
+    },
+    {
+      "name": "empty query matches an empty entry name (index 2)",
+      "args": ["@sprite", ""],
+      "memory": [{"addr": "@dags", "offset": "0x294", "u32": "@empty"}]
+    },
+    {
+      "name": "empty query with no empty entry name",
+      "args": ["@sprite", ""],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 1001371,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@sprite"]
+      },
+      {
+        "choices": ["alpha", "beta", "gamma", "delta", "", "alp", "alphas", "BETA", "zeta", "@empty"]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x0", "type": "u32", "choices": [20, 20, 20, 19, 21, 0]},
+      {"addr": "@sprite", "offset": "0x20", "type": "u32", "range": [0, 4]},
+      {"addr": "@dags", "offset": "0x4", "type": "u32", "count": 4, "stride": 328,
+       "choices": ["@alpha", "@beta", "@gamma", "@delta", "@empty", 0], "p": 0.5}
+    ]
+  }
+}

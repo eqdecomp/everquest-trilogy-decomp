@@ -1,0 +1,229 @@
+{
+  "function": "EQ_Character_guess::offense_guess",
+  "original": "0x0041a32c",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_character",
+  "args": [
+    {
+      "name": "skill",
+      "type": "u8"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "eq_character": {
+      "size": "0x118",
+      "fill": "random",
+      "init": [
+        { "offset": "0xa0", "u32": "@player" },
+        { "offset": "0x114", "u32": "@weapon0" }
+      ]
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "weapon0": {
+      "size": "0xc3",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004b422a": {
+      "name": "EQPlayer::SkillUsed",
+      "conv": "thiscall",
+      "args": ["u32"],
+      "ret": 7
+    },
+    "0x004246a9": {
+      "name": "EQ_Character::HasSkillPassthrough_guess",
+      "conv": "thiscall",
+      "args": ["u8"],
+      "ret": 1
+    },
+    "0x00419867": {
+      "name": "EQ_Character::Skill_guess",
+      "conv": "thiscall",
+      "args": ["u32"],
+      "ret": 80
+    },
+    "0x0041b0c3": {
+      "name": "ComputeStr_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 75
+    },
+    "0x0041b48f": {
+      "name": "EQ_Character::Dex_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 75
+    },
+    "0x004238a2": {
+      "name": "EQ_Character::TotalSpellAffects_guess",
+      "conv": "thiscall",
+      "args": ["u8"],
+      "ret": 9
+    }
+  },
+  "cases": [
+    {
+      "name": "skill denied and stat below threshold",
+      "args": [1],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": 74 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 6 }
+      }
+    },
+    {
+      "name": "denied skill initializes offense despite dirty saved registers",
+      "args": [1],
+      "regs": { "eax": 305419896, "ebx": 591751049, "ebp": 878082202, "esi": 1164413355, "edi": 1450744508 },
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": 74 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 6 }
+      }
+    },
+    {
+      "name": "stat threshold repeats call and preserves EAX high word",
+      "args": [1],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": [75, 150] },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 65539 }
+      }
+    },
+    {
+      "name": "skill contributes below stat threshold",
+      "args": [2],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 1 },
+        "0x00419867": { "name": "Skill", "conv": "thiscall", "args": ["u32"], "ret": 100 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": 74 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 5 }
+      }
+    },
+    {
+      "name": "negative offense clamps to one",
+      "args": [1],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 1 },
+        "0x00419867": { "name": "Skill", "conv": "thiscall", "args": ["u32"], "ret": 0 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": [75, 0] },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": -20 }
+      }
+    },
+    {
+      "name": "dexterity below threshold does not repeat",
+      "args": [7],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b48f": { "name": "Dex", "conv": "thiscall", "args": [], "ret": 74 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 10 }
+      }
+    },
+    {
+      "name": "dexterity threshold repeats and contributes bonus",
+      "args": [7],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 1 },
+        "0x00419867": { "name": "Skill", "conv": "thiscall", "args": ["u32"], "ret": 30 },
+        "0x0041b48f": { "name": "Dex", "conv": "thiscall", "args": [], "ret": [75, 150] },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 20 }
+      }
+    },
+    {
+      "name": "other dex byte is used for bonus and division truncates toward zero",
+      "args": [51],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b48f": { "name": "Dex", "conv": "thiscall", "args": [], "ret": [255, 74] },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 1 }
+      }
+    },
+    {
+      "name": "stat helper uses its low byte and signed bonus",
+      "args": [1],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": [4294967115, 4294967040] },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 131072 }
+      }
+    },
+    {
+      "name": "ff null weapon selects default skill",
+      "args": [255],
+      "memory": [
+        { "addr": "@eq_character", "offset": "0x114", "u32": 0 }
+      ],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 1 },
+        "0x00419867": { "name": "Skill", "conv": "thiscall", "args": ["u32"], "ret": 60 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": 74 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 2 }
+      }
+    },
+    {
+      "name": "ff non-equipment selects default skill",
+      "args": [255],
+      "memory": [
+        { "addr": "@eq_character", "offset": "0x114", "u32": "@weapon0" },
+        { "addr": "@weapon0", "offset": "0x81", "u8": 1 }
+      ],
+      "callees": {
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": 0 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 0 }
+      }
+    },
+    {
+      "name": "ff equipment maps to dexterity skill",
+      "args": [255],
+      "memory": [
+        { "addr": "@eq_character", "offset": "0x114", "u32": "@weapon0" },
+        { "addr": "@weapon0", "offset": "0x81", "u8": 0 },
+        { "addr": "@weapon0", "offset": "0xc2", "u8": 51 }
+      ],
+      "callees": {
+        "0x004b422a": { "name": "SkillUsed", "conv": "thiscall", "args": ["u32"], "ret": 51 },
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 0 },
+        "0x0041b48f": { "name": "Dex", "conv": "thiscall", "args": [], "ret": 74 },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 25 }
+      }
+    },
+    {
+      "name": "ff equipment maps to skill and invokes stat twice",
+      "args": [255],
+      "memory": [
+        { "addr": "@eq_character", "offset": "0x114", "u32": "@weapon0" },
+        { "addr": "@weapon0", "offset": "0x81", "u8": 0 },
+        { "addr": "@weapon0", "offset": "0xc2", "u8": 1 }
+      ],
+      "callees": {
+        "0x004b422a": { "name": "SkillUsed", "conv": "thiscall", "args": ["u32"], "ret": 1 },
+        "0x004246a9": { "name": "HasSkillPassthrough", "conv": "thiscall", "args": ["u8"], "ret": 1 },
+        "0x00419867": { "name": "Skill", "conv": "thiscall", "args": ["u32"], "ret": 100 },
+        "0x0041b0c3": { "name": "stat", "conv": "thiscall", "args": [], "ret": [75, 255] },
+        "0x004238a2": { "name": "TotalSpellAffects", "conv": "thiscall", "args": ["u8"], "ret": 3 }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4301612,
+    "count": 40,
+    "args": [
+      { "range": [0, 255] }
+    ],
+    "memory": [
+      { "addr": "@eq_character", "offset": "0x114", "type": "ptr", "choices": ["@weapon0", "0x0"] },
+      { "addr": "@weapon0", "offset": "0x81", "type": "u8", "choices": [0, 1] },
+      { "addr": "@weapon0", "offset": "0xc2", "type": "u8", "choices": [1, 7, 51, 255] }
+    ]
+  }
+}

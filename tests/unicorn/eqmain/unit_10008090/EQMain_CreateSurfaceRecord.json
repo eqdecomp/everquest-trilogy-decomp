@@ -1,0 +1,107 @@
+{
+  "function": "EQMain_CreateSurfaceRecord_guess",
+  "original": "0x10008460",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "int"},
+    {"name": "param_5", "type": "int"},
+    {"name": "param_6", "type": "u32"},
+    {"name": "param_7", "type": "ptr"},
+    {"name": "param_8", "type": "int"},
+    {"name": "param_9", "type": "u32"},
+    {"name": "param_10", "type": "u32"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "parent": {"size": "0x40", "fill": "random", "init": [{"offset": "0xc", "u32": "@src"}]},
+    "src": {"size": "0x20", "fill": "random"},
+    "rec": {"size": "0xa8", "fill": "random"},
+    "buf": {"size": "0x40", "fill": "random"},
+    "surf": {"size": "0x20", "fill": "random", "init": [{"offset": "0xc", "u32": "@com"}]},
+    "wrap": {"size": "0x20", "fill": "random"},
+    "com": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": "@vtbl"}]},
+    "vtbl": {"size": "0x20", "fill": "random", "init": [{"offset": "0x14", "u32": "@blt"}]},
+    "ext": {"size": "0x20", "fill": "random"},
+    "old": {"size": "0x20", "fill": "random"},
+    "blt": {"size": "0x10"},
+    "tgt": {"size": "0x10"}
+  },
+  "memory": [
+    {"addr": "0x1004cec4", "u32": 0},
+    {"addr": "0x1004cec8", "u32": 111},
+    {"addr": "0x1004cecc", "u32": 222},
+    {"addr": "0x1004ced0", "u32": 333},
+    {"addr": "0x10040244", "u32": "@tgt"}
+  ],
+  "callees": {
+    "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": ["@rec", "@buf"]},
+    "0x10006d80": {"name": "FUN_10006d80", "conv": "cdecl", "args": ["int", "int", "int"], "ret": ["@surf", "@wrap"]},
+    "0x10007cf0": {"name": "FUN_10007cf0", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10028340": {"name": "FUN_10028340", "conv": "cdecl", "args": ["ptr", "int", "mem:168"], "ret": 0},
+    "0x10004ec0": {"name": "FUN_10004ec0", "conv": "cdecl", "args": ["mem:168"], "ret": 0},
+    "@tgt": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 1000},
+    "@blt": {"name": "Blt", "conv": "stdcall", "args": ["ptr", "mem:16", "ptr", "mem:16", "u32", "mem:12"], "ret": 0}
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e"
+  },
+  "cases": [
+    {"name": "typical: zero mode, registers", "args": ["@parent", 10, 20, 30, 40, 16, 0, 0, 7, 0]},
+    {"name": "pos mode", "args": ["@parent", 1, 2, 3, 4, 5, 0, 5, 7, 0]},
+    {"name": "neg mode", "args": ["@parent", 1, 2, 3, 4, 5, 0, -3, 7, 0]},
+    {"name": "param_8 = 1", "args": ["@parent", 1, 2, 3, 4, 5, 0, 1, 7, 0]},
+    {"name": "param_8 = -1", "args": ["@parent", 1, 2, 3, 4, 5, 0, -1, 7, 0]},
+    {"name": "kind 8 zeroes param_8, registers", "args": ["@parent", 1, 2, 3, 4, 5, 0, 5, 7, 4]},
+    {"name": "kind 9 zeroes param_8, no register", "args": ["@parent", 1, 2, 3, 4, 5, 0, -7, 7, 2]},
+    {"name": "kind 8 wins over 9", "args": ["@parent", 1, 2, 3, 4, 5, 0, 9, 7, 6]},
+    {"name": "bit 0 is not a flag", "args": ["@parent", 1, 2, 3, 4, 5, 0, 5, 7, 1]},
+    {"name": "bit 4 is not a flag", "args": ["@parent", 1, 2, 3, 4, 5, 0, 5, 7, 16]},
+    {"name": "bit 3, no surface: FUN_10007cf0", "args": ["@parent", 1, 2, 3, 4, 5, 0, 0, 7, 8]},
+    {"name": "all flags, no surface", "args": ["@parent", 1, 2, 3, 4, 5, 0, 5, 7, 15]},
+    {"name": "bit 3 with surface: no FUN_10007cf0", "args": ["@parent", 1, 2, 3, 4, 5, "@ext", 0, 7, 8]},
+    {"name": "surface given", "args": ["@parent", 1, 2, 3, 4, 5, "@ext", 0, 7, 0]},
+    {"name": "no parent", "args": [0, 1, 2, 3, 4, 5, 0, 0, 7, 0]},
+    {
+      "name": "malloc of the record fails",
+      "callees": {"0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": [0]}},
+      "args": ["@parent", 1, 2, 3, 4, 5, 0, 0, 7, 0]
+    },
+    {
+      "name": "already registered: no register",
+      "memory": [{"addr": "0x1004cec4", "u32": "@old"}],
+      "args": ["@parent", 1, 2, 3, 4, 5, 0, 0, 7, 0]
+    },
+    {"name": "zero size buffer", "args": ["@parent", 1, 2, 3, 4, 0, 0, 0, 7, 0]},
+    {"name": "wrapping rect", "args": ["@parent", 2147483632, -1, 32, 48, 16, 0, 0, 1, 0]},
+    {"name": "large size, all bits set", "args": ["@parent", -8, 8, 64, 64, 65536, 0, -2, 4294967295, 4294967295]},
+    {"name": "zeros", "args": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+  ],
+  "fuzz": {
+    "seed": 33888,
+    "count": 40,
+    "args": [
+      {"choices": ["@parent", "@parent", 0]},
+      {"range": [-64, 64]},
+      {"range": [-64, 64]},
+      {"range": [-4, 64]},
+      {"range": [-4, 64]},
+      {"range": [0, 512]},
+      {"choices": [0, 0, "@ext"]},
+      {"range": [-3, 3]},
+      {},
+      {"range": [0, 15]}
+    ],
+    "memory": [
+      {"addr": "0x1004cec4", "type": "ptr", "choices": [0, 0, "@old"]},
+      {"addr": "0x1004cec8", "type": "int", "range": [-1000, 1000]},
+      {"addr": "0x1004cecc", "type": "int", "range": [-1000, 1000]},
+      {"addr": "0x1004ced0", "type": "int", "range": [-1000, 1000]}
+    ]
+  }
+}

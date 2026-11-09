@@ -1,0 +1,182 @@
+{
+  "function": "t3dSetSphereRadius",
+  "original": "0x1001d3c0",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sphere",
+      "type": "ptr"
+    },
+    {
+      "name": "radius",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sphere": {
+      "size": "0x0c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": 24
+        },
+        {
+          "offset": "0x0f",
+          "u8": 1
+        }
+      ]
+    }
+  },
+  "callees": {},
+  "cases": [
+    {
+      "name": "matching type sets flag and stores radius",
+      "args": [
+        "@sphere",
+        1.5
+      ]
+    },
+    {
+      "name": "matching type preserves existing flag bits",
+      "args": [
+        "@sphere",
+        -3.25
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x0f",
+          "u8": 128
+        }
+      ]
+    },
+    {
+      "name": "nonmatching type leaves flags unchanged",
+      "args": [
+        "@sphere",
+        7.0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x00",
+          "u32": 23
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x0f",
+          "u8": 5
+        }
+      ]
+    },
+    {
+      "name": "type above match leaves flags unchanged",
+      "args": [
+        "@sphere",
+        0.25
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x00",
+          "u32": 25
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x0f",
+          "u8": 223
+        }
+      ]
+    },
+    {
+      "name": "null definition still stores radius",
+      "args": [
+        "@sphere",
+        -0.0
+      ],
+      "memory": [
+        {
+          "addr": "@sphere",
+          "offset": "0x04",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "matching type with flag already set",
+      "args": [
+        "@sphere",
+        0.0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x0f",
+          "u8": 32
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 119744,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@sphere"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sphere",
+        "offset": "0x04",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@definition"
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x00",
+        "type": "u32",
+        "choices": [
+          23,
+          24,
+          25
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x0f",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          31,
+          32,
+          127,
+          128,
+          255
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "function": "t3dIsTrackValid",
+  "original": "0x1001d0cc",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "track": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@definition"},
+        {"offset": "0x0", "u32": 22}
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 21}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@track"
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "track tag 0x15",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "u32": 21}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "track tag 0x17",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "u32": 23}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "track tag 0x116 (low byte only)",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "u32": "0x116"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "track tag 0x10016 (low word only)",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "u32": "0x10016"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "track tag 0x80000016 (sign bit)",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "u32": "0x80000016"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x16",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@definition", "u32": 22}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x115 (low byte only)",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@definition", "u32": "0x115"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x10015 (low word only)",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@definition", "u32": "0x10015"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition NULL",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list only at 0x18 (0x14 null)",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "offset": "0x14", "u32": 0},
+        {"addr": "@track", "offset": "0x18", "u32": "@definition"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "both tags wrong",
+      "args": [
+        "@track"
+      ],
+      "memory": [
+        {"addr": "@track", "u32": 0},
+        {"addr": "@definition", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@track"
+      ],
+      "objects": {
+        "track": {"size": "0x100", "fill": "zero"}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null track",
+      "args": [
+        0
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 118988,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@track",
+          "@track",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@track",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [21, 22, 22, 23, 0, 278, 65558, "0x80000016", "0x10016"]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": ["@definition", "@definition", 0]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x18",
+        "type": "ptr",
+        "choices": ["@definition", 0]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [21, 21, 22, 0, 277, 65557, "0x80000015"]
+      }
+    ]
+  }
+}

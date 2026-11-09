@@ -1,0 +1,42 @@
+{
+  "function": "drawButtonImage_guess",
+  "original": "0x004195A9",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "fastcall",
+  "args": [{"name": "element", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "element": {"size": "0x40", "fill": "random"},
+    "image": {"size": "0x24", "fill": "random"}
+  },
+  "callees": {
+    "0x004384B2": {"name": "EQ_Image_guess::draw_guess", "conv": "thiscall", "this": "ptr", "args": ["u32", "u32"], "ret": 0}
+  },
+  "memory": [
+    {"addr": "0x006B32B4", "u32": "@image"},
+    {"addr": "0x006B32D0", "u32": "@image"},
+    {"addr": "0x006B32D4", "u32": "@image"},
+    {"addr": "0x006B61A0", "u32": "@image"},
+    {"addr": "0x006D32B0", "u32": "@image"}
+  ],
+  "cases": [
+    {"name": "zero ID in first slot calls image zero", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 0}, {"addr": "@element", "offset": "0x16", "u16": 0}]},
+    {"name": "zero ID in second slot calls image zero", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 1}, {"addr": "@element", "offset": "0x18", "u16": 0}]},
+    {"name": "zero selector uses first ID", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 0}, {"addr": "@element", "offset": "0x16", "u16": 7}, {"addr": "@element", "offset": "0x18", "u16": 8}]},
+    {"name": "nonzero selector uses second ID", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 1}, {"addr": "@element", "offset": "0x16", "u16": 7}, {"addr": "@element", "offset": "0x18", "u16": 8}]},
+    {"name": "selected negative ID skips valid other slot", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 0}, {"addr": "@element", "offset": "0x16", "u16": 65535}, {"addr": "@element", "offset": "0x18", "u16": 7}]},
+    {"name": "null table entry skips draw", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 0}, {"addr": "@element", "offset": "0x16", "u16": 9}, {"addr": "0x006B32D8", "u32": 0}]},
+    {"name": "ID beyond common image range remains unchecked", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 0}, {"addr": "@element", "offset": "0x16", "u16": 3003}]},
+    {"name": "maximum signed ID remains unchecked", "args": ["@element"], "memory": [{"addr": "@element", "offset": 0, "u16": 1}, {"addr": "@element", "offset": "0x18", "u16": 32767}]}
+  ],
+  "fuzz": {
+    "seed": 419753,
+    "count": 30,
+    "args": [{"choices": ["@element", "@element+1"]}],
+    "memory": [
+      {"addr": "@element", "offset": 0, "type": "u16", "choices": [0, 1, 65535]},
+      {"addr": "@element", "offset": "0x16", "type": "short", "range": [-32768, 32767]},
+      {"addr": "@element", "offset": "0x18", "type": "short", "range": [-32768, 32767]}
+    ]
+  }
+}

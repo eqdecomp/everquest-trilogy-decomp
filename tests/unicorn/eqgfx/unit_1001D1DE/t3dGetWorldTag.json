@@ -1,0 +1,237 @@
+{
+  "function": "t3dGetWorldTag",
+  "original": "0x1001e07f",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "tag_buffer",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@source_tag"
+        }
+      ]
+    },
+    "source_tag": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "EverQuest"
+        }
+      ]
+    },
+    "tag_buffer": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ]
+    },
+    {
+      "name": "empty source",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "single character",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "cstr": "A"
+        }
+      ]
+    },
+    {
+      "name": "short boundary",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "cstr": "123456789012345"
+        }
+      ]
+    },
+    {
+      "name": "length 63",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "cstr": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!"
+        }
+      ]
+    },
+    {
+      "name": "length 64",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "cstr": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!?"
+        }
+      ]
+    },
+    {
+      "name": "high-bit bytes",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "hex": "41fe8042ff00"
+        }
+      ]
+    },
+    {
+      "name": "destination offset",
+      "args": [
+        "@world",
+        "@tag_buffer+0x20"
+      ],
+      "memory": [
+        {
+          "addr": "@source_tag",
+          "cstr": "offset destination"
+        }
+      ]
+    },
+    {
+      "name": "exact source destination alias",
+      "args": [
+        "@world",
+        "@tag_buffer"
+      ],
+      "objects": {
+        "world": {
+          "size": "0xc",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": "@tag_buffer"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@tag_buffer",
+          "hex": "73616d6500"
+        }
+      ]
+    },
+    {
+      "name": "forward overlap ordering",
+      "args": [
+        "@world",
+        "@tag_buffer+0x1"
+      ],
+      "objects": {
+        "world": {
+          "size": "0xc",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": "@tag_buffer"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@tag_buffer",
+          "hex": "4142434400"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 123007,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@tag_buffer"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source_tag",
+        "type": "u8",
+        "count": 63,
+        "choices": [
+          0,
+          1,
+          65,
+          66,
+          90,
+          127,
+          128,
+          255
+        ]
+      },
+      {
+        "addr": "@source_tag+0x3f",
+        "type": "u8",
+        "choices": [
+          0
+        ]
+      }
+    ]
+  }
+}

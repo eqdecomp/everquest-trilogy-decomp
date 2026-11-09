@@ -1,0 +1,131 @@
+{
+  "function": "getObjectDataPointer_guess",
+  "original": "0x100545c0",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "handle",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "handle": {
+      "size": "0x8",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@object"
+        }
+      ]
+    },
+    "object": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "cases": [
+    {
+      "name": "reads the data pointer at object+8",
+      "args": [
+        "@handle"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x8",
+          "u32": "0x1234abcd"
+        }
+      ],
+      "expect": {
+        "ret": "0x1234abcd"
+      }
+    },
+    {
+      "name": "zero data pointer",
+      "args": [
+        "@handle"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "all-ones data pointer",
+      "args": [
+        "@handle"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": "0xffffffff"
+      }
+    },
+    {
+      "name": "data pointer pointing back at the object",
+      "args": [
+        "@handle"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x8",
+          "u32": "@object"
+        }
+      ]
+    },
+    {
+      "name": "null handle faults like the original",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "null object pointer faults like the original",
+      "args": [
+        "@handle"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 345536,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@handle"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@object",
+        "offset": "0x8",
+        "type": "u32"
+      }
+    ]
+  }
+}

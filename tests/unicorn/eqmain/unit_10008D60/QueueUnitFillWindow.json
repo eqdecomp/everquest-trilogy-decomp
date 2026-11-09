@@ -1,0 +1,237 @@
+{
+  "function": "QueueUnitFillWindow_guess",
+  "original": "0x10009960",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unit",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "unit": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@strm"},
+        {"offset": "0x24", "u32": 1024},
+        {"offset": "0x30", "u32": "@window"},
+        {"offset": "0x34", "u32": 2048},
+        {"offset": "0x38", "u32": "@prev"},
+        {"offset": "0x3c", "u32": "@head"},
+        {"offset": "0x40", "u32": 4660},
+        {"offset": "0x44", "u32": 512},
+        {"offset": "0x4c", "u32": 32767},
+        {"offset": "0x50", "u32": 5},
+        {"offset": "0x54", "u32": 1440},
+        {"offset": "0x68", "u32": 1696}
+      ]
+    },
+    "strm": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@input"},
+        {"offset": "0x1c", "u32": "@state"}
+      ]
+    },
+    "state": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": 1}
+      ]
+    },
+    "window": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "prev": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u16": 1024},
+        {"offset": "0x02", "u16": 1023},
+        {"offset": "0x04", "u16": 1025},
+        {"offset": "0x06", "u16": 0},
+        {"offset": "0x08", "u16": 65535}
+      ]
+    },
+    "head": {
+      "size": "0x400",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u16": 1024},
+        {"offset": "0x02", "u16": 1023},
+        {"offset": "0x04", "u16": 1025},
+        {"offset": "0x06", "u16": 0},
+        {"offset": "0x08", "u16": 65535}
+      ]
+    },
+    "input": {
+      "size": "0x1000",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x10009a90": {
+      "name": "QueueUnitReadBytes_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty window (window_size 0): reads w_size bytes",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x34", "u32": 0},
+        {"addr": "@strm", "offset": "0x4", "u32": 5000}
+      ]
+    },
+    {
+      "name": "more == -1 at strstart past the slide limit: no slide, unbounded read",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 2047},
+        {"addr": "@unit", "offset": "0x6c", "u32": 2},
+        {"addr": "@strm", "offset": "0x4", "u32": 5}
+      ]
+    },
+    {
+      "name": "window full at strstart 0 with lookahead: no slide, read 0",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x34", "u32": 300},
+        {"addr": "@unit", "offset": "0x6c", "u32": 300},
+        {"addr": "@strm", "offset": "0x4", "u32": 50}
+      ]
+    },
+    {
+      "name": "window full at strstart 100 with lookahead: no slide, read 0",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x34", "u32": 400},
+        {"addr": "@unit", "offset": "0x64", "u32": 100},
+        {"addr": "@unit", "offset": "0x6c", "u32": 300},
+        {"addr": "@strm", "offset": "0x4", "u32": 50}
+      ]
+    },
+    {
+      "name": "window full past the slide limit with empty lookahead: slide, read w_size",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x34", "u32": 1790},
+        {"addr": "@unit", "offset": "0x64", "u32": 1790},
+        {"addr": "@strm", "offset": "0x4", "u32": 2000}
+      ]
+    },
+    {
+      "name": "strstart 1785: one below the slide limit",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 1785},
+        {"addr": "@unit", "offset": "0x6c", "u32": 248},
+        {"addr": "@strm", "offset": "0x4", "u32": 20}
+      ]
+    },
+    {
+      "name": "strstart 1786: at the slide limit",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 1786},
+        {"addr": "@unit", "offset": "0x6c", "u32": 248},
+        {"addr": "@strm", "offset": "0x4", "u32": 20}
+      ]
+    },
+    {
+      "name": "2 bytes read: lookahead below 3, no rehash",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 10},
+        {"addr": "@strm", "offset": "0x4", "u32": 2}
+      ]
+    },
+    {
+      "name": "3 bytes read: rehash ins_h",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 10},
+        {"addr": "@strm", "offset": "0x4", "u32": 3}
+      ]
+    },
+    {
+      "name": "window-limited read with input left",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 500},
+        {"addr": "@unit", "offset": "0x6c", "u32": 100},
+        {"addr": "@strm", "offset": "0x4", "u32": 2000}
+      ]
+    },
+    {
+      "name": "input-limited read from an empty window",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@strm", "offset": "0x4", "u32": 100}
+      ]
+    },
+    {
+      "name": "no input at entry: returns before the read",
+      "args": ["@unit"],
+      "memory": []
+    },
+    {
+      "name": "slide with no input: returns after the slide",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": 1800},
+        {"addr": "@unit", "offset": "0x6c", "u32": 248}
+      ]
+    },
+    {
+      "name": "window-limited read to exactly 262 bytes: returns at the limit",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x34", "u32": 300},
+        {"addr": "@unit", "offset": "0x64", "u32": 38},
+        {"addr": "@strm", "offset": "0x4", "u32": 5000}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 10009960,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@unit"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@unit", "offset": "0x64", "type": "u32", "choices": [0, 1, 2, 100, 500, 1000, 1500, 1785, 1786, 1790, 1800]},
+      {"addr": "@unit", "offset": "0x6c", "type": "u32", "choices": [0, 1, 2, 3, 4, 10, 100, 248]},
+      {"addr": "@unit", "offset": "0x34", "type": "u32", "choices": [2048, 2048, 2300]},
+      {"addr": "@unit", "offset": "0x50", "type": "u32", "range": [0, 15]},
+      {"addr": "@unit", "offset": "0x4c", "type": "u32", "choices": [32767, 65535, 8191, 63]},
+      {"addr": "@unit", "offset": "0x40", "type": "u32"},
+      {"addr": "@unit", "offset": "0x54", "type": "u32"},
+      {"addr": "@unit", "offset": "0x68", "type": "u32"},
+      {"addr": "@strm", "offset": "0x4", "type": "u32", "choices": [0, 1, 2, 3, 50, 300, 1024, 1500, 3000]},
+      {"addr": "@state", "offset": "0x18", "type": "u32", "choices": [0, 1]},
+      {"addr": "@prev", "size": 2048},
+      {"addr": "@head", "size": 1024},
+      {"addr": "@input", "size": 4096}
+    ]
+  }
+}

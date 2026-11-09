@@ -1,0 +1,395 @@
+{
+  "function": "t3dDuplicateTrack",
+  "original": "0x1001cd0c",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "0x1000"
+        }
+      ]
+    },
+    "source": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "offset": "0x14",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "key": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "dup": {
+      "size": "0x38",
+      "fill": "random"
+    },
+    "ods": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100760c4",
+      "u32": "@ods"
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@dup"
+    },
+    "@ods": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: linked, the copy is returned",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "in dictionary with keep-memory flags 0x21, key set",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@source",
+          "offset": "0xc",
+          "u8": 33
+        },
+        {
+          "addr": "@source",
+          "offset": "0x8",
+          "u32": "@key"
+        }
+      ]
+    },
+    {
+      "name": "link fails: copy freed, debug text, NULL",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        }
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails: debug text, NULL, no link",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros: base, source offset and use counts 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@source",
+          "offset": "0x20",
+          "u32": 0
+        },
+        {
+          "addr": "@source",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "wrap: base and source offset 0xffffffff",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@source",
+          "offset": "0x20",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "definition use count 0xffffffff wraps to 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "source use count 3: the copy's use count is 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@source",
+          "offset": "0x10",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "flags 0x01 (in dictionary), key null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@source",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@source",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "flags 0xff, base 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100760c4",
+          "u32": "@ods"
+        },
+        {
+          "addr": "@source",
+          "offset": "0xc",
+          "u8": 255
+        },
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5550,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@context",
+        "offset": "0x8",
+        "type": "u32"
+      },
+      {
+        "addr": "@source",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@key",
+          0
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0xc",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          0,
+          5
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0x20",
+        "type": "u32"
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          0,
+          5
+        ],
+        "p": 0.5
+      }
+    ]
+  }
+}

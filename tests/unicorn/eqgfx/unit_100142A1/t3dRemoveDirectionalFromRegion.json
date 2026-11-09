@@ -1,0 +1,337 @@
+{
+  "function": "t3dRemoveDirectionalFromRegion",
+  "original": "0x10014e48",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "regionIndices",
+      "type": "ptr"
+    },
+    {
+      "name": "regionIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@regions"
+        }
+      ]
+    },
+    "regions": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@regionobject"},
+        {"offset": "0x04", "u32": "@regionobject"},
+        {"offset": "0x08", "u32": "@regionobject"},
+        {"offset": "0x0c", "u32": "@regionobject"},
+        {"offset": "0x10", "u32": "@regionobject"},
+        {"offset": "0x14", "u32": "@regionobject"},
+        {"offset": "0x18", "u32": "@regionobject"},
+        {"offset": "0x1c", "u32": "@regionobject"}
+      ]
+    },
+    "regionobject": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@regionset"
+        }
+      ]
+    },
+    "regionset": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": "0x27"},
+        {"offset": "0x10", "u32": 3},
+        {"offset": "0x14", "u32": 8},
+        {"offset": "0x18", "u32": "@entries"}
+      ]
+    },
+    "entries": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": "@decoy"},
+        {"offset": "0x04", "u32": "@regionindices"},
+        {"offset": "0x08", "u32": "@decoy"}
+      ]
+    },
+    "decoy": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "regionindices": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": 4},
+        {"offset": "0x28", "u32": 8},
+        {"offset": "0x2c", "u32": "@indexlist"}
+      ]
+    },
+    "indexlist": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": 1},
+        {"offset": "0x04", "u32": 3},
+        {"offset": "0x08", "u32": 5},
+        {"offset": "0x0c", "u32": 6}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100679f0": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 3 found at the middle probe, tag 0x27, entry in the middle",
+      "args": ["@world", "@regionindices", 3],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first list element: found after one left step, middle 0",
+      "args": ["@world", "@regionindices", 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last list element: middle = count - 1",
+      "args": ["@world", "@regionindices", 6],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "found after one right step",
+      "args": ["@world", "@regionindices", 5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not in list, below all",
+      "args": ["@world", "@regionindices", 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not in list, above all",
+      "args": ["@world", "@regionindices", 9],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not in list, gap between 1 and 3",
+      "args": ["@world", "@regionindices", 2],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not in list, gap between 3 and 5",
+      "args": ["@world", "@regionindices", 4],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not in list, 0xffffffff is above all (unsigned)",
+      "args": ["@world", "@regionindices", "0xffffffff"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty list: upper bound below zero",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry, found",
+      "args": ["@world", "@regionindices", 1],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry, not found",
+      "args": ["@world", "@regionindices", 2],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unsigned: 0x80000001 in the list, key 0x7fffffff not found",
+      "args": ["@world", "@regionindices", "0x7fffffff"],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 5},
+        {"addr": "@indexlist", "offset": "0x10", "u32": "0x80000001"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "full list of 8, found in the middle",
+      "args": ["@world", "@regionindices", 4],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 8},
+        {"addr": "@indexlist", "offset": "0x00", "u32": 0},
+        {"addr": "@indexlist", "offset": "0x04", "u32": 1},
+        {"addr": "@indexlist", "offset": "0x08", "u32": 2},
+        {"addr": "@indexlist", "offset": "0x0c", "u32": 3},
+        {"addr": "@indexlist", "offset": "0x10", "u32": 4},
+        {"addr": "@indexlist", "offset": "0x14", "u32": 5},
+        {"addr": "@indexlist", "offset": "0x18", "u32": 6},
+        {"addr": "@indexlist", "offset": "0x1c", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list value 7 (last region), found at the last list slot",
+      "args": ["@world", "@regionindices", 7],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 5},
+        {"addr": "@indexlist", "offset": "0x10", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tag 0x29, entry in the middle",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x00", "u32": "0x29"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tag 0x28: list removal only, entries untouched",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x00", "u32": "0x28"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tag 0x26: below the 0x27 test",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x00", "u32": "0x26"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tag 0x2a: above the 0x29 test",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x00", "u32": "0x2a"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry at index 0",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@entries", "offset": "0x00", "u32": "@regionindices"},
+        {"addr": "@entries", "offset": "0x04", "u32": "@decoy"},
+        {"addr": "@entries", "offset": "0x08", "u32": "@decoy"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry at the last index: count drops, no memcpy",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@entries", "offset": "0x00", "u32": "@decoy"},
+        {"addr": "@entries", "offset": "0x04", "u32": "@decoy"},
+        {"addr": "@entries", "offset": "0x08", "u32": "@regionindices"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry absent: scan runs to the end",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@entries", "offset": "0x04", "u32": "@decoy"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry count 0: no scan",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x10", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry count 1, the one entry is the list",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x10", "u32": 1},
+        {"addr": "@entries", "offset": "0x00", "u32": "@regionindices"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry count 1, the one entry is another object",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x10", "u32": 1},
+        {"addr": "@entries", "offset": "0x00", "u32": "@decoy"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list twice in the entries: first match wins",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@entries", "offset": "0x00", "u32": "@regionindices"},
+        {"addr": "@entries", "offset": "0x04", "u32": "@regionindices"},
+        {"addr": "@entries", "offset": "0x08", "u32": "@decoy"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 85576,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@regionindices"
+        ]
+      },
+      {
+        "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "0x7fffffff", "0x80000000", "0xffffffff"]
+      }
+    ],
+    "memory": [
+      {"addr": "@regionindices", "offset": "0x24", "type": "int", "range": [-1, 8]},
+      {"addr": "@indexlist", "type": "u32", "count": 8, "range": [0, 7]},
+      {"addr": "@regionset", "offset": "0x00", "type": "int", "choices": ["0x26", "0x27", "0x28", "0x29", "0x2a"]},
+      {"addr": "@regionset", "offset": "0x10", "type": "int", "range": [0, 8]},
+      {"addr": "@entries", "type": "ptr", "count": 8, "choices": ["@regionindices", "@decoy", 0]}
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "function": "SetXMIDIMasterVolume_guess",
+  "original": "0x004e5ee6",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "volume",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self_seq": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        { "offset": "0x60", "u32": "0x12345678" }
+      ]
+    },
+    "self_seq_high": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        { "offset": "0x60", "u32": "0x80000000" }
+      ]
+    },
+    "self_noseq": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        { "offset": "0x60", "u32": "0" }
+      ]
+    },
+    "self_random": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "mss32.dll!_AIL_set_XMIDI_master_volume@8": {
+      "name": "_AIL_set_XMIDI_master_volume@8",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    { "name": "sequence set", "args": ["@self_seq", 0, 11, 64] },
+    { "name": "sequence set zero volume", "args": ["@self_seq", 0, 11, 0] },
+    { "name": "sequence set negative volume", "args": ["@self_seq", 3, 22, -5] },
+    { "name": "sequence high bit", "args": ["@self_seq_high", 0, 1, 127] },
+    { "name": "unused argument matters not", "args": ["@self_seq", 0, -1, 127] },
+    { "name": "no sequence", "args": ["@self_noseq", 0, 11, 64] },
+    { "name": "no sequence zeros", "args": ["@self_noseq", 0, 0, 0] },
+    { "name": "random object", "args": ["@self_random", 0, 5, 99] }
+  ],
+  "fuzz": {
+    "seed": 5125871,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@self_seq",
+          "@self_seq_high",
+          "@self_noseq",
+          "@self_random"
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

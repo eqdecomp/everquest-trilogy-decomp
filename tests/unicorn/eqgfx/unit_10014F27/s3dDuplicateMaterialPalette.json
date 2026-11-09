@@ -1,0 +1,227 @@
+{
+  "function": "s3dDuplicateMaterialPalette",
+  "original": "0x10017042",
+  "sources": [
+    "src/eqgfx/unit_10014F27.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": 3},
+        {"offset": "0x18", "u32": "@sourceEntries"},
+        {"offset": "0x1c", "u32": "@sourceTints"}
+      ]
+    },
+    "sourceEntries": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "sourceTints": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "palette": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "entries": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "tints": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": ["@palette", "@entries", "@tints"]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: three entries and tints, registers",
+      "args": ["@dictionary", "@source"]    },
+    {
+      "name": "one entry",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 1}
+      ]    },
+    {
+      "name": "no entries (count 0), tints present",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 0}
+      ]    },
+    {
+      "name": "no tint entries (source tints null)",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x1c", "u32": 0}
+      ]    },
+    {
+      "name": "no entries and no tints",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 0},
+        {"addr": "@source", "offset": "0x1c", "u32": 0}
+      ]    },
+    {
+      "name": "palette allocation fails",
+      "args": ["@dictionary", "@source"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entries allocation fails (returns the freed palette)",
+      "args": ["@dictionary", "@source"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@palette", 0]}
+      }    },
+    {
+      "name": "tint allocation fails (returns the freed palette)",
+      "args": ["@dictionary", "@source"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@palette", "@entries", 0]}
+      }    },
+    {
+      "name": "tint allocation fails, count 0",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 0}
+      ],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@palette", "@entries", 0]}
+      }    },
+    {
+      "name": "registration fails (frees tints, entries, palette)",
+      "args": ["@dictionary", "@source"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -49858}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "registration fails, no tint entries",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x1c", "u32": 0}
+      ],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -49858}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "registration fails, count 0",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 0}
+      ],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -49858}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "registration returns 1 (any nonzero fails)",
+      "args": ["@dictionary", "@source"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "registration returns -1 (negative fails)",
+      "args": ["@dictionary", "@source"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "registration succeeds, no entries, no tints",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 0},
+        {"addr": "@source", "offset": "0x1c", "u32": 0}
+      ]    },
+    {
+      "name": "registration succeeds, two entries, no tints",
+      "args": ["@dictionary", "@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x14", "u32": 2},
+        {"addr": "@source", "offset": "0x1c", "u32": 0}
+      ]    }
+  ],
+  "fuzz": {
+    "seed": 94274,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@source", "offset": "0x14", "type": "u32", "range": [0, 6]},
+      {"addr": "@source", "offset": "0x1c", "type": "ptr", "choices": ["@sourceTints", 0]}
+    ]
+  }
+}

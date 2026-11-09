@@ -1,0 +1,187 @@
+{
+  "function": "fillNextResourceDescriptorType29_guess",
+  "original": "0x100250a6",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "contextArg",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "descriptor": {
+      "size": "0x38",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@mainBlock"
+        }
+      ]
+    },
+    "mainBlock": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x27"
+        }
+      ]
+    },
+    "altDescriptor": {
+      "size": "0x38",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@altMainBlock"
+        }
+      ]
+    },
+    "altMainBlock": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x26"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10024c93": {
+      "name": "fillNextResourceDescriptor",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@descriptor"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: next descriptor's main block gets type 0x29",
+      "args": [
+        1
+      ]
+    },
+    {
+      "name": "zero context argument",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "negative context argument",
+      "args": [
+        -1
+      ]
+    },
+    {
+      "name": "no descriptor filled: returns 0 and touches nothing",
+      "args": [
+        1
+      ],
+      "callees": {
+        "0x10024c93": {
+          "name": "fillNextResourceDescriptor",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "returned descriptor is another one: its main block is stamped, that descriptor returned",
+      "args": [
+        1
+      ],
+      "callees": {
+        "0x10024c93": {
+          "name": "fillNextResourceDescriptor",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": "@altDescriptor"
+        }
+      }
+    },
+    {
+      "name": "main block already type 0x26 is overwritten with 0x29",
+      "args": [
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@mainBlock",
+          "offset": "0x0",
+          "u32": "0x26"
+        }
+      ]
+    },
+    {
+      "name": "descriptor points its main block at the alternate block",
+      "args": [
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "offset": "0x2c",
+          "u32": "@altMainBlock"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 151718,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@descriptor",
+        "offset": "0x2c",
+        "type": "ptr",
+        "choices": [
+          "@mainBlock",
+          "@altMainBlock"
+        ]
+      },
+      {
+        "addr": "@descriptor",
+        "offset": "0x30",
+        "size": 8
+      },
+      {
+        "addr": "@mainBlock",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          64
+        ]
+      },
+      {
+        "addr": "@altMainBlock",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          64
+        ]
+      }
+    ]
+  }
+}

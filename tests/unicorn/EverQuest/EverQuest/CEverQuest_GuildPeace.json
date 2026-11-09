@@ -1,0 +1,80 @@
+{
+  "function": "CEverQuest_GuildPeace_guess_class::GuildPeace",
+  "original": "0x004cb1a5",
+  "rewrite": "CEverQuest_GuildPeace_guess_class::GuildPeace",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "conv": "thiscall",
+  "this": "@unusedthis",
+  "args": [
+    {"name": "param_1", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "unusedthis": {"size": "0x100", "fill": "zero"},
+    "profile": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "GuildMember"},
+        {"offset": "0x103a", "u16": 77},
+        {"offset": "0x104b", "u8": 2}
+      ]
+    },
+    "eq": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006efe2c", "u32": "@eq"}
+  ],
+  "callees": {
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": ["ignore", "cstr"],
+      "passthrough": true
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:72", "u32", "int"]
+    }
+  },
+  "cases": [
+    {"name": "leader message and packet", "args": ["War target"]},
+    {"name": "leader empty target", "args": [""]},
+    {"name": "leader percent characters", "args": ["%s 100% peace"]},
+    {"name": "leader 29 bytes", "args": ["12345678901234567890123456789"]},
+    {"name": "leader 30 bytes", "args": ["123456789012345678901234567890"]},
+    {"name": "leader 31 bytes", "args": ["1234567890123456789012345678901"]},
+    {"name": "leader 40 bytes", "args": ["1234567890123456789012345678901234567890"]},
+    {"name": "leader overwrites packet tail before it is cleared", "args": ["12345678901234567890123456789012345678901234567890123456789012345"]},
+    {"name": "nonleader rank zero", "args": ["GuildA"], "objects": {"profile": {"init": [{"offset": "0x104b", "u8": 0}]}}},
+    {"name": "nonleader rank one", "args": ["GuildB"], "objects": {"profile": {"init": [{"offset": "0x104b", "u8": 1}]}}},
+    {"name": "nonleader rank three", "args": ["GuildC"], "objects": {"profile": {"init": [{"offset": "0x104b", "u8": 3}]}}},
+    {"name": "nonleader max rank", "args": ["GuildD"], "objects": {"profile": {"init": [{"offset": "0x104b", "u8": 255}]}}},
+    {"name": "guild id zero", "args": ["IdZero"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 0}]},
+    {"name": "guild id signed low", "args": ["IdLow"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 32768}]},
+    {"name": "guild id high", "args": ["IdHigh"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 32767}]}
+  ],
+  "fuzz": {
+    "seed": 5026213,
+    "count": 40,
+    "args": [
+      {"choices": ["", "x", "A target", "two words", "%s", "peace!", "12345678901234567890123456789012345678901234567890123456789"]}
+    ],
+    "memory": [
+      {"addr": "@profile", "offset": "0x104b", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@profile", "offset": "0x103a", "type": "short", "choices": [-32768, -1, 0, 1, 32767]}
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "function": "EQ_Overlay::drawExplicit",
+  "original": "0x004500BE",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "rewrite": "EQ_Overlay::drawExplicit",
+  "conv": "thiscall",
+  "this": "@overlay",
+  "args": [
+    {"name": "overlay", "type": "ptr"},
+    {"name": "arg", "type": "int"},
+    {"name": "pos", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "overlay": {"size": "0x20", "fill": "zero"},
+    "asset": {"size": "0x20", "fill": "zero"},
+    "player": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x70", "u32": "@actor"}]},
+    "actor": {"size": "0x18A", "fill": "zero", "init": [{"offset": "0x189", "u8": 1}]},
+    "pos": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "u32": 4294967280}, {"offset": "4", "u32": 2147483647}, {"offset": "8", "u32": 305419896}, {"offset": "12", "u32": 2309737967}]}
+  },
+  "callees": {
+    "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 1},
+    "0x00401011": {"name": "overlay_apply_before", "conv": "cdecl", "args": ["ptr", "int", "int", "int"], "ret": 0, "writes": [{"arg": 0, "hex": "01020304"}]},
+    "0x0040101D": {"name": "overlay_apply_after", "conv": "cdecl", "args": ["ptr", "int", "int", "int"], "ret": 0, "writes": [{"arg": 0, "hex": "A1B2C3D4"}]}
+  },
+  "memory": [
+    {"addr": "0x006E4DA0", "u32": "@player"},
+    {"addr": "0x006E5334", "u32": "0x00401011"}
+  ],
+  "cases": [
+    {"args": ["@asset", -1, "0x0000DEAD"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 0, "writes": [{"addr": "0x006E4DA0", "hex": "00000000"}, {"addr": "0x006E5334", "hex": "1D104000"}]}}},
+    {"args": ["@asset", 2147483647, "@pos"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 256, "writes": [{"addr": "0x006E4DA0", "hex": "00000000"}, {"addr": "0x006E5334", "hex": "1D104000"}]}}},
+    {"args": ["@asset", -2147483648, "@pos+1"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 2147483648, "writes": [{"addr": "@player", "offset": 112, "hex": "00000000"}]}}},
+    {"args": ["@asset+1", 305419896, "@pos+4"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": -1, "writes": [{"addr": "@actor", "offset": 393, "hex": "00"}, {"addr": "0x006E5334", "hex": "1D104000"}]}}},
+    {"args": ["@asset", 42, "@pos"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"args": ["@asset", -999, "@pos+4"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 1, "writes": [{"addr": "@actor", "offset": 393, "hex": "00"}]}}},
+    {"args": ["@asset", 0, "@pos+8"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 1, "writes": [{"addr": "0x006E4DA0", "hex": "00000000"}]}}},
+    {"args": ["@asset", 2147483647, "@pos+12"], "callees": {"0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 1, "writes": [{"addr": "@actor", "offset": 393, "hex": "80"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4522238,
+    "count": 30,
+    "args": [
+      {"choices": ["@asset", "@asset+1"]},
+      {"range": [-2147483648, 2147483647]},
+      {"choices": ["@pos", "@pos+1", "@pos+4", "@pos+8"]}
+    ],
+    "memory": [
+      {"addr": "0x006E4DA0", "type": "ptr", "choices": [0, "@player"]},
+      {"addr": "@player", "offset": "0x70", "type": "ptr", "choices": [0, "@actor"]},
+      {"addr": "@actor", "offset": "0x189", "type": "u8", "range": [0, 255]},
+      {"addr": "0x006E5334", "type": "ptr", "choices": ["0x00401011", "0x0040101D"]},
+      {"addr": "@pos", "type": "int", "count": 4, "range": [-2147483648, 2147483647]}
+    ]
+  }
+}

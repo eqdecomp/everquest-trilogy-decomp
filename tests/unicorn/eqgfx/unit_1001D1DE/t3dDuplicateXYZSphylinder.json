@@ -1,0 +1,163 @@
+{
+  "function": "t3dDuplicateXYZSphylinder",
+  "original": "0x1001d4cf",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sourceWords",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "sourcewords": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "destination": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@destination"
+    }
+  },
+  "cases": [
+    {
+      "name": "six ordered dwords and untouched seventh destination dword",
+      "args": [
+        "@sourcewords"
+      ],
+      "objects": {
+        "sourcewords": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x00", "u32": "0x11000001"},
+            {"offset": "0x04", "u32": "0x22000002"},
+            {"offset": "0x08", "u32": "0x33000003"},
+            {"offset": "0x0c", "u32": "0x44000004"},
+            {"offset": "0x10", "u32": "0x55000005"},
+            {"offset": "0x14", "u32": "0x66000006"},
+            {"offset": "0x18", "u32": "0x77000007"}
+          ]
+        },
+        "destination": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x18", "u32": "0xdeadbeef"},
+            {"offset": "0x1c", "u32": "0xcafebabe"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "all zero words",
+      "args": [
+        "@sourcewords"
+      ],
+      "objects": {
+        "sourcewords": {
+          "size": "0x20",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "high-bit and low-bit word patterns",
+      "args": [
+        "@sourcewords"
+      ],
+      "objects": {
+        "sourcewords": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x00", "u32": "0xffffffff"},
+            {"offset": "0x04", "u32": "0x80000000"},
+            {"offset": "0x08", "u32": "0x7fffffff"},
+            {"offset": "0x0c", "u32": "0x00000001"},
+            {"offset": "0x10", "u32": "0xaaaaaaaa"},
+            {"offset": "0x14", "u32": "0x55555555"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "alternating word order",
+      "args": [
+        "@sourcewords"
+      ],
+      "objects": {
+        "sourcewords": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x00", "u32": "0x01020304"},
+            {"offset": "0x04", "u32": "0x05060708"},
+            {"offset": "0x08", "u32": "0x11121314"},
+            {"offset": "0x0c", "u32": "0x15161718"},
+            {"offset": "0x10", "u32": "0x21222324"},
+            {"offset": "0x14", "u32": "0x25262728"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "allocation failure leaves destination unchanged",
+      "args": [
+        "@sourcewords"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": 0
+        }
+      },
+      "objects": {
+        "destination": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x00", "u32": "0x12345678"},
+            {"offset": "0x04", "u32": "0x87654321"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 120015,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sourcewords"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sourcewords",
+        "type": "u32",
+        "count": 7
+      },
+      {
+        "addr": "@destination",
+        "type": "u32",
+        "count": 8
+      }
+    ]
+  }
+}

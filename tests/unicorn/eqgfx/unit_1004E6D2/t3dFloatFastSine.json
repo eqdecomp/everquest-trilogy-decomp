@@ -1,0 +1,65 @@
+{
+  "function": "t3dFloatFastSine",
+  "original": "0x1004ee87",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "value",
+      "type": "float"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "startup": {
+      "size": "0x8d04",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1800", "f32": 1.0},
+        {"offset": "0x1804", "f32": 2.5},
+        {"offset": "0x1C00", "f32": 0.5},
+        {"offset": "0x1FF8", "f32": 7.0},
+        {"offset": "0x1FFC", "f32": -3.75}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100F3FF4", "u32": "@startup"}
+  ],
+  "callees": {
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {"name": "index-zero", "args": [0.25], "expect": {"ret": 1.0}},
+    {"name": "index-one", "args": [1.25], "expect": {"ret": 2.5}},
+    {"name": "index-0x100", "args": [256.0], "expect": {"ret": 0.5}},
+    {"name": "index-0x101-unset-entry", "args": [257.0], "expect": {"ret": 0.0}},
+    {"name": "index-0x1fe", "args": [510.0], "expect": {"ret": 7.0}},
+    {"name": "index-top-0x1ff", "args": [511.0], "expect": {"ret": -3.75}},
+    {"name": "index-minus-one-is-top", "args": [-1.0], "expect": {"ret": -3.75}},
+    {"name": "index-minus-two", "args": [-2.0], "expect": {"ret": 7.0}},
+    {"name": "index-0x200-wraps-to-zero", "args": [512.0], "expect": {"ret": 1.0}},
+    {"name": "index-0x201-wraps-to-one", "args": [513.0], "expect": {"ret": 2.5}},
+    {"name": "index-0x3ff-wraps-to-top", "args": [1023.0], "expect": {"ret": -3.75}},
+    {"name": "index-minus-512-wraps-to-zero", "args": [-512.0], "expect": {"ret": 1.0}},
+    {"name": "index-2pow31-plus-256", "args": [2147483904.0], "expect": {"ret": 0.5}},
+    {"name": "index-2pow31-plus-512", "args": [2147484160.0], "expect": {"ret": 1.0}}
+  ],
+  "fuzz": {
+    "seed": 323207,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "@startup", "offset": "0x1800", "type": "float", "count": 512, "choices": [-8.0, -2.5, -0.75, 0.0, 0.5, 1.0, 3.25, 7.5]}
+    ]
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "function": "EQSwitch_Destructor_guess",
+  "original": "0x004bdc26",
+  "sources": [
+    "src/EverQuest/EQSwitch.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": 4, "u32": "@prev"},
+        {"offset": 8, "u32": "@next"},
+        {"offset": "0x1c", "u8": 0},
+        {"offset": "0x80", "u32": 4660}
+      ]
+    },
+    "prev": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "next": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4d78", "u32": 2864434397},
+    {"addr": "0x006e4de0", "u32": "@display"}
+  ],
+  "callees": {
+    "0x0040827a": {
+      "name": "CDisplay::DeleteActorFromDisplay_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x00411715": {
+      "name": "CDisplay::DeleteActor",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "middle of list: prev and next relinked, head kept, actor deleted",
+      "args": ["@self"]
+    },
+    {
+      "name": "middle of list, type 0x35: actor removed from display by address",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": "0x1c", "u8": 53}
+      ]
+    },
+    {
+      "name": "type 0x34 boundary: DeleteActor",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": "0x1c", "u8": 52}
+      ]
+    },
+    {
+      "name": "type 0x36 boundary: DeleteActor",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": "0x1c", "u8": 54}
+      ]
+    },
+    {
+      "name": "middle of list, no actor",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": "0x80", "u32": 0}
+      ]
+    },
+    {
+      "name": "no actor, type 0x35",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": "0x80", "u32": 0},
+        {"addr": "@self", "offset": "0x1c", "u8": 53}
+      ]
+    },
+    {
+      "name": "first switch (prev null): next becomes head",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 4, "u32": 0}
+      ]
+    },
+    {
+      "name": "last switch (next null): prev's next cleared",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 8, "u32": 0}
+      ]
+    },
+    {
+      "name": "only switch: links and head cleared",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 4, "u32": 0},
+        {"addr": "@self", "offset": 8, "u32": 0}
+      ]
+    },
+    {
+      "name": "only switch, type 0x35",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 4, "u32": 0},
+        {"addr": "@self", "offset": 8, "u32": 0},
+        {"addr": "@self", "offset": "0x1c", "u8": 53}
+      ]
+    },
+    {
+      "name": "prev and next the same node (ordering of the two stores)",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 8, "u32": "@prev"}
+      ]
+    },
+    {
+      "name": "next is self (reload after store)",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 8, "u32": "@self"}
+      ]
+    },
+    {
+      "name": "null display pointer passed through",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "0x006e4de0", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4971558,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@self", "offset": 4, "type": "ptr", "choices": [0, "@prev", "@next"]},
+      {"addr": "@self", "offset": 8, "type": "ptr", "choices": [0, "@next", "@prev"]},
+      {"addr": "@self", "offset": "0x1c", "type": "u8", "choices": [0, 52, 53, 54, 255]},
+      {"addr": "@self", "offset": "0x80", "type": "int", "choices": [0, 1, 4660, -1]},
+      {"addr": "0x006e4d78", "type": "ptr", "choices": [0, "@self", "@next", 305419896]}
+    ]
+  }
+}

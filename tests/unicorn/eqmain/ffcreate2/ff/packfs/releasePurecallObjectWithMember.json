@@ -1,0 +1,316 @@
+{
+  "function": "releasePurecallObjectWithMember_guess",
+  "original": "0x10007ee0",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "buf": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "one": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "two": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "zero": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "neg": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 4294967295
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "minint": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2147483648
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "maxint": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2147483647
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "big": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1000
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf"
+        }
+      ]
+    },
+    "nullmember": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    "alias": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@alias+0x4"
+        }
+      ]
+    },
+    "selfmember": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@selfmember"
+        }
+      ]
+    },
+    "fz": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10040dfc",
+      "from_image": "0x10040DFC",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x10033800": {
+      "name": "FUN_10033800 (cdecl library call on the member at +0x8; no effect on the object)",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033e53": {
+      "name": "__purecall (vtable slot 0 of 0x10040dfc; deleting-destructor stub, see RESULT note)",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "count 1 -> 0 at non-NULL calls vtable slot 0 with 1",
+      "args": [
+        "@one"
+      ]
+    },
+    {
+      "name": "count 2 -> 1 keeps",
+      "args": [
+        "@two"
+      ]
+    },
+    {
+      "name": "count 0 -> -1 keeps",
+      "args": [
+        "@zero"
+      ]
+    },
+    {
+      "name": "count -1 -> -2 keeps",
+      "args": [
+        "@neg"
+      ]
+    },
+    {
+      "name": "count minint -> maxint keeps (wraps)",
+      "args": [
+        "@minint"
+      ]
+    },
+    {
+      "name": "count maxint -> maxint-1 keeps",
+      "args": [
+        "@maxint"
+      ]
+    },
+    {
+      "name": "count 1000 -> 999 keeps",
+      "args": [
+        "@big"
+      ]
+    },
+    {
+      "name": "count 1 -> 0 with a NULL member still calls slot 0",
+      "args": [
+        "@nullmember"
+      ]
+    },
+    {
+      "name": "callee writes 5 through the member: count is read after the call (5 -> 4 keeps)",
+      "args": [
+        "@alias"
+      ],
+      "callees": {
+        "0x10033800": {
+          "name": "FUN_10033800 (writes 5 through its pointer argument)",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "05000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "callee reads the object's first word: vtable already 0x10040df4 when it runs; count 1 -> 0 calls slot 0",
+      "args": [
+        "@selfmember"
+      ],
+      "callees": {
+        "0x10033800": {
+          "name": "FUN_10033800 (reads 4 bytes at its pointer argument)",
+          "conv": "cdecl",
+          "args": [
+            "mem:4"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 32480,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@fz"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@fz",
+        "offset": "0x4",
+        "type": "int",
+        "choices": [
+          -2,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          1000,
+          2147483647,
+          -2147483648
+        ]
+      },
+      {
+        "addr": "@fz",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@buf",
+          "@fz",
+          0,
+          "@fz+0x4"
+        ]
+      }
+    ]
+  }
+}

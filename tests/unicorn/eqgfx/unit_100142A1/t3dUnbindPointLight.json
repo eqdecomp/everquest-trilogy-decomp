@@ -1,0 +1,220 @@
+{
+  "function": "t3dUnbindPointLight",
+  "original": "0x1001494d",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x34", "u32": "@shared"},
+        {"offset": "0x38", "u32": "@bound"},
+        {"offset": "0x3c", "u32": "@binding"}
+      ]
+    },
+    "shared": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "bound": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "binding": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": "@bindingShared"}
+      ]
+    },
+    "bindingShared": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100aad7c", "u32": 5}
+  ],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "bound, all three objects: shared, binding and bound unshared, binding and bound cleared, count 5 to 4, flag 0x08 cleared and 0x40 kept",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 72},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, no binding: only the shared and bound objects are unshared",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@light", "offset": "0x3c", "u32": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, binding whose shared object is null: unshared with null, then the binding is cleared",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@binding", "offset": "0x10", "u32": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, no bound object and a binding with a null shared object: the binding is still unshared (with null) and cleared",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@light", "offset": "0x38", "u32": 0},
+        {"addr": "@binding", "offset": "0x10", "u32": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, no bound object: the bound object is not unshared, the rest still is",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@light", "offset": "0x38", "u32": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, null shared object: unshared with null anyway, then the binding and bound object",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@light", "offset": "0x34", "u32": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, every pointer null: only the shared object is unshared (with null)",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@light", "offset": "0x34", "u32": 0},
+        {"addr": "@light", "offset": "0x38", "u32": 0},
+        {"addr": "@light", "offset": "0x3c", "u32": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound, bound object is the shared object: unshared twice, then cleared",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "@light", "offset": "0x38", "u32": "@shared"},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not bound: flag 0x40 only, nothing unshared, count and flags unchanged",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 64},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not bound: flags 0xf7, every bit but 0x08 set, nothing happens",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 247},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not bound: flags 0 with all pointers set, no calls",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 0},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound with every flag bit set: 0xff becomes 0xf7",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 255},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound with count 0: the count wraps to -1",
+      "args": [1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "0x100aad7c", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unused first argument takes any value: -1 gives the same bound result",
+      "args": [-1, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xf", "u8": 8},
+        {"addr": "0x100aad7c", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 84301,
+    "count": 60,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@light"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@light", "offset": "0xf", "type": "u8", "choices": [0, 8, 16, 24, 64, 72, 240, 247, 255]},
+      {"addr": "@light", "offset": "0x34", "type": "ptr", "choices": [0, "@shared", "@bound", "@binding"]},
+      {"addr": "@light", "offset": "0x38", "type": "ptr", "choices": [0, "@bound", "@shared"]},
+      {"addr": "@light", "offset": "0x3c", "type": "ptr", "choices": [0, "@binding"]},
+      {"addr": "@binding", "offset": "0x10", "type": "ptr", "choices": [0, "@bindingShared", "@shared"]},
+      {"addr": "0x100aad7c", "type": "int", "range": [-2, 40]}
+    ]
+  }
+}

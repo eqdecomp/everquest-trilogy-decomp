@@ -1,0 +1,168 @@
+{
+  "function": "t3dSetTrackDefaultFromFrame",
+  "original": "0x1001d106",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "track",
+      "type": "ptr"
+    },
+    {
+      "name": "frame",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "track": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@list"},
+        {"offset": "0x18", "u32": "@fallback"}
+      ]
+    },
+    "list": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 10}
+      ]
+    },
+    "fallback": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 20}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "instance list: frame below count",
+      "args": ["@track", 3],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance list: frame one below count",
+      "args": ["@track", 9],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance list: frame equals count",
+      "args": ["@track", 10],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "instance list: frame above count",
+      "args": ["@track", 11],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "instance list wins over fallback list (counts 10 and 20)",
+      "args": ["@track", 15],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback list: frame below its count",
+      "args": ["@track", 15],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fallback list: frame equals its count",
+      "args": ["@track", 20],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "zero count rejects frame 0",
+      "args": ["@track", 0],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": 0}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "count 1 accepts frame 0",
+      "args": ["@track", 0],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0xffffffff is read unsigned",
+      "args": ["@track", 5],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "frame 0x80000000 is compared unsigned",
+      "args": ["@track", 2147483648],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "frame equals count at 0xffffffff",
+      "args": ["@track", "0xffffffff"],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "frame one below count at 0xffffffff",
+      "args": ["@track", "0xfffffffe"],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "frame stored as its low 16 bits",
+      "args": ["@track", "0x18001"],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": "0x20000"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 119046,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@track"
+        ]
+      },
+      {
+        "range": [0, 40]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": ["@list", 0]},
+      {"addr": "@definition", "offset": "0x18", "type": "ptr", "choices": ["@fallback"]},
+      {"addr": "@list", "offset": "0x0", "type": "int", "range": [-4, 40]},
+      {"addr": "@fallback", "offset": "0x0", "type": "int", "range": [-4, 40]}
+    ]
+  }
+}

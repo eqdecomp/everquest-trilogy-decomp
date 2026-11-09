@@ -1,0 +1,164 @@
+{
+  "function": "_t3dLexOpenIncludeFile",
+  "original": "0x10028e82",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    },
+    {
+      "name": "fileName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "owner": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@parser"},
+        {"offset": "0xc", "u32": 0}
+      ]
+    },
+    "parser": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@curSource"}
+      ]
+    },
+    "curSource": {"size": "0x10", "fill": "random"},
+    "opened": {"size": "0x10", "fill": "random"},
+    "resolvedBuf": {"size": "0x105", "fill": "zero"},
+    "newEntry": {"size": "0x10", "fill": "zero"},
+    "oldEntry": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@resolvedBuf", "cstr": "abc.wld"}
+  ],
+  "callees": {
+    "0x100262f0": {
+      "name": "openSourceFile",
+      "conv": "cdecl",
+      "args": ["cstr", "ptr"],
+      "ret": [0, "@opened"]
+    },
+    "0x10028ef8": {
+      "name": "findFileOnSearchPath_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": "@resolvedBuf"
+    },
+    "0x1002902b": {
+      "name": "logParserError",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr", "cstr"]
+    },
+    "0x10028f44": {
+      "name": "_t3dLexCreateScannerContext",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": "@newEntry"
+    }
+  },
+  "cases": [
+    {
+      "name": "relative open succeeds, list empty",
+      "args": ["@owner", "abc"],
+      "callees": {
+        "0x100262f0": {"name": "openSourceFile", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": "@opened"}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "relative open succeeds, new entry pushed in front of the old head",
+      "args": ["@owner", "abc"],
+      "callees": {
+        "0x100262f0": {"name": "openSourceFile", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": "@opened"}
+      },
+      "memory": [{"addr": "@owner", "offset": "0xc", "u32": "@oldEntry"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "relative open fails with a current source: logged, no search",
+      "args": ["@owner", "abc"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "no current source: relative open fails, search finds the file",
+      "args": ["@owner", "abc"],
+      "memory": [{"addr": "@parser", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no current source: relative open succeeds, no search",
+      "args": ["@owner", "abc"],
+      "memory": [{"addr": "@parser", "offset": "0x4", "u32": 0}],
+      "callees": {
+        "0x100262f0": {"name": "openSourceFile", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": "@opened"}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no current source: search finds the file, resolved open fails",
+      "args": ["@owner", "abc"],
+      "memory": [{"addr": "@parser", "offset": "0x4", "u32": 0}],
+      "callees": {
+        "0x100262f0": {"name": "openSourceFile", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": [0, 0]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "no current source: search finds nothing",
+      "args": ["@owner", "abc"],
+      "memory": [{"addr": "@parser", "offset": "0x4", "u32": 0}],
+      "callees": {
+        "0x100262f0": {"name": "openSourceFile", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": 0},
+        "0x10028ef8": {"name": "FUN_10028ef8", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "entry creation fails: owner list unchanged",
+      "args": ["@owner", "abc"],
+      "memory": [{"addr": "@owner", "offset": "0xc", "u32": "@oldEntry"}],
+      "callees": {
+        "0x100262f0": {"name": "openSourceFile", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": "@opened"},
+        "0x10028f44": {"name": "FUN_10028f44", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "empty file name, relative open fails",
+      "args": ["@owner", ""],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "empty file name, no current source: search finds it",
+      "args": ["@owner", ""],
+      "memory": [{"addr": "@parser", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 167554,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@owner"]
+      },
+      {
+        "choices": ["abc", "", "x.wld", "dir/a.wld", "ABC"]
+      }
+    ],
+    "memory": [
+      {"addr": "@parser", "offset": "0x4", "type": "ptr", "choices": ["@curSource", 0]},
+      {"addr": "@owner", "offset": "0xc", "type": "ptr", "choices": ["@oldEntry", 0]}
+    ]
+  }
+}

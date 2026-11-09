@@ -1,0 +1,117 @@
+{
+  "function": "RemoveMessagesFromConnection_guess",
+  "original": "0x004f78e0",
+  "sources": [
+    "src/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "list", "type": "ptr"},
+    {"name": "sender", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "list": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": 3}
+      ]
+    },
+    "sender": {"size": "0x40", "fill": "random"},
+    "other": {"size": "0x40", "fill": "random"},
+    "a": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x10", "u32": "@sender"}]
+    },
+    "b": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x10", "u32": "@other"}]
+    },
+    "c": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x10", "u32": "@sender"}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": "@a"},
+    "0x004f4ac0": {"name": "fast_free_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x004f54c0": {"name": "list_add_tail_guess", "conv": "cdecl", "args": ["ptr", "ptr"]}
+  },
+  "cases": [
+    {
+      "name": "empty list returns 0, no calls",
+      "args": ["@list", "@sender"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "one item, match is freed",
+      "args": ["@list", "@sender"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@a"]}
+      }
+    },
+    {
+      "name": "one item, no match goes back to tail",
+      "args": ["@list", "@sender"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@b"]}
+      }
+    },
+    {
+      "name": "three items, first and last match",
+      "args": ["@list", "@sender"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@b", "@c"]}
+      }
+    },
+    {
+      "name": "three items, only middle matches other",
+      "args": ["@list", "@other"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@b", "@c"]}
+      }
+    },
+    {
+      "name": "no match among three",
+      "args": ["@list", 0],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@b", "@a", "@c"]}
+      }
+    },
+    {
+      "name": "count read once: five iterations",
+      "args": ["@list", "@other"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 5}],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@b", "@a", "@b", "@c", "@b"]}
+      }
+    },
+    {
+      "name": "two items, both match",
+      "args": ["@list", "@sender"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 2}],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@c", "@a"]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5208288,
+    "count": 40,
+    "args": [
+      {"choices": ["@list"]},
+      {"choices": ["@sender", "@other", 0]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x8", "type": "u32", "range": [0, 6]},
+      {"addr": "@a", "offset": "0x10", "type": "u32", "choices": ["@sender", "@other", 0]}
+    ]
+  }
+}

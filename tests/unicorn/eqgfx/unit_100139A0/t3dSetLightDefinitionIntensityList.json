@@ -1,0 +1,135 @@
+{
+  "function": "t3dSetLightDefinitionIntensityList",
+  "original": "0x10013fea",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "intensityList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": 2},
+        {"offset": "0x18", "u32": "@destination"}
+      ]
+    },
+    "intensitylist": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "source2": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "destination": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "destination2": {
+      "size": "0x1000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "two frames copies eight bytes from the argument to the pointed-to list",
+      "args": ["@definition", "@intensitylist"]
+    },
+    {
+      "name": "zero frames requests a zero-byte copy",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ]
+    },
+    {
+      "name": "one frame writes four bytes into the definition pointer field",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 1}
+      ]
+    },
+    {
+      "name": "one frame ignores the stored destination pointer",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x18", "u32": 0}
+      ]
+    },
+    {
+      "name": "two-frame boundary copies exactly eight bytes",
+      "args": ["@definition", "@source2"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 2},
+        {"addr": "@definition", "offset": "0x18", "u32": "@destination2"}
+      ]
+    },
+    {
+      "name": "three frames select the alternate source and destination",
+      "args": ["@definition", "@source2"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 3},
+        {"addr": "@definition", "offset": "0x18", "u32": "@destination2"}
+      ]
+    },
+    {
+      "name": "four frames copies sixteen bytes",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 4}
+      ]
+    },
+    {
+      "name": "256 frames reaches the 1024-byte boundary",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "0x100"}
+      ]
+    },
+    {
+      "name": "frame count shift wraps to a zero-byte size",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "0x40000000"}
+      ]
+    },
+    {
+      "name": "frame count shift wraps to four bytes",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "0x40000001"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 81898,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@definition"]
+      },
+      {
+        "choices": ["@intensitylist", "@source2"]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "u32", "range": [0, 128]},
+      {"addr": "@definition", "offset": "0x18", "type": "u32", "choices": ["@destination", "@destination2"]}
+    ]
+  }
+}

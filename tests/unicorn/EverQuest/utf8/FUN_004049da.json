@@ -1,0 +1,141 @@
+{
+  "function": "AssignAnsiStringToWideBuffer_guess",
+  "original": "0x004049da",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": 4, "u32": "@old"},
+        {"offset": 8, "u32": 4},
+        {"offset": "0xc", "u32": 305419896}
+      ]
+    },
+    "old": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "blk": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@blk"
+    },
+    "kernel32.dll!MultiByteToWideChar": {
+      "name": "MultiByteToWideChar",
+      "conv": "stdcall",
+      "args": ["u32", "u32", "ptr", "int", "ptr", "int"],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6",
+    "??3@YAXPAX@Z": "0x005218bb"
+  },
+  "cases": [
+    {
+      "name": "fits: strlen+1 = 4 == capacity 4 (boundary, no growth)",
+      "args": ["@obj", 1, "abc"]
+    },
+    {
+      "name": "grows: strlen+1 = 5 > capacity 4 (boundary)",
+      "args": ["@obj", 1, "abcd"]
+    },
+    {
+      "name": "empty string, capacity 4 (no growth, terminator at index 1)",
+      "args": ["@obj", 0, ""]
+    },
+    {
+      "name": "empty string, capacity 0 (grows to 1, length 0)",
+      "args": ["@obj", 0, ""],
+      "objects": {
+        "obj": {
+          "size": "0x40",
+          "fill": "random",
+          "init": [
+            {"offset": 4, "u32": "@old"},
+            {"offset": 8, "u32": 0},
+            {"offset": "0xc", "u32": 7}
+          ]
+        }
+      }
+    },
+    {
+      "name": "huge capacity (unsigned compare: 0x80000000 not grown)",
+      "args": ["@obj", 0, "hello world"],
+      "objects": {
+        "obj": {
+          "size": "0x40",
+          "fill": "random",
+          "init": [
+            {"offset": 4, "u32": "@old"},
+            {"offset": 8, "u32": 2147483648},
+            {"offset": "0xc", "u32": 7}
+          ]
+        }
+      }
+    },
+    {
+      "name": "long string grows, new block zero-filled",
+      "args": ["@obj", 0, "the quick brown fox jumps"],
+      "objects": {
+        "blk": {
+          "size": "0x100",
+          "fill": "zero"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4213210,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      },
+      {},
+      {"choices": ["", "a", "ab", "abc", "abcd", "abcde", "abcdefgh", "0123456789abcdef", "x y z"]}
+    ],
+    "memory": [
+      {"addr": "@obj+0x8", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 6, 9, 16, 17, 2147483648, 4294967295]},
+      {"addr": "@obj+0xc", "type": "u32"}
+    ]
+  }
+}

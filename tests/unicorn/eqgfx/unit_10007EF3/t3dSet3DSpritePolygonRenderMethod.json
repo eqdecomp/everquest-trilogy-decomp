@@ -1,0 +1,91 @@
+{
+  "function": "t3dSet3DSpritePolygonRenderMethod",
+  "original": "0x10008900",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "renderer", "type": "ptr"},
+    {"name": "sprite", "type": "ptr"},
+    {"name": "frameIndex", "type": "u32"},
+    {"name": "renderMethod", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "renderer": {
+      "size": "0x400",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x3dc", "u32": 8}
+      ]
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": 5}
+      ]
+    },
+    "sprite": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "0x100f4800"},
+        {"offset": "0x2c", "u32": "@definition"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100f4800", "size": 512, "fill": "zero"}
+  ],
+  "callees": {
+    "0x1000897d": {
+      "name": "t3dCopy3DSpriteDefinitionFrames_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 24, "hex": "00480f10"}]
+    }
+  },
+  "cases": [
+    {"name": "plain method in the middle frame", "args": ["@renderer", "@sprite", 2, 3], "expect": {"ret": 0}},
+    {"name": "plain method in the last frame", "args": ["@renderer", "@sprite", 4, 1], "expect": {"ret": 0}},
+    {"name": "plain method, bit 0x40000000 set, high bit clear", "args": ["@renderer", "@sprite", 3, "0x40000000"], "expect": {"ret": 0}},
+    {"name": "plain method, all low bits set, high bit clear", "args": ["@renderer", "@sprite", 3, "0x7fffffff"], "expect": {"ret": 0}},
+    {"name": "index form 0", "args": ["@renderer", "@sprite", 3, "0x80000000"], "expect": {"ret": 0}},
+    {"name": "index form below the count", "args": ["@renderer", "@sprite", 0, "0x80000007"], "expect": {"ret": 0}},
+    {"name": "index form one below a count of 7", "args": ["@renderer", "@sprite", 1, "0x80000006"], "memory": [{"addr": "@renderer", "offset": "0x3dc", "u32": 7}], "expect": {"ret": 0}},
+    {"name": "index form at a count of 7", "args": ["@renderer", "@sprite", 1, "0x80000007"], "memory": [{"addr": "@renderer", "offset": "0x3dc", "u32": 7}], "expect": {"ret": -49858}},
+    {"name": "index form at the count", "args": ["@renderer", "@sprite", 0, "0x80000008"], "expect": {"ret": -49858}},
+    {"name": "index form past the count", "args": ["@renderer", "@sprite", 0, "0x80000009"], "expect": {"ret": -49858}},
+    {"name": "index form with no render methods", "args": ["@renderer", "@sprite", 0, "0x80000000"], "memory": [{"addr": "@renderer", "offset": "0x3dc", "u32": 0}], "expect": {"ret": -49858}},
+    {"name": "all bits set: index form past the count", "args": ["@renderer", "@sprite", 0, "0xffffffff"], "expect": {"ret": -49858}},
+    {"name": "0xfeefffff: high bit set, index form past the count", "args": ["@renderer", "@sprite", 0, "0xfeefffff"], "expect": {"ret": -49858}},
+    {"name": "frame index at the frame count", "args": ["@renderer", "@sprite", 5, 1], "expect": {"ret": -49858}},
+    {"name": "frame index past the frame count", "args": ["@renderer", "@sprite", 6, 1], "expect": {"ret": -49858}},
+    {"name": "frame count zero", "args": ["@renderer", "@sprite", 0, 1], "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}], "expect": {"ret": -49858}},
+    {"name": "null renderer: a plain method never reads it", "args": [0, "@sprite", 2, 3], "expect": {"ret": 0}},
+    {"name": "no frame array: callee allocates, store into the new frames", "args": ["@renderer", "@sprite", 2, 5], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "no frame array: last frame, plain method", "args": ["@renderer", "@sprite", 4, 1], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "no frame array: index form stored", "args": ["@renderer", "@sprite", 1, "0x80000003"], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "no frame array: allocation fails, nothing stored", "args": ["@renderer", "@sprite", 2, 5], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "callees": {"0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": -49858}}, "expect": {"ret": -49858}},
+    {"name": "no frame array: bad render method, callee not called", "args": ["@renderer", "@sprite", 0, "0x80000008"], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": -49858}},
+    {"name": "no frame array: frame index past the count, callee not called", "args": ["@renderer", "@sprite", 5, 1], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": -49858}}
+  ],
+  "fuzz": {
+    "seed": 35072,
+    "count": 60,
+    "args": [
+      {"choices": ["@renderer"]},
+      {"choices": ["@sprite"]},
+      {"range": [0, 7]},
+      {"choices": [0, 1, 3, 7, 8, 9, "0x40000000", "0x7fffffff", "0x7eefffff", "0x80000000", "0x80000001", "0x80000003", "0x80000006", "0x80000007", "0x80000008", "0x80000009", "0xfeefffff", "0xffffffff", 16777216]}
+    ],
+    "memory": [
+      {"addr": "@renderer", "offset": "0x3dc", "type": "u32", "range": [0, 10]},
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 6]},
+      {"addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": [0, "0x100f4800"]}
+    ]
+  }
+}

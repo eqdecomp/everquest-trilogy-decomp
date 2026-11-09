@@ -1,0 +1,56 @@
+{
+  "function": "buffer_find_nonzero_guess",
+  "original": "0x00404343",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "buf", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "out", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "arr": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 0}, {"offset": "0x8", "u32": 0}, {"offset": "0xc", "u32": 0},
+      {"offset": "0x10", "u32": "0x77"}, {"offset": "0x14", "u32": 0},
+      {"offset": "0x18", "u32": 0}, {"offset": "0x1c", "u32": 0}, {"offset": "0x20", "u32": "0x99"},
+      {"offset": "0x24", "u32": 0}, {"offset": "0x28", "u32": "0xdead"}
+    ]},
+    "out": {"size": "0x10", "fill": "random"},
+    "vEmpty": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr"}, {"offset": "0x8", "u32": "@arr"}]},
+    "vAllZero": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr"}, {"offset": "0x8", "u32": "@arr+0x10"}]},
+    "vFirst": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x10"}, {"offset": "0x8", "u32": "@arr+0x18"}]},
+    "vOne": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x10"}, {"offset": "0x8", "u32": "@arr+0x14"}]},
+    "vThird": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x18"}, {"offset": "0x8", "u32": "@arr+0x24"}]},
+    "vLastEl": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0xc"}, {"offset": "0x8", "u32": "@arr+0x14"}]},
+    "vJustShort": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x18"}, {"offset": "0x8", "u32": "@arr+0x20"}]},
+    "vNeg": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x10"}, {"offset": "0x8", "u32": "@arr"}]},
+    "vOdd": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x10"}, {"offset": "0x8", "u32": "@arr+0x17"}]},
+    "vOdd3": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@arr+0x10"}, {"offset": "0x8", "u32": "@arr+0x13"}]}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "empty vector: value 0", "args": ["@vEmpty", 0, "@out"]},
+    {"name": "all zero: value 0", "args": ["@vAllZero", 0, "@out"]},
+    {"name": "nonzero at index 0", "args": ["@vFirst", 0, "@out"]},
+    {"name": "single nonzero element", "args": ["@vOne", 0, "@out"]},
+    {"name": "nonzero at index 2 (third)", "args": ["@vThird", 1, "@out"]},
+    {"name": "nonzero at last element only", "args": ["@vLastEl", 0, "@out"]},
+    {"name": "nonzero just past last is not seen", "args": ["@vJustShort", 0, "@out"]},
+    {"name": "last below first: negative count, scan proceeds", "args": ["@vNeg", 0, "@out"]},
+    {"name": "unaligned 7 bytes counts 1 element", "args": ["@vOdd", 0, "@out"]},
+    {"name": "unaligned 3 bytes counts 0 elements", "args": ["@vOdd3", 0, "@out"]},
+    {"name": "edx argument ignored", "args": ["@vFirst", 99999, "@out"]}
+  ],
+  "fuzz": {
+    "seed": 4211523,
+    "count": 30,
+    "args": [
+      {"choices": ["@vEmpty", "@vAllZero", "@vFirst", "@vOne", "@vThird", "@vLastEl", "@vJustShort", "@vNeg", "@vOdd", "@vOdd3"]},
+      {},
+      {"choices": ["@out"]}
+    ],
+    "memory": []
+  }
+}

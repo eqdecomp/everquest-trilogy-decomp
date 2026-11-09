@@ -1,0 +1,194 @@
+{
+  "function": "crc_msb_update_guess",
+  "original": "0x1000e5d0",
+  "sources": [
+    "src/eqmain/unit_1000E5B0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "crc",
+      "type": "u32"
+    },
+    {
+      "name": "buf",
+      "type": "ptr"
+    },
+    {
+      "name": "len",
+      "type": "int"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "buf": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "len 0 returns crc unchanged",
+      "args": [
+        "0x12345678",
+        "@buf",
+        0
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "len 0 never reads a null buf",
+      "args": [
+        "0xffffffff",
+        0,
+        0
+      ],
+      "expect": {
+        "ret": "0xffffffff"
+      }
+    },
+    {
+      "name": "len 0 from zero",
+      "args": [
+        0,
+        "@buf",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "len 1 byte 00",
+      "args": [
+        0,
+        "@buf",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "hex": "00"
+        }
+      ]
+    },
+    {
+      "name": "len 1 byte ff, crc top byte set",
+      "args": [
+        "0xff000000",
+        "@buf",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "hex": "ff"
+        }
+      ]
+    },
+    {
+      "name": "len 1 index 0 (top byte equals input byte)",
+      "args": [
+        "0x80000000",
+        "@buf",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "hex": "80"
+        }
+      ]
+    },
+    {
+      "name": "len 2 byte order",
+      "args": [
+        "0x00000001",
+        "@buf",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "hex": "0102"
+        }
+      ]
+    },
+    {
+      "name": "len 4 byte order",
+      "args": [
+        "0x11223344",
+        "@buf",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "hex": "a5c3f00f"
+        }
+      ]
+    },
+    {
+      "name": "len 3 all ones crc",
+      "args": [
+        "0xffffffff",
+        "@buf",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "hex": "fe7f01"
+        }
+      ]
+    },
+    {
+      "name": "len 255",
+      "args": [
+        "0x12345678",
+        "@buf",
+        255
+      ]
+    },
+    {
+      "name": "len 256 (whole buf)",
+      "args": [
+        "0x9abcdef0",
+        "@buf",
+        256
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 58832,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@buf"
+        ]
+      },
+      {
+        "range": [
+          0,
+          64
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x10047a54",
+        "size": 1024
+      },
+      {
+        "addr": "@buf",
+        "size": 64
+      }
+    ]
+  }
+}

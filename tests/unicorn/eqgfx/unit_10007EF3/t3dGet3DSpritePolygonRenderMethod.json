@@ -1,0 +1,176 @@
+{
+  "function": "t3dGet3DSpritePolygonRenderMethod",
+  "original": "0x100088d5",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "@frames"},
+        {"offset": "0x2c", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x20", "u32": 4},
+        {"offset": "0x2c", "u32": "@parent"}
+      ]
+    },
+    "frames": {
+      "size": "0x300",
+      "fill": "random"
+    },
+    "parent": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "@parent_frames"}
+      ]
+    },
+    "parent_frames": {
+      "size": "0x300",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@frames", "offset": "0x04", "u32": "0x11111111"},
+    {"addr": "@frames", "offset": "0x54", "u32": "0x22222222"},
+    {"addr": "@frames", "offset": "0xa4", "u32": "0x33333333"},
+    {"addr": "@frames", "offset": "0xf4", "u32": "0x44444444"},
+    {"addr": "@frames", "offset": "0x144", "u32": "0x55555555"},
+    {"addr": "@frames", "offset": "0x194", "u32": "0x66666666"},
+    {"addr": "@frames", "offset": "0x234", "u32": "0x77777777"},
+    {"addr": "@parent_frames", "offset": "0x04", "u32": "0xaaaa0001"},
+    {"addr": "@parent_frames", "offset": "0x54", "u32": "0xaaaa0002"},
+    {"addr": "@parent_frames", "offset": "0xa4", "u32": "0xaaaa0003"},
+    {"addr": "@parent_frames", "offset": "0xf4", "u32": "0xaaaa0004"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "first frame",
+      "args": ["@sprite", 0],
+      "expect": {"ret": "0x11111111"}
+    },
+    {
+      "name": "typical middle frame",
+      "args": ["@sprite", 1],
+      "expect": {"ret": "0x22222222"}
+    },
+    {
+      "name": "last in-range frame",
+      "args": ["@sprite", 3],
+      "expect": {"ret": "0x44444444"}
+    },
+    {
+      "name": "index equals count",
+      "args": ["@sprite", 4],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index past count",
+      "args": ["@sprite", 5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero",
+      "args": ["@sprite", 0],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count one, first frame",
+      "args": ["@sprite", 0],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 1}],
+      "expect": {"ret": "0x11111111"}
+    },
+    {
+      "name": "own frame array null falls back to parent",
+      "args": ["@sprite", 1],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": "0xaaaa0002"}
+    },
+    {
+      "name": "fallback last in-range frame",
+      "args": ["@sprite", 3],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": "0xaaaa0004"}
+    },
+    {
+      "name": "fallback with index equals count",
+      "args": ["@sprite", 4],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fallback with count zero",
+      "args": ["@sprite", 0],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0},
+                 {"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unsigned compare: high-bit count keeps index below it",
+      "args": ["@sprite", 5],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": "0x80000000"}],
+      "expect": {"ret": "0x66666666"}
+    },
+    {
+      "name": "unsigned compare: all-ones count keeps small index in range",
+      "args": ["@sprite", 7],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": "0xffffffff"}],
+      "expect": {"ret": "0x77777777"}
+    },
+    {
+      "name": "unsigned compare: high-bit index is out of range",
+      "args": ["@sprite", "0x80000000"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index all ones",
+      "args": ["@sprite", "0xffffffff"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count two, second frame",
+      "args": ["@sprite", 1],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 2}],
+      "expect": {"ret": "0x22222222"}
+    }
+  ],
+  "fuzz": {
+    "seed": 35029,
+    "count": 48,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "range": [0, 8]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x18", "type": "u32", "choices": ["@frames", 0]},
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 8, "0x7fffffff", "0x80000000", "0xffffffff"]}
+    ]
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "function": "getObjectPointerFromOffset_guess",
+  "original": "0x10028f2e",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "object": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x8", "u32": "@entry_alt" },
+        { "offset": "0xc", "u32": "@entry" },
+        { "offset": "0x10", "u32": "@entry_b" }
+      ]
+    },
+    "entry": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x8", "u32": "@value_alt" },
+        { "offset": "0xc", "u32": "@value" },
+        { "offset": "0x10", "u32": "@value_b" }
+      ]
+    },
+    "entry_alt": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x8", "u32": "@value_b" },
+        { "offset": "0xc", "u32": "@value_alt" }
+      ]
+    },
+    "entry_b": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x8", "u32": "@value" },
+        { "offset": "0xc", "u32": "@value_b" }
+      ]
+    },
+    "value": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0xc", "u32": 4369 }
+      ]
+    },
+    "value_alt": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "value_b": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "both hops +0xc: returns the pointer stored in the record's +0xc slot (@value, not @value_alt/@value_b)",
+      "args": ["@object"]
+    },
+    {
+      "name": "slots swapped: the +0xc slot (not +0x8) selects the record (@value_alt)",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@object", "offset": "0x8", "u32": "@entry" },
+        { "addr": "@object", "offset": "0xc", "u32": "@entry_alt" }
+      ]
+    },
+    {
+      "name": "second hop is the record's +0xc, not its +0x8 (@value_alt)",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@entry", "offset": "0x8", "u32": "@value_b" },
+        { "addr": "@entry", "offset": "0xc", "u32": "@value_alt" }
+      ]
+    },
+    {
+      "name": "slot holds null: returns null without a further read",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@entry", "offset": "0xc", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "slot holds 0xffffffff: passes through, never dereferenced",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@entry", "offset": "0xc", "u32": 4294967295 }
+      ],
+      "expect": { "ret": "0xffffffff" }
+    },
+    {
+      "name": "slot holds a small non-address value: passes through",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@entry", "offset": "0xc", "u32": 1 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "four-byte load: byte-order witness",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@entry", "offset": "0xc", "u32": 305419896 }
+      ],
+      "expect": { "ret": "0x12345678" }
+    },
+    {
+      "name": "argument slot may name any readable record (returns its +0xc word 4369)",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@object", "offset": "0xc", "u32": "@value" }
+      ],
+      "expect": { "ret": 4369 }
+    },
+    {
+      "name": "third record through the argument slot (@value_b)",
+      "args": ["@object"],
+      "memory": [
+        { "addr": "@object", "offset": "0xc", "u32": "@entry_b" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 167726,
+    "count": 40,
+    "args": [
+      { "choices": ["@object"] }
+    ],
+    "memory": [
+      { "addr": "@object", "offset": "0x8", "type": "u32", "choices": ["@entry", "@entry_alt", "@entry_b"] },
+      { "addr": "@object", "offset": "0xc", "type": "u32", "choices": ["@entry", "@entry_alt", "@entry_b"] },
+      { "addr": "@object", "offset": "0x10", "type": "u32", "choices": ["@entry", "@entry_alt", "@entry_b"] },
+      { "addr": "@entry", "offset": "0x8", "type": "u32", "choices": ["@value", "@value_alt", "@value_b"] },
+      { "addr": "@entry", "offset": "0xc", "type": "u32", "choices": ["@value", "@value_alt", "@value_b"] },
+      { "addr": "@entry", "offset": "0x10", "type": "u32", "choices": ["@value", "@value_alt", "@value_b"] },
+      { "addr": "@entry_alt", "offset": "0x8", "type": "u32", "choices": ["@value_b", "@value", "@value_alt"] },
+      { "addr": "@entry_alt", "offset": "0xc", "type": "u32", "choices": ["@value_b", "@value", "@value_alt"] },
+      { "addr": "@entry_b", "offset": "0x8", "type": "u32", "choices": ["@value", "@value_alt", "@value_b"] },
+      { "addr": "@entry_b", "offset": "0xc", "type": "u32", "choices": ["@value_b", "@value", "@value_alt"] }
+    ]
+  }
+}

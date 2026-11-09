@@ -1,0 +1,210 @@
+{
+  "function": "EqDirectSoundSlotsStop_guess::StopSlot_guess",
+  "original": "0x004eb96a",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@slots",
+  "args": [
+    {
+      "name": "slot",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "slots": {
+      "size": "0x48",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": "@voice"},
+        {"offset": "0x08", "u32": "@voice"},
+        {"offset": "0x0c", "u32": "@voice"},
+        {"offset": "0x10", "u32": "@voice2"},
+        {"offset": "0x14", "u32": "@voice"},
+        {"offset": "0x18", "u32": 0},
+        {"offset": "0x1c", "u32": "@voice"},
+        {"offset": "0x20", "u32": "@voice"},
+        {"offset": "0x24", "u32": "@voice"},
+        {"offset": "0x28", "u32": "@voice"},
+        {"offset": "0x2c", "u32": "@voice"},
+        {"offset": "0x30", "u32": "@voice"},
+        {"offset": "0x34", "u32": "@voice"},
+        {"offset": "0x38", "u32": "@voice"},
+        {"offset": "0x3c", "u32": "@voice"},
+        {"offset": "0x40", "u32": "@voice2"},
+        {"offset": "0x44", "u32": "@voice"}
+      ]
+    },
+    "voice": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": "@buffer"},
+        {"offset": "0x10", "u8": 1}
+      ]
+    },
+    "voice2": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": "@buffer"},
+        {"offset": "0x10", "u8": 0}
+      ]
+    },
+    "buffer": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": "@vt"}
+      ]
+    },
+    "vt": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {"offset": "0x48", "u32": "@stop"}
+      ]
+    },
+    "stop": {
+      "size": 4
+    },
+    "slot": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": 0}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004ec004": {
+      "name": "EqDirectSoundVoice_guess::GetStatus_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 4
+    },
+    "@stop": {
+      "name": "IDirectSoundBuffer::Stop",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "slot 0 active, looping -> Stop and clear",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 0}]
+    },
+    {
+      "name": "slot 0 active, status 0 -> clear only",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 0}],
+      "callees": {
+        "0x004ec004": {"conv": "thiscall", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "slot 1 status 3 (no bit 2) -> clear only",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 1}],
+      "callees": {
+        "0x004ec004": {"conv": "thiscall", "args": [], "ret": 3}
+      }
+    },
+    {
+      "name": "slot 2 status 0xFFFFFFFB -> clear only",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 2}],
+      "callees": {
+        "0x004ec004": {"conv": "thiscall", "args": [], "ret": 4294967291}
+      }
+    },
+    {
+      "name": "slot 14 status 0x405 -> Stop",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 14}],
+      "callees": {
+        "0x004ec004": {"conv": "thiscall", "args": [], "ret": 1029}
+      }
+    },
+    {
+      "name": "slot 15 boundary, inactive voice -> nothing",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 15}]
+    },
+    {
+      "name": "slot 15 boundary, active voice -> Stop",
+      "args": ["@slot"],
+      "memory": [
+        {"addr": "@slot", "offset": 0, "u32": 15},
+        {"addr": "@voice2", "offset": "0x10", "u8": 1}
+      ]
+    },
+    {
+      "name": "slot 16 out of range -> nothing",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 16}]
+    },
+    {
+      "name": "slot -1 out of range -> nothing",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 4294967295}]
+    },
+    {
+      "name": "slot 0x80000000 out of range -> nothing",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 2147483648}]
+    },
+    {
+      "name": "slot 3 inactive voice -> nothing",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 3}]
+    },
+    {
+      "name": "slot 3 active flag 0x80 -> Stop",
+      "args": ["@slot"],
+      "memory": [
+        {"addr": "@slot", "offset": 0, "u32": 3},
+        {"addr": "@voice2", "offset": "0x10", "u8": 128}
+      ]
+    },
+    {
+      "name": "slot 5 null voice -> nothing",
+      "args": ["@slot"],
+      "memory": [{"addr": "@slot", "offset": 0, "u32": 5}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5159274,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@slot"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@slot",
+        "offset": 0,
+        "type": "int",
+        "choices": [-2, -1, 0, 1, 2, 3, 4, 5, 7, 12, 15, 16, 17, 100]
+      },
+      {
+        "addr": "@voice",
+        "offset": "0x10",
+        "type": "u8",
+        "choices": [0, 1, 2, 255]
+      },
+      {
+        "addr": "@voice2",
+        "offset": "0x10",
+        "type": "u8",
+        "choices": [0, 1]
+      }
+    ]
+  }
+}

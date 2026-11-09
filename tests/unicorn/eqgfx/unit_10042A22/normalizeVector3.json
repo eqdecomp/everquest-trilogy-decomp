@@ -1,0 +1,198 @@
+{
+  "function": "_t3dInitializePendingResourceArray_guess",
+  "original": "0x10042ac6",
+  "sources": [
+    "src/eqgfx/unit_10042A22.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "renderContext": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "buf": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "other": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: three dwords are filled with 7",
+      "args": [
+        "@renderContext",
+        3
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "one dword",
+      "args": [
+        "@renderContext",
+        1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "64 dwords fill the whole 256 bytes",
+      "args": [
+        "@renderContext",
+        64
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero count never calls the allocator",
+      "args": [
+        "@renderContext",
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero count clears the pending block, no free",
+      "args": [
+        "@renderContext",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@renderContext",
+          "offset": "0x3e0",
+          "u32": "@other"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "allocation failure: count cleared, block null, -1",
+      "args": [
+        "@renderContext",
+        5
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "count 0x40000000: byte count wraps to 0, nothing filled",
+      "args": [
+        "@renderContext",
+        1073741824
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count 0xffffffff: byte count wraps, end is before the block",
+      "args": [
+        "@renderContext",
+        4294967295
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "old pending block is overwritten, not freed",
+      "args": [
+        "@renderContext",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@renderContext",
+          "offset": "0x3e0",
+          "u32": "@other"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 273094,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@renderContext"
+        ]
+      },
+      {
+        "range": [
+          0,
+          64
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@renderContext",
+        "offset": "0x3e0",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@other"
+        ]
+      }
+    ]
+  }
+}

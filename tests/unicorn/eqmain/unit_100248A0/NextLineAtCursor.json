@@ -1,0 +1,338 @@
+{
+  "function": "NextLineAtCursor_guess",
+  "original": "0x10025320",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "cursor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "cstr",
+  "objects": {
+    "cursor": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0",
+          "u32": "@text"
+        }
+      ]
+    },
+    "text": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x40",
+          "hex": "5a005a00"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033861": {
+      "name": "isdigit_guess",
+      "args": [
+        "int"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "LF ends the first line, the next line is returned",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "head\nline\nnext"
+        }
+      ],
+      "expect": {
+        "ret": "line"
+      }
+    },
+    {
+      "name": "CRLF line ends",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "head\r\nline\r\nnext"
+        }
+      ],
+      "expect": {
+        "ret": "line"
+      }
+    },
+    {
+      "name": "CR alone ends the line",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "head\rline\rnext"
+        }
+      ],
+      "expect": {
+        "ret": "line"
+      }
+    },
+    {
+      "name": "last line ends at NUL",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "head\nline"
+        }
+      ],
+      "expect": {
+        "ret": "line"
+      }
+    },
+    {
+      "name": "text starts with LF (first skip loop not entered)",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "\nabc\r\ndef"
+        }
+      ],
+      "expect": {
+        "ret": "abc"
+      }
+    },
+    {
+      "name": "text starts with CR (first loop breaks at once)",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "\rabc\nxyz"
+        }
+      ],
+      "expect": {
+        "ret": "abc"
+      }
+    },
+    {
+      "name": "empty text: the skip runs over the NUL into the sentinel",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": ""
+        }
+      ],
+      "expect": {
+        "ret": "Z"
+      }
+    },
+    {
+      "name": "blank lines of every kind are skipped",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "a\n\n\r\n\nword\r\n"
+        }
+      ],
+      "expect": {
+        "ret": "word"
+      }
+    },
+    {
+      "name": "embedded NUL ends the first line and is skipped",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "hex": "616263006465660a676869"
+        }
+      ],
+      "expect": {
+        "ret": "def"
+      }
+    },
+    {
+      "name": "space and tab are not skipped",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "x\n \tword y\n"
+        }
+      ],
+      "expect": {
+        "ret": " \tword y"
+      }
+    },
+    {
+      "name": "digit run at the start (digit loop runs)",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "x\n12ab\n"
+        }
+      ],
+      "expect": {
+        "ret": "12ab"
+      }
+    },
+    {
+      "name": "single digit that ends at NUL",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "x\n7"
+        }
+      ],
+      "expect": {
+        "ret": "7"
+      }
+    },
+    {
+      "name": "minus sign is not a digit",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "x\n-5\n"
+        }
+      ],
+      "expect": {
+        "ret": "-5"
+      }
+    },
+    {
+      "name": "high byte at the start (sign-extended char)",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "hex": "780aff790a"
+        }
+      ]
+    },
+    {
+      "name": "cursor starts on the LF (first loop not entered)",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "x\nabc\n"
+        },
+        {
+          "addr": "@cursor",
+          "u32": "@text+0x1"
+        }
+      ],
+      "expect": {
+        "ret": "abc"
+      }
+    },
+    {
+      "name": "cursor in the middle of a line",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "abc def\nghi\n"
+        },
+        {
+          "addr": "@cursor",
+          "u32": "@text+0x4"
+        }
+      ],
+      "expect": {
+        "ret": "ghi"
+      }
+    },
+    {
+      "name": "digit run up to a space, then more text",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "x\n1234 56789"
+        }
+      ],
+      "expect": {
+        "ret": "1234 56789"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 152352,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@cursor"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@text",
+        "size": 64
+      },
+      {
+        "addr": "@cursor",
+        "type": "ptr",
+        "choices": [
+          "@text",
+          "@text+0x1",
+          "@text+0x2",
+          "@text+0x7",
+          "@text+0x20",
+          "@text+0x3f"
+        ]
+      }
+    ]
+  }
+}

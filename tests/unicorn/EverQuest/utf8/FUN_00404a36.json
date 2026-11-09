@@ -1,0 +1,191 @@
+{
+  "function": "CopyWideBuffer_guess",
+  "original": "0x00404a36",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "src",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": 4, "u32": "@old"},
+        {"offset": 8, "u32": 8},
+        {"offset": "0xc", "u32": 7}
+      ]
+    },
+    "src": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": 4, "u32": "@wsrc"},
+        {"offset": "0xc", "u32": 5}
+      ]
+    },
+    "old": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "blk": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "wsrc": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "u16": 65},
+        {"offset": 2, "u16": 66},
+        {"offset": 4, "u16": 67},
+        {"offset": 6, "u16": 68},
+        {"offset": 8, "u16": 69}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@blk"
+    },
+    "0x0052278c": {
+      "name": "_wcscpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {},
+  "cases": [
+    {
+      "name": "typical: length 5 < capacity 8 (no growth, length field untouched)",
+      "args": ["@obj", 1, "@src"]
+    },
+    {
+      "name": "boundary: length 5 == capacity 5 (no growth: JBE taken on equal)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [{"addr": "@obj", "offset": 8, "u32": 5}]
+    },
+    {
+      "name": "boundary: length 5 > capacity 4 (grows by one)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [{"addr": "@obj", "offset": 8, "u32": 4}]
+    },
+    {
+      "name": "grow from empty: capacity 0, length 5 (new size 12, length becomes 4)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [{"addr": "@obj", "offset": 8, "u32": 0}, {"addr": "@obj", "offset": 12, "u32": 0}]
+    },
+    {
+      "name": "empty source: length 0, capacity 0 (no growth, copies the NUL only)",
+      "args": ["@obj", 0, "@src"],
+      "memory": [
+        {"addr": "@obj", "offset": 8, "u32": 0},
+        {"addr": "@src", "offset": 12, "u32": 0},
+        {"addr": "@wsrc", "offset": 0, "u16": 0}
+      ]
+    },
+    {
+      "name": "unsigned compare: capacity 0x80000000 is not below length 5 (no growth)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [{"addr": "@obj", "offset": 8, "u32": 2147483648}]
+    },
+    {
+      "name": "unsigned compare: length 0x80000000 > capacity 0x7fffffff (grows; size wraps to 2)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [
+        {"addr": "@obj", "offset": 8, "u32": 2147483647},
+        {"addr": "@src", "offset": 12, "u32": 2147483648}
+      ]
+    },
+    {
+      "name": "length 0xffffffff > capacity 8 (grows; size 2*len+2 wraps to 0)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [{"addr": "@src", "offset": 12, "u32": 4294967295}]
+    },
+    {
+      "name": "length 0x7fffffff > capacity 0x7ffffffe (grows; size 0xfffffffe, no wrap)",
+      "args": ["@obj", 1, "@src"],
+      "memory": [
+        {"addr": "@obj", "offset": 8, "u32": 2147483646},
+        {"addr": "@src", "offset": 12, "u32": 2147483647}
+      ]
+    },
+    {
+      "name": "grow with null old buffer: delete(NULL) still called, copy goes to the new block",
+      "args": ["@obj", 1, "@src"],
+      "memory": [
+        {"addr": "@obj", "offset": 4, "u32": 0},
+        {"addr": "@obj", "offset": 8, "u32": 4},
+        {"addr": "@obj", "offset": 12, "u32": 3}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4213302,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@src"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@obj",
+        "offset": 8,
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 2147483647, 2147483648, 4294967295]
+      },
+      {
+        "addr": "@src",
+        "offset": 12,
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 2147483647, 2147483648, 4294967295]
+      },
+      {
+        "addr": "@wsrc",
+        "type": "u16",
+        "choices": [0, 65, 66, 67, 68, 20013, 65535],
+        "count": 6
+      }
+    ]
+  }
+}

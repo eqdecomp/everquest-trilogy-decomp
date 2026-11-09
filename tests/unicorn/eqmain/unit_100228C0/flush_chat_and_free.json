@@ -1,0 +1,110 @@
+{
+  "function": "flush_chat_and_free_guess",
+  "original": "0x10022b10",
+  "sources": [
+    "src/eqmain/unit_100228C0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "chat_a": {"size": "0x36C0", "fill": "random"},
+    "chat_b": {"size": "0x36C0", "fill": "random"},
+    "xlat": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x101255F8", "size": 64, "fill": "zero"},
+    {"addr": "0x1012B918", "u32": 37},
+    {"addr": "0x10125848", "u32": 5},
+    {"addr": "0x101258A8", "u32": 0},
+    {"addr": "0x101258A4", "u32": 0},
+    {"addr": "@xlat", "cstr": "translated line"}
+  ],
+  "callees": {
+    "0x10024f90": {"name": "FUN_10024f90", "conv": "cdecl", "args": ["u16"]},
+    "0x100211b0": {"name": "FUN_100211b0", "conv": "cdecl", "args": ["mem:64"], "ret": "@xlat"},
+    "0x10024ff0": {"name": "FUN_10024ff0", "conv": "cdecl", "args": ["cstr"]},
+    "0x1002c010": {"name": "connection_send_guess", "conv": "cdecl", "args": ["int", "ptr", "u32", "int", "int"]},
+    "0x10033800": {"name": "FUN_10033800", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {"name": "empty line, both slots null: no send, nothing freed", "memory": [
+      {"addr": "0x101255F8", "u8": 0}]},
+    {"name": "empty line with junk after its NUL: strlen stops at the first byte", "memory": [
+      {"addr": "0x101255F8", "u8": 0},
+      {"addr": "0x101255F9", "cstr": "junk"}]},
+    {"name": "one char line, both slots null", "memory": [
+      {"addr": "0x101255F8", "cstr": "a"}]},
+    {"name": "two char line, both slots null", "memory": [
+      {"addr": "0x101255F8", "cstr": "ab"}]},
+    {"name": "typical line, both slots null", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"}]},
+    {"name": "typical line, slot A set, slot B null", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x101258A8", "u32": "@chat_a"}]},
+    {"name": "typical line, slot A null, slot B set", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x101258A4", "u32": "@chat_b"}]},
+    {"name": "typical line, both slots set", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x101258A8", "u32": "@chat_a"},
+      {"addr": "0x101258A4", "u32": "@chat_b"}]},
+    {"name": "empty line, both slots set: freed without a send", "memory": [
+      {"addr": "0x101255F8", "u8": 0},
+      {"addr": "0x101258A8", "u32": "@chat_a"},
+      {"addr": "0x101258A4", "u32": "@chat_b"}]},
+    {"name": "empty line, slot A only", "memory": [
+      {"addr": "0x101255F8", "u8": 0},
+      {"addr": "0x101258A8", "u32": "@chat_a"}]},
+    {"name": "empty line, slot B only", "memory": [
+      {"addr": "0x101255F8", "u8": 0},
+      {"addr": "0x101258A4", "u32": "@chat_b"}]},
+    {"name": "63-char line fills the 64-byte buffer, both slots set", "memory": [
+      {"addr": "0x101255F8", "cstr": "012345678901234567890123456789012345678901234567890123456789abc"},
+      {"addr": "0x101258A8", "u32": "@chat_a"},
+      {"addr": "0x101258A4", "u32": "@chat_b"}]},
+    {"name": "high-bit bytes count as text (strlen compares the whole byte 0)", "memory": [
+      {"addr": "0x101255F8", "u8": 65},
+      {"addr": "0x101255F9", "u8": 255},
+      {"addr": "0x101255FA", "u8": 66}]},
+    {"name": "+0x36B0 word all ones, neighbours +0x36AE and +0x36B2 set", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x101258A8", "u32": "@chat_a"},
+      {"addr": "@chat_a", "offset": "0x36AE", "u16": 4386},
+      {"addr": "@chat_a", "offset": "0x36B0", "u16": 65535},
+      {"addr": "@chat_a", "offset": "0x36B2", "u16": 8738}]},
+    {"name": "same object in both slots (freed twice, bugs included)", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x101258A8", "u32": "@chat_a"},
+      {"addr": "0x101258A4", "u32": "@chat_a"}]},
+    {"name": "slots cross: A holds chat_b, B holds chat_a (free order)", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x101258A8", "u32": "@chat_b"},
+      {"addr": "0x101258A4", "u32": "@chat_a"}]},
+    {"name": "append index 0: zero-length send", "memory": [
+      {"addr": "0x101255F8", "cstr": "hello world"},
+      {"addr": "0x1012B918", "u32": 0}]},
+    {"name": "append index 0xFFFFFFFF, connection 0", "memory": [
+      {"addr": "0x101255F8", "cstr": "hi"},
+      {"addr": "0x1012B918", "u32": 4294967295},
+      {"addr": "0x10125848", "u32": 0}]},
+    {"name": "empty line, both slots hold chat_b", "memory": [
+      {"addr": "0x101255F8", "u8": 0},
+      {"addr": "0x101258A8", "u32": "@chat_b"},
+      {"addr": "0x101258A4", "u32": "@chat_b"}]}
+  ],
+  "fuzz": {
+    "seed": 10022011,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x101255F8", "type": "u8", "count": 16, "choices": [0, 0, 32, 65, 66, 97, 98, 255]},
+      {"addr": "0x101258A8", "type": "ptr", "choices": [0, "@chat_a", "@chat_b"]},
+      {"addr": "0x101258A4", "type": "ptr", "choices": [0, "@chat_a", "@chat_b"]},
+      {"addr": "0x1012B918", "type": "u32", "choices": [0, 1, 37, 255, 65535, 4294967295]},
+      {"addr": "0x10125848", "type": "u32", "choices": [0, 1, 5, 4294967295]},
+      {"addr": "@chat_a", "offset": "0x36B0", "type": "u16", "choices": [0, 1, 65535]},
+      {"addr": "@chat_b", "offset": "0x36B0", "type": "u16", "choices": [0, 1, 65535]}
+    ]
+  }
+}

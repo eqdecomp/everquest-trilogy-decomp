@@ -1,0 +1,85 @@
+{
+  "function": "EQMain_HandleReplyCommand_guess",
+  "original": "0x10017730",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "cmd_reply": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#reply hi"}]},
+    "cmd_six": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#reply"}]},
+    "cmd_upper": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#REPLY hi"}]},
+    "cmd_seventh": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#replyX"}]},
+    "cmd_fifth": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#replx hi"}]},
+    "cmd_short": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#repl"}]},
+    "cmd_version": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#version 2"}]},
+    "cmd_empty": {"size": "0x100", "fill": "zero"},
+    "cmd_long": {"size": "0x100", "fill": "zero", "init": [{"offset": 0, "cstr": "#reply abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"}]},
+    "reply_target": {"size": "0x40", "fill": "zero", "init": [{"offset": 0, "cstr": "Bob"}]},
+    "target_long": {"size": "0x80", "fill": "zero", "init": [{"offset": 0, "cstr": "a long reply target name of forty characters"}]},
+    "target_empty": {"size": "0x40", "fill": "zero"},
+    "reply_line": {"size": "0x40", "fill": "zero", "init": [{"offset": 0, "cstr": "No one to reply to"}]},
+    "chat": {"size": "0x20", "fill": "zero", "init": [{"offset": 4, "u32": 42}, {"offset": 8, "u32": 119}]}
+  },
+  "memory": [
+    {"addr": "0x1004F880", "u16": 1},
+    {"addr": "0x1004CE40", "size": 64, "fill": "zero"},
+    {"addr": "0x1004CE40", "cstr": "old"},
+    {"addr": "0x1004CE46", "cstr": "."},
+    {"addr": "0x1004801C", "cstr": "/r "},
+    {"addr": "0x10055964", "u32": "@reply_line"}
+  ],
+  "callees": {
+    "0x10035d40": {"name": "__strnicmp", "conv": "cdecl", "args": ["cstr", "cstr", "int"], "passthrough": true},
+    "0x100169f0": {"name": "FUN_100169f0", "conv": "stdcall", "args": [], "ret": "@reply_target"},
+    "0x10020ef0": {"name": "FUN_10020ef0", "conv": "cdecl", "args": ["char"], "ret": "@chat"},
+    "0x100224b0": {"name": "FUN_100224b0", "conv": "cdecl", "args": ["cstr", "int", "char"]}
+  },
+  "cases": [
+    {"name": "reply: target appended between prefix and suffix", "args": ["@cmd_reply"]},
+    {"name": "reply: exactly six characters", "args": ["@cmd_six"]},
+    {"name": "reply: upper case matches", "args": ["@cmd_upper"]},
+    {"name": "reply: seventh character is not compared", "args": ["@cmd_seventh"]},
+    {"name": "no match: fifth character differs", "args": ["@cmd_fifth"]},
+    {"name": "no match: string ends at the fifth character", "args": ["@cmd_short"]},
+    {"name": "no match: other command, reply available", "args": ["@cmd_version"]},
+    {"name": "no match: empty string", "args": ["@cmd_empty"]},
+    {"name": "no match: other command, nothing available", "args": ["@cmd_version"],
+     "memory": [{"addr": "0x1004F880", "u16": 0}]},
+    {"name": "avail 0: restores the saved line and writes it", "args": ["@cmd_reply"],
+     "memory": [{"addr": "0x1004F880", "u16": 0}]},
+    {"name": "avail -1: not above 0, restores the saved line", "args": ["@cmd_reply"],
+     "memory": [{"addr": "0x1004F880", "u16": 65535}]},
+    {"name": "avail -32768: not above 0, restores the saved line", "args": ["@cmd_reply"],
+     "memory": [{"addr": "0x1004F880", "u16": 32768}]},
+    {"name": "avail 32767: above 0, appends", "args": ["@cmd_reply"],
+     "memory": [{"addr": "0x1004F880", "u16": 32767}]},
+    {"name": "avail 2: above 0, appends", "args": ["@cmd_reply"],
+     "memory": [{"addr": "0x1004F880", "u16": 2}]},
+    {"name": "long command overflows the saved line into the suffix", "args": ["@cmd_long"]},
+    {"name": "long reply target", "args": ["@cmd_reply"],
+     "callees": {"0x100169f0": {"name": "FUN_100169f0", "conv": "stdcall", "args": [], "ret": "@target_long"}}},
+    {"name": "empty reply target", "args": ["@cmd_reply"],
+     "callees": {"0x100169f0": {"name": "FUN_100169f0", "conv": "stdcall", "args": [], "ret": "@target_empty"}}}
+  ],
+  "fuzz": {
+    "seed": 96048,
+    "count": 40,
+    "args": [
+      {"choices": ["@cmd_reply", "@cmd_six", "@cmd_upper", "@cmd_seventh", "@cmd_fifth", "@cmd_short", "@cmd_version", "@cmd_empty", "@cmd_long"]}
+    ],
+    "memory": [
+      {"addr": "0x1004F880", "type": "i16", "range": [-2, 3]},
+      {"addr": "0x1004CE40", "type": "u8", "range": [0, 127], "count": 8, "p": 0.5},
+      {"addr": "@reply_target", "type": "u8", "range": [0, 127], "count": 16},
+      {"addr": "@chat", "offset": 4, "type": "u32"}
+    ]
+  }
+}

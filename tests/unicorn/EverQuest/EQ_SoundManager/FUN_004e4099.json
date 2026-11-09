@@ -1,0 +1,317 @@
+{
+  "function": "OpenDigitalDriver_guess",
+  "original": "0x004e4099",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x00577ae4",
+      "u32": 65535
+    },
+    {
+      "addr": "0x00577ac0",
+      "u32": 44100
+    },
+    {
+      "addr": "0x00577aac",
+      "u32": 44100
+    },
+    {
+      "addr": "0x00577aa8",
+      "from_image": "0x00577AA8",
+      "image_size": 4
+    },
+    {
+      "addr": "0x00577ab4",
+      "u32": 44100
+    }
+  ],
+  "callees": {
+    "mss32.dll!_AIL_set_preference@8": {
+      "name": "AIL_set_preference",
+      "conv": "stdcall",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "mss32.dll!_AIL_waveOutOpen@16": {
+      "name": "AIL_waveOutOpen",
+      "conv": "stdcall",
+      "args": [
+        "ignore",
+        "int",
+        "int",
+        "mem:16"
+      ],
+      "ret": [
+        0,
+        0
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "12345678"
+        }
+      ]
+    },
+    "mss32.dll!_AIL_digital_configuration@16": {
+      "name": "AIL_digital_configuration",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "int",
+        "int",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "5741564500"
+        }
+      ]
+    },
+    "0x00522a30": {
+      "name": "strstr_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "mss32.dll!_AIL_waveOutClose@4": {
+      "name": "AIL_waveOutClose",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "initial open failure returns zero after driver error copy",
+      "args": [],
+      "callees": {
+        "mss32.dll!_AIL_waveOutOpen@16": {
+          "name": "waveopen_initial_failure",
+          "conv": "stdcall",
+          "args": [
+            "ignore",
+            "int",
+            "int",
+            "mem:16"
+          ],
+          "ret": -1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "normal configuration returns opened handle",
+      "args": []
+    },
+    {
+      "name": "emulated output retries and returns second handle",
+      "args": [],
+      "callees": {
+        "0x00522a30": {
+          "name": "strstr_emulated_found",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "emulated output retry failure returns zero",
+      "args": [],
+      "callees": {
+        "0x00522a30": {
+          "name": "strstr_emulated_found",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 1
+        },
+        "mss32.dll!_AIL_waveOutOpen@16": {
+          "name": "waveopen_retry_failure",
+          "conv": "stdcall",
+          "args": [
+            "ignore",
+            "int",
+            "int",
+            "mem:16"
+          ],
+          "ret": [
+            0,
+            5
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "12345678"
+            }
+          ]
+        },
+        "mss32.dll!_AIL_digital_configuration@16": {
+          "name": "AIL_digital_configuration_emulated",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "int",
+            "int",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "456d756c6174656400"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative configuration globals preserve signed quotient and low words",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x00577aac",
+          "u32": 4294967289
+        },
+        {
+          "addr": "0x00577aa8",
+          "u32": 4294934527
+        },
+        {
+          "addr": "0x00577ab4",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "zero channel and sample fields are passed without guards",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x00577aac",
+          "u32": 0
+        },
+        {
+          "addr": "0x00577aa8",
+          "u32": 0
+        },
+        {
+          "addr": "0x00577ab4",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5128345,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x00577ae4",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          65535,
+          2147483647
+        ]
+      },
+      {
+        "addr": "0x00577ac0",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          128,
+          44100,
+          2147483647
+        ]
+      },
+      {
+        "addr": "0x00577aac",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -15,
+          -9,
+          -8,
+          -7,
+          -1,
+          0,
+          1,
+          7,
+          8,
+          9,
+          44100,
+          2147483647
+        ]
+      },
+      {
+        "addr": "0x00577aa8",
+        "type": "int",
+        "choices": [
+          -65536,
+          -32769,
+          -32768,
+          -1,
+          0,
+          1,
+          2,
+          32767,
+          32768,
+          65535,
+          65536
+        ]
+      },
+      {
+        "addr": "0x00577ab4",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2,
+          65535,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

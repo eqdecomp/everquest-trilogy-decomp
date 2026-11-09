@@ -1,0 +1,242 @@
+{
+  "function": "t3dSetDirectionalLightLightInstance",
+  "original": "0x10014cb9",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        }
+      ]
+    },
+    "oldOwner": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "newOwner": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical move between owners",
+      "args": [
+        "@light",
+        "@newOwner"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        },
+        {
+          "addr": "@oldOwner",
+          "offset": "0x10",
+          "u32": 5
+        },
+        {
+          "addr": "@newOwner",
+          "offset": "0x10",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "same owner nets zero",
+      "args": [
+        "@light",
+        "@oldOwner"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        },
+        {
+          "addr": "@oldOwner",
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "zero counts go negative and positive",
+      "args": [
+        "@light",
+        "@newOwner"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        },
+        {
+          "addr": "@oldOwner",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@newOwner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "old count decrement wraps at signed minimum",
+      "args": [
+        "@light",
+        "@newOwner"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        },
+        {
+          "addr": "@oldOwner",
+          "offset": "0x10",
+          "u32": "0x80000000"
+        },
+        {
+          "addr": "@newOwner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "new count increment wraps at signed maximum",
+      "args": [
+        "@light",
+        "@newOwner"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        },
+        {
+          "addr": "@oldOwner",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@newOwner",
+          "offset": "0x10",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "new owner count aliases the light's owner field",
+      "args": [
+        "@light",
+        "@light+0x4"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@oldOwner"
+        },
+        {
+          "addr": "@oldOwner",
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "old owner count aliases the light's owner field",
+      "args": [
+        "@light",
+        "@newOwner"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x14",
+          "u32": "@light+0x4"
+        },
+        {
+          "addr": "@newOwner",
+          "offset": "0x10",
+          "u32": 2
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 85177,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@light"
+        ]
+      },
+      {
+        "choices": [
+          "@newOwner",
+          "@oldOwner"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@light",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          "@oldOwner",
+          "@newOwner"
+        ]
+      },
+      {
+        "addr": "@oldOwner",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -8,
+          64
+        ]
+      },
+      {
+        "addr": "@newOwner",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -8,
+          64
+        ]
+      }
+    ]
+  }
+}

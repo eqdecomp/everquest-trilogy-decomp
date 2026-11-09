@@ -1,0 +1,118 @@
+{
+  "function": "ClickedObject",
+  "original": "0x004dcfe8",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "stdcall",
+  "args": [
+    {"name": "x", "type": "short"},
+    {"name": "y", "type": "short"}
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {"addr": "0x006e4de0", "u32": "0x00700100"},
+    {"addr": "0x006e4d6c", "u32": "0x00700200"}
+  ],
+  "callees": {
+    "0x0041125d": {
+      "name": "CDisplay::PickActorOnScreen_guess",
+      "conv": "thiscall",
+      "args": ["int", "int", "int"],
+      "ret": "0x11223344"
+    },
+    "0x004b0334": {
+      "name": "EQObject::get_object",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": "0x55667788"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical coordinates and distinct callee results",
+      "args": [1, 2],
+      "expect": {"ret": "0x55667788"}
+    },
+    {
+      "name": "zero coordinates and negative lookup result",
+      "args": [0, 0],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": 0},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": -7}
+      },
+      "expect": {"ret": -7}
+    },
+    {
+      "name": "minimum x and maximum y sign extension",
+      "args": [-32768, 32767],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": "0x80000001"},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": -12345}
+      },
+      "expect": {"ret": -12345}
+    },
+    {
+      "name": "maximum x and minimum y with reversed signs",
+      "args": [32767, -32768],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": -2},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": "0x76543210"}
+      },
+      "expect": {"ret": "0x76543210"}
+    },
+    {
+      "name": "distinct coordinates preserve x y order",
+      "args": [4660, -9029],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": 314159},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": 271828}
+      },
+      "expect": {"ret": 271828}
+    },
+    {
+      "name": "null display receiver is still passed to picker",
+      "args": [-1, 173],
+      "memory": [{"addr": "0x006e4de0", "u32": 0}],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": 77},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": 88}
+      },
+      "expect": {"ret": 88}
+    },
+    {
+      "name": "null object list receiver is still passed to lookup",
+      "args": [1024, -2048],
+      "memory": [{"addr": "0x006e4d6c", "u32": 0}],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": 0},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": "0x13572468"}
+      },
+      "expect": {"ret": "0x13572468"}
+    },
+    {
+      "name": "same receiver for both this pointers",
+      "args": [21845, -21846],
+      "memory": [
+        {"addr": "0x006e4de0", "u32": "0x00700300"},
+        {"addr": "0x006e4d6c", "u32": "0x00700300"}
+      ],
+      "callees": {
+        "0x0041125d": {"name": "PickActorOnScreen", "conv": "thiscall", "args": ["int", "int", "int"], "ret": "0xffff8000"},
+        "0x004b0334": {"name": "get_object", "conv": "thiscall", "args": ["int"], "ret": "0x24681357"}
+      },
+      "expect": {"ret": "0x24681357"}
+    }
+  ],
+  "fuzz": {
+    "seed": 5099496,
+    "count": 40,
+    "args": [
+      {"range": [-32768, 32767]},
+      {"range": [-32768, 32767]}
+    ],
+    "memory": [
+      {"addr": "0x006e4de0", "type": "ptr", "choices": [0, "0x00700100", "0x00700300", "0x0070ffff"]},
+      {"addr": "0x006e4d6c", "type": "ptr", "choices": [0, "0x00700200", "0x00700300", "0x0070ff00"]}
+    ]
+  }
+}

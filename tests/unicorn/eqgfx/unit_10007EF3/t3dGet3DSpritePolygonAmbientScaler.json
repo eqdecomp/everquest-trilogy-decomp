@@ -1,0 +1,86 @@
+{
+  "function": "t3dGet3DSpritePolygonAmbientScaler",
+  "original": "0x10008aba",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "sprite": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "zero"
+    },
+    "parent": {
+      "size": "0x30",
+      "fill": "zero"
+    },
+    "frames": {
+      "size": "0x200",
+      "fill": "zero"
+    },
+    "parent_frames": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "@sprite", "offset": "0x2c", "u32": "@definition"},
+    {"addr": "@sprite", "offset": "0x18", "u32": "@frames"},
+    {"addr": "@definition", "offset": "0x20", "u32": 4},
+    {"addr": "@definition", "offset": "0x2c", "u32": "@parent"},
+    {"addr": "@parent", "offset": "0x18", "u32": "@parent_frames"},
+    {"addr": "@frames", "offset": "0x0c", "f32": 2.5},
+    {"addr": "@frames", "offset": "0x5c", "f32": 3.5},
+    {"addr": "@frames", "offset": "0xac", "f32": 4.5},
+    {"addr": "@frames", "offset": "0xfc", "f32": 5.5},
+    {"addr": "@parent_frames", "offset": "0x0c", "f32": -1.5},
+    {"addr": "@parent_frames", "offset": "0x5c", "f32": -2.5},
+    {"addr": "@parent_frames", "offset": "0xac", "f32": -3.5},
+    {"addr": "@parent_frames", "offset": "0xfc", "f32": -4.5}
+  ],
+  "callees": {},
+  "cases": [
+    {"name": "own frames, index 0", "args": ["@sprite", 0], "expect": {"ret": 2.5}},
+    {"name": "own frames, index 1", "args": ["@sprite", 1], "expect": {"ret": 3.5}},
+    {"name": "own frames, index 2", "args": ["@sprite", 2], "expect": {"ret": 4.5}},
+    {"name": "own frames, last valid index 3", "args": ["@sprite", 3], "expect": {"ret": 5.5}},
+    {"name": "index equal to count 4", "args": ["@sprite", 4], "expect": {"ret": 0.0}},
+    {"name": "index above count", "args": ["@sprite", 7], "expect": {"ret": 0.0}},
+    {"name": "index 0xffffffff (unsigned high)", "args": ["@sprite", 4294967295], "expect": {"ret": 0.0}},
+    {"name": "index 0x80000000 (untruncated wrap check)", "args": ["@sprite", 2147483648], "expect": {"ret": 0.0}},
+    {"name": "no own frames, parent frames index 1", "args": ["@sprite", 1], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": -2.5}},
+    {"name": "no own frames, parent frames index 3", "args": ["@sprite", 3], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": -4.5}},
+    {"name": "no own frames, index at count", "args": ["@sprite", 4], "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}], "expect": {"ret": 0.0}},
+    {"name": "count zero", "args": ["@sprite", 0], "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}], "expect": {"ret": 0.0}},
+    {"name": "count one, index zero", "args": ["@sprite", 0], "memory": [{"addr": "@definition", "offset": "0x20", "u32": 1}], "expect": {"ret": 2.5}},
+    {"name": "count one, index one", "args": ["@sprite", 1], "memory": [{"addr": "@definition", "offset": "0x20", "u32": 1}], "expect": {"ret": 0.0}}
+  ],
+  "fuzz": {
+    "seed": 35514,
+    "count": 40,
+    "args": [
+      {"choices": ["@sprite"]},
+      {"range": [0, 5]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 4]},
+      {"addr": "@sprite", "offset": "0x18", "type": "u32", "choices": ["@frames", 0]},
+      {"addr": "@frames", "offset": "0x0c", "type": "float", "count": 4, "stride": "0x50"}
+    ]
+  }
+}

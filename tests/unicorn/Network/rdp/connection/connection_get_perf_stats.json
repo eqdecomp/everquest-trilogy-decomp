@@ -1,0 +1,167 @@
+{
+  "function": "connection_get_perf_stats",
+  "original": "0x004f23e0",
+  "sources": [
+    "src/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "stats",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@hash"},
+        {"offset": "0x294", "u32": "0x10203040"},
+        {"offset": "0x48c", "u16": "0x5261"},
+        {"offset": "0x490", "u32": "0x11223344"},
+        {"offset": "0x494", "u32": "0x55667788"},
+        {"offset": "0x4a8", "u16": "0x0044"},
+        {"offset": "0x5dc", "u32": "0x00000123"},
+        {"offset": "0x5f4", "u32": "0x00000234"},
+        {"offset": "0x60c", "u32": "0x00000345"},
+        {"offset": "0x746", "u16": "0x1234"},
+        {"offset": "0x748", "u16": "0x5678"},
+        {"offset": "0x79c", "u16": "0x9abc"}
+      ]
+    },
+    "stats": {
+      "size": "0x28",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": "0xa1b2c3d4"}
+      ]
+    },
+    "hash": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x004f51c0": {
+      "name": "connhash_lock_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"]
+    },
+    "0x004f46c0": {
+      "name": "tx_get_stall_time_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": "0x13579bdf"
+    },
+    "0x004ef240": {
+      "name": "rdp_unlock_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x004f17e0": {
+      "name": "rdp_get_serial_stall_time_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": "0x2468ace0"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical fields and untouched halfword",
+      "args": ["@conn", "@stats"]
+    },
+    {
+      "name": "serial stall branch",
+      "args": ["@conn", "@stats"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x4a8", "u16": "0x0045"}
+      ]
+    },
+    {
+      "name": "unlock changes serial flag before branch",
+      "args": ["@conn", "@stats"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x4a8", "u16": "0x0044"}
+      ],
+      "callees": {
+        "0x004ef240": {
+          "name": "rdp_unlock_guess",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "writes": [
+            {"arg": 0, "offset": 1192, "hex": "4500"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero counters and values",
+      "args": ["@conn", "@stats"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x294", "u32": 0},
+        {"addr": "@conn", "offset": "0x48c", "u16": 0},
+        {"addr": "@conn", "offset": "0x490", "u32": 0},
+        {"addr": "@conn", "offset": "0x494", "u32": 0},
+        {"addr": "@conn", "offset": "0x4a8", "u16": 0},
+        {"addr": "@conn", "offset": "0x5dc", "u32": 0},
+        {"addr": "@conn", "offset": "0x5f4", "u32": 0},
+        {"addr": "@conn", "offset": "0x60c", "u32": 0},
+        {"addr": "@conn", "offset": "0x746", "u16": 0},
+        {"addr": "@conn", "offset": "0x748", "u16": 0},
+        {"addr": "@conn", "offset": "0x79c", "u16": 0}
+      ]
+    },
+    {
+      "name": "word maxima and wrapped signed total",
+      "args": ["@conn", "@stats"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x294", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x48c", "u16": "0xffff"},
+        {"addr": "@conn", "offset": "0x490", "u32": "0x80000000"},
+        {"addr": "@conn", "offset": "0x494", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x4a8", "u16": "0x0045"},
+        {"addr": "@conn", "offset": "0x5dc", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x5f4", "u32": 1},
+        {"addr": "@conn", "offset": "0x60c", "u32": "0x7fffffff"},
+        {"addr": "@conn", "offset": "0x746", "u16": "0xffff"},
+        {"addr": "@conn", "offset": "0x748", "u16": "0xffff"},
+        {"addr": "@conn", "offset": "0x79c", "u16": "0xffff"}
+      ]
+    },
+    {
+      "name": "overlapping output changes flag and source fields",
+      "args": ["@conn", "@conn+0x48a"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x4a8", "u16": "0x0045"},
+        {"addr": "@conn", "offset": "0x79c", "u16": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5186520,
+    "count": 32,
+    "args": [
+      {"choices": ["@conn"]},
+      {"choices": ["@stats"]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x294", "type": "u32"},
+      {"addr": "@conn", "offset": "0x48c", "type": "u16"},
+      {"addr": "@conn", "offset": "0x490", "type": "u32"},
+      {"addr": "@conn", "offset": "0x494", "type": "u32"},
+      {"addr": "@conn", "offset": "0x4a8", "type": "u16", "choices": [0, "0x44", "0x45", "0xffff"]},
+      {"addr": "@conn", "offset": "0x5dc", "type": "u32"},
+      {"addr": "@conn", "offset": "0x5f4", "type": "u32"},
+      {"addr": "@conn", "offset": "0x60c", "type": "u32"},
+      {"addr": "@conn", "offset": "0x746", "type": "u16"},
+      {"addr": "@conn", "offset": "0x748", "type": "u16"},
+      {"addr": "@conn", "offset": "0x79c", "type": "u16"}
+    ]
+  }
+}

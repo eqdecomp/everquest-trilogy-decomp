@@ -1,0 +1,110 @@
+{
+  "function": "s3dIsDMSpriteDefinitionValid",
+  "original": "0x1000eed2",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "type 0x47 is valid -> 0",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "hex": "47000000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type 0x46 (just below) -> error",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "hex": "46000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0x48 (just above) -> error",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "hex": "48000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0 -> error",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "hex": "00000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0xffffffff -> error",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "hex": "ffffffff"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "whole dword is compared: 0x00470000 -> error",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "hex": "00004700"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "null definition still faults on the read (bug kept)",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 61138,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [71, 70, 72, 0, 4294967295, 4653056]
+      }
+    ]
+  }
+}

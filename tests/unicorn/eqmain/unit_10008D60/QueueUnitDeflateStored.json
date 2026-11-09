@@ -1,0 +1,304 @@
+{
+  "function": "QueueUnitDeflateStored_guess",
+  "original": "0x10009800",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unit",
+      "type": "ptr"
+    },
+    {
+      "name": "flush",
+      "type": "int"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "unit": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@strm"},
+        {"offset": "0xc", "u32": 69},
+        {"offset": "0x24", "u32": 512},
+        {"offset": "0x30", "u32": "@window"},
+        {"offset": "0x54", "u32": 0},
+        {"offset": "0x64", "u32": 0},
+        {"offset": "0x6c", "u32": 0}
+      ]
+    },
+    "strm": {"size": "0x40", "fill": "random"},
+    "window": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10009960": {
+      "name": "QueueUnitFillWindow_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{"arg": 0, "offset": 108, "hex": "00000000"}]
+    },
+    "0x1000cd90": {
+      "name": "tr_flush_block_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32", "int"]
+    },
+    "0x10009780": {
+      "name": "QueueUnitCopyFromSource_guess",
+      "conv": "cdecl",
+      "args": ["int"],
+      "writes": [{"arg": 0, "offset": 16, "hex": "01000000"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "fill gives nothing, flush 0: return 0 with no cut",
+      "args": ["@unit", 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fill gives nothing, finish with room: final cut at block_start 0, return 3",
+      "args": ["@unit", 4],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "fill gives nothing, flush 1 with room: return 1",
+      "args": ["@unit", 1],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "flush 2 with room: return 1 (only flush 4 finishes)",
+      "args": ["@unit", 2],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "finish with no room after the final cut: return 2",
+      "args": ["@unit", 4],
+      "callees": {
+        "0x10009780": {
+          "name": "QueueUnitCopyFromSource_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]
+        }
+      },
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "second-cut availability check uses stream offset 0x10",
+      "args": ["@unit", 0],
+      "callees": {
+        "0x10009960": {
+          "name": "QueueUnitFillWindow_guess",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "writes": [{"arg": 0, "offset": 108, "hex": "00000000"}]
+        },
+        "0x10009780": {
+          "name": "QueueUnitCopyFromSource_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@unit", "offset": "0x0", "u32": "@strm+0x10"},
+        {"addr": "@unit", "offset": "0xc", "u32": 1024},
+        {"addr": "@unit", "offset": "0x64", "u32": 0},
+        {"addr": "@unit", "offset": "0x6c", "u32": 250},
+        {"addr": "@strm", "offset": "0x0", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "flush 1 with no room after the final cut: return 0",
+      "args": ["@unit", 1],
+      "callees": {
+        "0x10009780": {
+          "name": "QueueUnitCopyFromSource_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "finish, block_start -5: final cut has no window pointer, return 3",
+      "args": ["@unit", 4],
+      "memory": [{"addr": "@unit", "offset": "0x54", "u32": "0xfffffffb"}],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "fill gives 1 each time, cut at block_start + 64 with no room: return 0 after 64 passes",
+      "args": ["@unit", 0],
+      "callees": {
+        "0x10009960": {
+          "name": "QueueUnitFillWindow_guess",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "writes": [{"arg": 0, "offset": 108, "hex": "01000000"}]
+        },
+        "0x10009780": {
+          "name": "QueueUnitCopyFromSource_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@unit", "offset": "0x54", "u32": 16},
+        {"addr": "@unit", "offset": "0x64", "u32": 16}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lookahead 2 is not refilled: strstart moves by 2, then the empty fill returns 0",
+      "args": ["@unit", 0],
+      "memory": [{"addr": "@unit", "offset": "0x6c", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lookahead 1 is refilled (fill gives 0): return 0",
+      "args": ["@unit", 0],
+      "memory": [{"addr": "@unit", "offset": "0x6c", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "strstart wraps to 0: cut at once (no room), return 0",
+      "args": ["@unit", 0],
+      "callees": {
+        "0x10009780": {
+          "name": "QueueUnitCopyFromSource_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@unit", "offset": "0x64", "u32": "0xfffffff0"},
+        {"addr": "@unit", "offset": "0x6c", "u32": 16}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "strstart reaches block_start + 64 exactly: cut, then the empty fill returns 0",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0x54", "u32": 16},
+        {"addr": "@unit", "offset": "0x64", "u32": 48},
+        {"addr": "@unit", "offset": "0x6c", "u32": 32}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "strstart one short of block_start + 64: no cut",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0x54", "u32": 16},
+        {"addr": "@unit", "offset": "0x64", "u32": 48},
+        {"addr": "@unit", "offset": "0x6c", "u32": 31}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "block_start -5: first cut has no window pointer, the lookahead left over is moved on",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0x54", "u32": "0xfffffffb"},
+        {"addr": "@unit", "offset": "0x64", "u32": 48},
+        {"addr": "@unit", "offset": "0x6c", "u32": 32}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "w_size - 262 past block_start - 1: no second cut",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0xc", "u32": 32773},
+        {"addr": "@unit", "offset": "0x54", "u32": 16},
+        {"addr": "@unit", "offset": "0x64", "u32": 16},
+        {"addr": "@unit", "offset": "0x6c", "u32": 249}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "w_size - 262 past block_start: second cut with window pointer, then the empty fill returns 0",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0xc", "u32": 32773},
+        {"addr": "@unit", "offset": "0x54", "u32": 16},
+        {"addr": "@unit", "offset": "0x64", "u32": 16},
+        {"addr": "@unit", "offset": "0x6c", "u32": 250}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "w_size - 262 past a negative block_start: second cut without window pointer",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0xc", "u32": 32773},
+        {"addr": "@unit", "offset": "0x54", "u32": "0xfffffff6"},
+        {"addr": "@unit", "offset": "0x64", "u32": 240},
+        {"addr": "@unit", "offset": "0x6c", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "finish after a cut with room: the empty fill then the final cut returns 3",
+      "args": ["@unit", 4],
+      "memory": [{"addr": "@unit", "offset": "0x6c", "u32": 64}],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "finish, a cut with no room returns 0 before the final cut",
+      "args": ["@unit", 4],
+      "callees": {
+        "0x10009780": {
+          "name": "QueueUnitCopyFromSource_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]
+        }
+      },
+      "memory": [{"addr": "@unit", "offset": "0x6c", "u32": 64}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pending_buf_size 3 wraps: max block is 0xffff, strstart at 65536 cuts",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0xc", "u32": 3},
+        {"addr": "@unit", "offset": "0x6c", "u32": 65536}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pending_buf_size 0x20000: strstart at 65535 cuts exactly at the 0xffff max",
+      "args": ["@unit", 0],
+      "memory": [
+        {"addr": "@unit", "offset": "0xc", "u32": 131072},
+        {"addr": "@unit", "offset": "0x6c", "u32": 65535}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 38912,
+    "count": 40,
+    "args": [
+      {"choices": ["@unit"]},
+      {"choices": [0, 4, 1, 2, 3, -1, 5]}
+    ],
+    "memory": [
+      {"addr": "@unit", "offset": "0x54", "type": "int", "range": [-300, 300]},
+      {"addr": "@unit", "offset": "0x64", "type": "u32", "range": [0, 600]},
+      {"addr": "@unit", "offset": "0x6c", "type": "u32", "range": [0, 300]},
+      {"addr": "@unit", "offset": "0xc", "type": "u32", "choices": [69, 48, 32, 32773]},
+      {"addr": "@unit", "offset": "0x24", "type": "u32", "choices": [512, 256, 32768, 40]}
+    ]
+  }
+}

@@ -1,0 +1,550 @@
+{
+  "function": "EqDirectSoundSlots_StopReserved_guess",
+  "original": "0x004ec445",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "slots",
+      "type": "ptr"
+    },
+    {
+      "name": "edx",
+      "type": "int"
+    },
+    {
+      "name": "slot",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "slots": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x54",
+          "u32": "@name"
+        }
+      ]
+    },
+    "name": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "name2": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "stop": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "setpos": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "buf": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt"
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x34",
+          "u32": "@setpos"
+        },
+        {
+          "offset": "0x48",
+          "u32": "@stop"
+        }
+      ]
+    },
+    "vPlay": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@buf"
+        },
+        {
+          "offset": "0x10",
+          "u8": 1
+        }
+      ]
+    },
+    "vIdle": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@buf"
+        },
+        {
+          "offset": "0x10",
+          "u32": "0xff00"
+        }
+      ]
+    },
+    "vNoBuf": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u8": 1
+        }
+      ]
+    },
+    "vFlag2": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@buf"
+        },
+        {
+          "offset": "0x10",
+          "u8": 2
+        }
+      ]
+    },
+    "vFlag80": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@buf"
+        },
+        {
+          "offset": "0x10",
+          "u8": 128
+        }
+      ]
+    },
+    "vFuzz": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@buf"
+        },
+        {
+          "offset": "0x10",
+          "u8": 1
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "@name",
+      "cstr": "SndKey"
+    },
+    {
+      "addr": "@name2",
+      "cstr": "OtherKey"
+    }
+  ],
+  "callees": {
+    "kernel32.dll!OutputDebugStringA": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "@stop": {
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@setpos": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "play slot 1",
+      "args": [
+        "@slots",
+        1,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x8",
+          "u32": "@vPlay"
+        }
+      ]
+    },
+    {
+      "name": "play slot 0",
+      "args": [
+        "@slots",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x4",
+          "u32": "@vPlay"
+        }
+      ]
+    },
+    {
+      "name": "play slot 15 (top of range)",
+      "args": [
+        "@slots",
+        0,
+        15
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x40",
+          "u32": "@vPlay"
+        }
+      ]
+    },
+    {
+      "name": "flag 0x80 counts as playing",
+      "args": [
+        "@slots",
+        0,
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x10",
+          "u32": "@vFlag80"
+        }
+      ]
+    },
+    {
+      "name": "flag 2 counts as playing",
+      "args": [
+        "@slots",
+        0,
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x14",
+          "u32": "@vFlag2"
+        }
+      ]
+    },
+    {
+      "name": "flag byte zero but dword nonzero is not playing",
+      "args": [
+        "@slots",
+        0,
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0xc",
+          "u32": "@vIdle"
+        }
+      ]
+    },
+    {
+      "name": "playing voice with no buffer returns",
+      "args": [
+        "@slots",
+        0,
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x18",
+          "u32": "@vNoBuf"
+        }
+      ]
+    },
+    {
+      "name": "empty slot reports",
+      "args": [
+        "@slots",
+        0,
+        6
+      ]
+    },
+    {
+      "name": "other key name is printed",
+      "args": [
+        "@slots",
+        0,
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x54",
+          "u32": "@name2"
+        }
+      ]
+    },
+    {
+      "name": "slot -1 with a voice at slot -1 reports",
+      "args": [
+        "@slots",
+        0,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x0",
+          "u32": "@vPlay"
+        }
+      ]
+    },
+    {
+      "name": "slot 16 with a voice past the array reports",
+      "args": [
+        "@slots",
+        0,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x44",
+          "u32": "@vPlay"
+        }
+      ]
+    },
+    {
+      "name": "slot INT_MIN reports",
+      "args": [
+        "@slots",
+        0,
+        -2147483648
+      ]
+    },
+    {
+      "name": "slot INT_MAX reports",
+      "args": [
+        "@slots",
+        0,
+        2147483647
+      ]
+    },
+    {
+      "name": "edx is ignored",
+      "args": [
+        "@slots",
+        12345,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x8",
+          "u32": "@vPlay"
+        }
+      ]
+    },
+    {
+      "name": "stop callee repoints the voice buffer (buffer re-read after Stop)",
+      "args": [
+        "@slots",
+        0,
+        1
+      ],
+      "callees": {
+        "@stop": {
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x60000084",
+              "hex": "c0000060"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x8",
+          "u32": "@slots+0x80"
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x84",
+          "u32": "@buf"
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x90",
+          "u8": 1
+        },
+        {
+          "addr": "@slots",
+          "offset": "0xc0",
+          "u32": "@vt"
+        }
+      ]
+    },
+    {
+      "name": "stop callee repoints the slot (slot re-read after Stop)",
+      "args": [
+        "@slots",
+        0,
+        1
+      ],
+      "callees": {
+        "@stop": {
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x60000008",
+              "hex": "00010060"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x8",
+          "u32": "@slots+0x80"
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x84",
+          "u32": "@buf"
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x90",
+          "u8": 1
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x104",
+          "u32": "@slots+0xc0"
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x110",
+          "u8": 1
+        },
+        {
+          "addr": "@slots",
+          "offset": "0xc0",
+          "u32": "@vt"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5162053,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@slots"
+        ]
+      },
+      {},
+      {
+        "range": [
+          -4,
+          20
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@slots",
+        "offset": "0x4",
+        "type": "ptr",
+        "count": 16,
+        "stride": 4,
+        "choices": [
+          0,
+          "@vPlay",
+          "@vIdle",
+          "@vNoBuf",
+          "@vFlag2",
+          "@vFlag80",
+          "@vFuzz"
+        ]
+      },
+      {
+        "addr": "@slots",
+        "offset": "0x54",
+        "type": "ptr",
+        "choices": [
+          "@name",
+          "@name2"
+        ]
+      },
+      {
+        "addr": "@vFuzz",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          128,
+          255,
+          256,
+          65280,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@vFuzz",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@buf"
+        ]
+      }
+    ]
+  }
+}

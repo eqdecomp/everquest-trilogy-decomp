@@ -1,0 +1,229 @@
+{
+  "function": "CreateOverlayOrSubmitQuad_guess",
+  "original": "0x00401ce5",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "@vt"
+        },
+        {
+          "offset": 4,
+          "u32": "@owner"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@list"
+        },
+        {
+          "offset": "0x10",
+          "u32": "@list"
+        },
+        {
+          "offset": "0x9c",
+          "u32": 0
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@slot4"
+        }
+      ]
+    },
+    "slot4": {
+      "size": 16
+    },
+    "owner": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "list": {
+      "size": 4,
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@slot4": {
+      "name": "virtual slot 4",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 1
+    },
+    "0x00402ec0": {
+      "name": "CreateAndConfigureObject_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "0x55667788"
+    },
+    "0x00402c98": {
+      "name": "DeferQuadOptionalTexture_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "ptr",
+        "int"
+      ]
+    },
+    "0x00403f3d": {
+      "name": "EQObjectList_guess::CallSlot2OnAll_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "slot 4 returns zero: no branches run",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "@slot4": {
+          "name": "virtual slot 4",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "slot 4 tests AL only: 0x100 is false",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "@slot4": {
+          "name": "virtual slot 4",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 256
+        }
+      }
+    },
+    {
+      "name": "AL 1 and state zero: create then call list",
+      "args": [
+        "@obj"
+      ]
+    },
+    {
+      "name": "AL high bit set is true",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "@slot4": {
+          "name": "virtual slot 4",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 128
+        }
+      }
+    },
+    {
+      "name": "AL 0xff is true",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "@slot4": {
+          "name": "virtual slot 4",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 255
+        }
+      }
+    },
+    {
+      "name": "nonzero state one: update then call list",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x9c",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "any nonzero state takes update branch",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x9c",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "constructor may return zero",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "0x00402ec0": {
+          "name": "FUN_00402ec0",
+          "conv": "thiscall",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4201701,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@obj",
+        "offset": "0x9c",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

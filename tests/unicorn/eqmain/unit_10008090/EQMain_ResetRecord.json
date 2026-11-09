@@ -1,0 +1,166 @@
+{
+  "function": "EQMain_ResetRecord_guess",
+  "original": "0x10008aa0",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": "0x12345678"
+        },
+        {
+          "offset": "0x20",
+          "u32": "@flag"
+        }
+      ]
+    },
+    "flag": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10004ec0": {
+      "name": "FUN_10004ec0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@param_1"
+      ]
+    },
+    {
+      "name": "flag byte and count already zero",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@flag",
+          "u8": 0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "flag byte set, count with sign bit",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@flag",
+          "u8": 255
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x1c",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "flag points into the count dword",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x20",
+          "u32": "@param_1+0x1c"
+        }
+      ]
+    },
+    {
+      "name": "flag points at the flag pointer itself",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x20",
+          "u32": "@param_1+0x20"
+        }
+      ]
+    },
+    {
+      "name": "flag points at the record's last byte",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x20",
+          "u32": "@param_1+0xff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 35488,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x1c",
+        "type": "u32",
+        "p": 0.8
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          "@flag",
+          "@flag+0x3",
+          "@param_1+0x1c",
+          "@param_1+0x20",
+          "@param_1+0xfc"
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x0",
+        "size": 32
+      },
+      {
+        "addr": "@flag",
+        "size": 16
+      }
+    ]
+  }
+}

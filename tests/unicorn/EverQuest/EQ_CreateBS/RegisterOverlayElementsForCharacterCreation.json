@@ -1,0 +1,88 @@
+{
+  "function": "EQ_Overlay::RegisterOverlayElementsForCharacterCreation_guess",
+  "original": "0x00434166",
+  "sources": ["src/EverQuest/EQ_CreateBS.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x4", "u32": "@elementList"}]
+    },
+    "elementList": {"size": "0x10", "fill": "zero"},
+    "state": {"size": "0x100", "fill": "zero"},
+    "setrect": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E4DE0", "u32": "@state"},
+    {"addr": "0x00534248", "u32": "@setrect"}
+  ],
+  "callees": {
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ignore", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x004502A1": {
+      "name": "AddImage",
+      "conv": "thiscall",
+      "args": ["short", "ptr", "ignore"]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero state registers fourteen rows in ascending ID and y order",
+      "args": [],
+      "memory": [{"addr": "@state", "offset": "0x94", "u32": 0}]
+    },
+    {
+      "name": "zero state initializes the first rectangle independently of incoming EBX",
+      "args": [],
+      "regs": {"ebx": 123},
+      "memory": [{"addr": "@state", "offset": "0x94", "u32": 0}]
+    },
+    {
+      "name": "positive state registers the two fixed rows before the remaining rows",
+      "args": [],
+      "memory": [{"addr": "@state", "offset": "0x94", "u32": 1}]
+    },
+    {
+      "name": "zero state initializes row position with both incoming index registers nonzero",
+      "args": [],
+      "regs": {"ebx": 123, "edi": 456},
+      "memory": [{"addr": "@state", "offset": "0x94", "u32": 0}]
+    },
+    {
+      "name": "zero state initializes row position over nonzero incoming stack storage",
+      "args": [],
+      "memory": [
+        {"addr": "@state", "offset": "0x94", "u32": 0},
+        {"addr": "0x7f0efff8", "u32": 123}
+      ]
+    },
+    {
+      "name": "negative state takes the nonzero branch",
+      "args": [],
+      "memory": [{"addr": "@state", "offset": "0x94", "u32": -1}]
+    },
+    {
+      "name": "large positive state takes the nonzero branch",
+      "args": [],
+      "memory": [{"addr": "@state", "offset": "0x94", "u32": 2147483647}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4407654,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@state", "offset": "0x94", "type": "u32", "choices": [0, 1, -1, 2, 14, 2147483647]}
+    ]
+  }
+}

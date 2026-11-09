@@ -1,0 +1,205 @@
+{
+  "function": "t3dCopyIndexedPointsToRenderSlots_guess",
+  "original": "0x1002fe13",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "records",
+      "type": "ptr"
+    },
+    {
+      "name": "indexList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x300",
+      "fill": "random",
+      "init": [
+        { "offset": "0x2c4", "u32": "@dest" }
+      ]
+    },
+    "dest": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "records": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "indexlist": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x4", "u32": 3 },
+        { "offset": "0x8", "u32": "@indexes" }
+      ]
+    },
+    "indexes": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "three indexes 0,2,1: three slots each get one record",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 3 },
+        { "addr": "@indexes", "offset": "0x0", "u32": 0 },
+        { "addr": "@indexes", "offset": "0x4", "u32": 2 },
+        { "addr": "@indexes", "offset": "0x8", "u32": 1 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "count 1: exactly one iteration",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 1 },
+        { "addr": "@indexes", "offset": "0x0", "u32": 7 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "count 0: loop skipped, dest untouched",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 0 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "count 0 with the index array pointer right at the region end: no read",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 0 },
+        { "addr": "@indexlist", "offset": "0x8", "u32": "@indexes+0x40" }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "single index 0x14: last whole record fits (0xf0..0xfc)",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 1 },
+        { "addr": "@indexes", "offset": "0x0", "u32": "0x14" }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "duplicate index 5 three times: same record into three slots",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 3 },
+        { "addr": "@indexes", "offset": "0x0", "u32": 5 },
+        { "addr": "@indexes", "offset": "0x4", "u32": 5 },
+        { "addr": "@indexes", "offset": "0x8", "u32": 5 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "four descending indexes 3,2,1,0: four slots in list order",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 4 },
+        { "addr": "@indexes", "offset": "0x0", "u32": 3 },
+        { "addr": "@indexes", "offset": "0x4", "u32": 2 },
+        { "addr": "@indexes", "offset": "0x8", "u32": 1 },
+        { "addr": "@indexes", "offset": "0xc", "u32": 0 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "index array pointer at @indexes+0x10: base comes from +0x8",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 2 },
+        { "addr": "@indexlist", "offset": "0x8", "u32": "@indexes+0x10" },
+        { "addr": "@indexes", "offset": "0x10", "u32": "0xa" },
+        { "addr": "@indexes", "offset": "0x14", "u32": 9 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "index 0xffffffff: record pointer 0xc bytes before records",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 1 },
+        { "addr": "@indexes", "offset": "0x0", "u32": "0xffffffff" }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "index 0x15: last record byte runs 4 past the region",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 1 },
+        { "addr": "@indexes", "offset": "0x0", "u32": "0x15" }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "index array pointer near the 32-bit top: unsigned end wraps",
+      "args": ["@context", "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": "0x10" },
+        { "addr": "@indexlist", "offset": "0x8", "u32": "0x7ffffff0" }
+      ]
+    },
+    {
+      "name": "null context: faults reading +0x2c4",
+      "args": [0, "@records", "@indexlist"],
+      "memory": [
+        { "addr": "@indexlist", "offset": "0x4", "u32": 1 },
+        { "addr": "@indexes", "offset": "0x0", "u32": 0 }
+      ]
+    },
+    {
+      "name": "null index list: faults reading +0x4/+0x8",
+      "args": ["@context", "@records", 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5017550,
+    "count": 40,
+    "args": [
+      { "choices": ["@context"] },
+      { "choices": ["@records"] },
+      { "choices": ["@indexlist"] }
+    ],
+    "memory": [
+      {
+        "addr": "@indexlist",
+        "offset": "0x4",
+        "type": "int",
+        "choices": [0, 1, 2, 3, 4, 5, 6, 8]
+      },
+      {
+        "addr": "@indexlist",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": ["@indexes", "@indexes+0x10"]
+      },
+      {
+        "addr": "@indexes",
+        "offset": "0x0",
+        "type": "int",
+        "count": 8,
+        "stride": 4,
+        "range": [0, "0x14"]
+      }
+    ]
+  }
+}

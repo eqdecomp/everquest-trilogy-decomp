@@ -1,0 +1,168 @@
+{
+  "function": "InitSFDLL",
+  "original": "0x004e47d2",
+  "sources": ["src/EverQuest/EQ_SoundManager.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "param_1", "type": "u32"}],
+  "ret": "int",
+  "max_insns": 200000,
+  "objects": {
+    "module": {"size": "0x10", "fill": "zero"},
+    "function_table": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@get_count"},
+        {"offset": "0x4", "u32": "@get_info"},
+        {"offset": "0x10", "u32": "@device_open"},
+        {"offset": "0x14", "u32": "@device_close"},
+        {"offset": "0x1c", "u32": "@get_config"}
+      ]
+    },
+    "manager_export": {"size": "0x4", "fill": "zero", "init": [
+      {"offset": 0, "u32": "@manager_entry"}
+    ]},
+    "manager_entry": {"size": "0x1", "fill": "zero"},
+    "get_count": {"size": "0x1", "fill": "zero"},
+    "get_info": {"size": "0x1", "fill": "zero"},
+    "device_open": {"size": "0x1", "fill": "zero"},
+    "device_close": {"size": "0x1", "fill": "zero"},
+    "get_config": {"size": "0x1", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006ecdb4", "u32": "@function_table"},
+    {"addr": "0x006ecdbc", "u32": 1},
+    {"addr": "0x006ecdb8", "u32": 0}
+  ],
+  "callees": {
+    "kernel32.dll!LoadLibraryA": {
+      "name": "LoadLibraryA", "conv": "stdcall", "args": ["cstr"], "ret": "@module"
+    },
+    "kernel32.dll!FreeLibrary": {
+      "name": "FreeLibrary", "conv": "stdcall", "args": ["ptr"], "ret": 1
+    },
+    "kernel32.dll!GetProcAddress": {
+      "name": "GetProcAddress", "conv": "stdcall", "args": ["ptr", "cstr"], "ret": "@manager_export"
+    },
+    "@manager_entry": {
+      "name": "SFManager", "conv": "cdecl", "args": ["u32", "ptr"], "ret": 0
+    },
+    "@get_count": {
+      "name": "GetDeviceCount", "conv": "cdecl", "args": ["ptr"], "ret": 0
+    },
+    "@get_info": {
+      "name": "GetDeviceInfo", "conv": "cdecl", "args": ["u32", "ignore"],
+      "writes": [
+        {"arg": 1, "offset": 9, "hex": "00"},
+        {"arg": 1, "offset": 22, "hex": "44657669636500"}
+      ]
+    },
+    "@device_open": {
+      "name": "OpenDevice", "conv": "cdecl", "args": ["u32"], "ret": 0
+    },
+    "@device_close": {
+      "name": "CloseDevice", "conv": "cdecl", "args": ["u32"], "ret": 0
+    },
+    "@get_config": {
+      "name": "GetDeviceConfig", "conv": "cdecl", "args": ["u32", "ignore", "mem:4"],
+      "writes": [{"arg": 2, "offset": 0, "hex": "00003800"}]
+    },
+    "0x00521960": {
+      "name": "memset", "args": ["ignore", "int", "int"], "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true
+    },
+    "0x004a3d01": {
+      "name": "EQTRACE_guess", "conv": "cdecl", "args": ["cstr"], "varargs": "printf"
+    }
+  },
+  "cases": [
+    {"name": "non-one-low", "args": [0], "expect": {"ret": 1}},
+    {"name": "non-one-high", "args": [2], "expect": {"ret": 1}},
+    {"name": "library-load-failure", "args": [1], "callees": {
+      "kernel32.dll!LoadLibraryA": {"name": "LoadLibraryA", "conv": "stdcall", "args": ["cstr"], "ret": 0}
+    }},
+    {"name": "proc-lookup-failure", "args": [1], "callees": {
+      "kernel32.dll!GetProcAddress": {"name": "GetProcAddress", "conv": "stdcall", "args": ["ptr", "cstr"], "ret": 0}
+    }},
+    {"name": "manager-query-failure", "args": [1], "callees": {
+      "@manager_entry": {"name": "SFManager", "conv": "cdecl", "args": ["u32", "ptr"], "ret": 1}
+    }},
+    {"name": "no-devices", "args": [1], "memory": [{"addr": "0x006ecdbc", "u32": 0}]},
+    {"name": "zero-low-word-count", "args": [1], "memory": [{"addr": "0x006ecdbc", "u32": 65536}]},
+    {"name": "software-synth", "args": [1], "callees": {
+      "@get_info": {"name": "GetDeviceInfo", "conv": "cdecl", "args": ["u32", "ignore"],
+        "writes": [
+          {"arg": 1, "offset": 9, "hex": "40"},
+          {"arg": 1, "offset": 22, "hex": "536f66747761726500"}
+        ]}
+    }},
+    {"name": "hardware-not-openable-capability", "args": [1], "callees": {
+      "@get_info": {"name": "GetDeviceInfo", "conv": "cdecl", "args": ["u32", "ignore"],
+        "writes": [
+          {"arg": 1, "offset": 9, "hex": "80"},
+          {"arg": 1, "offset": 22, "hex": "486172647761726500"}
+        ]}
+    }},
+    {"name": "flag-bit0-distinguishes-mask", "args": [1], "callees": {
+      "@get_info": {"name": "GetDeviceInfo", "conv": "cdecl", "args": ["u32", "ignore"],
+        "writes": [
+          {"arg": 1, "offset": 9, "hex": "01"},
+          {"arg": 1, "offset": 22, "hex": "5465737400"}
+        ]}
+    }},
+    {"name": "hardware-zero-rating", "args": [1], "callees": {
+      "@get_config": {"name": "GetDeviceConfig", "conv": "cdecl", "args": ["u32", "ignore", "mem:4"]}
+    }},
+    {"name": "hardware-positive-rating-opens", "args": [1], "memory": [
+      {"addr": "0x7f0eff00", "size": 512, "fill": "random"},
+      {"addr": "0x7f0f0044", "u32": 2779096485},
+      {"addr": "0x7f0f0048", "u32": 2779096485}
+    ]},
+    {"name": "selected-device-open-fails", "args": [1], "callees": {
+      "@device_open": {"name": "OpenDevice", "conv": "cdecl", "args": ["u32"], "ret": [0, 1]}
+    }},
+    {"name": "ties-select-last-device", "args": [1], "memory": [
+      {"addr": "0x006ecdbc", "u32": 3}, {"addr": "0x006ecdb8", "u32": 0}
+    ]},
+    {"name": "retry-skips-zeroed-last-tie", "args": [1], "memory": [
+      {"addr": "0x006ecdbc", "u32": 3}, {"addr": "0x006ecdb8", "u32": 0}
+    ], "callees": {
+      "@device_open": {"name": "OpenDevice", "conv": "cdecl", "args": ["u32"], "ret": [0, 0, 0, 1, 0]}
+    }},
+    {"name": "stale-best-index-eleven", "args": [1], "memory": [
+      {"addr": "0x7f0eff00", "size": 512, "fill": "random"},
+      {"addr": "0x006ecdbc", "u32": 1}, {"addr": "0x006ecdb8", "u32": 11}
+    ]},
+    {"name": "stale-best-index-fifteen", "args": [1], "memory": [
+      {"addr": "0x7f0eff00", "size": 512, "fill": "random"},
+      {"addr": "0x006ecdbc", "u32": 1}, {"addr": "0x006ecdb8", "u32": 15}
+    ]},
+    {"name": "software-two-device-open-retries", "args": [1], "memory": [
+      {"addr": "0x006ecdbc", "u32": 2}, {"addr": "0x006ecdb8", "u32": 0}
+    ], "callees": {
+      "@get_info": {"name": "GetDeviceInfo", "conv": "cdecl", "args": ["u32", "ignore"],
+        "writes": [
+          {"arg": 1, "offset": 9, "hex": "40"},
+          {"arg": 1, "offset": 22, "hex": "536f66747761726500"}
+        ]},
+      "@device_open": {"name": "OpenDevice", "conv": "cdecl", "args": ["u32"], "ret": 1}
+    }},
+    {"name": "sixteen-device-boundary", "args": [1], "memory": [
+      {"addr": "0x006ecdbc", "u32": 16}, {"addr": "0x006ecdb8", "u32": 0}
+    ]},
+    {"name": "existing-best-index", "args": [1], "memory": [
+      {"addr": "0x006ecdbc", "u32": 3}, {"addr": "0x006ecdb8", "u32": 2}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 5130194,
+    "count": 32,
+    "args": [{"choices": [0, 1, 2, 4294967295]}],
+    "memory": [
+      {"addr": "0x006ecdbc", "type": "u32", "range": [0, 16]},
+      {"addr": "0x006ecdb8", "type": "u32", "range": [0, 15]}
+    ]
+  }
+}

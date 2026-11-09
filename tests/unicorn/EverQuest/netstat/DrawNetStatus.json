@@ -1,0 +1,253 @@
+{
+  "function": "DrawNetStatus",
+  "original": "0x004e0af0",
+  "sources": [
+    "src/EverQuest/netstat.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "param_1", "type": "int" },
+    { "name": "param_2", "type": "int" },
+    { "name": "param_3", "type": "int" },
+    { "name": "param_4", "type": "u16" },
+    { "name": "param_5", "type": "u16" },
+    { "name": "param_6", "type": "int" },
+    { "name": "param_7", "type": "u16" },
+    { "name": "param_8", "type": "u32" },
+    { "name": "param_9", "type": "u32" },
+    { "name": "param_10", "type": "int" }
+  ],
+  "ret": "void",
+  "objects": {
+    "clearfn": { "size": "0x10" },
+    "hdobj": { "size": "0x10" },
+    "display": { "size": "0x8000", "fill": "zero", "init": [{ "offset": "0x7a18", "u32": 32 }] }
+  },
+  "memory": [
+    { "addr": "0x006e5480", "u32": 0 },
+    { "addr": "0x006e4e68", "u32": "@hdobj" },
+    { "addr": "0x006e5338", "u32": "@clearfn" },
+    { "addr": "0x006efdfc", "u32": 4660 },
+    { "addr": "0x006e50a0", "u32": "@display" }
+  ],
+  "callees": {
+    "winmm.dll!timeGetTime": { "name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 100000 },
+    "0x004f23e0": {
+      "name": "connection_get_perf_stats",
+      "conv": "cdecl",
+      "args": ["int", "ignore"],
+      "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" },
+        { "arg": 1, "offset": 8, "hex": "ffffffff" },
+        { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" },
+        { "arg": 1, "offset": 28, "hex": "bc020000" }
+      ]
+    },
+    "0x00524220": { "name": "__allshl", "conv": "cdecl", "args": [], "passthrough": true },
+    "0x004e0ac2": { "name": "LODWORD_countSetBits_guess", "conv": "cdecl", "args": ["u64"], "passthrough": true },
+    "0x005224fb": { "name": "_sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "ret": 0,
+      "writes": [{ "arg": 0, "offset": 0, "hex": "616200" }] },
+    "@clearfn": { "name": "t3dOverlayClear", "conv": "cdecl", "args": ["int", "int"], "ret": 0 },
+    "0x0048d21a": {
+      "name": "EQ_TextO::WriteTextHD_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": ["cstr", "int", "int", "int", "int", "int"],
+      "ret": 0
+    },
+    "0x0040be28": {
+      "name": "DrawScreenText_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr", "int", "int", "int", "int"],
+      "ret": 0
+    },
+    "0x004e08ff": {
+      "name": "DrawPacketLossBar",
+      "conv": "cdecl",
+      "args": ["int", "int", "int", "int", "u64", "int", "int"]
+    },
+    "0x004e06d1": {
+      "name": "DrawPacketLossBar16_guess",
+      "conv": "cdecl",
+      "args": ["int", "int", "int", "int", "u32", "u32", "int", "int"]
+    }
+  },
+  "rewrite_aliases": {
+    "__allshl": "0x00524220"
+  },
+  "cases": [
+    { "name": "base: GDI text, DrawPacketLossBar for both bars, latency 700, 41 bits each", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999] },
+    { "name": "null surface does nothing", "args": [0, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999] },
+    { "name": "HD mode with no HD object returns early", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "memory": [{ "addr": "0x006e5480", "u32": 1 }, { "addr": "0x006e4e68", "u32": 0 }] },
+    { "name": "HD mode with HD object: WriteTextHD for all texts, FUN_004e06d1 for the bars", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "memory": [{ "addr": "0x006e5480", "u32": 1 }] },
+    { "name": "HD mode with sign-extended and wide positions", "args": [1, "0x8010", "0x8020", 65535, 65534, 77, 13, "0xffffffff", "0x1ff", -5],
+      "memory": [{ "addr": "0x006e5480", "u32": 1 }] },
+    { "name": "mode 2 with no HD object proceeds: GDI text, FUN_004e06d1 bars", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "memory": [{ "addr": "0x006e5480", "u32": 2 }, { "addr": "0x006e4e68", "u32": 0 }] },
+    { "name": "mode 0 with no HD object proceeds", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "memory": [{ "addr": "0x006e4e68", "u32": 0 }] },
+    { "name": "display state 0x21 takes FUN_004e06d1", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "objects": { "display": { "size": "0x8000", "fill": "zero", "init": [{ "offset": "0x7a18", "u32": 33 }] } } },
+    { "name": "display state 0x120 (low byte 0x20) takes FUN_004e06d1", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "objects": { "display": { "size": "0x8000", "fill": "zero", "init": [{ "offset": "0x7a18", "u32": 288 }] } } },
+    { "name": "display state 0 takes FUN_004e06d1", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "objects": { "display": { "size": "0x8000", "fill": "zero" } } },
+    { "name": "latency 599: colour 2",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "57020000" }] } } },
+    { "name": "latency 600: colour 15",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "58020000" }] } } },
+    { "name": "latency 899: colour 15",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "83030000" }] } } },
+    { "name": "latency 900: colour 13",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "84030000" }] } } },
+    { "name": "latency 0x80000000 is unsigned: colour 13",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000080" }] } } },
+    { "name": "latency 500 with diff 1000: no shift",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "03000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "f4010000" }] } } },
+    { "name": "latency 499 with diff 1000: shift by 1, count 6",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "03000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "f3010000" }] } } },
+    { "name": "latency 1 with diff 1000: quotient 999/500 = 1",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "01000000" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "01000000" }] } } },
+    { "name": "shift by 4 and the count wraps at 16 bits",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "d07e0100" }, { "arg": 1, "offset": 8, "hex": "0f000000" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "feff0000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "shift by 31",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "144a0100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "shift by 32",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "20480100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "shift by 40",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "80380100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "shift by 63",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "940b0100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "shift by 64 clears the mask",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "a0090100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ffffffff" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "very old tick: huge shift, second block skipped",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "00000000" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ffffffff" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "tick after now: unsigned difference is huge",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "400d0300" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ffffffff" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "00000000" }] } } },
+    { "name": "diff 15000: second block skipped (lat 700 shifts by 28)",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "084c0100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "diff 14999: second block shown",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "094c0100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff010000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "first bar 35 bits: colour 13",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "07000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "first bar 36 bits: colour 15",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "0f000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "first bar 42 bits: colour 2",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff030000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "first bar empty mask: 100 percent, colour 13",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "00000000" }, { "arg": 1, "offset": 12, "hex": "00000000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "first bar full mask: 0 percent, colour 2",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "b8820100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ffffffff" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "second bar 35 bits: colour 13", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", 7, 999] },
+    { "name": "second bar 36 bits: colour 15", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", 15, 999] },
+    { "name": "second bar 42 bits: colour 2", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x3ff", 999] },
+    { "name": "second bar empty", "args": [1, 16, 32, 3, 4, 77, 13, 0, 0, 999] },
+    { "name": "second bar index uses the unsigned 16-bit param_7 modulo 8", "args": [1, 16, 32, 3, 4, 77, 65535, "0xffffffff", "0x1ff", 999] },
+    { "name": "second bar index 13 mod 8 in HD mode", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "memory": [{ "addr": "0x006e5480", "u32": 1 }, { "addr": "0x006efdfc", "u32": 99 }] },
+    { "name": "HD mode second bar 42 bits then final HD text reuses last colour", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x3ff", 999],
+      "memory": [{ "addr": "0x006e5480", "u32": 1 }] },
+    { "name": "GDI mode second bar 42 bits then final text uses colour 2", "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x3ff", 999] },
+    { "name": "diff 15000 HD mode: final HD text reuses first-bar colour",
+      "args": [1, 16, 32, 3, 4, 77, 13, "0xffffffff", "0x1ff", 999],
+      "memory": [{ "addr": "0x006e5480", "u32": 1 }],
+      "callees": { "0x004f23e0": { "name": "connection_get_perf_stats_guess", "conv": "cdecl", "args": ["int", "ignore"], "writes": [
+        { "arg": 1, "offset": 0, "hex": "084c0100" }, { "arg": 1, "offset": 8, "hex": "ffffffff" }, { "arg": 1, "offset": 12, "hex": "ff030000" },
+        { "arg": 1, "offset": 16, "hex": "05000000" }, { "arg": 1, "offset": 28, "hex": "bc020000" }] } } },
+    { "name": "negative positions in GDI mode", "args": [1, -40, -8, 0, 0, 77, 3, "0xffffffff", "0x1ff", -1] }
+  ],
+  "fuzz": {
+    "seed": 5114608,
+    "count": 40,
+    "args": [
+      { "choices": [0, 1, 1, 1, 1] },
+      { "choices": [0, 16, 32, 100, "0x7fff", "0x8000", "0xffff", -32, "0x12345"] },
+      { "choices": [0, 32, 100, "0x7fff", "0x8000", "0xffff", -32, "0x12345"] },
+      { "choices": [0, 1, 3, 100, 65535] },
+      { "choices": [0, 1, 4, 100, 65535] },
+      { "choices": [0, 77, "0x1000"] },
+      { "choices": [0, 1, 7, 8, 13, 65535] },
+      { "choices": [0, 1, "0xffffffff", "0x80000000", "0x0f0f0f0f", "0x7fffffff"] },
+      { "choices": [0, 1, 7, 15, "0x1ff", "0x3ff", "0xffffffff", "0x80000000"] },
+      { "choices": [0, 1, 999, -1] }
+    ],
+    "memory": [
+      { "addr": "0x006e5480", "type": "u32", "choices": [0, 0, 1, 1, 2] },
+      { "addr": "0x006e4e68", "type": "ptr", "choices": [0, "@hdobj"] },
+      { "addr": "@display", "offset": "0x7a18", "type": "u32", "choices": [32, 32, 33, 0] },
+      { "addr": "0x006efdfc", "type": "u32", "range": [0, 100000] }
+    ]
+  }
+}

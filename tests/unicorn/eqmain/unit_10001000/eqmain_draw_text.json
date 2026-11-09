@@ -1,0 +1,247 @@
+{
+  "function": "eqmain_draw_text_guess",
+  "original": "0x100017b0",
+  "sources": [
+    "src/eqmain/unit_10001000.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "cstr"},
+    {"name": "param_4", "type": "int"},
+    {"name": "param_5", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x20", "u32": "@sub"},
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x28", "u32": 0}
+      ]
+    },
+    "sub": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 640},
+        {"offset": "0x4", "u32": 480},
+        {"offset": "0xc", "u32": "@surf"}
+      ]
+    },
+    "surf": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"}
+      ]
+    },
+    "vt": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x44", "u32": "@getdc"},
+        {"offset": "0x68", "u32": "@reldc"}
+      ]
+    },
+    "sub24": {"size": "0x20", "fill": "random"},
+    "sub28": {"size": "0x20", "fill": "random"},
+    "msg": {"size": "0x20", "fill": "zero"},
+    "getdc": {"size": "0x10", "fill": "zero"},
+    "reldc": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "@getdc": {
+      "conv": "stdcall",
+      "args": ["ptr", "ignore"],
+      "writes": [{"arg": 1, "offset": 0, "hex": "34120000"}]
+    },
+    "@reldc": {
+      "conv": "stdcall",
+      "args": ["ptr", "int"]
+    },
+    "gdi32.dll!SetTextAlign": {
+      "name": "SetTextAlign",
+      "conv": "stdcall",
+      "args": ["int", "u32"],
+      "ret": 1
+    },
+    "0x10008230": {
+      "name": "FUN_10008230",
+      "conv": "cdecl",
+      "args": ["int", "int", "u32"],
+      "ret": 0
+    },
+    "gdi32.dll!GetTextExtentPoint32A": {
+      "name": "GetTextExtentPoint32A",
+      "conv": "stdcall",
+      "args": ["int", "cstr", "int", "ignore"],
+      "writes": [{"arg": 3, "offset": 0, "hex": "4000000020000000"}],
+      "ret": 1
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 5
+    },
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": ["cstr", "u32"]
+    },
+    "0x100082c0": {
+      "name": "FUN_100082c0",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int", "int", "cstr", "int", "int"],
+      "ret": 0
+    },
+    "0x10004ec0": {
+      "name": "FUN_10004ec0",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: DC from slot 0x44, measured 64x32, centred on the 640x480 box",
+      "args": ["@param_1", 1, "abc", 1, 1]
+    },
+    {
+      "name": "empty text is still measured and drawn",
+      "args": ["@param_1", 0, "", 0, 0]
+    },
+    {
+      "name": "NULL text returns before any call",
+      "args": ["@param_1", 2, 0, 3, 4]
+    },
+    {
+      "name": "measure fails: DAT_10055a6c message with GetLastError, then return",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "memory": [
+        {"addr": "0x10055a6c", "u32": "@msg"},
+        {"addr": "@msg", "cstr": "measure failed"}
+      ],
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "ret": 0
+        },
+        "kernel32.dll!GetLastError": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 87
+        }
+      }
+    },
+    {
+      "name": "negative origin: the halving rounds toward zero",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "memory": [
+        {"addr": "@sub", "u32": "0xfffffff9"},
+        {"addr": "@sub", "offset": "0x4", "u32": "0xfffffffb"}
+      ]
+    },
+    {
+      "name": "zero measured size centres on the origin",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "writes": [{"arg": 3, "offset": 0, "hex": "0000000000000000"}],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "odd measured size 3x5 halves toward zero",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "writes": [{"arg": 3, "offset": 0, "hex": "0300000005000000"}],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "sub +0x24 and +0x28 set: all three draws",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x24", "u32": "@sub24"},
+        {"addr": "@param_1", "offset": "0x28", "u32": "@sub28"}
+      ]
+    },
+    {
+      "name": "only +0x28 set: the +0x24 draw is skipped",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x28", "u32": "@sub28"}
+      ]
+    },
+    {
+      "name": "param_4 and param_5 at signed and high-bit values reach FUN_10008230 and FUN_100082c0",
+      "args": ["@param_1", -3, "xyz", "0x7fffffff", "0x80000000"]
+    },
+    {
+      "name": "longer text, odd size id",
+      "args": ["@param_1", 5, "abcdefghijklmnop", 2, 7]
+    },
+    {
+      "name": "GetDC clears the surface pointer of the object it was called on: the release reloads it (NULL: faults)",
+      "args": ["@param_1", 1, "abc", 1, 1],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x20", "u32": "@sub_self"}
+      ],
+      "objects": {
+        "sub_self": {
+          "size": "0x20",
+          "fill": "random",
+          "init": [
+            {"offset": "0x0", "u32": "@vt"},
+            {"offset": "0x4", "u32": 480},
+            {"offset": "0xc", "u32": "@sub_self"}
+          ]
+        }
+      },
+      "callees": {
+        "@getdc": {
+          "conv": "stdcall",
+          "args": ["ptr", "ignore"],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "34120000"},
+            {"arg": 0, "offset": 12, "hex": "00000000"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 6064,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1"]},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "@sub", "offset": "0x0", "type": "int", "range": [-300, 700]},
+      {"addr": "@sub", "offset": "0x4", "type": "int", "range": [-300, 700]},
+      {"addr": "@param_1", "offset": "0x24", "type": "u32", "choices": [0, "@sub24"], "p": 0.5},
+      {"addr": "@param_1", "offset": "0x28", "type": "u32", "choices": [0, "@sub28"], "p": 0.5}
+    ]
+  }
+}

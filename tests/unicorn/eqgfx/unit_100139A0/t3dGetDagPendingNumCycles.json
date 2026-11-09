@@ -1,0 +1,189 @@
+{
+  "function": "t3dGetDagPendingNumCycles",
+  "original": "0x10013b3b",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderer",
+      "type": "ptr"
+    },
+    {
+      "name": "dag",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "renderer": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "dag": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d251": {
+      "name": "t3dUpdateAnimationCycle_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:32",
+        "int"
+      ],
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 24,
+          "hex": "78563412"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: callee writes word 6 of the copy, random objects",
+      "args": [
+        "@renderer",
+        "@dag"
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "callee leaves the copy alone: ret is the dag's word 6 (+0x140), not words 5 or 7",
+      "args": [
+        "@renderer",
+        "@dag"
+      ],
+      "memory": [
+        {
+          "addr": "@dag",
+          "offset": "0x13c",
+          "u32": "0x11111111"
+        },
+        {
+          "addr": "@dag",
+          "offset": "0x140",
+          "u32": "0xdeadbeef"
+        },
+        {
+          "addr": "@dag",
+          "offset": "0x144",
+          "u32": "0xaaaaaaaa"
+        }
+      ],
+      "callees": {
+        "0x1001d251": {
+          "name": "t3dUpdateAnimationCycle_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:32",
+            "int"
+          ]
+        }
+      },
+      "expect": {
+        "ret": 3735928559
+      }
+    },
+    {
+      "name": "zeros: zero objects, base frame 0",
+      "args": [
+        "@renderer",
+        "@dag"
+      ],
+      "objects": {
+        "renderer": {
+          "size": "0x10",
+          "fill": "zero"
+        },
+        "dag": {
+          "size": "0x200",
+          "fill": "zero"
+        }
+      },
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "base frame -1 (passed to the callee as int)",
+      "args": [
+        "@renderer",
+        "@dag"
+      ],
+      "memory": [
+        {
+          "addr": "@renderer",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "base frame 0x7fffffff (largest positive)",
+      "args": [
+        "@renderer",
+        "@dag"
+      ],
+      "memory": [
+        {
+          "addr": "@renderer",
+          "offset": "0x8",
+          "u32": "0x7fffffff"
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 80699,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@renderer"
+        ]
+      },
+      {
+        "choices": [
+          "@dag"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@renderer",
+        "offset": "0x8",
+        "type": "int",
+        "range": [
+          -64,
+          64
+        ]
+      },
+      {
+        "addr": "@dag",
+        "offset": "0x18",
+        "type": "u32"
+      },
+      {
+        "addr": "@dag",
+        "offset": "0x128",
+        "size": 32
+      }
+    ]
+  }
+}

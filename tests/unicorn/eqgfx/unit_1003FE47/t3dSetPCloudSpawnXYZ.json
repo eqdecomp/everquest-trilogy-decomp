@@ -1,0 +1,124 @@
+{
+  "function": "t3dSetPCloudSpawnXYZ",
+  "original": "0x1004038a",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "instance",
+      "type": "ptr"
+    },
+    {
+      "name": "xyz",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "instance": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "xyz": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical floats",
+      "args": [
+        "@instance",
+        "@xyz"
+      ],
+      "objects": {
+        "xyz": {
+          "size": "0xc",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "f32": 1.5},
+            {"offset": "0x4", "f32": -2.25},
+            {"offset": "0x8", "f32": 1000.0}
+          ]
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@instance",
+        "@xyz"
+      ],
+      "objects": {
+        "instance": {
+          "size": "0x100",
+          "fill": "zero"
+        },
+        "xyz": {
+          "size": "0xc",
+          "fill": "zero"
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "raw dword bits (NaN payload, -0.0, denormal)",
+      "args": [
+        "@instance",
+        "@xyz"
+      ],
+      "objects": {
+        "xyz": {
+          "size": "0xc",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "u32": "0x7fc00001"},
+            {"offset": "0x4", "u32": "0x80000000"},
+            {"offset": "0x8", "u32": "0x00000001"}
+          ]
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "overlap: source 4 bytes before the destination",
+      "args": [
+        "@instance",
+        "@instance+0x50"
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "overlap: source is the destination",
+      "args": [
+        "@instance",
+        "@instance+0x54"
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 263050,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@instance"
+        ]
+      },
+      {
+        "choices": [
+          "@xyz"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@xyz", "type": "u32", "count": 3}
+    ]
+  }
+}

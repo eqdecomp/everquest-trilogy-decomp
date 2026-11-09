@@ -1,0 +1,105 @@
+{
+  "function": "HandleNineRecordYesNoDialog_guess",
+  "original": "0x1001cfb0",
+  "sources": [
+    "src/eqmain/unit_1001CFB0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {"name": "dialog", "type": "u32"},
+    {"name": "message", "type": "u32"},
+    {"name": "wParam", "type": "u32"},
+    {"name": "lParam", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "strs": {"size": "0x400", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@strs", "offset": "0x000", "cstr": "A"},
+    {"addr": "@strs", "offset": "0x040", "cstr": "bc"},
+    {"addr": "@strs", "offset": "0x080", "cstr": ""},
+    {"addr": "@strs", "offset": "0x0c0", "cstr": "def"},
+    {"addr": "@strs", "offset": "0x100", "cstr": "ghij"},
+    {"addr": "@strs", "offset": "0x140", "cstr": "klmno"},
+    {"addr": "@strs", "offset": "0x180", "cstr": "pqrstuvwx"},
+    {"addr": "@strs", "offset": "0x1c0", "cstr": "Y"},
+    {"addr": "@strs", "offset": "0x200", "cstr": "zz end of text."},
+    {"addr": "@strs", "offset": "0x240", "cstr": "Accept"},
+    {"addr": "@strs", "offset": "0x280", "cstr": "Decline"},
+    {"addr": "@strs", "offset": "0x2c0", "cstr": "License"},
+    {"addr": "0x10055a50", "u32": "0x20001111"},
+    {"addr": "0x10055a54", "u32": "0x20002222"},
+    {"addr": "0x10055a58", "u32": "0x20003333"},
+    {"addr": "0x100e49c0", "size": 32768, "fill": "random"},
+    {"addr": "0x100ec9c0", "u32": "0x0000abcd"},
+    {"addr": "0x100ec9c4", "u32": "0x0000dcba"}
+  ],
+  "callees": {
+    "user32.dll!EndDialog": {"name": "EndDialog", "conv": "stdcall", "args": ["u32", "int"], "ret": 1},
+    "0x100210f0": {"name": "FUN_100210f0", "conv": "cdecl", "args": ["ptr", "mem:2048", "int"],
+                   "ret": ["@strs+0x240", "@strs+0x280", "@strs+0x2c0", "@strs+0x0", "@strs+0x40", "@strs+0x80",
+                           "@strs+0xc0", "@strs+0x100", "@strs+0x140", "@strs+0x180", "@strs+0x1c0", "@strs+0x200"]},
+    "user32.dll!SetDlgItemTextA": {"name": "SetDlgItemTextA", "conv": "stdcall", "args": ["u32", "int", "cstr"], "ret": 1},
+    "user32.dll!SetWindowTextA": {"name": "SetWindowTextA", "conv": "stdcall", "args": ["u32", "cstr"], "ret": 1},
+    "0x10021110": {"name": "FUN_10021110", "conv": "cdecl", "args": ["ptr"],
+                   "ret": ["0x30000001", "0x30000002", "0x30000003", "0x30000004", "0x30000005", "0x30000006",
+                           "0x30000007", "0x30000008", "0x30000009"]},
+    "0x1001cf80": {"name": "FUN_1001cf80", "conv": "cdecl", "args": ["cstr", "int"]},
+    "user32.dll!GetDlgItem": {"name": "GetDlgItem", "conv": "stdcall", "args": ["u32", "int"], "ret": "0x00ed17"},
+    "user32.dll!SendMessageA": {"name": "SendMessageA", "conv": "stdcall", "args": ["u32", "u32", "u32", "u32"], "ret": 0},
+    "user32.dll!SendDlgItemMessageA": {"name": "SendDlgItemMessageA", "conv": "stdcall",
+                                       "args": ["u32", "int", "u32", "u32", "u32"], "ret": 0}
+  },
+  "cases": [
+    {"name": "WM_INITDIALOG: buttons, title, nine records concatenated, edit set up", "args": [4660, 272, 0, 0],
+     "expect": {"ret": 0}},
+    {"name": "WM_INITDIALOG with other wParam/lParam", "args": [86, 272, 1003, 1004], "expect": {"ret": 0}},
+    {"name": "WM_INITDIALOG: longer records (all copy tails 0..3)",
+     "args": [77, 272, 0, 0],
+     "memory": [
+       {"addr": "@strs", "offset": "0x000", "cstr": "0123456789abcdef0123456789abcdef0123456789"},
+       {"addr": "@strs", "offset": "0x040", "cstr": "0123456789abcdef0123456789abcdef012345678"},
+       {"addr": "@strs", "offset": "0x080", "cstr": "0123456789abcdef0123456789abcdef01234567"},
+       {"addr": "@strs", "offset": "0x0c0", "cstr": "0123456789abcdef0123456789abcdef0123456"},
+       {"addr": "@strs", "offset": "0x200", "cstr": "QRSTUVWXYZQRSTUVWXYZQRSTUVWXYZQRSTUVWXYZQRSTUV"}
+     ]},
+    {"name": "WM_COMMAND 0x3eb: EndDialog 0, returns 1", "args": [4660, 273, 1003, 0], "expect": {"ret": 1}},
+    {"name": "WM_COMMAND 0x3ec: EndDialog 1, returns 1", "args": [4660, 273, 1004, 0], "expect": {"ret": 1}},
+    {"name": "WM_COMMAND 0x3eb with a notification code in the high word", "args": [99, 273, "0x000103eb", 5],
+     "expect": {"ret": 1}},
+    {"name": "WM_COMMAND 0x3ec with high word 0xffff", "args": [99, 273, "0xffff03ec", 5], "expect": {"ret": 1}},
+    {"name": "WM_COMMAND 0x3ea: nothing", "args": [99, 273, 1002, 0], "expect": {"ret": 0}},
+    {"name": "WM_COMMAND 0x3ed: nothing", "args": [99, 273, 1005, 0], "expect": {"ret": 0}},
+    {"name": "WM_COMMAND id 0", "args": [99, 273, 0, 0], "expect": {"ret": 0}},
+    {"name": "message 0x10f: nothing", "args": [99, 271, 1003, 0], "expect": {"ret": 0}},
+    {"name": "message 0x112: nothing", "args": [99, 274, 1004, 0], "expect": {"ret": 0}},
+    {"name": "message 0: nothing", "args": [0, 0, 0, 0], "expect": {"ret": 0}},
+    {"name": "message 0x10110 (only the low bits like WM_INITDIALOG)", "args": [1, "0x10110", 1004, 0],
+     "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 118704,
+    "count": 40,
+    "args": [
+      {"range": [0, 100000]},
+      {"choices": [272, 272, 272, 273, 273, 273, 0, 271, 274, 528, "0x10111"]},
+      {"choices": [1003, 1004, "0x000103eb", "0x000203ec", 1002, 1005, 0, "0x13eb", "0x03eb0000"]},
+      {"range": [0, 100000]}
+    ],
+    "memory": [
+      {"addr": "@strs", "offset": "0x000", "size": 48},
+      {"addr": "@strs", "offset": "0x040", "size": 48},
+      {"addr": "@strs", "offset": "0x080", "size": 48},
+      {"addr": "@strs", "offset": "0x0c0", "size": 48},
+      {"addr": "@strs", "offset": "0x100", "size": 48},
+      {"addr": "@strs", "offset": "0x140", "size": 48},
+      {"addr": "@strs", "offset": "0x180", "size": 48},
+      {"addr": "@strs", "offset": "0x1c0", "size": 48},
+      {"addr": "@strs", "offset": "0x200", "size": 48},
+      {"addr": "@strs", "offset": "0x240", "size": 48},
+      {"addr": "@strs", "offset": "0x280", "size": 48},
+      {"addr": "@strs", "offset": "0x2c0", "size": 48}
+    ]
+  }
+}

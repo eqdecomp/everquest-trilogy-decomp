@@ -1,0 +1,71 @@
+{
+  "function": "getObjectDataPointer_guess",
+  "original": "0x004fb6d0",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "handle",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "handle": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@obj"}]},
+    "obj": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: returns obj->+8 (random data)",
+      "args": ["@handle"]
+    },
+    {
+      "name": "data zero",
+      "args": ["@handle"],
+      "objects": {
+        "handle": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@obj"}]},
+        "obj": {"size": "0x20", "fill": "zero"}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "data set at +8 only; neighbours distinct",
+      "args": ["@handle"],
+      "objects": {
+        "handle": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@obj"}]},
+        "obj": {"size": "0x20", "fill": "zero", "init": [
+          {"offset": "0x4", "u32": 4}, {"offset": "0x8", "u32": 8}, {"offset": "0xc", "u32": 12}]}
+      },
+      "expect": {"ret": 8}
+    },
+    {
+      "name": "high-bit data value",
+      "args": ["@handle"],
+      "objects": {
+        "handle": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@obj"}]},
+        "obj": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x8", "u32": "0xdeadbeef"}]}
+      },
+      "expect": {"ret": "0xdeadbeef"}
+    },
+    {
+      "name": "null handle faults identically",
+      "args": [0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5224144,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@handle"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

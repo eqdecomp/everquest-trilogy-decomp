@@ -1,0 +1,193 @@
+{
+  "function": "advanceFileQueue_guess",
+  "original": "0x10028fb4",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "@entry"
+        }
+      ]
+    },
+    "entry": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "@release"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@fileObject"
+        }
+      ]
+    },
+    "nextEntry": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "fileObject": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "release": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002642d": {
+      "name": "closeFileHandle_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10026411": {
+      "name": "freeObjectAndData_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "@release": {
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty-entry-next-zero",
+      "args": [
+        "@owner"
+      ]
+    },
+    {
+      "name": "branch-taken-valid-next",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@entry",
+          "offset": "0x08",
+          "u32": "@nextEntry"
+        }
+      ]
+    },
+    {
+      "name": "branch-boundary-next-one",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@entry",
+          "offset": "0x08",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "same-entry-as-next",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@entry",
+          "offset": "0x08",
+          "u32": "@entry"
+        }
+      ]
+    },
+    {
+      "name": "null-file-object-and-call-order",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@entry",
+          "offset": "0x08",
+          "u32": "@nextEntry"
+        },
+        {
+          "addr": "@entry",
+          "offset": "0x0c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "high-bit-file-object",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@entry",
+          "offset": "0x08",
+          "u32": "@nextEntry"
+        },
+        {
+          "addr": "@entry",
+          "offset": "0x0c",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 167860,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@owner"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@entry",
+        "offset": "0x08",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@nextEntry",
+          "@entry",
+          1
+        ]
+      },
+      {
+        "addr": "@entry",
+        "offset": "0x0c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@fileObject",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

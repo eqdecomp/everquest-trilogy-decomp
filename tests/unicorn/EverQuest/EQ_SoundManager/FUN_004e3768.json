@@ -1,0 +1,101 @@
+{
+  "function": "LoadNamedWave_guess",
+  "original": "0x004e3768",
+  "sources": ["src/EverQuest/EQ_SoundManager.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unused_edx", "type": "int"},
+    {"name": "path", "type": "cstr"},
+    {"name": "index", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {"size": "0x1000", "fill": "zero"},
+    "ctl": {"size": "0x10", "fill": "zero", "init": [{"u32": "@vtbl"}]},
+    "vtbl": {"size": "0x0c", "fill": "zero", "init": [{"offset": "0x8", "u32": "@loadWave"}]},
+    "loadWave": {"size": 16},
+    "old_match": {"size": 16, "fill": "zero", "init": [{"cstr": "LaSoNG.WAV"}]},
+    "old_other": {"size": 16, "fill": "zero", "init": [{"cstr": "old.wav"}]},
+    "old_last": {"size": 16, "fill": "zero", "init": [{"cstr": "last.wav"}]},
+    "order": {"size": 4, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E4DD0", "u32": "@ctl"}
+  ],
+  "callees": {
+    "0x004e370a": {"name": "EqSoundManager_guess::IsWaveLoaded_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+    "0x004a3d01": {"name": "EQTRACE_guess", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+    "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+    "@loadWave": {"name": "SoundControl::LoadWaveAs3DStatic_guess", "conv": "thiscall", "args": ["cstr", "int", "int"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "negative index logs trace then formatted error and returns zero",
+      "args": ["@self", 0, "bad.wav", -1],
+      "memory": [{"addr": "@order", "u32": 0}],
+      "callees": {
+        "0x004a3d01": {"name": "trace", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0, "writes": [{"addr": "@order", "hex": "11111111"}]},
+        "0x004c1703": {"name": "format error", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0, "writes": [{"addr": "@order", "hex": "22222222"}]}
+      }
+    },
+    {
+      "name": "index 720 is rejected at the upper bound",
+      "args": ["@self", 0, "bad.wav", 720]
+    },
+    {
+      "name": "minimum signed index is rejected",
+      "args": ["@self", 0, "bad.wav", -2147483648]
+    },
+    {
+      "name": "index zero loaded with case-insensitive same path returns early",
+      "args": ["@self", 0, "lasong.wav", 0],
+      "memory": [{"addr": "@self", "offset": "0x478", "u32": "@old_match"}],
+      "callees": {"0x004e370a": {"name": "wave loaded", "conv": "thiscall", "args": ["int"], "ret": 1}}
+    },
+    {
+      "name": "loaded index zero with a different path reloads and replaces the pointer",
+      "args": ["@self", 0, "new.wav", 0],
+      "memory": [{"addr": "@self", "offset": "0x478", "u32": "@old_other"}],
+      "callees": {
+        "0x004e370a": {"name": "wave loaded", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "@loadWave": {"name": "load records before pointer replacement", "conv": "thiscall", "args": ["cstr", "int", "int"], "ret": 0, "writes": [{"addr": "@self", "offset": 1144, "hex": "dec0adde"}]}
+      }
+    },
+    {
+      "name": "unloaded index zero reloads even when the old path compares equal",
+      "args": ["@self", 0, "lasong.wav", 0],
+      "memory": [{"addr": "@self", "offset": "0x478", "u32": "@old_match"}],
+      "callees": {"0x004e370a": {"name": "wave not loaded", "conv": "thiscall", "args": ["int"], "ret": 0}}
+    },
+    {
+      "name": "last valid index 719 can return early when loaded path matches",
+      "args": ["@self", 0, "last.wav", 719],
+      "memory": [{"addr": "@self", "offset": "0xFB4", "u32": "@old_last"}],
+      "callees": {"0x004e370a": {"name": "wave loaded", "conv": "thiscall", "args": ["int"], "ret": 1}}
+    },
+    {
+      "name": "last valid index 719 invokes loader with empty path when not loaded",
+      "args": ["@self", 0, "", 719],
+      "callees": {"0x004e370a": {"name": "wave not loaded", "conv": "thiscall", "args": ["int"], "ret": 0}}
+    },
+    {
+      "name": "maximum signed index is rejected",
+      "args": ["@self", 0, "bad.wav", 2147483647]
+    }
+  ],
+  "fuzz": {
+    "seed": 5125992,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {"choices": [0, 1, -1, 2147483647]},
+      {"choices": ["song.wav", "SONG.WAV", "other.wav", ""]},
+      {"choices": [-1, 0, 1, 718, 719, 720, 721, -2147483648, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "0x006E4DD0", "type": "ptr", "choices": ["@ctl"]},
+      {"addr": "@self", "offset": "0x478", "type": "u32", "count": 720, "choices": [0, "@old_match", "@old_other"]}
+    ]
+  }
+}

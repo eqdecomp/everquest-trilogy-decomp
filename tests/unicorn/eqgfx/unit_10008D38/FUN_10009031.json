@@ -1,0 +1,307 @@
+{
+  "function": "t3dPrependActorToActiveList_guess",
+  "original": "0x10009031",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x324",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x310",
+          "u32": 5
+        },
+        {
+          "offset": "0x314",
+          "u32": "@active_tail"
+        },
+        {
+          "offset": "0x318",
+          "u32": "@active_head"
+        },
+        {
+          "offset": "0x31c",
+          "u32": "@free_node"
+        },
+        {
+          "offset": "0x320",
+          "u32": "@secondary_head"
+        }
+      ]
+    },
+    "actor": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 24
+        }
+      ]
+    },
+    "active_head": {
+      "size": "0xc",
+      "fill": "zero"
+    },
+    "active_tail": {
+      "size": "0xc",
+      "fill": "zero"
+    },
+    "secondary_head": {
+      "size": "0xc",
+      "fill": "zero"
+    },
+    "free_node": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@next_node"
+        }
+      ]
+    },
+    "next_node": {
+      "size": "0xc",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000935f": {
+      "name": "t3dAllocateActorNodePoolBlock_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "type18_empty_tail_and_secondary",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "u32": 24
+        },
+        {
+          "addr": "@world",
+          "offset": "0x314",
+          "u32": 0
+        },
+        {
+          "addr": "@world",
+          "offset": "0x320",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type19_existing_tail_and_secondary",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "u32": 25
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type3a_empty_secondary",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "u32": 58
+        },
+        {
+          "addr": "@world",
+          "offset": "0x320",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type44_empty_tail",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "u32": 68
+        },
+        {
+          "addr": "@world",
+          "offset": "0x314",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unrecognized_kind",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "u32": 69
+        },
+        {
+          "addr": "@world",
+          "offset": "0x314",
+          "u32": 0
+        },
+        {
+          "addr": "@world",
+          "offset": "0x320",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocator_error_returns_before_linking",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@free_node",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1000935f": {
+          "name": "FUN_1000935f",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -123
+        }
+      },
+      "expect": {
+        "ret": -123
+      }
+    },
+    {
+      "name": "allocator_success_with_empty_free_tail",
+      "args": [
+        "@world",
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@free_node",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 36913,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          24,
+          25,
+          58,
+          68,
+          69
+        ]
+      },
+      {
+        "addr": "@world",
+          "offset": "0x314",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@active_tail"
+        ]
+      },
+      {
+        "addr": "@world",
+        "offset": "0x320",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@secondary_head"
+        ]
+      },
+      {
+        "addr": "@free_node",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@next_node"
+        ]
+      }
+    ]
+  }
+}

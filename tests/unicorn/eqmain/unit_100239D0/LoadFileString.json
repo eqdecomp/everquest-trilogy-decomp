@@ -1,0 +1,177 @@
+{
+  "function": "LoadFileString_guess",
+  "original": "0x100239d0",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "file": {"size": "0x40", "fill": "random"},
+    "buf": {"size": "0x40", "fill": "zero"},
+    "entry": {"size": "0x20", "fill": "zero"},
+    "dup": {"size": "0x20", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1003407f": {"name": "FUN_1003407f_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": "@file"},
+    "0x100345ed": {"name": "_fseek_guess", "conv": "cdecl", "args": ["ptr", "long", "int"], "ret": 0},
+    "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 5},
+    "0x1003342e": {"name": "_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": "@buf"},
+    "0x100342a2": {"name": "_fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 5},
+    "0x100343b9": {"name": "_fclose_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10021110": {"name": "FUN_10021110_guess", "conv": "cdecl", "args": ["cstr"], "ret": "@entry"},
+    "0x1003396b": {"name": "__strdup_guess", "conv": "cdecl", "args": ["ptr"], "ret": "@dup"},
+    "0x10033568": {"name": "_free_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "file read: NUL at the fread count, strdup of FUN_10021110 returned",
+      "args": ["data/quest.txt"],
+      "memory": [{"addr": "@buf", "cstr": "Hello, world"}]
+    },
+    {
+      "name": "ftell 0 (empty file): closed, 0 returned with no buffer",
+      "args": ["data/empty.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "ftell -1 (negative as int): closed, 0 returned",
+      "args": ["data/bad.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": -1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "ftell 1 and one byte read: NUL at index 1",
+      "args": ["data/one.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x100342a2": {"name": "_fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1}
+      },
+      "memory": [{"addr": "@buf", "cstr": "AB"}]
+    },
+    {
+      "name": "ftell 0x7fffffff: malloc asks for 0x8000000f bytes",
+      "args": ["data/big.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 2147483647}
+      }
+    },
+    {
+      "name": "ftell 0x7ffffff0: malloc asks for 0x80000000 bytes",
+      "args": ["data/big.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 2147483632}
+      }
+    },
+    {
+      "name": "ftell 0x80000000: negative as int, closed, 0 returned",
+      "args": ["data/big.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 2147483648}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "ftell -16: closed, 0 returned",
+      "args": ["data/bad.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": -16}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "malloc fails: closed, 0 returned with no FUN_10021110 or free",
+      "args": ["data/quest.txt"],
+      "callees": {
+        "0x1003342e": {"name": "_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fopen fails: buffer 0, FUN_10021110(0) still runs and its copy is returned",
+      "args": ["data/missing.txt"],
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0},
+        "0x10021110": {"name": "FUN_10021110_guess", "conv": "cdecl", "args": ["ptr"], "ret": "@entry"}
+      }
+    },
+    {
+      "name": "fopen fails and FUN_10021110 gives 0: strdup(0) gives 0",
+      "args": ["data/missing.txt"],
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0},
+        "0x10021110": {"name": "FUN_10021110_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x1003396b": {"name": "__strdup_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "good read, FUN_10021110 gives 0: strdup(0) gives 0 and the buffer is freed",
+      "args": ["data/quest.txt"],
+      "callees": {
+        "0x10021110": {"name": "FUN_10021110_guess", "conv": "cdecl", "args": ["cstr"], "ret": 0},
+        "0x1003396b": {"name": "__strdup_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "short read: NUL at the count fread returned (3 of 5)",
+      "args": ["data/quest.txt"],
+      "callees": {
+        "0x100342a2": {"name": "_fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 3}
+      },
+      "memory": [{"addr": "@buf", "cstr": "Hello"}]
+    },
+    {
+      "name": "fread reads nothing: NUL at index 0",
+      "args": ["data/quest.txt"],
+      "callees": {
+        "0x100342a2": {"name": "_fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 0}
+      },
+      "memory": [{"addr": "@buf", "cstr": "Hello"}]
+    },
+    {
+      "name": "fread returns the whole file: NUL at ftell (12)",
+      "args": ["data/quest.txt"],
+      "callees": {
+        "0x10033e8f": {"name": "_ftell_guess", "conv": "cdecl", "args": ["ptr"], "ret": 12},
+        "0x100342a2": {"name": "_fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 12}
+      },
+      "memory": [{"addr": "@buf", "cstr": "Hello, world"}]
+    },
+    {
+      "name": "path with backslashes, fopen gets it as given",
+      "args": ["C:\\EverQuest\\eqmain.ini"]
+    },
+    {
+      "name": "empty path, fopen fails: FUN_10021110(0) still runs",
+      "args": [""],
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0},
+        "0x10021110": {"name": "FUN_10021110_guess", "conv": "cdecl", "args": ["ptr"], "ret": "@entry"}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 145872,
+    "count": 40,
+    "args": [
+      {"choices": ["data/quest.txt", "", "C:\\EverQuest\\eqmain.ini", "x", "ab cd"]}
+    ],
+    "memory": [
+      {"addr": "@buf", "size": 32}
+    ]
+  }
+}

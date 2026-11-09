@@ -1,0 +1,85 @@
+{
+  "function": "DisplaySoundCardInfo_guess",
+  "original": "0x004db93c",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eq": {"size": 16}
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@eq"},
+    {"addr": "0x006ECD0C", "cstr": "Sound card: Test Audio"},
+    {"addr": "0x006ECE24", "u32": 1},
+    {"addr": "0x006ECDF4", "u32": 1},
+    {"addr": "0x006ECE28", "u32": 0}
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "music on, DLS"},
+    {
+      "name": "music on, SoundFont",
+      "memory": [{"addr": "0x006ECE28", "u32": 1}]
+    },
+    {
+      "name": "SoundFont flag any nonzero",
+      "memory": [{"addr": "0x006ECE28", "u32": 4294967295}]
+    },
+    {
+      "name": "count zero: no music suffix (boundary of > 0)",
+      "memory": [{"addr": "0x006ECE24", "u32": 0}]
+    },
+    {
+      "name": "count negative: signed compare, no suffix",
+      "memory": [{"addr": "0x006ECE24", "u32": 4294967295}, {"addr": "0x006ECE28", "u32": 1}]
+    },
+    {
+      "name": "count large positive",
+      "memory": [{"addr": "0x006ECE24", "u32": 2147483647}, {"addr": "0x006ECE28", "u32": 1}]
+    },
+    {
+      "name": "music flag off: no suffix",
+      "memory": [{"addr": "0x006ECDF4", "u32": 0}, {"addr": "0x006ECE28", "u32": 1}]
+    },
+    {
+      "name": "music flag high bit only",
+      "memory": [{"addr": "0x006ECDF4", "u32": 2147483648}]
+    },
+    {
+      "name": "empty card description",
+      "memory": [{"addr": "0x006ECD0C", "cstr": ""}, {"addr": "0x006ECE28", "u32": 1}]
+    },
+    {
+      "name": "all zero",
+      "memory": [
+        {"addr": "0x006ECD0C", "cstr": ""},
+        {"addr": "0x006ECE24", "u32": 0},
+        {"addr": "0x006ECDF4", "u32": 0},
+        {"addr": "0x006ECE28", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5093692,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x006ECE24", "type": "u32", "choices": [0, 1, 2, 4294967295, 2147483648, 2147483647, 16]},
+      {"addr": "0x006ECDF4", "type": "u32", "choices": [0, 1, 256, 2147483648]},
+      {"addr": "0x006ECE28", "type": "u32", "choices": [0, 1, 2, 4294967295]},
+      {"addr": "0x006ECD0C", "type": "u32", "choices": [0, 6513249, 1953719636]}
+    ]
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "function": "EQMain_OpenChatLog_guess",
+  "original": "0x100164f0",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "chatfile": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "chatobj": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "0x1234"
+        }
+      ]
+    },
+    "msgok": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "msgfail": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004F884",
+      "u32": 0
+    },
+    {
+      "addr": "0x10055944",
+      "u32": "@msgok"
+    },
+    {
+      "addr": "0x1005594C",
+      "u32": "@msgfail"
+    },
+    {
+      "addr": "@msgok",
+      "cstr": "chat opened"
+    },
+    {
+      "addr": "@msgfail",
+      "cstr": "chat failed"
+    }
+  ],
+  "callees": {
+    "0x1003407f": {
+      "name": "FUN_1003407f",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@chatfile"
+    },
+    "0x10020ef0": {
+      "name": "FUN_10020ef0",
+      "conv": "cdecl",
+      "args": [
+        "char"
+      ],
+      "ret": "@chatobj"
+    },
+    "0x100224b0": {
+      "name": "FUN_100224b0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int",
+        "char"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "log pointer NULL: fopen succeeds, the ok string goes out with the object dword and 5",
+      "args": []
+    },
+    {
+      "name": "log pointer already set: nothing is opened or written",
+      "memory": [
+        {
+          "addr": "0x1004F884",
+          "u32": "@chatfile"
+        }
+      ]
+    },
+    {
+      "name": "fopen fails: the fail string goes out, the log pointer stays NULL",
+      "callees": {
+        "0x1003407f": {
+          "name": "FUN_1003407f",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fopen fails with the two string globals swapped",
+      "callees": {
+        "0x1003407f": {
+          "name": "FUN_1003407f",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x10055944",
+          "u32": "@msgfail"
+        },
+        {
+          "addr": "0x1005594C",
+          "u32": "@msgok"
+        }
+      ]
+    },
+    {
+      "name": "object dword at +4 is zero",
+      "memory": [
+        {
+          "addr": "@chatobj",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "object dword at +4 is -1 (passed as int)",
+      "memory": [
+        {
+          "addr": "@chatobj",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "fopen fails and the object dword is -1",
+      "callees": {
+        "0x1003407f": {
+          "name": "FUN_1003407f",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@chatobj",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 91376,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x1004F884",
+        "type": "ptr",
+        "choices": [0, "@chatfile"]
+      },
+      {
+        "addr": "0x10055944",
+        "type": "ptr",
+        "choices": ["@msgok", "@msgfail"]
+      },
+      {
+        "addr": "0x1005594C",
+        "type": "ptr",
+        "choices": ["@msgfail", "@msgok"]
+      },
+      {
+        "addr": "@chatobj",
+        "offset": "0x4",
+        "type": "int",
+        "range": [-8, 64]
+      }
+    ]
+  }
+}

@@ -1,0 +1,324 @@
+{
+  "function": "s3dDestroyStringSprite",
+  "original": "0x1001acf8",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "sprite": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "offset": "0x18",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "all resources, dictionary flag set, cleanup succeeds",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "0x0a000100"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": "0x0a000200"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0x0a000300"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "nonzero cleanup result skips dictionary key and sprite frees",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "0x0a000100"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": "0x0a000200"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0x0a000300"
+        }
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "negative cleanup result takes the same nonzero branch",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "no text or key and no dictionary flag, font still unshared",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": "0x0a000200"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other flag bits do not remove an entry",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "0x0a000100"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 2
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag bit set with null key still removes the null entry",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 255
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bit zero boundary just below flag condition",
+      "args": [
+        "@dictionary",
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0x0a000300"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 109816,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000100",
+          "0x0a000101"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0xc",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          255
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000200",
+          "0x0a000201"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x18",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000300",
+          "0x0a000301"
+        ]
+      }
+    ]
+  }
+}

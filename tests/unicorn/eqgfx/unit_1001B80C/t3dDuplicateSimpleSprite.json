@@ -1,0 +1,289 @@
+{
+  "function": "t3dDuplicateSimpleSprite",
+  "original": "0x1001b8f2",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "dup": {
+      "size": "0x2c",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@dup"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: FUN_1001564b returns 0, owner use count goes up",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "FUN_1001564b returns 1: copy freed, NULL, owner untouched",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "FUN_1001564b returns -1: same failure path",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails: NULL, nothing copied, FUN_1001564b not called",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "source flags dword 0xffffffff: the copy's flags dword is cleared, bytes 0x0d-0x0f too",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x2c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x0c",
+              "u32": "0xffffffff"
+            },
+            {
+              "offset": "0x28",
+              "u32": "@owner"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "source +0x1c 0xfffffff0 plus context +0x08 0x20 wraps",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "context": {
+          "size": "0x10",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x08",
+              "u32": "0x20"
+            }
+          ]
+        },
+        "source": {
+          "size": "0x2c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x1c",
+              "u32": "0xfffffff0"
+            },
+            {
+              "offset": "0x28",
+              "u32": "@owner"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "owner use count 0xffffffff wraps to 0 on success",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "owner": {
+          "size": "0x20",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x10",
+              "u32": "0xffffffff"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "zeros: zero context and source (owner set), FUN_1001564b returns 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "context": {
+          "size": "0x10",
+          "fill": "zero"
+        },
+        "source": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x28",
+              "u32": "@owner"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 112882,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source",
+        "offset": "0x08",
+        "type": "u32"
+      },
+      {
+        "addr": "@source",
+        "offset": "0x0c",
+        "type": "u32"
+      },
+      {
+        "addr": "@source",
+        "offset": "0x1c",
+        "type": "u32"
+      },
+      {
+        "addr": "@context",
+        "offset": "0x08",
+        "type": "u32"
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [0, 3]
+      }
+    ]
+  }
+}

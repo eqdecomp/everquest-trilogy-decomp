@@ -1,0 +1,181 @@
+{
+  "function": "t3dDefineLight",
+  "original": "0x10013d6d",
+  "sources": ["src/eqgfx/unit_100139A0.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "renderer", "type": "int"},
+    {"name": "name", "type": "cstr"},
+    {"name": "count", "type": "int"},
+    {"name": "values", "type": "ptr"},
+    {"name": "frameCount", "type": "u32"},
+    {"name": "intensityList", "type": "ptr"},
+    {"name": "initialState", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "renderer": {"size": "0x40", "fill": "zero"},
+    "values": {"size": "0x40", "fill": "random"},
+    "intensityList": {"size": "0x40", "fill": "zero"},
+    "initialState": {"size": "0x28", "fill": "zero"},
+    "existing": {"size": "0x24", "fill": "zero"},
+    "light": {"size": "0x24", "fill": "zero"},
+    "nameBuf": {"size": "0x20", "fill": "zero"},
+    "entries": {"size": "0x28", "fill": "zero"},
+    "definition": {"size": "0x28", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["int", "cstr"], "ret": 0},
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"],
+                   "ret": ["@light", "@nameBuf", "@entries", "@definition"]},
+    "0x10068160": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x10068070": {"name": "copyStringWithNullTerminator_guess", "conv": "cdecl", "args": ["ptr", "cstr"], "passthrough": true},
+    "0x10067d30": {"name": "FID_conflict:_memcpy", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "passthrough": true},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 0]},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1000e334": {"name": "t3dRemoveEntryFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"]}
+  },
+  "cases": [
+    {
+      "name": "existing light is returned as is",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["int", "cstr"], "ret": "@existing"}},
+      "memory": [{"addr": "@existing", "u32": 28}]
+    },
+    {
+      "name": "existing entry of another type returns 0",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["int", "cstr"], "ret": "@existing"}},
+      "memory": [{"addr": "@existing", "u32": 29}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count and not found allocates nothing",
+      "args": ["@renderer", "torch", 0, "@values", 3, "@intensityList", "@initialState"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count still returns an existing light",
+      "args": ["@renderer", "torch", 0, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["int", "cstr"], "ret": "@existing"}},
+      "memory": [{"addr": "@existing", "u32": 28}]
+    },
+    {
+      "name": "light allocation fails",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": [0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "name copy allocation fails and frees the light",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", 0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry registers the light and its definition",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", "@definition"]}}
+    },
+    {
+      "name": "three entries register the light and its definition",
+      "args": ["@renderer", "torch", 3, "@values", 7, "@intensityList", "@initialState"]
+    },
+    {
+      "name": "two entries, dictionary add returns 1",
+      "args": ["@renderer", "gem_07", 2, "@values", 0, 0, "@initialState"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [1]}}
+    },
+    {
+      "name": "one entry, light registration fails",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf"]},
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [7]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three entries, entry allocation fails",
+      "args": ["@renderer", "torch", 3, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", 0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three entries, light registration fails",
+      "args": ["@renderer", "torch", 3, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", "@entries"]},
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [7]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two entries, dictionary add returns -1",
+      "args": ["@renderer", "torch", 2, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [-1]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry, dictionary add returns INT_MIN",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf"]},
+        "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [-2147483648]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two entries, definition allocation fails",
+      "args": ["@renderer", "torch", 2, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", "@entries", 0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry, definition registration fails",
+      "args": ["@renderer", "torch", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", "@definition"]},
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 9]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three entries, definition registration fails",
+      "args": ["@renderer", "torch", 3, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 9]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty name registers",
+      "args": ["@renderer", "", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", "@definition"]}}
+    },
+    {
+      "name": "eight entries, largest copy",
+      "args": ["@renderer", "torch", 8, "@values", 64, "@intensityList", "@initialState"]
+    },
+    {
+      "name": "31-character name fills the name copy exactly",
+      "args": ["@renderer", "abcdefghijklmnopqrstuvwxyz12345", 1, "@values", 3, "@intensityList", "@initialState"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@light", "@nameBuf", "@definition"]}}
+    }
+  ],
+  "fuzz": {
+    "seed": 81261,
+    "count": 40,
+    "args": [
+      {"choices": ["@renderer"]},
+      {"choices": ["", "a", "torch", "gem_07", "lamp"]},
+      {"range": [0, 8]},
+      {"choices": ["@values"]},
+      {"range": [0, 64]},
+      {"choices": ["@intensityList", 0]},
+      {"choices": ["@initialState", 0]}
+    ],
+    "memory": [{"addr": "@values", "size": 64}]
+  }
+}

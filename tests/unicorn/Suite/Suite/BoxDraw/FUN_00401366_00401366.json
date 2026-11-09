@@ -1,0 +1,65 @@
+{
+  "function": "pool_alloc_guess",
+  "original": "0x00401366",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "param_1", "type": "u32"}],
+  "ret": "ptr",
+  "objects": {
+    "new_result": {"size": "0x10", "fill": "zero"},
+    "refill_result": {"size": "0x10", "fill": "zero"},
+    "node_a": {"size": "0x8", "fill": "zero", "init": [{"offset": "0", "u32": "@node_b"}]},
+    "node_b": {"size": "0x8", "fill": "zero"},
+    "node_c": {"size": "0x8", "fill": "zero", "init": [{"offset": "0", "u32": "@node_d"}]},
+    "node_d": {"size": "0x8", "fill": "zero"}
+  },
+  "memory": [{"addr": "0x0058fb58", "size": 64, "fill": "zero"}],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@new_result"
+    },
+    "0x0040152f": {
+      "name": "PoolRefillFreeList_guess",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@refill_result"
+    }
+  },
+  "cases": [
+    {"name": "class 0 empty refills", "args": [1]},
+    {"name": "class 0 head pops and returns original node", "args": [8], "memory": [{"addr": "0x0058fb58", "u32": "@node_a"}]},
+    {"name": "class 0 one-element list clears", "args": [7], "memory": [{"addr": "0x0058fb58", "u32": "@node_b"}]},
+    {"name": "class 1 lower boundary empty", "args": [9]},
+    {"name": "class 1 lower boundary pops", "args": [9], "memory": [{"addr": "0x0058fb5c", "u32": "@node_c"}]},
+    {"name": "class 1 upper boundary", "args": [16], "memory": [{"addr": "0x0058fb5c", "u32": "@node_d"}]},
+    {"name": "class 2 first size", "args": [17], "memory": [{"addr": "0x0058fb60", "u32": "@node_a"}]},
+    {"name": "class 7", "args": [64], "memory": [{"addr": "0x0058fb74", "u32": "@node_b"}]},
+    {"name": "class 8 boundary", "args": [65], "memory": [{"addr": "0x0058fb78", "u32": "@node_c"}]},
+    {"name": "class 14 upper boundary", "args": [120], "memory": [{"addr": "0x0058fb90", "u32": "@node_d"}]},
+    {"name": "class 15 lower boundary", "args": [121], "memory": [{"addr": "0x0058fb94", "u32": "@node_a"}]},
+    {"name": "128 remains pooled", "args": [128], "memory": [{"addr": "0x0058fb94", "u32": "@node_c"}]},
+    {"name": "128 empty refills", "args": [128]},
+    {"name": "129 allocates", "args": [129]},
+    {"name": "large allocation returns callee EAX", "args": [256]},
+    {"name": "maximum unsigned size allocates", "args": ["0xffffffff"]},
+    {"name": "midpoint empty refills", "args": [80]},
+    {"name": "midpoint populated list returns head", "args": [80], "memory": [{"addr": "0x0058fb80", "u32": "@node_b"}]},
+    {"name": "adjacent classes select separate heads", "args": [24], "memory": [{"addr": "0x0058fb64", "u32": "@node_a"}, {"addr": "0x0058fb68", "u32": "@node_c"}]},
+    {"name": "one less than pooled limit", "args": [127], "memory": [{"addr": "0x0058fb94", "u32": "@node_d"}]}
+  ],
+  "fuzz": {
+    "seed": 4199270,
+    "count": 40,
+    "args": [{"choices": [1, 2, 7, 8, 9, 15, 16, 17, 23, 24, 31, 32, 63, 64, 65, 79, 80, 81, 119, 120, 121, 127, 128, 129, 130, 191, 192, 255, 256, 1024, "0xffffffff"]}],
+    "memory": [
+      {"addr": "0x0058fb58", "type": "ptr", "choices": [0, "@node_a", "@node_b", "@node_c", "@node_d"], "count": 16, "stride": 4},
+      {"addr": "@node_a", "type": "ptr", "choices": [0, "@node_a", "@node_b", "@node_c", "@node_d"]},
+      {"addr": "@node_b", "type": "ptr", "choices": [0, "@node_a", "@node_b", "@node_c", "@node_d"]},
+      {"addr": "@node_c", "type": "ptr", "choices": [0, "@node_a", "@node_b", "@node_c", "@node_d"]},
+      {"addr": "@node_d", "type": "ptr", "choices": [0, "@node_a", "@node_b", "@node_c", "@node_d"]}
+    ]
+  }
+}

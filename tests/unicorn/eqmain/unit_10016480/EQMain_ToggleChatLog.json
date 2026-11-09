@@ -1,0 +1,142 @@
+{
+  "function": "EQMain_ToggleChatLog_guess",
+  "original": "0x10016550",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "logfile": {"size": "0x40", "fill": "zero"},
+    "chatobj": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x4", "u32": "0x12345678"}]},
+    "msgs": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "cstr": "opened"}, {"offset": "0x40", "cstr": "failed"}, {"offset": "0x80", "cstr": "closed"}]}
+  },
+  "memory": [
+    {"addr": "0x10055944", "u32": "@msgs"},
+    {"addr": "0x1005594c", "u32": "@msgs+0x40"},
+    {"addr": "0x10055948", "u32": "@msgs+0x80"},
+    {"addr": "0x1004f884", "u32": 0}
+  ],
+  "callees": {
+    "0x1003407f": {
+      "name": "FUN_1003407f",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@logfile"
+    },
+    "0x10020ef0": {
+      "name": "FUN_10020ef0",
+      "conv": "cdecl",
+      "args": [
+        "char"
+      ],
+      "ret": "@chatobj"
+    },
+    "0x100224b0": {
+      "name": "FUN_100224b0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int",
+        "char"
+      ]
+    },
+    "0x100343b9": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "closed, fopen opens it (opened message)",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": 0}]
+    },
+    {
+      "name": "closed, fopen fails (failed message)",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": 0}],
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "closed, fopen returns 1",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": 0}],
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 1}
+      }
+    },
+    {
+      "name": "closed, fopen returns -1 (non-null, negative)",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": 0}],
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": "0xffffffff"}
+      }
+    },
+    {
+      "name": "closed, fopen fails, object dword 0",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": 0}],
+      "objects": {
+        "chatobj": {"size": "0x20", "fill": "zero"}
+      },
+      "callees": {
+        "0x1003407f": {"name": "FUN_1003407f", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "open, closes (closed message)",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": "@logfile"}]
+    },
+    {
+      "name": "open, object dword 0",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": "@logfile"}],
+      "objects": {
+        "chatobj": {"size": "0x20", "fill": "zero"}
+      }
+    },
+    {
+      "name": "open, object dword -1",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": "@logfile"}],
+      "objects": {
+        "chatobj": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x4", "u32": "0xffffffff"}]}
+      }
+    },
+    {
+      "name": "open, FILE value 1 is passed to _fclose",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": 1}]
+    },
+    {
+      "name": "open, FILE value -1 is passed to _fclose",
+      "args": [],
+      "memory": [{"addr": "0x1004f884", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 91472,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004f884", "type": "ptr", "choices": [0, "@logfile", 1, "0xffffffff"]},
+      {"addr": "@chatobj", "offset": "0x4", "type": "u32"},
+      {"addr": "0x10055944", "type": "ptr", "choices": ["@msgs", "@msgs+0x40", "@msgs+0x80"]},
+      {"addr": "0x1005594c", "type": "ptr", "choices": ["@msgs", "@msgs+0x40", "@msgs+0x80"]},
+      {"addr": "0x10055948", "type": "ptr", "choices": ["@msgs", "@msgs+0x40", "@msgs+0x80"]}
+    ]
+  }
+}

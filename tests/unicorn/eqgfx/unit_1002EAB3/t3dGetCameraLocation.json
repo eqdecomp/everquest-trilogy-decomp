@@ -1,0 +1,157 @@
+{
+  "function": "t3dGetCameraLocation",
+  "original": "0x1002f48d",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "camera",
+      "type": "ptr"
+    },
+    {
+      "name": "location",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "camera": {
+      "size": "0x60",
+      "fill": "random"
+    },
+    "location": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@camera",
+        "@location"
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@camera",
+        "@location"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x60",
+          "fill": "zero"
+        },
+        "location": {
+          "size": "0x20",
+          "fill": "random"
+        }
+      }
+    },
+    {
+      "name": "distinct word per copied field, sentinel past the written range",
+      "args": [
+        "@camera",
+        "@location"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x60",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x4", "u32": "0x11111111"},
+            {"offset": "0x8", "u32": "0x22222222"},
+            {"offset": "0xc", "u32": "0x33333333"},
+            {"offset": "0x10", "u32": "0x44444444"},
+            {"offset": "0x14", "u32": "0x55555555"},
+            {"offset": "0x18", "u32": "0x66666666"},
+            {"offset": "0x1c", "u32": "0x77777777"},
+            {"offset": "0x20", "u32": "0x88888888"}
+          ]
+        },
+        "location": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x1c", "u32": "0xcccccccc"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "all-ones camera over zero location",
+      "args": [
+        "@camera",
+        "@location"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x60",
+          "fill": "random",
+          "init": [
+            {"offset": "0x4", "u32": "0xffffffff"},
+            {"offset": "0x8", "u32": "0xffffffff"},
+            {"offset": "0xc", "u32": "0xffffffff"},
+            {"offset": "0x10", "u32": "0xffffffff"},
+            {"offset": "0x14", "u32": "0xffffffff"},
+            {"offset": "0x18", "u32": "0xffffffff"},
+            {"offset": "0x1c", "u32": "0xffffffff"}
+          ]
+        },
+        "location": {
+          "size": "0x20",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "location is the camera (aliased): stores land before the later loads",
+      "args": [
+        "@camera",
+        "@camera"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x60",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x4", "u32": "0x11111111"},
+            {"offset": "0x8", "u32": "0x22222222"},
+            {"offset": "0xc", "u32": "0x33333333"},
+            {"offset": "0x10", "u32": "0x44444444"},
+            {"offset": "0x14", "u32": "0x55555555"},
+            {"offset": "0x18", "u32": "0x66666666"},
+            {"offset": "0x1c", "u32": "0x77777777"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 193677,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@camera"
+        ]
+      },
+      {
+        "choices": [
+          "@location"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@camera",
+        "size": 96
+      }
+    ]
+  }
+}

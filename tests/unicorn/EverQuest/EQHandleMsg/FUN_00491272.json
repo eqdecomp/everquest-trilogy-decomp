@@ -1,0 +1,175 @@
+{
+  "function": "HandleGuildInvite_guess",
+  "original": "0x00491272",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "profile": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "GuildMember"},
+        {"offset": "0x103a", "u16": 42},
+        {"offset": "0x104b", "u8": 1}
+      ]
+    },
+    "msg": {
+      "size": "0x44",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "GuildMember"},
+        {"offset": "0x1e", "cstr": "Inviter"},
+        {"offset": "0x3c", "u16": 42},
+        {"offset": "0x40", "u32": 1}
+      ]
+    },
+    "msg_window": {
+      "size": "0x84",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0xffffffff"},
+        {"offset": "0x40", "cstr": "GuildMember"},
+        {"offset": "0x5e", "cstr": "Inviter"},
+        {"offset": "0x7c", "u16": 42},
+        {"offset": "0x80", "u32": 0}
+      ]
+    },
+    "state": {
+      "size": "0x600",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"}
+      ]
+    },
+    "vtable": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@fn"}
+      ]
+    },
+    "fn": {"size": "0x4", "fill": "zero"},
+    "clock": {
+      "size": "0xc0",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xbc", "u32": 1234}
+      ]
+    },
+    "connection": {"size": "0x4", "fill": "zero"},
+    "everquest": {"size": "0x4", "fill": "zero"},
+    "guild": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "The Guild"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": 1},
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006b686c", "u32": 0},
+    {"addr": "0x006b3194", "u32": "@connection"},
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006e4e20", "u32": "@state"},
+    {"addr": "0x006e4de0", "u32": "@clock"}
+  ],
+  "callees": {
+    "0x00524240": {
+      "name": "_strcmpi",
+      "conv": "cdecl",
+      "args": ["cstr", "cstr"],
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr"],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:68", "u32", "int"]
+    },
+    "0x004e00f6": {
+      "name": "GetPlayerGuildName",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": "@guild"
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"]
+    },
+    "@fn": {
+      "name": "invite_state_callback",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {"name": "feature gate returns before other reads", "args": [0, 0, "@msg"], "memory": [{"addr": "0x006e4e44", "u32": 0}]},
+    {"name": "profile and sender names differ", "args": [1, 2, "@msg"], "memory": [{"addr": "@msg", "offset": "0x0", "cstr": "Other"}]},
+    {"name": "same guild, rank matches officer action", "args": [3, 4, "@msg"]},
+    {"name": "same guild, member demotion announces", "args": [0, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 1}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "same guild, action one promotes to officer", "args": [1, 1, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 0}, {"addr": "@msg", "offset": "0x40", "u32": 1}]},
+    {"name": "same guild, action two promotes to leader", "args": [2, 2, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 1}, {"addr": "@msg", "offset": "0x40", "u32": 2}]},
+    {"name": "promotion side effects then unsupported action returns", "args": [3, 3, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 0}, {"addr": "@msg", "offset": "0x40", "u32": 3}]},
+    {"name": "already leader action two only sends update", "args": [4, 4, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 2}, {"addr": "@msg", "offset": "0x40", "u32": 2}]},
+    {"name": "rank below action zero announces demotion", "args": [5, 5, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 2}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "rank below action one sends without demotion chat", "args": [6, 6, "@msg"], "memory": [{"addr": "@profile", "offset": "0x104b", "u8": 2}, {"addr": "@msg", "offset": "0x40", "u32": 1}]},
+    {"name": "no guild invitation for member action zero", "args": [0, 0, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "no guild invitation for officer action one", "args": [1, 1, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}, {"addr": "@msg", "offset": "0x40", "u32": 1}]},
+    {"name": "no guild invitation for leader action two", "args": [2, 2, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}, {"addr": "@msg", "offset": "0x40", "u32": 2}]},
+    {"name": "invite action outside zero to two returns before guild compare", "args": [3, 3, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}, {"addr": "@msg", "offset": "0x40", "u32": 3}]},
+    {"name": "negative invite action field guards the invitation decision", "args": [0, 0, "@msg_window+0x40"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}]},
+    {"name": "busy invitation state sends and shows member invite", "args": [1, 0, "@msg"], "memory": [{"addr": "@state", "offset": "0x10", "u32": 1}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "busy invitation state sends and shows officer invite", "args": [1, 0, "@msg"], "memory": [{"addr": "@state", "offset": "0x10", "u32": 1}, {"addr": "@msg", "offset": "0x40", "u32": 1}]},
+    {"name": "busy invitation state sends and shows leader invite", "args": [1, 0, "@msg"], "memory": [{"addr": "@state", "offset": "0x10", "u32": 1}, {"addr": "@msg", "offset": "0x40", "u32": 2}]},
+    {"name": "busy state ignores unsupported action for chat", "args": [1, 0, "@msg"], "memory": [{"addr": "@state", "offset": "0x10", "u32": 1}, {"addr": "@msg", "offset": "0x40", "u32": 3}]},
+    {"name": "forced mismatched guild shows member interest", "args": [0, 0, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@msg", "offset": "0x3c", "u16": 99}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "forced mismatched guild shows officer interest", "args": [1, 0, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@msg", "offset": "0x3c", "u16": 99}, {"addr": "@msg", "offset": "0x40", "u32": 1}]},
+    {"name": "forced mismatched guild shows leader interest", "args": [2, 0, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@msg", "offset": "0x3c", "u16": 99}, {"addr": "@msg", "offset": "0x40", "u32": 2}]},
+    {"name": "forced mismatched guild unsupported action sends only", "args": [3, 0, "@msg"], "memory": [{"addr": "0x006b686c", "u32": 1}, {"addr": "@msg", "offset": "0x3c", "u16": 99}, {"addr": "@msg", "offset": "0x40", "u32": 3}]},
+    {"name": "auto-decline member invite", "args": [0, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 40}, {"addr": "@msg", "offset": "0x3c", "u16": 42}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "auto-decline officer invite", "args": [1, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 40}, {"addr": "@msg", "offset": "0x3c", "u16": 42}, {"addr": "@msg", "offset": "0x40", "u32": 1}]},
+    {"name": "auto-decline leader invite", "args": [2, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 40}, {"addr": "@msg", "offset": "0x3c", "u16": 42}, {"addr": "@msg", "offset": "0x40", "u32": 2}]},
+    {"name": "auto-decline unsupported action displays options hint", "args": [3, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 40}, {"addr": "@msg", "offset": "0x3c", "u16": 42}, {"addr": "@msg", "offset": "0x40", "u32": 3}]},
+    {"name": "negative non-sentinel guild id remains in same-guild branch", "args": [0, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 65534}, {"addr": "@msg", "offset": "0x3c", "u16": 65534}, {"addr": "@msg", "offset": "0x40", "u32": 0}]},
+    {"name": "profile guild differs with no forced path returns", "args": [0, 0, "@msg"], "memory": [{"addr": "@profile", "offset": "0x103a", "u16": 41}, {"addr": "@msg", "offset": "0x3c", "u16": 42}, {"addr": "0x006b686c", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 4788850,
+    "count": 40,
+    "args": [
+      {"range": [-10, 10]},
+      {"range": [-10, 10]},
+      {"choices": ["@msg"]}
+    ],
+    "memory": [
+      {"addr": "0x006e4e44", "type": "u32", "choices": [0, 1], "p": 0.35},
+      {"addr": "0x006b686c", "type": "u32", "choices": [0, 1]},
+      {"addr": "@profile", "offset": "0x103a", "type": "u16", "choices": [65535, 65534, 0, 1, 42, 99]},
+      {"addr": "@profile", "offset": "0x104b", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@msg", "offset": "0x3c", "type": "u16", "choices": [0, 1, 42, 99, 65535]},
+      {"addr": "@msg", "offset": "0x40", "type": "u32", "choices": [0, 1, 2, 3, 4294967295]},
+      {"addr": "@state", "offset": "0x10", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

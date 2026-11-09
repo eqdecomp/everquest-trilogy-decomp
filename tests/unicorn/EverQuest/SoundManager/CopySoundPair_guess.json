@@ -1,0 +1,22 @@
+{
+  "function": "CopySoundPair_guess",
+  "original": "0x004EF0B8",
+  "sources": ["src/EverQuest/SoundManager.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "destination", "type": "ptr"}, {"name": "source", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "buffer": {"size": "0x30", "fill": "zero", "init": [{"offset": "0x00", "hex": "112233445566778899aabbcc"}]}
+  },
+  "cases": [
+    {"args": ["0x0", "0x0"]},
+    {"name": "disjoint ranges", "args": ["@buffer+0x10", "@buffer"]},
+    {"name": "self-copy", "args": ["@buffer", "@buffer"]},
+    {"name": "forward overlap by one byte observes ordered loads", "args": ["@buffer+1", "@buffer"]},
+    {"name": "forward overlap by one dword observes first store before second load", "args": ["@buffer+4", "@buffer"]},
+    {"name": "reverse overlap by one byte", "args": ["@buffer", "@buffer+1"]},
+    {"name": "reverse overlap by one dword", "args": ["@buffer", "@buffer+4"]},
+    {"name": "nonoverlap source after destination", "args": ["@buffer+4", "@buffer+8"]}
+  ],
+  "fuzz": {"seed": 4890808, "count": 30, "args": [{"choices": ["@buffer", "@buffer+1", "@buffer+4", "@buffer+8", "@buffer+0x10"]}, {"choices": ["@buffer", "@buffer+1", "@buffer+4", "@buffer+8", "@buffer+0x10"]}]}
+}

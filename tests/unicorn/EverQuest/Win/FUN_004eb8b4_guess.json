@@ -1,0 +1,97 @@
+{
+  "function": "ReleaseKeyboardInput_guess",
+  "original": "0x004EB8B4",
+  "sources": ["src/EverQuest/Win.cpp"],
+  "conv": "cdecl",
+  "ret": "void",
+  "objects": {
+    "unacquire": {"size": 1, "fill": "zero"},
+    "release_original": {"size": 1, "fill": "zero"},
+    "release_stale": {"size": 1, "fill": "zero"},
+    "release_switched": {"size": 1, "fill": "zero"},
+    "release_secondary_new": {"size": 1, "fill": "zero"},
+    "release_secondary_old": {"size": 1, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006EFA38", "size": "0x240", "fill": "zero"},
+    {"addr": "0x006EFA38", "u32": "0x60010040"},
+    {"addr": "0x006EFC74", "u32": "0x60010000"},
+    {"addr": "0x60010000", "size": "0x1A0", "fill": "zero"},
+    {"addr": "0x60010000", "u32": "0x60010100"},
+    {"addr": "0x60010010", "u32": "0x60010120"},
+    {"addr": "0x60010020", "u32": "0x60010140"},
+    {"addr": "0x60010030", "u32": "0x60010160"},
+    {"addr": "0x60010040", "u32": "0x60010180"},
+    {"addr": "0x60010108", "u32": "@release_original"},
+    {"addr": "0x60010120", "u32": "@unacquire"},
+    {"addr": "0x60010128", "u32": "@release_stale"},
+    {"addr": "0x60010148", "u32": "@release_switched"},
+    {"addr": "0x60010168", "u32": "@release_secondary_new"},
+    {"addr": "0x60010188", "u32": "@release_secondary_old"}
+  ],
+  "callees": {
+    "@unacquire": {
+      "name": "unacquire_keyboard_device_stub",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [
+        {"addr": "0x006EFC74", "hex": "10000160"},
+        {"addr": "0x60010010", "hex": "40010160"}
+      ]
+    },
+    "@release_original": {"name": "release_original_keyboard_stub", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "@release_stale": {"name": "release_stale_keyboard_table_stub", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "@release_switched": {
+      "name": "release_switched_keyboard_stub",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [
+        {"addr": "0x006EFC74", "hex": "20000160"},
+        {"addr": "0x006EFA38", "hex": "30000160"}
+      ]
+    },
+    "@release_secondary_new": {
+      "name": "release_new_keyboard_interface_stub",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"addr": "0x006EFA38", "hex": "40000160"}]
+    },
+    "@release_secondary_old": {"name": "release_old_keyboard_interface_stub", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {},
+    {"memory": [{"addr": "0x006EFC74", "u32": 0}]},
+    {"memory": [{"addr": "0x006EFA38", "u32": 0}, {"addr": "0x006EFC74", "u32": 0}]},
+    {
+      "memory": [
+        {"addr": "0x006EFC74", "u32": "0x006EFC74"},
+        {"addr": "0x006EFC7C", "u32": "@release_original"},
+        {"addr": "0x006EFC94", "u32": "@unacquire"}
+      ],
+      "callees": {
+        "@unacquire": {
+          "name": "unacquire_keyboard_alias_global_stub",
+          "conv": "stdcall",
+          "args": ["mem:4"],
+          "ret": 0,
+          "writes": [
+            {"addr": "0x006EFC74", "hex": "00000160"},
+            {"addr": "0x60010010", "hex": "40010160"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 516724,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x006EFC74", "type": "ptr", "choices": [0, "0x60010000"]},
+      {"addr": "0x006EFA38", "type": "ptr", "choices": [0, "0x60010040"]}
+    ]
+  }
+}

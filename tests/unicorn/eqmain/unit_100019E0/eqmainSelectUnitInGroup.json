@@ -1,0 +1,185 @@
+{
+  "function": "eqmainSelectUnitInGroup_guess",
+  "original": "0x10001ad0",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unit", "type": "int"},
+    {"name": "list", "type": "ptr"},
+    {"name": "count", "type": "short"},
+    {"name": "pick", "type": "ptr"}
+  ],
+  "ret": "short",
+  "objects": {
+    "u0": {"size": "0x20", "fill": "random"},
+    "u1": {"size": "0x20", "fill": "random"},
+    "u2": {"size": "0x20", "fill": "random"},
+    "u3": {"size": "0x20", "fill": "random"},
+    "u4": {"size": "0x20", "fill": "random"},
+    "u5": {"size": "0x20", "fill": "random"},
+    "list": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@u1"},
+        {"offset": "0x4", "u32": "@u2"},
+        {"offset": "0x8", "u32": "@u3"},
+        {"offset": "0xc", "u32": "@u4"},
+        {"offset": "0x10", "u32": "@u5"}
+      ]
+    },
+    "pick": {
+      "size": "0x4",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@u0"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10004ec0": {"name": "eqmain_fn_10004ec0_guess", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {
+      "name": "pick holds the unit: flagged and notified, -1 without reading the list",
+      "args": ["@u0", "@list", 3, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "pick holds the unit and the list has it too: the first branch wins",
+      "args": ["@u0", "@list", 3, "@pick"],
+      "memory": [{"addr": "@list", "offset": "0x0", "u32": "@u0"}],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "pick holds the unit and count is 0: the held check comes before the count guard",
+      "args": ["@u0", "@list", 0, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "unit neither held nor listed: -1, nothing written, no calls",
+      "args": ["@u0", "@list", 5, "@pick"],
+      "memory": [{"addr": "@pick", "u32": "@u4"}],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "not listed within count (u5 sits at index 4): -1",
+      "args": ["@u5", "@list", 4, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "count 0 with a null list: the list is never read",
+      "args": ["@u5", 0, 0, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "count -1, entry 0 matches: the search never runs",
+      "args": ["@u1", "@list", -1, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "count -32768 (short minimum): the search never runs",
+      "args": ["@u1", "@list", -32768, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "one entry that does not match: -1",
+      "args": ["@u2", "@list", 1, "@pick"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "one entry, matches: index 0, flagged, called once",
+      "args": ["@u1", "@list", 1, "@pick"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "found at index 0 of 3: the other two are cleared and all three called in order",
+      "args": ["@u1", "@list", 3, "@pick"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "found at index 1 of 3",
+      "args": ["@u2", "@list", 3, "@pick"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "found at index 2 of 3",
+      "args": ["@u3", "@list", 3, "@pick"],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "found at index 4 of 5 (last entry)",
+      "args": ["@u5", "@list", 5, "@pick"],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "first of two equal entries wins (index 1 of u2, u2)",
+      "args": ["@u2", "@list", 4, "@pick"],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": "@u4"},
+        {"addr": "@list", "offset": "0x4", "u32": "@u2"},
+        {"addr": "@list", "offset": "0x8", "u32": "@u2"},
+        {"addr": "@list", "offset": "0xc", "u32": "@u1"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "count limits the clear and call loops: entries 2..4 untouched",
+      "args": ["@u1", "@list", 2, "@pick"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "all five entries equal the unit: index 0, five calls",
+      "args": ["@u3", "@list", 5, "@pick"],
+      "memory": [
+        {"addr": "@list", "offset": "0x0", "u32": "@u3"},
+        {"addr": "@list", "offset": "0x4", "u32": "@u3"},
+        {"addr": "@list", "offset": "0x8", "u32": "@u3"},
+        {"addr": "@list", "offset": "0xc", "u32": "@u3"},
+        {"addr": "@list", "offset": "0x10", "u32": "@u3"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pick holds another listed unit: it is cleared, the new unit takes over",
+      "args": ["@u1", "@list", 3, "@pick"],
+      "memory": [{"addr": "@pick", "u32": "@u2"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pick holds an unlisted unit: it is left alone",
+      "args": ["@u1", "@list", 3, "@pick"],
+      "memory": [{"addr": "@pick", "u32": "@u4"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pick holds the first listed unit, the searched unit is index 1",
+      "args": ["@u2", "@list", 2, "@pick"],
+      "memory": [{"addr": "@pick", "u32": "@u1"}],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 6864,
+    "count": 40,
+    "args": [
+      {"choices": ["@u0", "@u1", "@u2", "@u3", "@u4", "@u5"]},
+      {"choices": ["@list"]},
+      {"range": [-2, 5]},
+      {"choices": ["@pick"]}
+    ],
+    "memory": [
+      {"addr": "@list", "type": "ptr", "count": 5, "choices": ["@u0", "@u1", "@u2", "@u3", "@u4", "@u5"]},
+      {"addr": "@pick", "type": "ptr", "choices": ["@u0", "@u1", "@u2", "@u3", "@u4", "@u5"]},
+      {"addr": "@u0", "offset": "0x1c", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@u1", "offset": "0x1c", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@u2", "offset": "0x1c", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@u3", "offset": "0x1c", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@u4", "offset": "0x1c", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@u5", "offset": "0x1c", "type": "u32", "choices": [0, 1, 2]}
+    ]
+  }
+}

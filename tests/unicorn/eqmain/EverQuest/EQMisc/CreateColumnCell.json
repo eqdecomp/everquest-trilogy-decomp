@@ -1,0 +1,149 @@
+{
+  "function": "CreateColumnCell_guess",
+  "original": "0x100018f0",
+  "sources": [
+    "src/eqmain/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "owner", "type": "ptr"},
+    {"name": "param_2", "type": "int"},
+    {"name": "hdc", "type": "ptr"},
+    {"name": "param_4", "type": "cstr"},
+    {"name": "param_5", "type": "cstr"},
+    {"name": "param_6", "type": "u32"},
+    {"name": "param_7", "type": "int"},
+    {"name": "param_8", "type": "cstr"},
+    {"name": "param_9", "type": "int"},
+    {"name": "param_10", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {"size": "0x40", "fill": "zero"},
+    "rec": {"size": "0x2c", "fill": "zero"},
+    "name_a": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 3}, {"offset": "0x4", "u32": 7}]},
+    "name_b": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 4294967291}, {"offset": "0x4", "u32": 12}]},
+    "text": {"size": "0x40", "fill": "zero"},
+    "msg": {"size": "0x20", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10055a70", "u32": "@msg"},
+    {"addr": "@msg", "cstr": "EQ message"}
+  ],
+  "callees": {
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": ["cstr"]
+    },
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@rec"
+    },
+    "0x10007ae0": {
+      "name": "FUN_10007ae0",
+      "conv": "cdecl",
+      "args": ["cstr", "int"],
+      "ret": ["@name_a", "@name_b"]
+    },
+    "0x100082c0": {
+      "name": "FUN_100082c0",
+      "conv": "cdecl",
+      "args": ["int", "u32", "ptr", "int", "cstr", "int", "int"],
+      "ret": "@text"
+    },
+    "0x10028340": {
+      "name": "FUN_10028340",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "ptr"]
+    },
+    "0x10004ec0": {
+      "name": "FUN_10004ec0",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e"
+  },
+  "cases": [
+    {
+      "name": "null_owner_reports_and_returns_null",
+      "args": [0, 5, 6, "alpha", "beta", 9, 10, "label", 11, 12],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "malloc_failure_returns_null_before_any_call",
+      "args": ["@owner", 5, 6, "alpha", "beta", 9, 10, "label", 11, 12],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "typical_with_text",
+      "args": ["@owner", 5, 6, "alpha", "beta", 9, 10, "label", 11, 12]
+    },
+    {
+      "name": "null_text_skips_the_text_call",
+      "args": ["@owner", 5, 6, "alpha", "beta", 9, 10, 0, 11, 12]
+    },
+    {
+      "name": "null_text_result_becomes_eight",
+      "args": ["@owner", 5, 6, "alpha", "beta", 9, 10, "label", 11, 12],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "u32", "ptr", "int", "cstr", "int", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "name_calls_in_order_first_record_is_metrics",
+      "args": ["@owner", 5, 6, "alpha", "beta", 9, 10, "label", 11, 12],
+      "callees": {
+        "0x10007ae0": {"name": "FUN_10007ae0", "conv": "cdecl", "args": ["cstr", "int"], "ret": ["@name_b", "@name_a"]}
+      }
+    },
+    {
+      "name": "negative_metrics_move_the_text_offsets",
+      "args": ["@owner", -7, -3, "alpha", "beta", 9, -4, "label", -2, 12],
+      "memory": [
+        {"addr": "@name_a", "u32": 4294967293},
+        {"addr": "@name_a", "offset": "0x4", "u32": 4294967290}
+      ]
+    },
+    {
+      "name": "zero_everything",
+      "args": ["@owner", 0, 0, "", "", 0, 0, "", 0, 0],
+      "memory": [
+        {"addr": "@name_a", "u32": 0},
+        {"addr": "@name_a", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "param6_and_tail_args_pass_through",
+      "args": ["@owner", 1, 2, "a", "b", 4294967295, 3, "t", 2147483647, -2147483648]
+
+    }
+  ],
+  "fuzz": {
+    "seed": 6384,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner", "@owner", "@owner", 0]},
+      {"range": [-16, 64]},
+      {"choices": [0, 8192, 65536, 2147483647]},
+      {"choices": ["alpha", "beta", "gamma delta", ""]},
+      {"choices": ["x", "yy", "zzz"]},
+      {"range": [0, 65535]},
+      {"range": [-8, 64]},
+      {"choices": ["label", "A longer label", "x", 0]},
+      {"range": [-8, 64]},
+      {"range": [-8, 64]}
+    ],
+    "memory": [
+      {"addr": "@name_a", "type": "int", "range": [-4, 30]},
+      {"addr": "@name_a", "offset": "0x4", "type": "int", "range": [-4, 30]}
+    ]
+  }
+}

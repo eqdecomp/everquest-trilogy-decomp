@@ -1,0 +1,94 @@
+{
+  "function": "EQPlayer_build_token_string_guess_class::SetHeight_guess",
+  "original": "0x004b4836",
+  "rewrite": "EQPlayer_build_token_string_guess_class::SetHeight_guess",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "thiscall",
+  "this": "@param_1",
+  "args": [
+    {"name": "param_2", "type": "float"}
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [{"offset": "0x70", "u32": "@actorinfo"}]
+    },
+    "actorinfo": {
+      "size": "0xb8",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x007a1000"},
+        {"offset": "0xb4", "f32": 1.25}
+      ]
+    },
+    "actorinfo2": {
+      "size": "0xb8",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x007a2000"},
+        {"offset": "0xb4", "f32": -3.5}
+      ]
+    },
+    "display": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [{"addr": "0x006e4de0", "u32": "@display"}],
+  "callees": {
+    "0x004bc9ba": {
+      "name": "EQPlayer::SetHeights_guess",
+      "conv": "thiscall",
+      "args": [],
+      "writes": [{"addr": "@actorinfo+0xb4", "hex": "00002040"}]
+    },
+    "0x0040c113": {
+      "name": "CDisplay::SetActorScaleFactor",
+      "conv": "thiscall",
+      "args": ["ptr", "float", "u8"]
+    }
+  },
+  "cases": [
+    {"name": "ordering via SetHeights write", "args": [1.5]},
+    {"name": "negative size", "args": [-1.0]},
+    {"name": "zero size", "args": [0.0]},
+    {"name": "negative zero", "args": [-0.0]},
+    {
+      "name": "preserve scale when SetHeights leaves it alone",
+      "args": [4.0],
+      "memory": [{"addr": "@actorinfo", "offset": "0xb4", "f32": -3.25}],
+      "callees": {
+        "0x004bc9ba": {"name": "EQPlayer::SetHeights_guess", "conv": "thiscall", "args": []}
+      }
+    },
+    {
+      "name": "alternate actor info",
+      "args": [0.125],
+      "memory": [{"addr": "@param_1", "offset": "0x70", "u32": "@actorinfo2"}],
+      "callees": {
+        "0x004bc9ba": {
+          "name": "EQPlayer::SetHeights_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [{"addr": "@actorinfo2+0xb4", "hex": "000020c0"}]
+        }
+      }
+    },
+    {
+      "name": "zero display global",
+      "args": [2.0],
+      "memory": [{"addr": "0x006e4de0", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4933686,
+    "count": 32,
+    "args": [
+      {"choices": [-64.0, -1.0, 0.0, 0.125, 0.5, 1.0, 64.0]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x70", "type": "ptr", "choices": ["@actorinfo", "@actorinfo2"], "p": 0.5},
+      {"addr": "@actorinfo", "offset": "0xb4", "type": "float", "choices": [-8.0, -1.0, 0.0, 0.5, 1.0, 16.0]},
+      {"addr": "0x006e4de0", "type": "ptr", "choices": ["@display", "0x0"], "p": 0.5}
+    ]
+  }
+}

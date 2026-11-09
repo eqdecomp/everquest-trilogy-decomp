@@ -1,0 +1,39 @@
+{
+  "function": "EqSoundManager_guess::PrintControlLossMessage_guess",
+  "original": "0x004B3FB0",
+  "sources": ["src/EverQuest/EQ_SoundManager.cpp"],
+  "conv": "thiscall",
+  "this": "@player",
+  "args": [
+    {"name": "unknown0", "type": "int"},
+    {"name": "unknown1", "type": "int"}
+  ],
+  "ret": "void",
+  "callees": {
+    "0x004D05B7": {"name": "print_chat_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr"], "ret": 0}
+  },
+  "objects": {
+    "player": {"size": "0x134", "fill": "random"},
+    "other": {"size": "0x134", "fill": "random"},
+    "eq0": {"size": "0x4", "fill": "random"},
+    "eq1": {"size": "0x4", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006E4D8C", "u32": "@player"},
+    {"addr": "0x006EFE2C", "u32": "@eq0"}
+  ],
+  "cases": [
+    {"name": "exact local player pointer invokes chat", "args": [2, "0x12345678"]},
+    {"name": "different spawn does not invoke chat", "this": "@other", "args": [0, -1]},
+    {"name": "null receiver equals null local-player global", "this": "0x0", "args": [0, 0], "memory": [{"addr": "0x006E4D8C", "u32": 0}]},
+    {"name": "null receiver differs from nonnull local-player global", "this": "0x0", "args": [1, 2], "memory": [{"addr": "0x006E4D8C", "u32": "@player"}]},
+    {"name": "unaligned near pointer is not the local player", "this": "@player+1", "args": ["0x7FFFFFFF", -2147483648], "memory": [{"addr": "0x006E4D8C", "u32": "@player"}]},
+    {"name": "reloaded local-player global points at other spawn", "this": "@other", "args": ["0x13579BDF", "0x2468ACE0"], "memory": [{"addr": "0x006E4D8C", "u32": "@other"}, {"addr": "0x006EFE2C", "u32": "@eq1"}]}
+  ],
+  "fuzz": {
+    "seed": 4932016,
+    "count": 30,
+    "args": [{"range": [-2147483648, 2147483647]}, {"range": [-2147483648, 2147483647]}],
+    "memory": [{"addr": "0x006E4D8C", "type": "ptr", "choices": ["@player", "@other", 0]}]
+  }
+}

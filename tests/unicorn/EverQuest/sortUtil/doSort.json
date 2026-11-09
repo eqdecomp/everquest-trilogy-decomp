@@ -1,0 +1,141 @@
+{
+  "function": "doSort",
+  "original": "0x004e1d09",
+  "sources": [
+    "src/EverQuest/sortUtil.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sortType",
+      "type": "short"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "n0": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x04", "u32": "@n1" },
+        { "offset": "0x0c", "cstr": "charlie" },
+        { "offset": "0x1c", "cstr": "charlie" },
+        { "offset": "0x3a", "u8": 3 },
+        { "offset": "0x3b", "cstr": "charlie" }
+      ]
+    },
+    "n1": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "@n0" },
+        { "offset": "0x04", "u32": "@n2" },
+        { "offset": "0x0c", "cstr": "alpha" },
+        { "offset": "0x1c", "cstr": "alpha" },
+        { "offset": "0x3a", "u8": 1 },
+        { "offset": "0x3b", "cstr": "alpha" }
+      ]
+    },
+    "n2": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "@n1" },
+        { "offset": "0x0c", "cstr": "bravo" },
+        { "offset": "0x1c", "cstr": "bravo" },
+        { "offset": "0x3a", "u8": 2 },
+        { "offset": "0x3b", "cstr": "bravo" }
+      ]
+    }
+  },
+  "memory": [
+    { "addr": "0x006e4d70", "u32": "@n0" }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty list returns",
+      "args": [ 2 ],
+      "memory": [ { "addr": "0x006e4d70", "u32": 0 } ]
+    },
+    {
+      "name": "single node exits before dispatch",
+      "args": [ 99 ],
+      "memory": [
+        { "addr": "0x006e4d70", "u32": "@n0" },
+        { "addr": "@n0", "offset": "0x04", "u32": 0 }
+      ]
+    },
+    {
+      "name": "mode zero compares secondary key and moves head",
+      "args": [ 0 ],
+      "memory": [
+        { "addr": "@n0", "offset": "0x0c", "cstr": "zulu" },
+        { "addr": "@n1", "offset": "0x0c", "cstr": "alpha" },
+        { "addr": "@n2", "offset": "0x0c", "cstr": "mike" }
+      ]
+    },
+    {
+      "name": "mode one primary equality falls through to secondary key",
+      "args": [ 1 ],
+      "memory": [
+        { "addr": "@n0", "offset": "0x1c", "cstr": "same" },
+        { "addr": "@n1", "offset": "0x1c", "cstr": "same" },
+        { "addr": "@n2", "offset": "0x1c", "cstr": "alpha" },
+        { "addr": "@n0", "offset": "0x0c", "cstr": "zulu" },
+        { "addr": "@n1", "offset": "0x0c", "cstr": "bravo" },
+        { "addr": "@n2", "offset": "0x0c", "cstr": "yankee" }
+      ]
+    },
+    {
+      "name": "mode two unsigned byte ordering and equal-key tie",
+      "args": [ 2 ],
+      "memory": [
+        { "addr": "@n0", "offset": "0x3a", "u8": 255 },
+        { "addr": "@n1", "offset": "0x3a", "u8": 7 },
+        { "addr": "@n2", "offset": "0x3a", "u8": 7 },
+        { "addr": "@n0", "offset": "0x0c", "cstr": "zulu" },
+        { "addr": "@n1", "offset": "0x0c", "cstr": "yankee" },
+        { "addr": "@n2", "offset": "0x0c", "cstr": "bravo" }
+      ]
+    },
+    {
+      "name": "mode three secondary equality uses tertiary key",
+      "args": [ 3 ],
+      "memory": [
+        { "addr": "@n0", "offset": "0x3b", "cstr": "same" },
+        { "addr": "@n1", "offset": "0x3b", "cstr": "same" },
+        { "addr": "@n2", "offset": "0x3b", "cstr": "alpha" },
+        { "addr": "@n0", "offset": "0x0c", "cstr": "zulu" },
+        { "addr": "@n1", "offset": "0x0c", "cstr": "bravo" },
+        { "addr": "@n2", "offset": "0x0c", "cstr": "yankee" }
+      ]
+    },
+    {
+      "name": "mode one already ordered does not swap",
+      "args": [ 1 ],
+      "memory": [
+        { "addr": "@n0", "offset": "0x1c", "cstr": "alpha" },
+        { "addr": "@n1", "offset": "0x1c", "cstr": "bravo" },
+        { "addr": "@n2", "offset": "0x1c", "cstr": "charlie" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5119241,
+    "count": 32,
+    "args": [
+      { "choices": [ 0, 1, 2, 3 ] }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4d70",
+        "type": "ptr",
+        "choices": [ "@n0", "@n1" ]
+      },
+      { "addr": "@n0", "offset": "0x3a", "type": "u8", "range": [ 0, 255 ] },
+      { "addr": "@n1", "offset": "0x3a", "type": "u8", "range": [ 0, 255 ] },
+      { "addr": "@n2", "offset": "0x3a", "type": "u8", "range": [ 0, 255 ] }
+    ]
+  }
+}

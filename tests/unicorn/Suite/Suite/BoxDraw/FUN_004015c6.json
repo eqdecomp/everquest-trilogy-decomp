@@ -1,0 +1,103 @@
+{
+  "function": "PoolAllocateBlocks_guess",
+  "original": "0x004015c6",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "u32"},
+    {"name": "param_2", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "param_2": {"size": "0x4", "fill": "random"},
+    "n0": {"size": "0x4", "fill": "random", "init": [{"offset": "0x0", "u32": 0}]},
+    "n1": {"size": "0x4", "fill": "random", "init": [{"offset": "0x0", "u32": 1}]},
+    "n2": {"size": "0x4", "fill": "random", "init": [{"offset": "0x0", "u32": 2}]},
+    "n3": {"size": "0x4", "fill": "random", "init": [{"offset": "0x0", "u32": 3}]},
+    "n4": {"size": "0x4", "fill": "random", "init": [{"offset": "0x0", "u32": 4}]},
+    "pool": {"size": "0x100", "fill": "random", "init": [{"offset": "0x0", "u32": 0}]},
+    "fallback": {"size": "0x100", "fill": "random", "init": [{"offset": "0x0", "u32": 0}]}
+  },
+  "memory": [
+    {"addr": "0x0058fb58", "u32": 0},
+    {"addr": "0x0058fb5c", "u32": 0},
+    {"addr": "0x0058fb60", "u32": 0},
+    {"addr": "0x0058fb64", "u32": 0},
+    {"addr": "0x0058fb68", "u32": 0},
+    {"addr": "0x0058fb6c", "u32": 0},
+    {"addr": "0x0058fb70", "u32": 0},
+    {"addr": "0x0058fb74", "u32": 0},
+    {"addr": "0x0058fb78", "u32": 0},
+    {"addr": "0x0058fb7c", "u32": 0},
+    {"addr": "0x0058fb80", "u32": 0},
+    {"addr": "0x0058fb84", "u32": 0},
+    {"addr": "0x0058fb88", "u32": 0},
+    {"addr": "0x0058fb8c", "u32": 0},
+    {"addr": "0x0058fb90", "u32": 0},
+    {"addr": "0x0058fb94", "u32": 0},
+    {"addr": "0x0058fb98", "u32": "0x1000"},
+    {"addr": "0x0058fb9c", "u32": 0},
+    {"addr": "0x0058fba0", "u32": "0xffffffff"}
+  ],
+  "callees": {
+    "0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": 0}
+  },
+  "cases": [
+    {"name": "fits with room remaining", "args": [4, "@n4"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool+0x100"}
+    ]},
+    {"name": "exact end boundary", "args": [8, "@n4"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool+0x20"}
+    ]},
+    {"name": "truncate to whole elements", "args": [8, "@n4"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool+0x14"}
+    ]},
+    {"name": "one element available", "args": [8, "@n2"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool+0x8"}
+    ]},
+    {"name": "zero remainder uses class 8 free list", "args": [8, "@n1"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"},
+      {"addr": "0x0058fb58", "u32": "@fallback"}
+    ]},
+    {"name": "failure scans next size class and truncates", "args": [8, "@n4"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"},
+      {"addr": "0x0058fb5c", "u32": "@fallback"}
+    ]},
+    {"name": "spill remainder then reuse it", "args": [8, "@n3"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool+0x4"},
+      {"addr": "0x0058fb58", "u32": 0}
+    ]},
+    {"name": "17 byte remainder spills to class 24", "args": [24, "@n2"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool+0x11"}
+    ]},
+    {"name": "scan through size class 128", "args": [8, "@n4"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"},
+      {"addr": "0x0058fb94", "u32": "@fallback"}
+    ]},
+    {"name": "128 byte class exact allocation", "args": [128, "@n1"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"},
+      {"addr": "0x0058fb94", "u32": "@fallback"}
+    ]},
+    {"name": "zero count at zero capacity", "args": [4, "@n0"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"}
+    ]},
+    {"name": "zero element size", "args": [0, "@n4"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"}
+    ]},
+    {"name": "unsigned multiplication wraps", "args": [2147483648, "@n2"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool"}, {"addr": "0x0058fba0", "u32": "@pool"}
+    ]},
+    {"name": "wrapped available byte count", "args": [4, "@n2"], "memory": [
+      {"addr": "0x0058fb9c", "u32": "@pool+0x10"}, {"addr": "0x0058fba0", "u32": "@pool+0x8"}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4199878,
+    "count": 32,
+    "args": [
+      {"choices": [0, 1, 2, 4, 8, 16, 32, 64, 128, 2147483648, 4294967295]},
+      {"choices": ["@param_2"]}
+    ],
+    "memory": []
+  }
+}

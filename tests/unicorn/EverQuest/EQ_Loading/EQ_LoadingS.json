@@ -1,0 +1,160 @@
+{
+  "function": "EQ_LoadingS::EQ_LoadingS",
+  "original": "0x0043aafa",
+  "sources": [
+    "src/EverQuest/EQ_Loading.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x98",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8c", "u32": 0},
+        {"offset": "0x90", "u32": 0}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4de0", "u32": "@display"}
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450049": {
+      "name": "EQ_Overlay::EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x00450168": {
+      "name": "EQ_Overlay::load_guess",
+      "conv": "thiscall",
+      "args": ["int", "int"]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "both flags clear selects logo",
+      "args": ["@self", 0]
+    },
+    {
+      "name": "secondary flag selects eqk bitmap",
+      "args": ["@self", -1],
+      "objects": {
+        "display": {
+          "size": "0x98",
+          "fill": "random",
+          "init": [
+            {"offset": "0x8c", "u32": 1},
+            {"offset": "0x90", "u32": 0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "primary flag selects eqv bitmap",
+      "args": ["@self", 1],
+      "objects": {
+        "display": {
+          "size": "0x98",
+          "fill": "random",
+          "init": [
+            {"offset": "0x8c", "u32": 0},
+            {"offset": "0x90", "u32": 1}
+          ]
+        }
+      }
+    },
+    {
+      "name": "primary flag wins when both are set",
+      "args": ["@self", 2],
+      "objects": {
+        "display": {
+          "size": "0x98",
+          "fill": "random",
+          "init": [
+            {"offset": "0x8c", "u32": 1},
+            {"offset": "0x90", "u32": "0xffffffff"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative nonzero fields",
+      "args": ["@self", -2147483648],
+      "objects": {
+        "display": {
+          "size": "0x98",
+          "fill": "random",
+          "init": [
+            {"offset": "0x8c", "u32": "0xffffffff"},
+            {"offset": "0x90", "u32": 0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero-filled self object",
+      "args": ["@self", 0],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4434682,
+    "count": 32,
+    "args": [
+      {
+        "choices": ["@self"]
+      },
+      {
+        "range": [-2147483648, 2147483647]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@display",
+        "offset": "0x8c",
+        "type": "u32",
+        "choices": [0, 1, "0xffffffff"]
+      },
+      {
+        "addr": "@display",
+        "offset": "0x90",
+        "type": "u32",
+        "choices": [0, 1, "0xffffffff"]
+      }
+    ]
+  }
+}

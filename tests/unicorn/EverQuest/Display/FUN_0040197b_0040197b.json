@@ -1,0 +1,85 @@
+{
+  "function": "ResetFields_guess",
+  "original": "0x0040197b",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "p",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "p": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "ones": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0xFFFFFFFF"},
+        {"offset": "0x4", "u32": "0x11223344"},
+        {"offset": "0x8", "u32": "0xFFFFFFFF"},
+        {"offset": "0xC", "u32": "0xFFFFFFFF"},
+        {"offset": "0x10", "u32": "0xFFFFFFFF"},
+        {"offset": "0x14", "u32": "0xFFFFFFFF"},
+        {"offset": "0x18", "u32": "0xFFFFFFFF"},
+        {"offset": "0x1C", "u32": "0xAABBCCDD"}
+      ]
+    },
+    "zero": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": "0x13579BDF"},
+        {"offset": "0x8", "u32": 0},
+        {"offset": "0xC", "u32": 0},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0x14", "u32": 0},
+        {"offset": "0x18", "u32": 0},
+        {"offset": "0x1C", "u32": "0x2468ACE0"}
+      ]
+    },
+    "edge": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0xDEADBEEF"},
+        {"offset": "0x4", "u32": "0x12345678"},
+        {"offset": "0x8", "u32": 1},
+        {"offset": "0xC", "u32": "0x80000000"},
+        {"offset": "0x10", "u32": "0x7F7F0000"},
+        {"offset": "0x14", "u32": "0x7FC00001"},
+        {"offset": "0x18", "u32": "0x80000000"},
+        {"offset": "0x1C", "u32": "0xCAFEBABE"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "typical random object", "args": ["@p"]},
+    {"name": "all store targets reset and gap sentinels preserved", "args": ["@ones"]},
+    {"name": "already-zero targets with nonzero gaps", "args": ["@zero"]},
+    {"name": "NaN and negative-zero float bit patterns", "args": ["@edge"]},
+    {"name": "unaligned this pointer", "args": ["@p+0x1"]},
+    {"name": "pointer at end of object with room for final store", "args": ["@p+0x20"]}
+  ],
+  "fuzz": {
+    "seed": 4200827,
+    "count": 30,
+    "args": [
+      {
+        "choices": ["@p", "@ones", "@zero", "@edge"]
+      }
+    ],
+    "memory": [
+      {"addr": "@p", "type": "u32", "count": 8}
+    ]
+  }
+}

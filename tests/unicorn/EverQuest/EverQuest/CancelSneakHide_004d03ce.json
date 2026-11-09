@@ -1,0 +1,46 @@
+{
+  "function": "CancelSneakHide",
+  "original": "0x004d03ce",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "rewrite": "CancelSneakHide",
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "player": {"size": "0x100", "fill": "zero"},
+    "pc": {"size": "0x100", "fill": "zero"},
+    "eq": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@pc"},
+    {"addr": "0x006efe2c", "u32": "@eq"},
+    {"addr": "0x006e4d8c", "u32": "@player"},
+    {"addr": "0x006b65d8", "u8": 0},
+    {"addr": "0x006b6772", "u16": 0}
+  ],
+  "callees": {
+    "0x004255ce": {"name": "FUN_004255ce", "conv": "thiscall", "this": "ptr", "args": []},
+    "0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr"]}
+  },
+  "cases": [
+    {"name": "idle flags and no sneak", "args": []},
+    {"name": "hidden byte triggers cancel", "args": [], "memory": [{"addr": "0x006b65d8", "u8": 1}, {"addr": "0x006b6772", "u16": 7}]},
+    {"name": "hide state 29 triggers cancel and resets to minus one", "args": [], "memory": [{"addr": "0x006b6772", "u16": 29}]},
+    {"name": "hidden and hide state both trigger once", "args": [], "memory": [{"addr": "0x006b65d8", "u8": 1}, {"addr": "0x006b6772", "u16": 29}, {"addr": "@player", "offset": "0x9f", "u8": 1}]},
+    {"name": "sneaking alone triggers stop message", "args": [], "memory": [{"addr": "@player", "offset": "0x9f", "u8": 1}]},
+    {"name": "nonzero sneaking byte is cleared", "args": [], "memory": [{"addr": "@player", "offset": "0x9f", "u8": 255}]},
+    {"name": "state below 29 does not cancel", "args": [], "memory": [{"addr": "0x006b6772", "u16": 28}]},
+    {"name": "state above 29 does not cancel", "args": [], "memory": [{"addr": "0x006b6772", "u16": 30}]},
+    {"name": "hidden with unrelated state and sneaking", "args": [], "memory": [{"addr": "0x006b65d8", "u8": 255}, {"addr": "0x006b6772", "u16": 4660}, {"addr": "@player", "offset": "0x9f", "u8": 2}]}
+  ],
+  "fuzz": {
+    "seed": 5047246,
+    "count": 32,
+    "args": [],
+    "memory": [
+      {"addr": "0x006b65d8", "type": "u8", "choices": [0, 1, 2, 127, 255]},
+      {"addr": "0x006b6772", "type": "u16", "choices": [0, 1, 28, 29, 30, 65535, 4660]},
+      {"addr": "@player", "offset": "0x9f", "type": "u8", "choices": [0, 1, 2, 127, 255]}
+    ]
+  }
+}

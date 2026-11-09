@@ -1,0 +1,169 @@
+{
+  "function": "t3dDestroyPalette",
+  "original": "0x100180eb",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "int"
+    },
+    {
+      "name": "palette",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x440",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "0x11110000"},
+        {"offset": "0xc", "u8": 1},
+        {"offset": "0x41c", "u32": "0x12340000"},
+        {"offset": "0x420", "u32": "0x12340020"},
+        {"offset": "0x424", "u32": "0x12340024"},
+        {"offset": "0x428", "u32": "0x12340028"}
+      ]
+    },
+    "UnrealizeObject": {"size": "0x10", "fill": "zero"},
+    "DeleteObject": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10076040", "u32": "@UnrealizeObject"},
+    {"addr": "0x10076044", "u32": "@DeleteObject"}
+  ],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "@UnrealizeObject": {
+      "name": "UnrealizeObject",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "@DeleteObject": {
+      "name": "DeleteObject",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 4660
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: owner set, flags bit 0 set, all handles and blocks set",
+      "args": [1, "@palette"],
+      "expect": {"ret": 4660}
+    },
+    {
+      "name": "zeros: no owner, no handle, no blocks, no key",
+      "args": [0, "@palette"],
+      "memory": [
+        {"addr": "@palette", "offset": "0x8", "u32": 0},
+        {"addr": "@palette", "offset": "0xc", "u8": 0},
+        {"addr": "@palette", "offset": "0x41c", "u32": 0},
+        {"addr": "@palette", "offset": "0x420", "u32": 0},
+        {"addr": "@palette", "offset": "0x424", "u32": 0},
+        {"addr": "@palette", "offset": "0x428", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner set, flags bit 0 clear: no dictionary removal",
+      "args": [1, "@palette"],
+      "memory": [
+        {"addr": "@palette", "offset": "0xc", "u8": 0}
+      ],
+      "expect": {"ret": 4660}
+    },
+    {
+      "name": "owner set, flags 0x02: other bit set, bit 0 clear",
+      "args": [1, "@palette"],
+      "memory": [
+        {"addr": "@palette", "offset": "0xc", "u8": 2}
+      ],
+      "expect": {"ret": 4660}
+    },
+    {
+      "name": "no owner, flags bit 0 set: dictionary not touched, FUN_10015d81 not called",
+      "args": [0, "@palette"],
+      "memory": [
+        {"addr": "@palette", "offset": "0xc", "u8": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner set, FUN_10015d81 returns 0: the function returns 0",
+      "args": [1, "@palette"],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "only the GDI handle set",
+      "args": [0, "@palette"],
+      "memory": [
+        {"addr": "@palette", "offset": "0x8", "u32": 0},
+        {"addr": "@palette", "offset": "0x420", "u32": 0},
+        {"addr": "@palette", "offset": "0x424", "u32": 0},
+        {"addr": "@palette", "offset": "0x428", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 98539,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@palette"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@palette", "offset": "0x8", "type": "ptr", "choices": [0, "0x11110000"]},
+      {"addr": "@palette", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@palette", "offset": "0x41c", "type": "ptr", "choices": [0, "0x12340000"]},
+      {"addr": "@palette", "offset": "0x420", "type": "ptr", "choices": [0, "0x12340020"]},
+      {"addr": "@palette", "offset": "0x424", "type": "ptr", "choices": [0, "0x12340024"]},
+      {"addr": "@palette", "offset": "0x428", "type": "ptr", "choices": [0, "0x12340028"]}
+    ]
+  }
+}

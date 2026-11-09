@@ -1,0 +1,132 @@
+{
+  "function": "ReserveBufferCapacity_guess",
+  "original": "0x004011ca",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_dummy",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "empty": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": 0}
+      ]
+    },
+    "room": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf16"},
+        {"offset": "0x4", "u32": "@buf16+0x8"},
+        {"offset": "0x8", "u32": "@buf16+0x10"}
+      ]
+    },
+    "grow16": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf16"},
+        {"offset": "0x4", "u32": "@buf16+0x8"},
+        {"offset": "0x8", "u32": "@buf16+0x10"}
+      ]
+    },
+    "grow128": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf128"},
+        {"offset": "0x4", "u32": "@buf128+0x20"},
+        {"offset": "0x8", "u32": "@buf128+0x80"}
+      ]
+    },
+    "grow132": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf132"},
+        {"offset": "0x4", "u32": "@buf132+0x20"},
+        {"offset": "0x8", "u32": "@buf132+0x84"}
+      ]
+    },
+    "fuzzvec": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf16"},
+        {"offset": "0x4", "u32": "@buf16+0x8"},
+        {"offset": "0x8", "u32": "@buf16+0x10"}
+      ]
+    },
+    "buf16": {"size": "0x40", "fill": "random"},
+    "buf128": {"size": "0x100", "fill": "random"},
+    "buf132": {"size": "0x100", "fill": "random"},
+    "newbuf": {"size": "0x200", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x0058FB58", "size": 64, "fill": "zero"},
+    {"addr": "0x0058FB5C", "u32": "0x00590000"},
+    {"addr": "0x0058FB94", "u32": "0x00590100"}
+  ],
+  "callees": {
+    "0x004014f2": {
+      "name": "alloc_and_copy_dwords_guess",
+      "conv": "thiscall",
+      "args": ["u32", "ptr", "ptr"],
+      "ret": "@newbuf"
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x00401366": {
+      "name": "pool_alloc_guess",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@newbuf"
+    }
+  },
+  "cases": [
+    {"name": "capacity has spare elements", "args": ["@room", 0, 3]},
+    {"name": "capacity boundary does not grow", "args": ["@room", 0, 4]},
+    {"name": "empty buffer remains empty for zero request", "args": ["@empty", 0, 0]},
+    {"name": "empty buffer allocation", "args": ["@empty", 7, 1]},
+    {"name": "small old buffer returns to class 1", "args": ["@grow16", 0, 5]},
+    {"name": "128 byte old buffer returns to class 15", "args": ["@grow128", 0, 33]},
+    {"name": "132 byte old buffer is deleted", "args": ["@grow132", 0, 34]}
+  ],
+  "fuzz": {
+    "seed": 4198858,
+    "count": 32,
+    "args": [
+      {"choices": ["@empty", "@room", "@grow16", "@grow128", "@grow132", "@fuzzvec"]},
+      {"range": [-8, 8]},
+      {"range": [0, 45]}
+    ],
+    "memory": [
+      {"addr": "@fuzzvec", "offset": "0x0", "type": "ptr", "choices": [0, "@buf16", "@buf16+0x10"]},
+      {"addr": "@fuzzvec", "offset": "0x4", "type": "ptr", "choices": [0, "@buf16+0x4", "@buf16+0x8", "@buf16+0x20"]},
+      {"addr": "@fuzzvec", "offset": "0x8", "type": "ptr", "choices": [0, "@buf16+0x10", "@buf16+0x20", "@buf16+0x40"]},
+      {"addr": "0x0058FB5C", "type": "u32"},
+      {"addr": "0x0058FB94", "type": "u32"}
+    ]
+  }
+}

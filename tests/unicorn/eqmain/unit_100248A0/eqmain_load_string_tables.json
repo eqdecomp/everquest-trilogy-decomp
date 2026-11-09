@@ -1,0 +1,164 @@
+{
+  "function": "eqmain_load_string_tables_guess",
+  "original": "0x100253d0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "bool",
+  "objects": {
+    "newobj": {"size": "0x10", "fill": "zero"},
+    "stream": {"size": "0x100", "init": [{"offset": 0, "u32": 2}]},
+    "srckey": {"size": "0x10", "fill": "zero"},
+    "fz0": {"size": "0x40", "fill": "zero"},
+    "fz1": {"size": "0x40", "fill": "zero"},
+    "fz2": {"size": "0x40", "fill": "zero"},
+    "fz3": {"size": "0x40", "fill": "zero"},
+    "name_empty": {"size": "0x40", "init": [{"offset": 0, "cstr": ""}]},
+    "name_one": {"size": "0x40", "init": [{"offset": 0, "cstr": "x"}]},
+    "name_abc": {"size": "0x40", "init": [{"offset": 0, "cstr": "abc"}]},
+    "name_four": {"size": "0x40", "init": [{"offset": 0, "cstr": "abcd"}]},
+    "name_seven": {"size": "0x40", "init": [{"offset": 0, "cstr": "abcdefg"}]},
+    "name_long": {"size": "0x40", "init": [{"offset": 0, "cstr": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"}]}
+  },
+  "memory": [
+    {"addr": "0x1012b914", "u32": "@stream"},
+    {"addr": "0x1012b91c", "u32": 0},
+    {"addr": "0x1012b920", "size": 1652, "fill": "random"},
+    {"addr": "0x1012bf94", "size": 1344, "fill": "random"},
+    {"addr": "0x1012c4ec", "size": 1344, "fill": "random"},
+    {"addr": "0x1012c774", "u32": "@srckey"}
+  ],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@newobj"
+    },
+    "0x100259c0": {
+      "name": "FUN_100259c0",
+      "conv": "fastcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@newobj"
+    },
+    "0x10025b00": {
+      "name": "FUN_10025b00",
+      "conv": "fastcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x100253b0": {
+      "name": "FUN_100253b0",
+      "conv": "stdcall",
+      "args": []
+    },
+    "0x10025120": {
+      "name": "FUN_10025120",
+      "conv": "stdcall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x10025150": {
+      "name": "FUN_10025150",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "@srckey"
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": [
+        "@fz0",
+        "@fz1",
+        "@fz2",
+        "@fz3"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "no rows, release skipped",
+      "memory": [{"addr": "@stream", "u32": 0}],
+      "callees": {"0x10025b00": {"ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "one row",
+      "memory": [{"addr": "@stream", "u32": 1}],
+      "callees": {"0x10021110": {"ret": ["@name_abc"]}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "two rows, release called (FUN_10025b00 returns 0)",
+      "memory": [{"addr": "@stream", "u32": 2}],
+      "callees": {"0x10025b00": {"ret": 0}, "0x10021110": {"ret": ["@name_abc", "@name_four"]}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "allocation fails: NULL object, constructor skipped, release called",
+      "memory": [{"addr": "@stream", "u32": 2}],
+      "callees": {"0x100338e5": {"ret": 0}, "0x10025b00": {"ret": 0}, "0x10021110": {"ret": ["@name_abc", "@name_four"]}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tail lengths 0, 3, 4, 7",
+      "memory": [{"addr": "@stream", "u32": 4}],
+      "callees": {"0x10021110": {"ret": ["@name_empty", "@name_abc", "@name_four", "@name_seven"]}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "63-char string fills its row",
+      "memory": [{"addr": "@stream", "u32": 2}],
+      "callees": {"0x10021110": {"ret": ["@name_long", "@name_one"]}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "count keeps only the low word (0x10002 -> 2)",
+      "memory": [{"addr": "@stream", "u32": 65538}],
+      "callees": {"0x10021110": {"ret": ["@name_abc"]}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "negative count: no rows",
+      "memory": [{"addr": "@stream", "u32": "0xffffffff"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "count 0 with release",
+      "memory": [{"addr": "@stream", "u32": 0}],
+      "callees": {"0x10025b00": {"ret": 0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "count 11: row 10 of the second table is the count word, its empty string zeroes the bound",
+      "memory": [{"addr": "@stream", "u32": 11}],
+      "callees": {"0x10021110": {"ret": ["@name_abc", "@name_four", "@name_seven", "@name_one", "@name_long", "@name_abc", "@name_four", "@name_seven", "@name_one", "@name_long", "@name_abc", "@name_four", "@name_seven", "@name_one", "@name_long", "@name_abc", "@name_four", "@name_seven", "@name_one", "@name_long", "@name_abc", "@name_empty"]}},
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 152528,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@stream", "type": "int", "range": [-3, 10]},
+      {"addr": "@fz0", "type": "u8", "count": 63, "choices": [0, 65, 66, 97, 98, 99, 120, 127]},
+      {"addr": "@fz1", "type": "u8", "count": 63, "choices": [0, 65, 66, 97, 98, 99, 120, 127]},
+      {"addr": "@fz2", "type": "u8", "count": 63, "choices": [0, 65, 66, 97, 98, 99, 120, 127]},
+      {"addr": "@fz3", "type": "u8", "count": 63, "choices": [0, 65, 66, 97, 98, 99, 120, 127]},
+      {"addr": "0x1012c4ec", "size": 1344},
+      {"addr": "0x1012bf94", "size": 1344}
+    ]
+  }
+}

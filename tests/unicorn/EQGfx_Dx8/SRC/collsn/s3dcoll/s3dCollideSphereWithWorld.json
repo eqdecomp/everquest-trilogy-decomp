@@ -1,0 +1,133 @@
+{
+  "function": "s3dCollideSphereWithWorld",
+  "original": "0x00414523",
+  "sources": [
+    "src/EQGfx_Dx8/SRC/collsn/s3dcoll.cpp"
+  ],
+  "rewrite": "s3dCollideSphereWithWorld",
+  "conv": "fastcall",
+  "args": [
+    { "name": "param_1", "type": "ptr" },
+    { "name": "edx_dummy", "type": "int" },
+    { "name": "param_2", "type": "u32" },
+    { "name": "param_3", "type": "u32" },
+    { "name": "param_4", "type": "u32" },
+    { "name": "param_5", "type": "float" },
+    { "name": "param_6", "type": "float" },
+    { "name": "param_7", "type": "float" },
+    { "name": "param_8", "type": "ptr" },
+    { "name": "param_9", "type": "ptr" },
+    { "name": "param_10", "type": "ptr" },
+    { "name": "param_11", "type": "char" }
+  ],
+  "ret": "char",
+  "objects": {
+    "param_1": {
+      "size": "0x2cb0",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 305419896 },
+        { "offset": "0x4", "u32": 2271560481 },
+        { "offset": "0x2c94", "u32": 1 },
+        { "offset": "0x2cac", "u32": "@sphere_data" }
+      ]
+    },
+    "sphere_data": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x8", "f32": 2.5 }
+      ]
+    },
+    "param_8": { "size": "0xc", "fill": "zero" },
+    "param_9": { "size": "0xc", "fill": "zero" },
+    "param_10": { "size": "0xc", "fill": "zero" },
+    "collision_fn": { "size": "0x10", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x006e50c8", "u32": "@collision_fn" },
+    { "addr": "0x7f0effc4", "u32": 1145324612 },
+    { "addr": "0x7f0effc8", "u32": 286331153 },
+    { "addr": "0x7f0effcc", "u32": 572662306 },
+    { "addr": "0x7f0effd0", "u32": 858993459 }
+  ],
+  "callees": {
+    "@collision_fn": {
+      "name": "s3dCollideSphereWithWorld",
+      "args": [
+        "u32", "u32", "mem:24", "mem:12", "float", "ptr", "ptr",
+        "int", "ignore", "ignore", "ignore", "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "world collision disabled",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 1],
+      "memory": [{ "addr": "@param_1", "offset": "0x2c94", "u32": 0 }],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "callback reports no contact",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 1],
+      "expect": { "ret": 1 },
+      "callees": { "@collision_fn": { "ret": 1 } }
+    },
+    {
+      "name": "callback selection mode two",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 2],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "callback selection mode three",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 3],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "contact exactly at input point, mode zero",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 0],
+      "expect": { "ret": 0 },
+      "callees": { "@collision_fn": { "ret": 0, "writes": [{ "arg": 8, "offset": 0, "hex": "0000803f0000004000004040" }] } }
+    },
+    {
+      "name": "contact differs in first coordinate",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 2],
+      "expect": { "ret": 1 },
+      "callees": { "@collision_fn": { "ret": 0, "writes": [{ "arg": 8, "offset": 0, "hex": "0000a03f0000004000004040" }] } }
+    },
+    {
+      "name": "contact differs in second coordinate",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 3],
+      "expect": { "ret": 1 },
+      "callees": { "@collision_fn": { "ret": 0, "writes": [{ "arg": 8, "offset": 0, "hex": "0000803f0000404000004040" }] } }
+    },
+    {
+      "name": "contact differs in third coordinate",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, "@param_8", "@param_9", "@param_10", 4],
+      "expect": { "ret": 1 },
+      "callees": { "@collision_fn": { "ret": 0, "writes": [{ "arg": 8, "offset": 0, "hex": "0000803f0000004000008040" }] } }
+    },
+    {
+      "name": "null output pointers still compare contact",
+      "args": ["@param_1", 0, 17, 34, 51, 1.0, 2.0, 3.0, 0, 0, 0, 2],
+      "expect": { "ret": 0 },
+      "callees": { "@collision_fn": { "ret": 0, "writes": [{ "arg": 8, "offset": 0, "hex": "0000803f0000004000004040" }] } }
+    }
+  ],
+  "fuzz": {
+    "seed": 4277539,
+    "count": 40,
+    "args": [
+      { "choices": ["@param_1"] },
+      {}, {}, {}, {}, {}, {}, {},
+      { "choices": ["@param_8", 0] },
+      { "choices": ["@param_9", 0] },
+      { "choices": ["@param_10", 0] },
+      {}
+    ],
+    "memory": [
+      { "addr": "@param_1", "offset": "0x2c94", "type": "u32", "choices": [0, 1, 1] }
+    ]
+  }
+}

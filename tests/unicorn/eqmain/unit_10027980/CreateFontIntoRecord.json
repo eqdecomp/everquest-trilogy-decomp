@@ -1,0 +1,150 @@
+{
+  "function": "CreateFontIntoRecord_guess",
+  "original": "0x10027980",
+  "sources": [
+    "src/eqmain/unit_10027980.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "record",
+      "type": "ptr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    },
+    {
+      "name": "param",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "record": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "param": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "gdi32.dll!CreateFontIndirectA": {
+      "name": "CreateFontIndirectA",
+      "conv": "stdcall",
+      "args": ["mem:60"],
+      "ret": 4660
+    }
+  },
+  "cases": [
+    {
+      "name": "font created",
+      "args": [
+        "@record",
+        1,
+        "@param"
+      ]
+    },
+    {
+      "name": "font creation fails",
+      "args": [
+        "@record",
+        0,
+        "@param"
+      ],
+      "callees": {
+        "gdi32.dll!CreateFontIndirectA": {
+          "conv": "stdcall",
+          "args": ["mem:60"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "handle with high bit set",
+      "args": [
+        "@record",
+        0,
+        "@param"
+      ],
+      "callees": {
+        "gdi32.dll!CreateFontIndirectA": {
+          "conv": "stdcall",
+          "args": ["mem:60"],
+          "ret": -2147483648
+        }
+      }
+    },
+    {
+      "name": "handle -1 is still non-null",
+      "args": [
+        "@record",
+        0,
+        "@param"
+      ],
+      "callees": {
+        "gdi32.dll!CreateFontIndirectA": {
+          "conv": "stdcall",
+          "args": ["mem:60"],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "param is the record (overlapping copy)",
+      "args": [
+        "@record",
+        0,
+        "@record"
+      ]
+    },
+    {
+      "name": "param shifted into the record",
+      "args": [
+        "@record",
+        0,
+        "@record+4"
+      ]
+    },
+    {
+      "name": "record is the param",
+      "args": [
+        "@param",
+        1,
+        "@param"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 162176,
+    "count": 60,
+    "args": [
+      {
+        "choices": [
+          "@record"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@param",
+          "@record",
+          "@record+4"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param",
+        "size": 64
+      },
+      {
+        "addr": "@record",
+        "size": 64
+      }
+    ]
+  }
+}

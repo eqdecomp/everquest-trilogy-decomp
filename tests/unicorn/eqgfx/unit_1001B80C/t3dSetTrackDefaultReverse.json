@@ -1,0 +1,253 @@
+{
+  "function": "t3dSetTrackDefaultReverse",
+  "original": "0x1001d1a9",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "track",
+      "type": "ptr"
+    },
+    {
+      "name": "reverse",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "track": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076284",
+      "f32": 0.0
+    },
+    {
+      "addr": "@track",
+      "offset": "0x28",
+      "f32": 1.0
+    },
+    {
+      "addr": "@track",
+      "offset": "0x2c",
+      "f32": -2.0
+    },
+    {
+      "addr": "@track",
+      "offset": "0x30",
+      "f32": 1.0
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "reverse 0, field negative: negated to positive",
+      "args": ["@track", 0],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": -2.0
+        }
+      ]
+    },
+    {
+      "name": "reverse 0, field positive: untouched",
+      "args": ["@track", 0],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 3.5
+        }
+      ]
+    },
+    {
+      "name": "reverse 1, field positive: negated",
+      "args": ["@track", 1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 3.5
+        }
+      ]
+    },
+    {
+      "name": "reverse 1, field negative: untouched",
+      "args": ["@track", 1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": -3.5
+        }
+      ]
+    },
+    {
+      "name": "reverse 2 (neither 0 nor 1): the non-zero xor always negates",
+      "args": ["@track", 2],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "reverse -1: always negates",
+      "args": ["@track", -1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "reverse 0x01000000: the compare is a full dword, high bits count",
+      "args": ["@track", "0x01000000"],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 7.0
+        }
+      ]
+    },
+    {
+      "name": "reverse 0, field +0.0: not less, untouched",
+      "args": ["@track", 0],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 0.0
+        }
+      ]
+    },
+    {
+      "name": "reverse 1, field +0.0: the boundary is negated to -0.0",
+      "args": ["@track", 1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": 0.0
+        }
+      ]
+    },
+    {
+      "name": "reverse 1, field -0.0: not less, negated to +0.0",
+      "args": ["@track", 1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "hex": "00000080"
+        }
+      ]
+    },
+    {
+      "name": "reverse 0, field -0.0: not less, untouched",
+      "args": ["@track", 0],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "hex": "00000080"
+        }
+      ]
+    },
+    {
+      "name": "reverse 1, field +inf: negated to -inf",
+      "args": ["@track", 1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "hex": "0000807f"
+        }
+      ]
+    },
+    {
+      "name": "reverse 0, field -inf: negated to +inf",
+      "args": ["@track", 0],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "hex": "000080ff"
+        }
+      ]
+    },
+    {
+      "name": "reverse 0, field -1.0 with pinned neighbours: the negated store lands only at +0x2C",
+      "args": ["@track", 0],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x28",
+          "f32": 1.0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": -1.0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x30",
+          "f32": 1.0
+        }
+      ]
+    },
+    {
+      "name": "reverse 1, field -1.0 with pinned neighbours: no store at all",
+      "args": ["@track", 1],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x28",
+          "f32": 1.0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x2c",
+          "f32": -1.0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x30",
+          "f32": 1.0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 119209,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@track"]
+      },
+      {
+        "range": [-2, 3]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@track",
+        "offset": "0x2c",
+        "type": "float"
+      }
+    ]
+  }
+}

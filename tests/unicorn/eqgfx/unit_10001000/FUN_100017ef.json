@@ -1,0 +1,282 @@
+{
+  "function": "s3dReorientActorFromCollision",
+  "original": "0x100017ef",
+  "sources": [
+    "src/eqgfx/unit_10001000.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "world", "type": "ptr"},
+    {"name": "actor", "type": "ptr"},
+    {"name": "coefficients", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "actor": {
+      "size": "0x110",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "f32": 1.0},
+        {"offset": "0x14", "f32": 2.0},
+        {"offset": "0x18", "f32": 3.0},
+        {"offset": "0x1C", "f32": 100.0},
+        {"offset": "0x20", "f32": 20.0},
+        {"offset": "0x24", "f32": 0.0},
+        {"offset": "0x28", "f32": 5.0},
+        {"offset": "0x10C", "u32": 2}
+      ]
+    },
+    "coefficients": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "f32": 0.6},
+        {"offset": "0x04", "f32": 0.1},
+        {"offset": "0x08", "f32": 0.8},
+        {"offset": "0x0C", "f32": -0.2},
+        {"offset": "0x10", "f32": 0.3},
+        {"offset": "0x14", "f32": 0.4},
+        {"offset": "0x18", "f32": -0.5},
+        {"offset": "0x1C", "f32": 0.6},
+        {"offset": "0x20", "f32": 0.5},
+        {"offset": "0x24", "f32": 0.25},
+        {"offset": "0x28", "f32": 0.75}
+      ]
+    },
+    "startup": {
+      "size": "0x6100",
+      "fill": "random"
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "decoy": {
+      "size": "0x110",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x10C", "u32": 4}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100f3ff4", "u32": "@startup"},
+    {"addr": "0x100fc77c", "u32": "@fn"}
+  ],
+  "callees": {
+    "0x1004eefa": {
+      "name": "t3dFloatFastCosine",
+      "conv": "cdecl",
+      "args": ["float"],
+      "passthrough": true
+    },
+    "0x1004ee87": {
+      "name": "t3dFloatFastSine",
+      "conv": "cdecl",
+      "args": ["float"],
+      "passthrough": true
+    },
+    "0x1004ef68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": ["float"],
+      "passthrough": true
+    },
+    "0x1004ecf9": {
+      "name": "t3dAngleArcTangentFloat",
+      "conv": "cdecl",
+      "args": ["float", "float", "ptr"],
+      "ret_float": [0.5, -0.25],
+      "writes": [{"arg": 2, "offset": 0, "hex": "01000000"}]
+    },
+    "0x1000a764": {
+      "name": "t3dSetActorLocation",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "mem:28"],
+      "ret": 0
+    },
+    "@fn": {
+      "name": "invsqrt_guess",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 0.37
+    }
+  },
+  "cases": [
+    {
+      "name": "typical mode 2: pitch from the matrix, roll zero",
+      "args": ["@world", "@actor", "@coefficients"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "typical mode 3: pitch and roll from the matrix",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 1: pitch and roll levelled",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 0: returns 0 before the matrix is read",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "mode 0 with a zero first coefficient: still 0",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 0}, {"addr": "@coefficients", "offset": "0x00", "f32": 0.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "mode 4 with a nonzero first coefficient: returns -1",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 4}],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "mode 4 with +0.0 first coefficient: levels both and sets (ret 1)",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 4}, {"addr": "@coefficients", "offset": "0x00", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 4 with -0.0 first coefficient: raw bits are not zero, returns -1",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 4}, {"addr": "@coefficients", "offset": "0x00", "f32": -0.0}],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "mode 2 with -0.0 first coefficient: not the zero test, pitch path (ret 1)",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@coefficients", "offset": "0x00", "f32": -0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 5 with +0.0 first coefficient: levels both (ret 1)",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 5}, {"addr": "@coefficients", "offset": "0x00", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 2, A = B = 0: pitch sine is zero, no pitch arc tangent",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@coefficients", "offset": "0x20", "f32": 0.0}, {"addr": "@coefficients", "offset": "0x24", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, A = B = 0: pitch and roll sines are zero",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}, {"addr": "@coefficients", "offset": "0x20", "f32": 0.0}, {"addr": "@coefficients", "offset": "0x24", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 2, A = B = C = 0: squared length zero, no normalisation, pitch zero",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@coefficients", "offset": "0x20", "f32": 0.0}, {"addr": "@coefficients", "offset": "0x24", "f32": 0.0}, {"addr": "@coefficients", "offset": "0x28", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, A = B = C = 0: squared length zero, pitch and roll zero",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}, {"addr": "@coefficients", "offset": "0x20", "f32": 0.0}, {"addr": "@coefficients", "offset": "0x24", "f32": 0.0}, {"addr": "@coefficients", "offset": "0x28", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, C = 0: Y and Z vanish, roll comes from X alone",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}, {"addr": "@coefficients", "offset": "0x28", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 2, C = 0: pitch sine zero, squared length is X squared",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@coefficients", "offset": "0x28", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, all of A, B, C negative",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}, {"addr": "@coefficients", "offset": "0x20", "f32": -0.5}, {"addr": "@coefficients", "offset": "0x24", "f32": -0.25}, {"addr": "@coefficients", "offset": "0x28", "f32": -0.75}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, inverse square root returns 2.0 (per-case callee)",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}],
+      "callees": {"@fn": {"name": "invsqrt_guess", "conv": "cdecl", "args": ["float"], "ret_float": 2.0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 2, inverse square root returns 0.0: scaled Y and Z vanish, pitch zero",
+      "args": ["@world", "@actor", "@coefficients"],
+      "callees": {"@fn": {"name": "invsqrt_guess", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, inverse square root returns 0.0: roll and pitch zero",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}],
+      "callees": {"@fn": {"name": "invsqrt_guess", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 2, A = 0: pitch from Y times B alone",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@coefficients", "offset": "0x20", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 3, B = 0: roll from sin times A alone",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x10C", "u32": 3}, {"addr": "@coefficients", "offset": "0x24", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 2 with heading 500.0",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": "0x1C", "f32": 500.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "entry registers are never read: the actor is taken from the argument (mode 2, ret 1)",
+      "args": ["@world", "@actor", "@coefficients"],
+      "regs": {"eax": "@decoy", "ebx": "@decoy", "ecx": "@decoy", "edx": "@decoy", "esi": "@decoy", "edi": "@decoy"},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "another actor argument: the decoy (mode 4) gives -1, so the argument is what is read",
+      "args": ["@world", "@decoy", "@coefficients"],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "held-out reseed: mode 2 normalised Y is rounded to float before the pitch product (huge sine table entry)",
+      "args": ["@world", "@actor", "@coefficients"],
+      "memory": [{"addr": "@actor", "offset": 268, "hex": "02000000"}, {"addr": "@actor", "offset": 16, "f32": 144}, {"addr": "@actor", "offset": 20, "f32": 57}, {"addr": "@actor", "offset": 24, "f32": 2}, {"addr": "@actor", "offset": 28, "f32": 143}, {"addr": "@actor", "offset": 32, "f32": 458}, {"addr": "@actor", "offset": 36, "f32": -26}, {"addr": "@actor", "offset": 40, "f32": 547}, {"addr": "@coefficients", "offset": 0, "f32": 1}, {"addr": "@coefficients", "offset": 4, "f32": 1}, {"addr": "@coefficients", "offset": 8, "f32": 1}, {"addr": "@coefficients", "offset": 12, "f32": 1}, {"addr": "@coefficients", "offset": 16, "f32": 1}, {"addr": "@coefficients", "offset": 20, "f32": -1}, {"addr": "@coefficients", "offset": 24, "f32": -2}, {"addr": "@coefficients", "offset": 28, "f32": 0}, {"addr": "@coefficients", "offset": 32, "f32": -2}, {"addr": "@coefficients", "offset": 36, "f32": 1}, {"addr": "@coefficients", "offset": 40, "f32": -1}, {"addr": "@coefficients", "offset": 44, "f32": 1}, {"addr": "@startup", "offset": 4668, "hex": "42d0ac2d"}, {"addr": "@startup", "offset": 6716, "hex": "077624dd"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 1710017,
+    "count": 40,
+    "args": [
+      {"choices": ["@world"]},
+      {"choices": ["@actor"]},
+      {"choices": ["@coefficients"]}
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x10C", "type": "int", "range": [0, 4]},
+      {"addr": "@actor", "offset": "0x10", "type": "float", "count": 7, "range": [-600, 600]},
+      {"addr": "@coefficients", "offset": "0x00", "type": "float", "count": 12, "range": [-2, 2]},
+      {"addr": "@coefficients", "offset": "0x00", "type": "float", "choices": [0.0, -0.0, 0.5], "p": 0.3},
+      {"addr": "@coefficients", "offset": "0x20", "type": "float", "count": 3, "choices": [0.0, 0.25, -0.5, 1.0], "p": 0.4}
+    ]
+  }
+}

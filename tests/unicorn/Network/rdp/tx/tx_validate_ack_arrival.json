@@ -1,0 +1,213 @@
+{
+  "function": "tx_validate_ack_arrival",
+  "original": "0x004f2990",
+  "sources": [
+    "src/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {"size": "0x520", "fill": "zero"},
+    "param_2": {"size": "0x8", "fill": "zero", "init": [
+      {"offset": "0x4", "u32": "@ackbuf"}
+    ]},
+    "param_3": {"size": "0x4", "fill": "zero"},
+    "conn_alt": {"size": "0x520", "fill": "zero"},
+    "ackbuf": {"size": "0x100", "fill": "zero"},
+    "stats": {"size": "0x140", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x0057f698", "u32": "@stats"}
+  ],
+  "callees": {
+    "0x004f1230": {
+      "name": "format_sockaddr",
+      "conv": "cdecl",
+      "args": ["ignore", "ignore"],
+      "writes": [{"arg": 0, "offset": 0, "hex": "6164647200"}]
+    },
+    "0x004f66f0": {
+      "name": "discard_log_append",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "varargs": "printf"
+    },
+    "0x00500380": {
+      "name": "ntohs",
+      "conv": "stdcall",
+      "args": ["u16"],
+      "ret": 100
+    },
+    "0x004f7dd0": {
+      "name": "getbit_guess",
+      "conv": "cdecl",
+      "args": ["ignore", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "no flags returns zero",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [{"addr": "@param_2", "u16": 0}]
+    },
+    {
+      "name": "unrelated high flags reject with code two",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [{"addr": "@param_2", "u16": 16}]
+    },
+    {
+      "name": "single ack bit positive difference",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 4},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 99}
+      ]
+    },
+    {
+      "name": "sequence window accepts minus one thousand",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 8},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 1100}
+      ]
+    },
+    {
+      "name": "sequence window includes minus 4096",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 4},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 4196}
+      ]
+    },
+    {
+      "name": "sequence window rejects minus 4097",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 4},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 4197}
+      ]
+    },
+    {
+      "name": "equal sequence is ancient or unsent",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 4},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 100}
+      ]
+    },
+    {
+      "name": "odd ack sequence stays intact in ancient log",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 4},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 100}
+      ],
+      "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 101}}
+    },
+    {
+      "name": "signed wrap accepts minus one",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 4},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 0}
+      ],
+      "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 65535}}
+    },
+    {
+      "name": "one byte empty ack mask",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 20},
+        {"addr": "@ackbuf", "u16": 1234},
+        {"addr": "@ackbuf", "offset": "0x2", "u8": 165}
+      ]
+    },
+    {
+      "name": "fifteen byte empty ack mask boundary",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 244},
+        {"addr": "@ackbuf", "u16": 5678},
+        {"addr": "@ackbuf", "offset": "0x10", "u8": 255}
+      ]
+    },
+    {
+      "name": "single set mask bit resolves to sequence 101",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 20},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 101}
+      ],
+      "callees": {"0x004f7dd0": {"name": "getbit_guess", "conv": "cdecl", "args": ["ignore", "u32"], "ret": 1}}
+    },
+    {
+      "name": "middle set bit in two byte mask",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 36},
+        {"addr": "@param_1", "offset": "0x4bc", "u16": 101}
+      ],
+      "callees": {"0x004f7dd0": {"name": "getbit_guess", "conv": "cdecl", "args": ["ignore", "u32"], "ret": [0, 1, 0]}}
+    },
+    {
+      "name": "both ack bits take precedence over mask",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 27645},
+        {"addr": "@param_1", "offset": "0xec", "u32": 7}
+      ]
+    },
+    {
+      "name": "both ack bits with bit zero but without bit fourteen",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [{"addr": "@param_2", "u16": 13}]
+    },
+    {
+      "name": "both ack bits and overflowing global counter",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 12},
+        {"addr": "@stats", "offset": "0x118", "u32": 4294967295},
+        {"addr": "@stats", "offset": "0x11c", "u32": 7}
+      ]
+    },
+    {
+      "name": "both ack bits use alternate connection object",
+      "args": ["@conn_alt", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "u16": 12},
+        {"addr": "@conn_alt", "offset": "0xec", "u32": 7}
+      ]
+    },
+    {
+      "name": "no ack fields with several unrelated bits",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [{"addr": "@param_2", "u16": 240}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5187984,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1"]},
+      {"choices": ["@param_2"]},
+      {"choices": ["@param_3"]}
+    ],
+    "memory": [
+      {"addr": "@param_2", "type": "u16", "choices": [0, 1, 4, 8, 12, 16, 20, 24, 32, 36, 64, 68, 72, 128, 132, 240, 244, 252]},
+      {"addr": "@param_1", "offset": "0x4bc", "type": "short", "choices": [-32768, -4097, -4096, -1000, -1, 0, 99, 100, 101, 1100, 4196, 4197, 32767]},
+      {"addr": "@ackbuf", "offset": "0x2", "type": "u8", "count": 15, "range": [0, 255]},
+      {"addr": "@stats", "offset": "0xa0", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x118", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x120", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x128", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x130", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]}
+    ]
+  }
+}

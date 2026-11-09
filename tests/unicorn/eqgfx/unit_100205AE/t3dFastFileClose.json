@@ -1,0 +1,245 @@
+{
+  "function": "t3dFastFileClose",
+  "original": "0x10021838",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "fastFile",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "fastfile": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@stream"
+        }
+      ]
+    },
+    "stream": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@handle"
+        }
+      ]
+    },
+    "handle": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1
+        }
+      ]
+    },
+    "otherHandle": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10052a20": {
+      "name": "closeFileHandle_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10021c88": {
+      "name": "releaseObjectIfNotNull_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "open handle (record 1): returns 1, closes the handle, releases and frees the object",
+      "args": [
+        "@fastfile"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "closed handle (record 0): returns 0 but still closes, releases and frees",
+      "args": [
+        "@fastfile"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "record 0x80000000: non-zero means open even in the sign bit, returns 1",
+      "args": [
+        "@fastfile"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "record 0xffffffff: returns 1 (SETNZ, not a sign test)",
+      "args": [
+        "@fastfile"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "ordering: close clears the record, the result still reads it before the close",
+      "args": [
+        "@fastfile"
+      ],
+      "callees": {
+        "0x10052a20": {
+          "name": "closeFileHandle_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {
+              "addr": "@handle",
+              "hex": "00000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "stream points at another handle (record 0): close gets that handle, returns 0",
+      "args": [
+        "@fastfile"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x8",
+          "u32": "@otherHandle"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null fastFile: returns 0, no callee runs",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null fastFile with the general registers live on entry: returns 0, the result is set before the test",
+      "args": [
+        0
+      ],
+      "regs": {
+        "eax": "0x5a5a5a5a",
+        "ebx": "0x5a5a5a5a",
+        "ecx": "0x5a5a5a5a",
+        "edx": "0x5a5a5a5a",
+        "edi": "0x5a5a5a5a"
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null fastFile with esi and ebp live on entry: returns 0 (no stale register reaches the result)",
+      "args": [
+        0
+      ],
+      "regs": {
+        "esi": "0x5a5a5a5a",
+        "ebp": "0x5a5a5a5a"
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1021838,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@fastfile",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@handle",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          1,
+          2147483648,
+          4294967295,
+          305419896
+        ]
+      },
+      {
+        "addr": "@stream",
+        "offset": "0x8",
+        "type": "u32",
+        "choices": [
+          "@handle",
+          "@otherHandle"
+        ],
+        "p": 0.25
+      }
+    ]
+  }
+}

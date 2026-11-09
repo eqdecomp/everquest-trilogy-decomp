@@ -1,0 +1,104 @@
+{
+  "function": "t3dOverlayUnlock",
+  "original": "0x10049576",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "overlay",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX is not read at any of the 5 call sites; the original's RET follows a fresh call result it ignores (EAX evidence)",
+  "objects": {
+    "overlay": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0xc", "u32": "@surface"}]
+    },
+    "surface": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@vtable"}]
+    },
+    "vtable": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x80", "u32": "@fn"}]
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@fn": {
+      "name": "surface_unlock_guess",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 8, "hex": "454e4b55"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "mode 1 unlocks the surface",
+      "args": ["@overlay"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}]
+    },
+    {
+      "name": "mode 2 unlocks the surface",
+      "args": ["@overlay"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 0 does not unlock",
+      "args": ["@overlay"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 0}]
+    },
+    {
+      "name": "mode 3 does not unlock",
+      "args": ["@overlay"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 3}]
+    },
+    {
+      "name": "mode 0xffffffff does not unlock",
+      "args": ["@overlay"],
+      "memory": [{"addr": "0x100FB8A8", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "null surface in mode 1: no call",
+      "args": ["@overlay"],
+      "memory": [
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "@overlay", "offset": "0xc", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 300406,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@overlay"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100FB8A8",
+        "type": "u32",
+        "range": [0, 4]
+      },
+      {
+        "addr": "@overlay",
+        "offset": "0xc",
+        "type": "ptr",
+        "choices": ["@surface", 0]
+      }
+    ]
+  }
+}

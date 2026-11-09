@@ -1,0 +1,52 @@
+{
+  "function": "EQ_Overlay::draw_guess",
+  "original": "0x00450081",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "rewrite": "EQ_Overlay::draw_guess",
+  "conv": "thiscall",
+  "this": "@overlay",
+  "args": [{"name": "mode", "type": "int"}],
+  "ret": "void",
+  "objects": {
+    "overlay": {"size": "0x80", "fill": "zero", "init": [
+      {"offset": "0x4", "u32": "@overlay"},
+      {"offset": "0x14", "u32": 273},
+      {"offset": "0x24", "hex": "01000000020000000300000004000000"},
+      {"offset": "0x70", "u32": "0x006E4DE8"}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x006E4DE0", "u32": "0x007A3000"},
+    {"addr": "0x006E4E00", "u32": "0x006E4DE8"},
+    {"addr": "0x006E4E04", "u32": 0},
+    {"addr": "0x006E4E08", "u32": 0}
+  ],
+  "callees": {
+    "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 256},
+    "0x0040B492": {"name": "DrawOverlay_guess", "conv": "thiscall", "args": ["ptr", "mem:16", "mem:16", "int"], "ret": 0,
+      "writes": [{"arg": 0, "offset": 112, "hex": "e04d6e00"}]},
+    "0x004195A9": {"name": "drawButtonImage_guess", "conv": "thiscall", "args": [], "this": "mem:4", "ret": 0,
+      "writes": [{"addr": "0x006E4E00", "hex": "e44d6e00"}]}
+  },
+  "cases": [
+    {"name": "inactive skips draw and list", "args": [0], "callees": {
+      "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 0}}},
+    {"name": "full eax controls active branch", "args": [-1], "callees": {
+      "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 256}}},
+    {"name": "reload display handle scalar rect after IsActive", "args": [2147483647], "callees": {
+      "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 256,
+        "writes": [
+          {"addr": "0x006E4DE0", "hex": "e44d6e00"},
+          {"addr": "@overlay", "offset": 4, "hex": "e84d6e00"},
+          {"addr": "@overlay", "offset": 20, "hex": "efbeadde"},
+          {"addr": "@overlay", "offset": 36, "hex": "f0ffffff00000080a5a5a5a5ffffffff"}
+        ]},
+      "0x0040B492": {"name": "DrawOverlay_guess", "conv": "thiscall", "args": ["ptr", "mem:16", "mem:16", "int"], "ret": 0}},
+      "memory": [{"addr": "@overlay", "offset": "0x70", "u32": 0}]},
+    {"name": "reload list head and next after helpers", "args": [-2147483648], "callees": {
+      "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 256}}},
+    {"name": "unaligned receiver", "args": [42], "this": "@overlay+1", "callees": {
+      "0x004504AC": {"name": "IsActive_guess", "conv": "thiscall", "args": [], "ret": 0}}}
+  ],
+  "fuzz": {"seed": 45250081, "count": 30, "args": [{"range": [-2147483648, 2147483647]}]}
+}

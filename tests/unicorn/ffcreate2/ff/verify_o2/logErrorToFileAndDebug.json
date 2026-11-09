@@ -1,0 +1,227 @@
+{
+  "function": "logErrorToFileAndDebug_guess",
+  "original": "0x004f83e0",
+  "sources": [
+    "src/ffcreate2/ff/verify_o2.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "message",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "file": {
+      "size": 32,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006F015C",
+      "cstr": "verify.log"
+    },
+    {
+      "addr": "0x00564E48",
+      "from_image": "0x00564E48",
+      "image_size": 2
+    }
+  ],
+  "callees": {
+    "0x005223bc": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x005250a8": {
+      "name": "_setvbuf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x00524138": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!OutputDebugStringA": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x00521fbb": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "message is written, echoed and file closed",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "empty message still written and echoed",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "format characters passed through as the format",
+      "args": [
+        "%s %d %%\n"
+      ]
+    },
+    {
+      "name": "null message skips fprintf and echo but closes",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "fopen failure does nothing else",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fopen failure with null message",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "file name and mode read from their globals",
+      "args": [
+        "xyz"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F015C",
+          "cstr": "other.txt"
+        },
+        {
+          "addr": "0x00564E48",
+          "cstr": "w+"
+        }
+      ]
+    },
+    {
+      "name": "callee return values are ignored",
+      "args": [
+        "msg"
+      ],
+      "callees": {
+        "0x005250a8": {
+          "name": "_setvbuf_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int",
+            "u32"
+          ],
+          "ret": -1
+        },
+        "0x00524138": {
+          "name": "_fprintf_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x00521fbb": {
+          "name": "fclose_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5211104,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "abc",
+          "",
+          "error: %d\n",
+          "x",
+          "long message text here",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006F015C",
+        "type": "u32",
+        "choices": [
+          1718773110,
+          7364961,
+          0
+        ]
+      },
+      {
+        "addr": "0x00564E48",
+        "type": "u16",
+        "choices": [
+          97,
+          119,
+          29793
+        ]
+      }
+    ]
+  }
+}

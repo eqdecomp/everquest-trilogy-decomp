@@ -1,0 +1,214 @@
+{
+  "function": "WriteWindowColors",
+  "original": "0x004ab5ec",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "prefix",
+      "type": "cstr"
+    },
+    {
+      "name": "red",
+      "type": "int"
+    },
+    {
+      "name": "green",
+      "type": "int"
+    },
+    {
+      "name": "blue",
+      "type": "int"
+    },
+    {
+      "name": "trans",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x006e4e44",
+      "u32": "0x12345678"
+    }
+  ],
+  "callees": {
+    "0x0045056d": {
+      "name": "EQ_Overlay::WritePrivateProfileWindowValue",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "abc",
+        1,
+        2,
+        3,
+        4
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zeros empty prefix",
+      "args": [
+        "",
+        0,
+        0,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "distinct values keep argument order",
+      "args": [
+        "Chat",
+        255,
+        128,
+        7,
+        -1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "negative and extreme values",
+      "args": [
+        "Win1",
+        -2147483648,
+        2147483647,
+        -5,
+        65536
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "null main UI object",
+      "args": [
+        "Main",
+        10,
+        20,
+        30,
+        40
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4e44",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "UI pointer reloaded after each write",
+      "args": [
+        "Tell",
+        5,
+        6,
+        7,
+        8
+      ],
+      "callees": {
+        "0x0045056d": {
+          "name": "EQ_Overlay::WritePrivateProfileWindowValue_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr",
+            "cstr",
+            "int"
+          ],
+          "writes": [
+            {
+              "addr": "0x006e4e44",
+              "hex": "EFBEADDE"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "long prefix fills most of the key buffer",
+      "args": [
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx",
+        1,
+        2,
+        3,
+        4
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "prefix ending in key text",
+      "args": [
+        "WinRed",
+        9,
+        8,
+        7,
+        6
+      ],
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4896236,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "",
+          "a",
+          "Chat",
+          "Window12",
+          {
+            "from_image": "0x005658C0",
+            "image_size": 8,
+            "as": "cstr"
+          },
+          "xyzxyzxyzxyzxyzxyzxyzxyzxyzxyz"
+        ]
+      },
+      {},
+      {},
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4e44",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          305419896,
+          3735928559
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "function": "getFilePosition_guess",
+  "original": "0x10052d00",
+  "sources": [
+    "src/eqgfx/unit_10052D00.c"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "file",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "file": {
+      "size": "0x2020",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@buffer"
+        }
+      ]
+    },
+    "file2": {
+      "size": "0x2020",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@buffer2"
+        }
+      ]
+    },
+    "buffer": {
+      "size": "0x2018",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x200c",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    "buffer2": {
+      "size": "0x2018",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x200c",
+          "u32": "0x9955aa77"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: file -> buffer, position 0x12345678",
+      "args": ["@file"],
+      "expect": {"ret": "0x12345678"}
+    },
+    {
+      "name": "position zero, the start of the file",
+      "args": ["@file"],
+      "memory": [{"addr": "@buffer", "offset": "0x200c", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "only the low byte set (no truncation)",
+      "args": ["@file"],
+      "memory": [{"addr": "@buffer", "offset": "0x200c", "u32": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "only the second byte set",
+      "args": ["@file"],
+      "memory": [{"addr": "@buffer", "offset": "0x200c", "u32": "0xff00"}],
+      "expect": {"ret": "0xff00"}
+    },
+    {
+      "name": "sign bit set (negative as int)",
+      "args": ["@file"],
+      "memory": [{"addr": "@buffer", "offset": "0x200c", "u32": "0x80000000"}],
+      "expect": {"ret": "0x80000000"}
+    },
+    {
+      "name": "all ones",
+      "args": ["@file"],
+      "memory": [{"addr": "@buffer", "offset": "0x200c", "u32": "0xffffffff"}],
+      "expect": {"ret": "0xffffffff"}
+    },
+    {
+      "name": "neighbour dwords differ (offset witness)",
+      "args": ["@file"],
+      "memory": [
+        {"addr": "@buffer", "offset": "0x2000", "u32": "0x11112000"},
+        {"addr": "@buffer", "offset": "0x2004", "u32": "0x11112004"},
+        {"addr": "@buffer", "offset": "0x2008", "u32": "0x22222008"},
+        {"addr": "@buffer", "offset": "0x200c", "u32": "0x3333200c"},
+        {"addr": "@buffer", "offset": "0x2010", "u32": "0x44442010"},
+        {"addr": "@buffer", "offset": "0x2014", "u32": "0x55552014"}
+      ],
+      "expect": {"ret": "0x3333200c"}
+    },
+    {
+      "name": "file's own +0x200c differs (single-load witness)",
+      "args": ["@file"],
+      "memory": [
+        {"addr": "@file", "offset": "0x200c", "u32": "0x0badf00d"},
+        {"addr": "@buffer", "offset": "0x200c", "u32": "0x0ddc0ffe"}
+      ],
+      "expect": {"ret": "0x0ddc0ffe"}
+    },
+    {
+      "name": "second handle, second buffer",
+      "args": ["@file2"],
+      "expect": {"ret": "0x9955aa77"}
+    },
+    {
+      "name": "second handle, window boundary position",
+      "args": ["@file2"],
+      "memory": [{"addr": "@buffer2", "offset": "0x200c", "u32": "0x2000"}],
+      "expect": {"ret": "0x2000"}
+    }
+  ],
+  "fuzz": {
+    "seed": 339200,
+    "count": 40,
+    "args": [
+      {"choices": ["@file", "@file2"]}
+    ],
+    "memory": [
+      {"addr": "@buffer", "offset": "0x200c", "type": "u32"},
+      {"addr": "@buffer2", "offset": "0x200c", "type": "u32"}
+    ]
+  }
+}

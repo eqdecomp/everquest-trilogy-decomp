@@ -1,0 +1,327 @@
+{
+  "function": "wait_for_disconnect",
+  "original": "0x004e0632",
+  "sources": [
+    "src/EverQuest/net.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "sleep": {
+      "size": 16
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006b3194",
+      "u32": "0x12340000"
+    },
+    {
+      "addr": "0x006ecca8",
+      "u32": "0x56780000"
+    },
+    {
+      "addr": "0x00534198",
+      "u32": "@sleep"
+    }
+  ],
+  "callees": {
+    "0x004a461e": {
+      "name": "EqGetTime",
+      "conv": "cdecl",
+      "args": [],
+      "ret": [
+        0,
+        120001
+      ]
+    },
+    "0x004f23b0": {
+      "name": "connection_connected_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x004f1600": {
+      "name": "rdp_receive",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004f4cc0": {
+      "name": "msg_arrival_has_fin_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004e0601": {
+      "name": "net_shutdown",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ]
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "@sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004c1703": {
+      "name": "DbgLog_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null world connection exits without polling",
+      "memory": [
+        {
+          "addr": "0x006b3194",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "disconnected connection skips receive then shuts down",
+      "callees": {
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "exact timeout boundary sleeps before next connection check",
+      "callees": {
+        "0x004a461e": {
+          "name": "EqGetTime_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            100,
+            120100
+          ]
+        },
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "timeout fires only when elapsed is greater than 120000",
+      "callees": {
+        "0x004a461e": {
+          "name": "EqGetTime_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            100,
+            120101
+          ]
+        }
+      }
+    },
+    {
+      "name": "unsigned elapsed time wraps across tick rollover",
+      "callees": {
+        "0x004a461e": {
+          "name": "EqGetTime_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            4294967280,
+            16
+          ]
+        },
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "received non-FIN message is freed before retry",
+      "callees": {
+        "0x004a461e": {
+          "name": "EqGetTime_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            0,
+            120000
+          ]
+        },
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        },
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": "0x30001000"
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "FIN shuts down and clears connection then frees message",
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": "0x30002000"
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "FIN is ignored for shutdown if connection disappeared before check",
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": "0x30003000"
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "addr": "0x006b3194",
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "FIN shutdown uses the current non-null connection handle",
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": "0x30004000"
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "addr": "0x006b3194",
+              "hex": "efcdab89"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5113394,
+    "count": 32,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x006b3194",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x12340000",
+          "0x87654321"
+        ]
+      },
+      {
+        "addr": "0x006ecca8",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,399 @@
+{
+  "function": "SoundSlotTable_GetSlotInfo_guess",
+  "original": "0x004edf31",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "rewrite": "SoundSlotTable_GetSlotInfo_guess",
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "table",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "handle",
+      "type": "ptr"
+    },
+    {
+      "name": "info",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "table": {
+      "size": "0xb50",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@slot"
+        },
+        {
+          "offset": "0x20",
+          "u32": "@slot"
+        },
+        {
+          "offset": "0xb48",
+          "u32": "@slot"
+        },
+        {
+          "offset": "0xb4c",
+          "u32": "@slot"
+        }
+      ]
+    },
+    "slot": {
+      "size": "0xc0",
+      "fill": "random"
+    },
+    "handle": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "info": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@slot",
+      "offset": "0xac",
+      "u32": "0x12345678"
+    },
+    {
+      "addr": "@slot",
+      "offset": "0xb0",
+      "f32": 2.5
+    }
+  ],
+  "callees": {
+    "0x004ee2fd": {
+      "name": "IsEntryActive_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "index 0 slot active",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00000000"
+        }
+      ]
+    },
+    {
+      "name": "index 5 with low word bits set",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x0005ffff"
+        }
+      ]
+    },
+    {
+      "name": "index 0x2cf last valid slot",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02cf0000"
+        }
+      ]
+    },
+    {
+      "name": "index 0x2d0 out of range with live pointer",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02d00000"
+        }
+      ]
+    },
+    {
+      "name": "index 0x2d1 out of range",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02d10000"
+        }
+      ]
+    },
+    {
+      "name": "index 1 null slot",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00010000"
+        }
+      ]
+    },
+    {
+      "name": "index 0 slot cleared",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00000000"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "index 0 callee reports inactive",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00000000"
+        }
+      ],
+      "callees": {
+        "0x004ee2fd": {
+          "name": "IsEntryActive_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "index 0x2cf callee reports inactive",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02cf0000"
+        }
+      ],
+      "callees": {
+        "0x004ee2fd": {
+          "name": "IsEntryActive_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "callee returns 0x100 (nonzero above the low byte)",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00000000"
+        }
+      ],
+      "callees": {
+        "0x004ee2fd": {
+          "name": "IsEntryActive_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 256
+        }
+      }
+    },
+    {
+      "name": "callee returns -1",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00000000"
+        }
+      ],
+      "callees": {
+        "0x004ee2fd": {
+          "name": "IsEntryActive_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "high bit set in handle",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "handle all ones",
+      "args": [
+        "@table",
+        0,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "edx noise",
+      "args": [
+        "@table",
+        -1,
+        "@handle",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x00000000"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5168945,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@table"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@handle"
+        ]
+      },
+      {
+        "choices": [
+          "@info"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@table",
+        "offset": "0xc",
+        "type": "ptr",
+        "count": 720,
+        "choices": [
+          "@slot",
+          0
+        ]
+      },
+      {
+        "addr": "@handle",
+        "type": "u32",
+        "choices": [
+          "0x00000000",
+          "0x00000001",
+          "0x0005ffff",
+          "0x00010000",
+          "0x02cf0000",
+          "0x02d00000",
+          "0x02d10000",
+          "0x000b0000",
+          "0x7fff0000",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@slot",
+        "offset": "0x60",
+        "size": "0x5c"
+      }
+    ]
+  }
+}

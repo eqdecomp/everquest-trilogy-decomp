@@ -1,0 +1,672 @@
+{
+  "function": "t3dReadDataFromBinaryFile",
+  "original": "0x1002209a",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "readContext",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "readcontext": {
+      "size": "0x803c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@filename" },
+        { "offset": "0x8", "u32": 0 }
+      ]
+    },
+    "filename": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "@filename", "cstr": "trilogy.dat" }
+  ],
+  "callees": {
+    "0x10021791": {
+      "name": "t3dFastFileOpen",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": "0x1234"
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x100219a3": {
+      "name": "t3dFastFileGetEOF",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "0x10000"
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002186a": {
+      "name": "t3dFastFileRead",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr",
+        "u32"
+      ],
+      "ret": 1
+    },
+    "kernel32.dll!CreateFileA": {
+      "name": "CreateFileA",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "u32",
+        "u32",
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": "0x1234"
+    },
+    "kernel32.dll!ReadFile": {
+      "name": "ReadFile",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32",
+        "ignore",
+        "ptr"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "01000000"
+        }
+      ]
+    },
+    "kernel32.dll!Sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "addr": "@readcontext+0x2c",
+          "hex": "01000000"
+        }
+      ]
+    },
+    "kernel32.dll!CloseHandle": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x1006918a": {
+      "name": "__endthread",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 0
+    },
+    "0x10021838": {
+      "name": "t3dFastFileClose",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "disk open failure",
+      "args": [
+        "@readcontext"
+      ],
+      "callees": {
+        "kernel32.dll!CreateFileA": {
+          "name": "CreateFileA",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "u32",
+            "u32",
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": "0xffffffff"
+        }
+      }
+    },
+    {
+      "name": "disk read failure",
+      "args": [
+        "@readcontext"
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "u32",
+            "ignore",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "disk nonwrapped short read",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x5000"
+        }
+      ]
+    },
+    {
+      "name": "disk complete read",
+      "args": [
+        "@readcontext"
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "u32",
+            "ignore",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "00800000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "disk wrapped first read short",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": 1
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x5000"
+        }
+      ]
+    },
+    {
+      "name": "disk wrapped second read short",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": "0x5ffe"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x2001"
+        }
+      ]
+    },
+    {
+      "name": "disk wrapped first read failure",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": "1"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x5000"
+        }
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "u32",
+            "ignore",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fast file open failure",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        }
+      ],
+      "callees": {
+        "0x10021791": {
+          "name": "t3dFastFileOpen",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fast EOF short read",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        }
+      ],
+      "callees": {
+        "0x100219a3": {
+          "name": "t3dFastFileGetEOF",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "fast nonwrapped read failure",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        }
+      ],
+      "callees": {
+        "0x1002186a": {
+          "name": "t3dFastFileRead",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fast wrapped second read failure",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": "0x5ffe"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x2001"
+        }
+      ],
+      "callees": {
+        "0x100219a3": {
+          "name": "t3dFastFileGetEOF",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": "0x10000"
+        },
+        "0x1002186a": {
+          "name": "t3dFastFileRead",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "u32"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "already complete disk context",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x2c",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "buffer free space boundary",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x6000"
+        }
+      ]
+    },
+    {
+      "name": "buffer free space one above boundary",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x5fff"
+        }
+      ]
+    },
+    {
+      "name": "read offset wraps once",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": "0x6000"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x2001"
+        }
+      ]
+    },
+    {
+      "name": "fast file already complete",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x2c",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "wrapped disk second read has exact length",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": "0x5ffe"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": "0x2001"
+        }
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "u32",
+            "ignore",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "01000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "fast ring read crosses by one byte",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x24",
+          "u32": 1
+        },
+        {
+          "addr": "@readcontext",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x100219a3": {
+          "name": "t3dFastFileGetEOF",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": "0x10000"
+        }
+      }
+    },
+    {
+      "name": "fast reader decrements EOF between reads",
+      "args": [
+        "@readcontext"
+      ],
+      "memory": [
+        {
+          "addr": "@readcontext",
+          "offset": "0x8",
+          "u32": "0x12345678"
+        }
+      ],
+      "callees": {
+        "0x100219a3": {
+          "name": "t3dFastFileGetEOF",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": "0x8001"
+        },
+        "0x1002186a": {
+          "name": "t3dFastFileRead",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "u32"
+          ],
+          "ret": [
+            1,
+            1,
+            0
+          ]
+        },
+        "kernel32.dll!Sleep": {
+          "name": "Sleep",
+          "conv": "stdcall",
+          "args": [
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@readcontext+0x28",
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 139418,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@readcontext"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@readcontext",
+          "offset": "0x8",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x12345678"
+        ]
+      },
+      {
+        "addr": "@readcontext",
+          "offset": "0x24",
+        "type": "u32",
+        "range": [
+          0,
+          32768
+        ]
+      },
+      {
+        "addr": "@readcontext",
+          "offset": "0x28",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x2000",
+          "0x2001",
+          "0x5fff",
+          "0x6000",
+          "0x7fff",
+          "0x8000"
+        ]
+      },
+      {
+        "addr": "@readcontext",
+          "offset": "0x2c",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}
+
+
+
+

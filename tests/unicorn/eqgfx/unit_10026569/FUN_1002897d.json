@@ -1,0 +1,75 @@
+{
+  "function": "t3dScanBinaryGetToken",
+  "original": "0x1002897d",
+  "sources": ["src/eqgfx/unit_10026569.c"],
+  "conv": "cdecl",
+  "args": [{"name": "parser", "type": "ptr"}],
+  "ret": "u32",
+  "objects": {
+    "parser": {"size": "0x1c", "fill": "random", "init": [
+      {"offset": "0x0c", "u32": "@source"},
+      {"offset": "0x18", "u32": "@owner"}
+    ]},
+    "parser2": {"size": "0x1c", "fill": "random", "init": [
+      {"offset": "0x0c", "u32": "@source2"},
+      {"offset": "0x18", "u32": "@owner2"}
+    ]},
+    "source": {"size": "0x18", "fill": "random"},
+    "source2": {"size": "0x18", "fill": "random"},
+    "owner": {"size": "0x30", "fill": "random"},
+    "owner2": {"size": "0x30", "fill": "random"}
+  },
+  "callees": {
+    "0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1,
+      "writes": [{"arg": 1, "offset": 0, "hex": "7f"}]},
+    "0x10028bac": {"name": "readInteger", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0},
+    "0x10028c3b": {"name": "readHunkString", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 0},
+    "0x10028c12": {"name": "readFloat", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0},
+    "0x10028cbc": {"name": "readPlainString", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 0},
+    "0x1002902b": {"name": "logParserError", "conv": "cdecl", "args": ["ptr", "cstr"]}
+  },
+  "cases": [
+    {"name": "parser pointer copied before buffer read", "args": ["@parser"], "regs": {"esi": 0}},
+    {"name": "alternate parser fields remain live after read", "args": ["@parser2"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "6e"}]}}},
+    {"name": "end of input", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0}}},
+    {"name": "read error", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": -1}}},
+    {"name": "zero token invalid", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "00"}]}}},
+    {"name": "token 3 is ignored", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "03"}]}}},
+    {"name": "token 0b passes through", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0b"}]}}},
+    {"name": "token 4 string success", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "04"}]}}},
+    {"name": "token 4 string failure", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "04"}]}, "0x10028c3b": {"name": "readHunkString", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 1}}},
+    {"name": "token 8 integer width 1", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "08"}]}}},
+    {"name": "token 9 integer width 2", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "09"}]}}},
+    {"name": "token 10 integer width 4 failure", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0a"}]}, "0x10028bac": {"name": "readInteger", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1}}},
+    {"name": "token 12 float success", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0c"}]}}},
+    {"name": "token 12 float failure", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0c"}]}, "0x10028c12": {"name": "readFloat", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}}},
+    {"name": "token 16 hunk width 1 success", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "10"}]}}},
+    {"name": "token 16 hunk width 1 failure", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "10"}]}, "0x10028c3b": {"name": "readHunkString", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 1}}},
+    {"name": "token 24 hunk width 1", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "18"}]}}},
+    {"name": "token 28 plain string width 1", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "1c"}]}}},
+    {"name": "token 6e writes sentinel", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "6e"}]}}},
+    {"name": "token 6f integer width 2", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "6f"}]}}},
+    {"name": "token 70 returns at boundary", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "70"}]}}},
+    {"name": "token 0d lower passthrough boundary", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0d"}]}}},
+    {"name": "token 11 ordinary passthrough", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "11"}]}}},
+    {"name": "token 71 invalid above boundary", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "71"}]}}},
+    {"name": "token 7f invalid below extended prefix", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "7f"}]}}},
+    {"name": "extended token 80 accepted", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}}},
+    {"name": "extended token 7f invalid", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "7f"}]}}},
+    {"name": "extended token 137 accepted", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "81"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "37"}]}}},
+    {"name": "extended token 138 rejected", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "81"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "38"}]}}},
+    {"name": "extended 90 string width 2", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "90"}]}}},
+    {"name": "extended 90 string failure", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "90"}]}, "0x10028c3b": {"name": "readHunkString", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 1}}},
+    {"name": "extended 98 hunk string width 2", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "98"}]}}},
+    {"name": "extended 9c plain string width 2", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "9c"}]}}},
+    {"name": "extended zero invalid", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "00"}]}}},
+    {"name": "extended payload read failure", "args": ["@parser"], "callees": {"0x1002645c": {"name": "readChunk", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "80"}]}, "0x10028d14": {"name": "readBinaryDataWithErrorHandling", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "ret": 1}}}
+  ],
+  "fuzz": {
+    "seed": 166269,
+    "count": 35,
+    "args": [{"choices": ["@parser", "@parser2"]}],
+    "memory": [{"addr": "@owner", "offset": "0x0c", "type": "u32", "range": [0, 2147483647]}]
+  }
+}

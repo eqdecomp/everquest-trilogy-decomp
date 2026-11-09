@@ -1,0 +1,93 @@
+{
+  "function": "t3dGetActorDefinitionNumLevelsOfDetail",
+  "original": "0x1000acde",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "levelIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": 5},
+        {"offset": "0x18", "u32": "@levels"}
+      ]
+    },
+    "levels": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "first level",
+      "args": ["@definition", 0]
+    },
+    {
+      "name": "last level",
+      "args": ["@definition", 4]
+    },
+    {
+      "name": "index equals count",
+      "args": ["@definition", 5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index one past count",
+      "args": ["@definition", 6],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index far past count",
+      "args": ["@definition", 2147483647],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index all ones (unsigned compare)",
+      "args": ["@definition", 4294967295],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero",
+      "args": ["@definition", 0],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count all ones, index wraps to entry 0",
+      "args": ["@definition", 536870912],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 4294967295}]
+    }
+  ],
+  "fuzz": {
+    "seed": 44254,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "range": [0, 40]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "u32", "range": [0, 32]}
+    ]
+  }
+}

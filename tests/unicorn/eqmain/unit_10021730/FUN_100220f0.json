@@ -1,0 +1,276 @@
+{
+  "function": "RdpReceiveScreenDispatch_guess",
+  "original": "0x100220f0",
+  "sources": [
+    "src/eqmain/unit_10021730.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "msg": {"size": "0x10", "fill": "zero"},
+    "s1": {"size": "0x100", "fill": "zero"},
+    "s2": {"size": "0x100", "fill": "zero"},
+    "empty": {"size": "0x10", "fill": "zero"},
+    "fmt": {"size": "0x20", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10125638", "u32": "0x1234"},
+    {"addr": "0x100556f4", "u32": "@fmt"},
+    {"addr": "@fmt", "cstr": "failed"},
+    {"addr": "@s1", "cstr": "hello wor"},
+    {"addr": "@s2", "cstr": "second text!"},
+    {"addr": "@msg", "u16": 0}
+  ],
+  "callees": {
+    "0x10021420": {
+      "name": "FUN_10021420",
+      "conv": "cdecl",
+      "args": ["int", "u32"],
+      "ret": 28672
+    },
+    "0x1002de90": {
+      "name": "FUN_1002de90",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": 1
+    },
+    "0x1002dd30": {
+      "name": "FUN_1002dd30",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": 1
+    },
+    "0x10028a90": {
+      "name": "FUN_10028a90",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": 0
+    },
+    "0x1002de70": {
+      "name": "msg_arrival_get_data_guess",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": "@msg"
+    },
+    "0x100250a0": {
+      "name": "FUN_100250a0",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10025120": {
+      "name": "FUN_10025120",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [2, 5, 6, 7, 8, 0, 1, 9, 10, 3, 4]
+    },
+    "0x10025150": {
+      "name": "FUN_10025150",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "@s1"
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@s1", "@s2"]
+    },
+    "0x10018990": {
+      "name": "FUN_10018990",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10018ae0": {
+      "name": "chain_iter_next_bucket_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10001230": {
+      "name": "FUN_10001230",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1001f140": {
+      "name": "FUN_1001f140",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10034117": {
+      "name": "sprintf_stub",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": 6,
+      "writes": [{"arg": 0, "hex": "6661696c656400"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "no message: returns 0",
+      "callees": {
+        "0x10021420": {"name": "FUN_10021420", "conv": "cdecl", "args": ["int", "u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "FUN_1002de90 returns 0: frees, returns 0",
+      "callees": {
+        "0x1002de90": {"name": "FUN_1002de90", "conv": "cdecl", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "FUN_1002dd30 returns 0: frees, prints error, returns 2",
+      "callees": {
+        "0x1002dd30": {"name": "FUN_1002dd30", "conv": "cdecl", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "no message data: frees, prints error, returns 2",
+      "callees": {
+        "0x1002de70": {"name": "msg_arrival_get_data_guess", "conv": "cdecl", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "opcode 2: text copied, returns 2",
+      "memory": [{"addr": "@msg", "u16": 2}]
+    },
+    {
+      "name": "opcode 2: text of 12 bytes (3 words)",
+      "memory": [{"addr": "@msg", "u16": 2}, {"addr": "@s1", "cstr": "abcdefghijk"}]
+    },
+    {
+      "name": "opcode 2: empty text",
+      "memory": [{"addr": "@msg", "u16": 2}],
+      "callees": {
+        "0x10021110": {"name": "FUN_10021110", "conv": "cdecl", "args": ["ptr"], "ret": "@empty"}
+      }
+    },
+    {
+      "name": "opcode 0x46: FUN_1001f140, frees, returns opcode",
+      "memory": [{"addr": "@msg", "u16": 70}]
+    },
+    {
+      "name": "opcode 0x47: first string not empty: returns 2",
+      "memory": [{"addr": "@msg", "u16": 71}]
+    },
+    {
+      "name": "opcode 0x47: one-char first string: returns 2",
+      "memory": [{"addr": "@msg", "u16": 71}, {"addr": "@s1", "cstr": "x"}],
+      "callees": {
+        "0x10021110": {"name": "FUN_10021110", "conv": "cdecl", "args": ["ptr"], "ret": "@s1"}
+      }
+    },
+    {
+      "name": "opcode 0x47: empty first string: second string copied, returns 0x47",
+      "memory": [{"addr": "@msg", "u16": 71}],
+      "callees": {
+        "0x10021110": {"name": "FUN_10021110", "conv": "cdecl", "args": ["ptr"], "ret": ["@empty", "@s2"]}
+      }
+    },
+    {
+      "name": "opcode 0x49: text copied to DAT_100554b0",
+      "memory": [{"addr": "@msg", "u16": 73}]
+    },
+    {
+      "name": "opcode 0x52: FUN_10001230",
+      "memory": [{"addr": "@msg", "u16": 82}]
+    },
+    {
+      "name": "opcode 0x55: chain_iter_next_bucket_guess",
+      "memory": [{"addr": "@msg", "u16": 85}]
+    },
+    {
+      "name": "opcode 0x57: FUN_10018990",
+      "memory": [{"addr": "@msg", "u16": 87}]
+    },
+    {
+      "name": "opcode 0x60: dword and text stored",
+      "memory": [{"addr": "@msg", "u16": 96}],
+      "callees": {
+        "0x10025120": {"name": "FUN_10025120", "conv": "stdcall", "args": [], "ret": 1432778632}
+      }
+    },
+    {
+      "name": "opcode 0x63: counts 2 0 1 -1 0",
+      "memory": [{"addr": "@msg", "u16": 99}]
+    },
+    {
+      "name": "opcode 0x63: all counts 0",
+      "memory": [{"addr": "@msg", "u16": 99}],
+      "callees": {
+        "0x10025120": {"name": "FUN_10025120", "conv": "stdcall", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "opcode 0x63: all counts 1",
+      "memory": [{"addr": "@msg", "u16": 99}],
+      "callees": {
+        "0x10025120": {"name": "FUN_10025120", "conv": "stdcall", "args": [], "ret": [1, 100, 101, 1, 102, 103, 1, 104, 105, 1, 106, 107, 1, 108, 109]}
+      }
+    },
+    {
+      "name": "opcode 0x63: group 0 has 10 records, others 0",
+      "memory": [{"addr": "@msg", "u16": 99}, {"addr": "@s1", "cstr": "r"}],
+      "callees": {
+        "0x10025120": {"name": "FUN_10025120", "conv": "stdcall", "args": [], "ret": [10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0, 0, 0, 0]}
+      }
+    },
+    {
+      "name": "opcode 0x63: negative first count, then 3 records in the last group",
+      "memory": [{"addr": "@msg", "u16": 99}],
+      "callees": {
+        "0x10025120": {"name": "FUN_10025120", "conv": "stdcall", "args": [], "ret": [-5, 0, 0, 0, 3, 31, 32, 33, 34, 35, 36]}
+      }
+    },
+    {
+      "name": "default: opcode 0",
+      "memory": [{"addr": "@msg", "u16": 0}]
+    },
+    {
+      "name": "default: opcode 1",
+      "memory": [{"addr": "@msg", "u16": 1}]
+    },
+    {
+      "name": "default: opcode 3",
+      "memory": [{"addr": "@msg", "u16": 3}]
+    },
+    {
+      "name": "default: opcode 0x48",
+      "memory": [{"addr": "@msg", "u16": 72}]
+    },
+    {
+      "name": "default: opcode 0x56",
+      "memory": [{"addr": "@msg", "u16": 86}]
+    },
+    {
+      "name": "default: opcode 0x61",
+      "memory": [{"addr": "@msg", "u16": 97}]
+    },
+    {
+      "name": "default: opcode 0x62",
+      "memory": [{"addr": "@msg", "u16": 98}]
+    },
+    {
+      "name": "default: opcode 0x64 (past the table)",
+      "memory": [{"addr": "@msg", "u16": 100}]
+    },
+    {
+      "name": "default: opcode 0xffff",
+      "memory": [{"addr": "@msg", "u16": 65535}]
+    },
+    {
+      "name": "callee-saved registers hold garbage",
+      "memory": [{"addr": "@msg", "u16": 2}],
+      "regs": {"ebx": 305419896, "esi": 2271560481, "edi": 3735928559, "ebp": 3405691582}
+    }
+  ],
+  "fuzz": {
+    "seed": 139504,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@msg", "type": "u16", "choices": [2, 70, 71, 73, 82, 85, 87, 96, 99, 99, 71, 2, 0, 1, 3, 69, 72, 86, 97, 98, 100, 65535]},
+      {"addr": "@s1", "type": "u8", "count": 8, "range": [0, 40]},
+      {"addr": "@s2", "type": "u8", "count": 8, "range": [0, 40]}
+    ]
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "function": "AddVoiceCommand_guess",
+  "original": "0x004e6f95",
+  "sources": [
+    "src/ffcreate2/ff/verify.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "callback_object": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@callback_vtable"
+        }
+      ]
+    },
+    "callback_vtable": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@callback_fn"
+        }
+      ]
+    },
+    "callback_fn": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "buffer": {
+      "size": 4096,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0057c5b8",
+      "from_image": "0x0057C5B8",
+      "image_size": 12
+    },
+    {
+      "addr": "0x0057c5c4",
+      "u32": "0x64636261"
+    },
+    {
+      "addr": "0x0057c5c8",
+      "u32": "0x00686766"
+    },
+    {
+      "addr": "0x006ece48",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buffer"
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "@callback_fn": {
+      "name": "register_callback",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "mem:128",
+        "u32",
+        "ignore"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "no callback empty",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "no callback aligned edge 3",
+      "args": [
+        4294967295,
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "callback empty",
+      "args": [
+        1,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        }
+      ]
+    },
+    {
+      "name": "callback length 1",
+      "args": [
+        305419896,
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        }
+      ]
+    },
+    {
+      "name": "callback length 4 boundary",
+      "args": [
+        2,
+        "abcd"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        }
+      ]
+    },
+    {
+      "name": "callback length 5",
+      "args": [
+        3,
+        "abcde"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        }
+      ]
+    },
+    {
+      "name": "callback length 8 boundary",
+      "args": [
+        4,
+        "12345678"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        }
+      ]
+    },
+    {
+      "name": "callback length 12 ordering witness",
+      "args": [
+        5,
+        "hello world!"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        }
+      ]
+    },
+    {
+      "name": "resource name empty",
+      "args": [
+        6,
+        "resource"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        },
+        {
+          "addr": "0x0057c5c4",
+          "u32": 0
+        },
+        {
+          "addr": "0x0057c5c8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "resource name crosses first word",
+      "args": [
+        7,
+        "another"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ece48",
+          "u32": "@callback_object"
+        },
+        {
+          "addr": "0x0057c5c4",
+          "u32": "0x64636261"
+        },
+        {
+          "addr": "0x0057c5c8",
+          "u32": "0x00686766"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5140373,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          1,
+          4294967295,
+          305419896
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "x",
+          "abc",
+          "abcd",
+          "abcde",
+          "1234567",
+          "12345678",
+          "123456789",
+          "a longer binding name"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006ece48",
+        "type": "u32",
+        "choices": [
+          0,
+          "@callback_object"
+        ]
+      },
+      {
+        "addr": "0x0057c5c4",
+        "type": "u32",
+        "choices": [
+          0,
+          97,
+          25185,
+          6513249,
+          "0x64636261"
+        ]
+      },
+      {
+        "addr": "0x0057c5c8",
+        "type": "u32",
+        "choices": [
+          0,
+          97,
+          25185,
+          6513249,
+          "0x00686766"
+        ]
+      },
+      {
+        "addr": "0x0057c5c0",
+        "type": "u32",
+        "choices": [
+          "0x0073646e",
+          0,
+          110,
+          25710,
+          "0x0073646e"
+        ]
+      }
+    ]
+  }
+}

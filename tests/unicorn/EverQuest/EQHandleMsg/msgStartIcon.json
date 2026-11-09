@@ -1,0 +1,120 @@
+{
+  "function": "msgStartIcon",
+  "original": "0x00494af1",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "rewrite": "msgStartIcon",
+  "conv": "fastcall",
+  "args": [
+    { "name": "self", "type": "ptr" },
+    { "name": "unusedEdx", "type": "int" },
+    { "name": "item", "type": "ptr" }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": { "size": "0x100", "fill": "zero", "init": [{ "offset": "0x4", "u32": 0 }] },
+    "item": {
+      "size": "0xdc",
+      "fill": "random",
+      "init": [
+        { "offset": "0x82", "u16": 1 },
+        { "offset": "0x84", "u16": 0 },
+        { "offset": "0x86", "u16": 0 },
+        { "offset": "0xd6", "u8": 1 }
+      ]
+    },
+    "allocated": { "size": "0xdc", "fill": "random" },
+    "profile": { "size": "0x2000", "fill": "zero" },
+    "everquest": { "size": "0x20", "fill": "zero" },
+    "window1": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{ "offset": "0x0", "u32": "@vtable1" }, { "offset": "0x10", "u32": 1 }]
+    },
+    "window2": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [{ "offset": "0x0", "u32": "@vtable2" }, { "offset": "0x10", "u32": 1 }]
+    },
+    "vtable1": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x8", "u32": "@fn1" }] },
+    "vtable2": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x8", "u32": "@fn2" }] },
+    "fn1": { "size": "0x1", "fill": "zero" },
+    "fn2": { "size": "0x1", "fill": "zero" },
+    "mainui": { "size": "0x100", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x006b64e8", "u32": 0 },
+    { "addr": "0x006b70e0", "u32": 0 },
+    { "addr": "0x006efe2c", "u32": "@everquest" },
+    { "addr": "0x006b32b0", "size": 32, "fill": "zero" },
+    { "addr": "0x006b32b4", "u32": 1 },
+    { "addr": "0x006018c0", "u32": "@window1" },
+    { "addr": "0x00604984", "u32": "@window2" },
+    { "addr": "0x006e4da8", "u32": "@profile" },
+    { "addr": "0x006e4de0", "u32": "@mainui" },
+    { "addr": "0x006b3194", "u32": 0 }
+  ],
+  "callees": {
+    "0x0052189c": { "name": "__EH_prolog", "args": [], "passthrough": true },
+    "0x005218c6": { "name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": "@allocated" },
+    "0x005224fb": { "name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true },
+    "0x00434040": { "name": "EQ_Container::EQ_Container_guess", "conv": "thiscall", "args": [], "ret": "@allocated" },
+    "0x004d055e": { "name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"] },
+    "0x0043405a": { "name": "EQ_Container::~EQ_Container_guess", "conv": "thiscall", "args": [] },
+    "0x005218bb": { "name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"] },
+    "0x004a2816": { "name": "CheckDupLoreItems", "conv": "cdecl", "args": ["ptr"] },
+    "0x004e1c45": { "name": "send_message_guess", "conv": "cdecl", "args": ["ignore", "u32", "mem:12", "u32", "int"] },
+    "@fn1": { "name": "window1_callback", "conv": "thiscall", "args": [] },
+    "@fn2": { "name": "window2_callback", "conv": "thiscall", "args": [] }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    { "name": "inventory slot zero empty", "args": ["@self", 0, "@item"] },
+    { "name": "inventory last slot", "args": ["@self", 1, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 29 }] },
+    { "name": "negative slot uses preceding profile field", "args": ["@self", 2, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 65535 }] },
+    { "name": "occupied inventory slot", "args": ["@self", 3, "@item"], "memory": [{ "addr": "@profile", "offset": "0xe0", "u32": 1 }] },
+    { "name": "slot thirty rejected", "args": ["@self", 4, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 30 }] },
+    { "name": "slot 1999 rejected", "args": ["@self", 5, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 1999 }] },
+    { "name": "first bank slot empty", "args": ["@self", 6, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 2000 }] },
+    { "name": "last bank slot empty", "args": ["@self", 7, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 2007 }] },
+    { "name": "occupied bank slot", "args": ["@self", 8, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 2000 }, { "addr": "@profile", "offset": "0xf44", "u32": 1 }] },
+    { "name": "slot 2008 rejected", "args": ["@self", 9, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 2008 }] },
+    { "name": "slot 2009 rejected", "args": ["@self", 10, "@item"], "memory": [{ "addr": "@item", "offset": "0x86", "u16": 2009 }] },
+    { "name": "bogus item number", "args": ["@self", 11, "@item"], "memory": [{ "addr": "@item", "offset": "0x82", "u16": 0 }] },
+    { "name": "bad image number resets icon", "args": ["@self", 12, "@item"], "memory": [{ "addr": "@self", "offset": "0x4", "u32": 5 }, { "addr": "@item", "offset": "0x84", "u16": 2 }] },
+    { "name": "valid image skips warning", "args": ["@self", 13, "@item"], "memory": [{ "addr": "@self", "offset": "0x4", "u32": 5 }, { "addr": "@item", "offset": "0x84", "u16": 0 }] },
+    { "name": "global busy reason 1000", "args": ["@self", 14, "@item"], "memory": [{ "addr": "0x006b70e0", "u32": 1 }] },
+    { "name": "second busy flag takes reason 2000", "args": ["@self", 15, "@item"], "memory": [{ "addr": "0x006b64e8", "u32": 1 }] },
+    { "name": "both busy flags reason 2000", "args": ["@self", 16, "@item"], "memory": [{ "addr": "0x006b64e8", "u32": 1 }, { "addr": "0x006b70e0", "u32": 1 }] },
+    { "name": "disabled first window still updates second", "args": ["@self", 17, "@item"], "memory": [{ "addr": "@window1", "offset": "0x10", "u32": 0 }] },
+    { "name": "null windows", "args": ["@self", 18, "@item"], "memory": [{ "addr": "0x006018c0", "u32": 0 }, { "addr": "0x00604984", "u32": 0 }] },
+    { "name": "inventory item sets main UI redraw", "args": ["@self", 19, "@item"] }
+  ],
+  "fuzz": {
+    "seed": 4803313,
+    "count": 40,
+    "args": [
+      { "choices": ["@self"] },
+      { "range": [-8, 8] },
+      { "choices": ["@item"] }
+    ],
+    "memory": [
+      { "addr": "@self", "offset": "0x4", "type": "u32", "choices": [0, 4, 5, 6] },
+      { "addr": "@item", "offset": "0x82", "type": "short", "choices": [0, 1, 999, 1000, 32767] },
+      { "addr": "@item", "offset": "0x84", "type": "short", "choices": [-1, 0, 1, 2, 7] },
+      { "addr": "@item", "offset": "0x86", "type": "short", "choices": [-1, 0, 1, 29, 30, 1999, 2000, 2007, 2008, 2009] },
+      { "addr": "@profile", "offset": "0xe0", "type": "ptr", "choices": [0, 1] },
+      { "addr": "@profile", "offset": "0xf44", "type": "ptr", "choices": [0, 1] },
+      { "addr": "@profile", "offset": "0xe0", "type": "ptr", "count": 30, "choices": [0, 1] },
+      { "addr": "@profile", "offset": "0xf44", "type": "ptr", "count": 8, "choices": [0, 1] },
+      { "addr": "0x006b64e8", "type": "u32", "choices": [0, 1, 2] },
+      { "addr": "0x006b70e0", "type": "u32", "choices": [0, 1] },
+      { "addr": "0x006018c0", "type": "ptr", "choices": [0, "@window1"] },
+      { "addr": "0x00604984", "type": "ptr", "choices": [0, "@window2"] },
+      { "addr": "0x006b32b0", "type": "u32", "count": 9, "choices": [0, 1] }
+    ]
+  }
+}

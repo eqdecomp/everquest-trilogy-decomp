@@ -1,0 +1,199 @@
+{
+  "function": "t3dInitReferenceList",
+  "original": "0x10019012",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "list",
+      "type": "ptr"
+    },
+    {
+      "name": "capacity",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "list": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "allocated": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocated"
+    }
+  },
+  "cases": [
+    {
+      "name": "ordinary success",
+      "args": [
+        "@list",
+        1
+      ]
+    },
+    {
+      "name": "zero capacity success",
+      "args": [
+        "@list",
+        0
+      ]
+    },
+    {
+      "name": "capacity shift wraps to zero",
+      "args": [
+        "@list",
+        536870912
+      ]
+    },
+    {
+      "name": "maximum signed capacity",
+      "args": [
+        "@list",
+        2147483647
+      ]
+    },
+    {
+      "name": "negative capacity wraps to unsigned allocation size",
+      "args": [
+        "@list",
+        -1
+      ]
+    },
+    {
+      "name": "allocation failure leaves initialized fields zeroed",
+      "args": [
+        "@list",
+        7
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "allocation failure preserves allocator field writes",
+      "args": [
+        "@list",
+        7
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@list+0x8",
+              "hex": "78563412"
+            },
+            {
+              "addr": "@list+0xc",
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "allocation failure with zero capacity",
+      "args": [
+        "@list",
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@list+0x8",
+              "hex": "78563412"
+            },
+            {
+              "addr": "@list+0xc",
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "returned buffer aliases list memory",
+      "args": [
+        "@list",
+        3
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@list+0x4",
+          "writes": [
+            {
+              "addr": "@list+0x8",
+              "hex": "78563412"
+            },
+            {
+              "addr": "@list+0xc",
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative large capacity shift wraps to zero",
+      "args": [
+        "@list",
+        -536870912
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 102418,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@list"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

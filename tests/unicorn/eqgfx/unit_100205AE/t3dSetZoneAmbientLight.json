@@ -1,0 +1,258 @@
+{
+  "function": "t3dSetZoneAmbientLight",
+  "original": "0x10020bea",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "zone",
+      "type": "ptr"
+    },
+    {
+      "name": "ambient",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "zone": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 3
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@regions"
+        }
+      ]
+    },
+    "regions": {
+      "size": "0x20",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x11111111"
+        },
+        {
+          "offset": "0x4",
+          "u32": "0x22222222"
+        },
+        {
+          "offset": "0x8",
+          "u32": "0x33333333"
+        },
+        {
+          "offset": "0xc",
+          "u32": "0x44444444"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100194a2": {
+      "name": "t3dSetRegionAmbientLight",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "empty list returns 0 without calls",
+      "args": [
+        0,
+        "@zone",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "single region success",
+      "args": [
+        1,
+        "@zone",
+        32
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "three regions all succeed",
+      "args": [
+        0,
+        "@zone",
+        48
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "fails on first region stops early",
+      "args": [
+        0,
+        "@zone",
+        64
+      ],
+      "callees": {
+        "0x100194a2": {
+          "name": "t3dSetRegionAmbientLight",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": 7
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "fails on second region stops early",
+      "args": [
+        0,
+        "@zone",
+        80
+      ],
+      "callees": {
+        "0x100194a2": {
+          "name": "t3dSetRegionAmbientLight",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            5
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "fails on last region",
+      "args": [
+        0,
+        "@zone",
+        96
+      ],
+      "callees": {
+        "0x100194a2": {
+          "name": "t3dSetRegionAmbientLight",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            0,
+            9
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "first arg is unused",
+      "args": [
+        3735928559,
+        "@zone",
+        112
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "two regions all succeed boundary",
+      "args": [
+        0,
+        "@zone",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 134122,
+    "count": 30,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@zone"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@zone",
+        "offset": "0x14",
+        "type": "int",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@regions",
+        "size": 16
+      }
+    ]
+  }
+}

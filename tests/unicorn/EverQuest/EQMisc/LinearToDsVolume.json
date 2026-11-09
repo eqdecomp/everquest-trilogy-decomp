@@ -1,0 +1,255 @@
+{
+  "function": "LinearToDsVolume_guess",
+  "original": "0x004ecc30",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@o",
+  "args": [
+    {
+      "name": "volume",
+      "type": "double"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "o": {
+      "size": "0x8",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00535290",
+      "from_image": "0x00535290",
+      "image_size": 8
+    },
+    {
+      "addr": "0x00535878",
+      "from_image": "0x00535878",
+      "image_size": 8
+    },
+    {
+      "addr": "0x00535870",
+      "from_image": "0x00535870",
+      "image_size": 8
+    }
+  ],
+  "callees": {
+    "0x00524784": {
+      "name": "FUN_00524784",
+      "conv": "cdecl",
+      "args": [
+        "double"
+      ],
+      "ret_float": -2.4837
+    }
+  },
+  "cases": [
+    {
+      "name": "1.0 returns 0 (the first test is not below 1.0)",
+      "args": [
+        1.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "largest double below 1.0 takes the log path",
+      "args": [
+        0.9999999999999999
+      ]
+    },
+    {
+      "name": "just above 1.0 returns 0",
+      "args": [
+        1.0000000000000002
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "2.0 returns 0",
+      "args": [
+        2.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "exactly 1e-5 returns -10000 (the second test is not above 1e-5)",
+      "args": [
+        1e-05
+      ],
+      "expect": {
+        "ret": -10000
+      }
+    },
+    {
+      "name": "just above 1e-5 takes the log path",
+      "args": [
+        1.00000000000001e-05
+      ]
+    },
+    {
+      "name": "just below 1e-5 returns -10000",
+      "args": [
+        9.99999999999999e-06
+      ],
+      "expect": {
+        "ret": -10000
+      }
+    },
+    {
+      "name": "zero returns -10000",
+      "args": [
+        0.0
+      ],
+      "expect": {
+        "ret": -10000
+      }
+    },
+    {
+      "name": "negative returns -10000",
+      "args": [
+        -1.0
+      ],
+      "expect": {
+        "ret": -10000
+      }
+    },
+    {
+      "name": "quiet NaN: the first test passes through, the second is not taken (unordered), -10000",
+      "args": [
+        "nan"
+      ],
+      "expect": {
+        "ret": -10000
+      }
+    },
+    {
+      "name": "0.001 with a callee of -3.0 gives -6000",
+      "args": [
+        0.001
+      ],
+      "callees": {
+        "0x00524784": {
+          "name": "FUN_00524784",
+          "conv": "cdecl",
+          "args": [
+            "double"
+          ],
+          "ret_float": -3.0
+        }
+      },
+      "expect": {
+        "ret": -6000
+      }
+    },
+    {
+      "name": "callee -4.99999 * 2000 = -9999.98 truncates toward zero to -9999",
+      "args": [
+        0.5
+      ],
+      "callees": {
+        "0x00524784": {
+          "name": "FUN_00524784",
+          "conv": "cdecl",
+          "args": [
+            "double"
+          ],
+          "ret_float": -4.99999
+        }
+      },
+      "expect": {
+        "ret": -9999
+      }
+    },
+    {
+      "name": "callee -5.0 * 2000 = -10000 exactly",
+      "args": [
+        0.5
+      ],
+      "callees": {
+        "0x00524784": {
+          "name": "FUN_00524784",
+          "conv": "cdecl",
+          "args": [
+            "double"
+          ],
+          "ret_float": -5.0
+        }
+      },
+      "expect": {
+        "ret": -10000
+      }
+    },
+    {
+      "name": "callee 0.0 gives 0 from the log path",
+      "args": [
+        0.25
+      ],
+      "callees": {
+        "0x00524784": {
+          "name": "FUN_00524784",
+          "conv": "cdecl",
+          "args": [
+            "double"
+          ],
+          "ret_float": 0.0
+        }
+      }
+    },
+    {
+      "name": "callee 1e10 overflows __ftol (the client's conversion decides the value)",
+      "args": [
+        0.5
+      ],
+      "callees": {
+        "0x00524784": {
+          "name": "FUN_00524784",
+          "conv": "cdecl",
+          "args": [
+            "double"
+          ],
+          "ret_float": 10000000000.0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5164080,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0.0,
+          -0.5,
+          -1.0,
+          1e-300,
+          1e-06,
+          1e-05,
+          2e-05,
+          0.001,
+          0.01,
+          0.25,
+          0.3217,
+          0.5,
+          0.75,
+          0.9,
+          0.99,
+          0.9999,
+          1.0,
+          1.0000001,
+          1.5,
+          2.0
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

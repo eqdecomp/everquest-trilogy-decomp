@@ -1,0 +1,87 @@
+{
+  "function": "EQ_TextIO_guess::scrollTextBufferUp_guess",
+  "original": "0x0048cc53",
+  "sources": ["src/EverQuest/EQ_TextIO.cpp"],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x88", "u32": "@rect"},
+      {"offset": "0x174", "u16": 12},
+      {"offset": "0x178", "u16": 101},
+      {"offset": "0x17a", "u16": 60}
+    ]},
+    "rect": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": 10}, {"offset": "0x4", "u32": 20},
+      {"offset": "0x8", "u32": 110}, {"offset": "0xc", "u32": 120}
+    ]},
+    "self_odd": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x88", "u32": "@rect"},
+      {"offset": "0x174", "u16": 12},
+      {"offset": "0x178", "u16": 101},
+      {"offset": "0x17a", "u16": 60}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x006b772b", "size": "0x1f400", "fill": "zero"},
+    {"addr": "0x006b782b", "cstr": "LOCKED"},
+    {"addr": "0x0055d6d4", "cstr": "LOCKED"},
+    {"addr": "0x006d6fdc", "u32": 0},
+    {"addr": "0x006e0fea", "u16": 3}
+  ],
+  "callees": {
+    "0x0048ca78": {"name": "up_display", "conv": "thiscall", "args": [], "ret": 4660},
+    "user32.dll!CopyRect": {"name": "CopyRect", "conv": "stdcall", "args": ["mem:16", "mem:16"], "ret": 1},
+    "0x0048b9ac": {"name": "EQ_TextIO_draw_guess", "conv": "thiscall", "args": ["int"]}
+  },
+  "cases": [
+    {"name": "sentinel slot does not advance", "args": []},
+    {"name": "different slot advances", "args": [], "memory": [
+      {"addr": "0x006b782b", "cstr": "READY"}
+    ]},
+    {"name": "index 498 advances to the bound", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 498}, {"addr": "0x006d6a2b", "cstr": "READY"}
+    ]},
+    {"name": "index 498 sentinel remains", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 498}, {"addr": "0x006d6a2b", "cstr": "LOCKED"}
+    ]},
+    {"name": "index 499 is not examined", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 499}, {"addr": "0x006d6b2b", "cstr": "READY"}
+    ]},
+    {"name": "index above bound is unchanged", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 500}
+    ]},
+    {"name": "negative index reads preceding slot then advances", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 4294967295}, {"addr": "0x006b772b", "cstr": "READY"}
+    ]},
+    {"name": "one display row takes zero offset branch", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 2}, {"addr": "0x006e0fea", "u16": 1}
+    ]},
+    {"name": "zero offset branch with a non-64K-aligned object", "this": "@self_odd", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 2}, {"addr": "0x006e0fea", "u16": 1}
+    ]},
+    {"name": "zero display rows divides by negative one", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 2}, {"addr": "0x006e0fea", "u16": 0}
+    ]},
+    {"name": "negative height uses signed division", "args": [], "memory": [
+      {"addr": "0x006d6fdc", "u32": 3}, {"addr": "0x006e0fea", "u16": 4}
+    ], "objects": {"self": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x88", "u32": "@rect"}, {"offset": "0x174", "u16": 65521},
+      {"offset": "0x178", "u16": 101}, {"offset": "0x17a", "u16": 60}
+    ]}}}
+  ],
+  "fuzz": {
+    "seed": 4770899,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x006d6fdc", "type": "int", "range": [-2, 503]},
+      {"addr": "0x006e0fea", "type": "short", "range": [0, 10]},
+      {"addr": "@self", "offset": "0x174", "type": "short", "range": [-32768, 32767]},
+      {"addr": "@self", "offset": "0x178", "type": "short", "range": [-32768, 32767]},
+      {"addr": "@self", "offset": "0x17a", "type": "short", "range": [-32768, 32767]}
+    ]
+  }
+}

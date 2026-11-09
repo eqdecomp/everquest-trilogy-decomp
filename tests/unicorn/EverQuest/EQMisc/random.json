@@ -1,0 +1,95 @@
+{
+  "function": "random_guess",
+  "original": "0x004a6960",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "args",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {"size": "0x100", "fill": "random"},
+    "world": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006B3194", "u32": "@world"}
+  ],
+  "callees": {
+    "0x004dbc84": {
+      "name": "CEverQuest::GrabFirstWord2_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:8",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "typical: second word below first, pair sent as low, high", "args": [0, "9 3"]},
+    {"name": "first word below second, pair sent in the same order", "args": [0, "3 9"]},
+    {"name": "equal numbers sent", "args": [0, "4 4"]},
+    {"name": "zeros sent", "args": [0, "0 0"]},
+    {"name": "empty args sent as 0 0", "args": [0, ""]},
+    {"name": "one number sent as 0 and that number", "args": [0, "7"]},
+    {"name": "32000 as the second word is still sent", "args": [0, "1 32000"]},
+    {"name": "32000 as the first word is still sent", "args": [0, "32000 1"]},
+    {"name": "32001 refused with the 32000 message", "args": [0, "1 32001"]},
+    {"name": "six-digit first word above 32000 refused", "args": [0, "999999 1"]},
+    {"name": "six characters each, above 32000 refused", "args": [0, "123456 654321"]},
+    {"name": "seven-character second word: smaller message", "args": [0, "5 1234567"]},
+    {"name": "seven-character first word: smaller message", "args": [0, "1234567 5"]},
+    {"name": "negative second number: positive message", "args": [0, "5 -3"]},
+    {"name": "negative first number: positive message", "args": [0, "-5 3"]},
+    {"name": "both negative: positive message", "args": [0, "-1 -2"]},
+    {"name": "minus zero is not negative", "args": [0, "-0 5"]},
+    {"name": "negative seven-character word: length checked first", "args": [0, "-123456 1"]},
+    {"name": "negative six-character word: positive message", "args": [0, "-12345 1"]},
+    {"name": "non-numeric words sent as 0 0", "args": [0, "abc def"]},
+    {"name": "plus sign read by atol", "args": [0, "+5 6"]},
+    {"name": "leading spaces skipped by the word grab", "args": [0, "   8   2"]},
+    {"name": "different everquest instance", "args": [0, "2 8"],
+     "memory": [{"addr": "0x006EFE2C", "u32": "@other"}],
+     "objects": {"other": {"size": "0x100", "fill": "zero"}}}
+  ],
+  "fuzz": {
+    "seed": 4876640,
+    "count": 40,
+    "args": [
+      {},
+      {"choices": ["9 3", "3 9", "4 4", "0 0", "", "7", "1 32000", "32000 1", "1 32001", "999999 1",
+                   "123456 654321", "5 1234567", "1234567 5", "5 -3", "-5 3", "-1 -2", "-0 5",
+                   "abc def", "+5 6", "   8   2", "-12345 1", "-123456 1", "12 34", "100 200",
+                   "32767 32768", "1 2147483647", "x 1", "1 x", "  9  ", "3 0", "5 6x", "2 -2"]}
+    ],
+    "memory": []
+  }
+}

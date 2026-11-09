@@ -1,0 +1,86 @@
+{
+  "function": "PackFS::removeFileSystem",
+  "original": "0x004f9320",
+  "sources": ["src/ffcreate2/ff/packfs_o2.cpp"],
+  "conv": "thiscall",
+  "this": "@packfs",
+  "args": [
+    {"name": "source", "type": "ptr"},
+    {"name": "string", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "packfs": {"size": "0x100", "fill": "random"},
+    "enter": {"size": "0x10"},
+    "leave": {"size": "0x10"},
+    "destroy": {"size": "0x10"},
+    "node": {"size": "0x20", "init": [{"offset": "0x8", "u32": "@root"}, {"offset": "0x10", "u32": "@value"}]},
+    "value": {"size": "0x10", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 2}, {"offset": "0x8", "u32": "@child"}]},
+    "child": {"size": "0x14", "init": [{"offset": "0xc", "u32": 0}, {"offset": "0x10", "u32": 0}]},
+    "ref": {"size": "0x10", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 3}, {"offset": "0x8", "u32": "@data"}]},
+    "vtable": {"size": "0x4", "init": [{"offset": "0x0", "u32": "@destroy"}]},
+    "source": {"size": "0x10", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 3}, {"offset": "0x8", "u32": 11}, {"offset": "0xc", "u32": 19}]},
+    "source2": {"size": "0x10", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 3}]},
+    "data": {"size": "0x20", "init": [{"offset": "0xc", "u32": "@ref"}, {"offset": "0x10", "u32": "@ref"}]},
+    "sentinel": {"size": "0x10"},
+    "object": {"size": "0xc", "init": [{"offset": "0x8", "u32": "@data"}]},
+    "root": {"size": "0x20", "init": [{"offset": "0xc", "u32": "@object"}, {"offset": "0x10", "u32": "@object"}]}
+  },
+  "memory": [
+    {"addr": "0x006F0368", "size": "0x20", "fill": "zero"},
+    {"addr": "0x006F0380", "size": "0x20", "fill": "zero"},
+    {"addr": "0x006F0384", "u32": "@sentinel"},
+    {"addr": "0x00534194", "u32": "@enter"},
+    {"addr": "0x00534190", "u32": "@leave"}
+  ],
+  "callees": {
+    "@enter": {"name": "EnterCriticalSection", "conv": "stdcall", "args": ["ptr"]},
+    "@leave": {"name": "LeaveCriticalSection", "conv": "stdcall", "args": ["ptr"]},
+    "@destroy": {"name": "destroy_guess", "conv": "thiscall", "args": ["int"]},
+    "0x004f94e0": {"name": "initializeStringIfEmpty_guess", "conv": "thiscall", "args": []},
+    "0x004fa5f0": {
+      "name": "PackFsTree_guess::find_guess", "conv": "thiscall", "args": ["ignore", "ignore"],
+      "writes": [{"arg": 0, "offset": 0, "hex": "30010060"}]
+    },
+    "0x004fb6d0": {"name": "getObjectDataPointer_guess", "conv": "thiscall", "args": [], "ret": "@data"},
+    "0x004fb6e0": {"name": "updateReferenceCount_guess", "conv": "thiscall", "args": ["ignore"]},
+    "0x004fa1d0": {
+      "name": "RedBlackTree_removeNodeFromRedBlackTree_guess", "conv": "thiscall", "args": ["ignore", "ptr"],
+      "writes": [{"arg": 0, "offset": 0, "hex": "30010060"}]
+    }
+  },
+  "cases": [
+    {"name": "found, zero flag, no nested reference", "args": ["@source", "@object"]},
+    {"name": "found, nonzero flag", "args": ["@source", "@object"], "memory": [{"addr": "@child", "offset": "0x10", "u32": "@ref"}]},
+    {"name": "found, zero flag with nested reference", "args": ["@source", "@object"], "memory": [{"addr": "@child", "offset": "0xc", "u32": "@ref"}]},
+    {"name": "distinguish positive and negative nested field offsets", "args": ["@source", "@object"], "memory": [{"addr": "@child", "offset": "0xc", "u32": "@ref"}, {"addr": "@source2", "u32": 0}]},
+    {"name": "found, both nested paths", "args": ["@source", "@object"], "memory": [{"addr": "@child", "offset": "0xc", "u32": "@ref"}, {"addr": "@child", "offset": "0x10", "u32": "@ref"}]},
+    {"name": "not found at sentinel", "args": ["@source", "@object"], "callees": {"0x004fa5f0": {"name": "PackFsTree_guess::find_guess", "conv": "thiscall", "args": ["ignore", "ignore"], "writes": [{"arg": 0, "offset": 0, "hex": "e0010060"}]}}},
+    {"name": "null source", "args": [0, "@object"]},
+    {"name": "source destructor at zero", "args": ["@source", "@object"], "memory": [{"addr": "@source", "offset": "0x4", "u32": 1}], "callees": {"0x004fa5f0": {"name": "PackFsTree_guess::find_guess", "conv": "thiscall", "args": ["ignore", "ignore"], "writes": [{"arg": 0, "offset": 0, "hex": "e0010060"}]}}},
+    {"name": "value remains owned at refcount one", "args": ["@source", "@object"], "memory": [{"addr": "@value", "offset": "0x4", "u32": 1}]},
+    {"name": "value destructor after retain and release from zero", "args": ["@source", "@object"], "memory": [{"addr": "@value", "offset": "0x4", "u32": 0}]},
+    {"name": "nonzero branch with null temporary reference", "args": ["@source", "@object"], "memory": [{"addr": "@child", "offset": "0x10", "u32": "@ref"}, {"addr": "@data", "offset": "0xc", "u32": 0}]},
+    {"name": "zero branch with null temporary reference", "args": ["@source", "@object"], "memory": [{"addr": "@data", "offset": "0xc", "u32": 0}]},
+    {"name": "both branches with null temporary references", "args": ["@source", "@object"], "memory": [{"addr": "@child", "offset": "0xc", "u32": "@ref"}, {"addr": "@child", "offset": "0x10", "u32": "@ref"}, {"addr": "@data", "offset": "0xc", "u32": 0}, {"addr": "@data", "offset": "0x10", "u32": 0}]},
+    {"name": "value refcount wraps on retain", "args": ["@source", "@object"], "memory": [{"addr": "@value", "offset": "0x4", "u32": 4294967295}]},
+    {"name": "value and argument share zero refcount object", "args": ["@value", "@object"], "memory": [{"addr": "@value", "offset": "0x4", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 5215008,
+    "count": 32,
+    "args": [
+      {"choices": [0, "@source", "@source2"]},
+      {"choices": ["@object"]}
+    ],
+    "memory": [
+      {"addr": "@value", "offset": "0x4", "type": "int", "range": [0, 4]},
+      {"addr": "@child", "offset": "0xc", "type": "ptr", "choices": [0, "@ref"]},
+      {"addr": "@child", "offset": "0x10", "type": "ptr", "choices": [0, "@ref"]},
+      {"addr": "@data", "offset": "0xc", "type": "ptr", "choices": [0, "@ref"]},
+      {"addr": "@data", "offset": "0x10", "type": "ptr", "choices": [0, "@ref"]},
+      {"addr": "@source", "offset": "0x4", "type": "int", "range": [1, 4]},
+      {"addr": "@source2", "offset": "0x4", "type": "int", "range": [1, 4]}
+    ]
+  }
+}

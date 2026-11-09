@@ -1,0 +1,68 @@
+{
+  "function": "EQMain_ResetSlotTable_guess",
+  "original": "0x10017660",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {"addr": "0x1004EC24", "size": 200, "fill": "random"},
+    {"addr": "0x1004F880", "u16": 4660},
+    {"addr": "0x1004F882", "u16": 48879},
+    {"addr": "0x1004CE58", "u8": 0}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": "Default"}]
+    },
+    {
+      "name": "empty string (only the NUL is copied)",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": ""}]
+    },
+    {
+      "name": "one char",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": "A"}]
+    },
+    {
+      "name": "19 chars: 20 bytes with the NUL exactly fill one slot, no overflow",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": "ABCDEFGHIJKLMNOPQRS"}]
+    },
+    {
+      "name": "20 chars: the NUL spills one byte into the next slot",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": "ABCDEFGHIJKLMNOPQRST"}]
+    },
+    {
+      "name": "39 chars: two bytes into the next slot each time",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abc"}]
+    },
+    {
+      "name": "60 chars: spills past the last slot into 0x1004ECEC",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"}]
+    },
+    {
+      "name": "high bytes (repne scasb stops only at NUL)",
+      "args": [],
+      "memory": [{"addr": "0x1004CE40", "hex": "80ff4100"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 95840,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004CE40", "type": "u8", "count": 24, "choices": [0, 1, 32, 65, 97, 126, 128, 255]}
+    ]
+  }
+}

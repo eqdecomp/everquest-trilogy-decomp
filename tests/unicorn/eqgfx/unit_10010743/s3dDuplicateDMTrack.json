@@ -1,0 +1,290 @@
+{
+  "function": "s3dDuplicateDMTrack",
+  "original": "0x10010b8f",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x34",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x1c",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@track"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:56"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: validation passes (0), definition shared, track returned",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "validation returns 1: copy freed, returns null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "validation returns -1: any nonzero frees the copy",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails: returns null, no copy and no validation",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee rewrites the copy's definition: share gets the new value",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 52,
+              "hex": "78563412"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "null context is passed through",
+      "args": [
+        0,
+        "@source"
+      ]
+    },
+    {
+      "name": "source definition null: share gets 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x38",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x34",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "source all zero, definition null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x38",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "extreme source values (0x80000000 / 0xffffffff), validation fails",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x38",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x14",
+              "u32": "0xffffffff"
+            },
+            {
+              "offset": "0x18",
+              "u32": "0x80000000"
+            },
+            {
+              "offset": "0x30",
+              "u32": "0xffffffff"
+            },
+            {
+              "offset": "0x34",
+              "u32": "@definition"
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4461,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source",
+        "offset": "0x14",
+        "size": 32
+      },
+      {
+        "addr": "@source",
+        "offset": "0x34",
+        "type": "ptr",
+        "choices": [
+          "@definition",
+          0
+        ]
+      }
+    ]
+  }
+}

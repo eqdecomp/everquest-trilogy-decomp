@@ -1,0 +1,330 @@
+{
+  "function": "t3dCreatePolyhedron",
+  "original": "0x10018cf8",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": "@core"
+        }
+      ]
+    },
+    "core": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "block": {
+      "size": "0x1c",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@block"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:28"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: copy the core, clear key and flags, registration ok, owner count up",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "zeros: core fields and owner count zero, owner pointer kept",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@core",
+          "size": 24,
+          "fill": "zero"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "core flags 0xff and key set: both cleared in the new block",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@core",
+          "offset": "0x8",
+          "u32": "0x30004000"
+        },
+        {
+          "addr": "@core",
+          "offset": "0xc",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "core flags 0x01 (dictionary bit) and key set",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@core",
+          "offset": "0x8",
+          "u32": "0x30004000"
+        },
+        {
+          "addr": "@core",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "core flags 0x02, key null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@core",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@core",
+          "offset": "0xc",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "owner count at INT_MAX: the increment wraps",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "null context: the registration gets a null context",
+      "args": [
+        0,
+        "@source"
+      ]
+    },
+    {
+      "name": "registration returns 1: block freed, null returned, owner count kept",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:28"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registration returns -1: block freed, null returned",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:28"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registration fails with owner pointer null: the owner is not read on failure",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@core",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:28"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation returns null: nothing copied, registered or freed",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 101624,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@core",
+        "offset": "0x8",
+        "type": "u32"
+      },
+      {
+        "addr": "@core",
+        "offset": "0xc",
+        "type": "u8"
+      },
+      {
+        "addr": "@core",
+        "offset": "0x10",
+        "type": "u32"
+      },
+      {
+        "addr": "@core",
+        "offset": "0x14",
+        "type": "u32"
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -4,
+          30
+        ]
+      }
+    ]
+  }
+}

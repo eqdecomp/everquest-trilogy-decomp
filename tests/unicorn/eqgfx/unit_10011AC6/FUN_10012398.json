@@ -1,0 +1,137 @@
+{
+  "function": "t3dInterpolateFloat_guess",
+  "original": "0x10012398",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "start",
+      "type": "float"
+    },
+    {
+      "name": "end",
+      "type": "float"
+    },
+    {
+      "name": "blend",
+      "type": "float"
+    },
+    {
+      "name": "result",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX evidence: 0/5 call sites read EAX after the call and all 5 overwrite it first; the EAX at RET is only the result pointer loaded for the final FSTP.",
+  "objects": {
+    "result": {
+      "size": 8,
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "equal endpoints: fast path stores start untouched (blend unused)",
+      "args": [2.5, 2.5, 4.0, "@result"]
+    },
+    {
+      "name": "equal endpoints with a NaN blend: fast path stores start, a plain formula would store NaN",
+      "args": [1.0, 1.0, "nan", "@result"]
+    },
+    {
+      "name": "equal -0.0 endpoints: fast path keeps -0.0, the formula (0.0 * 2.0 + -0.0) would give +0.0",
+      "args": [-0.0, -0.0, 2.0, "@result"]
+    },
+    {
+      "name": "equal +0.0 endpoints",
+      "args": [0.0, 0.0, 0.0, "@result"]
+    },
+    {
+      "name": "equal large endpoints stay bit-identical",
+      "args": [3.4028234663852886e38, 3.4028234663852886e38, -1.0, "@result"]
+    },
+    {
+      "name": "blend 0: result is start",
+      "args": [3.25, -7.5, 0.0, "@result"]
+    },
+    {
+      "name": "blend 1: result is end",
+      "args": [3.25, -7.5, 1.0, "@result"]
+    },
+    {
+      "name": "typical quarter blend",
+      "args": [10.0, 20.0, 0.25, "@result"]
+    },
+    {
+      "name": "negative blend extrapolates before start",
+      "args": [0.0, 10.0, -0.5, "@result"]
+    },
+    {
+      "name": "start NaN: unordered compare still takes the compute path",
+      "args": ["nan", 5.0, 0.5, "@result"]
+    },
+    {
+      "name": "end NaN",
+      "args": [5.0, "nan", 0.5, "@result"]
+    },
+    {
+      "name": "both NaN: NaN != NaN, so the endpoints are not equal",
+      "args": ["nan", "nan", 0.5, "@result"]
+    },
+    {
+      "name": "equal +inf endpoints: fast path stores +inf, the formula would give NaN",
+      "args": ["inf", "inf", 0.5, "@result"]
+    },
+    {
+      "name": "equal -inf endpoints",
+      "args": ["-inf", "-inf", 0.5, "@result"]
+    },
+    {
+      "name": "opposite infinities: inf - -inf is +inf, times blend",
+      "args": ["inf", "-inf", 0.25, "@result"]
+    },
+    {
+      "name": "huge magnitudes that cancel exactly in the x87 sum",
+      "args": [1.0e30, -1.0e30, 0.5, "@result"]
+    },
+    {
+      "name": "denormal blend keeps extended-precision rounding",
+      "args": [1.0, 2.0, 1.0e-38, "@result"]
+    },
+    {
+      "name": "repeating decimals: one rounding at the FSTP",
+      "args": [0.1, 0.3, 0.2, "@result"]
+    },
+    {
+      "name": "end just below start: negative difference",
+      "args": [100.0, 99.99999, 0.5, "@result"]
+    },
+    {
+      "name": "blend 2: result is end + (end - start)",
+      "args": [1.5, 2.25, 2.0, "@result"]
+    },
+    {
+      "name": "same bits via different exponents",
+      "args": [1.0, 1.0000001, 0.5, "@result"]
+    }
+  ],
+  "fuzz": {
+    "seed": 23571,
+    "count": 40,
+    "args": [
+      {},
+      {},
+      {},
+      {
+        "choices": [
+          "@result"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

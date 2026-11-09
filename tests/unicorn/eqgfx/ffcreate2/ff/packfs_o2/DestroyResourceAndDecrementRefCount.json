@@ -1,0 +1,226 @@
+{
+  "function": "DestroyResourceAndDecrementRefCount_guess",
+  "original": "0x10054850",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "resource",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "blk": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "r1": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x8", "u32": "@blk"}
+      ]
+    },
+    "r2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 2},
+        {"offset": "0x8", "u32": "@blk"}
+      ]
+    },
+    "r0": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": "@blk"}
+      ]
+    },
+    "rNeg": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 4294967295},
+        {"offset": "0x8", "u32": "@blk"}
+      ]
+    },
+    "rMin": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 2147483648},
+        {"offset": "0x8", "u32": "@blk"}
+      ]
+    },
+    "r7": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 7},
+        {"offset": "0x8", "u32": "@blk"}
+      ]
+    },
+    "rNullData": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x8", "u32": 0}
+      ]
+    },
+    "rAlias": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x8", "u32": "@rAlias+0x4"}
+      ]
+    },
+    "rSelf": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 3},
+        {"offset": "0x8", "u32": "@rSelf"}
+      ]
+    },
+    "rf": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10069077": {
+      "name": "__purecall (vtable slot 0 of 0x10076410)",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "count 1 -> 0 frees the data and calls slot 0 with 1",
+      "args": [
+        "@r1"
+      ]
+    },
+    {
+      "name": "count 2 -> 1 keeps",
+      "args": [
+        "@r2"
+      ]
+    },
+    {
+      "name": "count 0 -> -1 keeps",
+      "args": [
+        "@r0"
+      ]
+    },
+    {
+      "name": "count -1 -> -2 keeps",
+      "args": [
+        "@rNeg"
+      ]
+    },
+    {
+      "name": "count minint -> maxint keeps",
+      "args": [
+        "@rMin"
+      ]
+    },
+    {
+      "name": "count 7 -> 6 keeps",
+      "args": [
+        "@r7"
+      ]
+    },
+    {
+      "name": "null data is still freed; count 1 -> 0 calls slot 0",
+      "args": [
+        "@rNullData"
+      ]
+    },
+    {
+      "name": "free rewrites the count it points at (data = &count): the count is read after the free, 5 -> 4 keeps",
+      "args": [
+        "@rAlias"
+      ],
+      "callees": {
+        "0x10050cbb": {
+          "name": "t3dFreeMemory writes 5 at its argument",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "05000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "free sees the vptr already stored (data = the object itself): 0x10076428 at the call, count 3 -> 2 keeps",
+      "args": [
+        "@rSelf"
+      ],
+      "callees": {
+        "0x10050cbb": {
+          "name": "t3dFreeMemory reads the object",
+          "conv": "cdecl",
+          "args": [
+            "mem:4"
+          ]
+        }
+      }
+    },
+    {
+      "name": "null holder faults",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5410850,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rf"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rf",
+        "offset": "0x4",
+        "type": "i32",
+        "choices": [1, 1, 2, 0, -1, 7, 2147483647, -2147483648]
+      },
+      {
+        "addr": "@rf",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": ["@blk", 0]
+      }
+    ]
+  }
+}

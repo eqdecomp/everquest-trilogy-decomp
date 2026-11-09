@@ -1,0 +1,110 @@
+{
+  "function": "CDisplay_MoveLight_guess::MoveLight",
+  "original": "0x004152eb",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "rewrite": "CDisplay_MoveLight_guess::MoveLight",
+  "conv": "thiscall",
+  "this": "@cdisplay",
+  "args": [
+    {"name": "light", "type": "ptr"},
+    {"name": "position", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "cdisplay": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "@world"}]},
+    "world": {"size": "0x10", "fill": "zero"},
+    "light": {"size": "0x20", "fill": "zero"},
+    "position": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "f32": 10.0},
+      {"offset": "0x4", "f32": 20.0},
+      {"offset": "0x8", "f32": 30.0},
+      {"offset": "0xc", "f32": 0.5}
+    ]},
+    "player": {"size": "0x40", "fill": "zero", "init": [
+      {"offset": "0x34", "f32": 1.0},
+      {"offset": "0x38", "f32": 2.0},
+      {"offset": "0x3c", "f32": 3.0}
+    ]},
+    "cosine": {"size": 16},
+    "sine": {"size": 16},
+    "getPointLightXYZ": {"size": 16},
+    "setPointLightXYZ": {"size": 16}
+  },
+  "memory": [
+    {"addr": "0x006E4D8C", "u32": "@player"},
+    {"addr": "0x006B66E0", "f32": 300.0},
+    {"addr": "0x006E4DE0", "u32": "@cdisplay"},
+    {"addr": "0x006E524C", "u32": "@cosine"},
+    {"addr": "0x006E5250", "u32": "@sine"},
+    {"addr": "0x006E52E4", "u32": "@getPointLightXYZ"},
+    {"addr": "0x006E5430", "u32": "@setPointLightXYZ"}
+  ],
+  "callees": {
+    "0x00412984": {"name": "CDisplay::SimpleDistance", "conv": "thiscall", "args": ["float", "float", "float", "float", "float", "float", "float"], "passthrough": true},
+    "@cosine": {"name": "t3dFloatFastCosine", "conv": "cdecl", "args": ["float"], "ret_float": 0.5},
+    "@sine": {"name": "t3dFloatFastSine", "conv": "cdecl", "args": ["float"], "ret_float": 0.25},
+    "@getPointLightXYZ": {"name": "t3dGetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ignore"], "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "000000000000000000000000"}]},
+    "@setPointLightXYZ": {"name": "t3dSetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ptr", "mem:12"], "ret": 0}
+  },
+  "cases": [
+    {"name": "normal update", "args": ["@light", "@position"]},
+    {"name": "local player absent", "args": ["@light", "@position"], "memory": [
+      {"addr": "0x006E4D8C", "u32": 0}
+    ]},
+    {"name": "minimum clip distance includes equality", "args": ["@light", "@position"], "memory": [
+      {"addr": "0x006B66E0", "f32": 0.0},
+      {"addr": "@player", "offset": "0x34", "hex": "000000000000000000000000"},
+      {"addr": "@position", "hex": "00004842000000000000000000000000"}
+    ]},
+    {"name": "minimum clip distance excludes greater value", "args": ["@light", "@position"], "memory": [
+      {"addr": "0x006B66E0", "f32": 0.0},
+      {"addr": "@player", "offset": "0x34", "hex": "000000000000000000000000"},
+      {"addr": "@position", "offset": "0x0", "f32": 50.5},
+      {"addr": "@position", "offset": "0x4", "f32": 0.0},
+      {"addr": "@position", "offset": "0x8", "f32": 0.0}
+    ]},
+    {"name": "fog clip distance includes equality", "args": ["@light", "@position"], "memory": [
+      {"addr": "0x006B66E0", "f32": 200.0},
+      {"addr": "@player", "offset": "0x34", "hex": "000000000000000000000000"},
+      {"addr": "@position", "offset": "0x0", "f32": 100.0},
+      {"addr": "@position", "offset": "0x4", "f32": 0.0},
+      {"addr": "@position", "offset": "0x8", "f32": 0.0}
+    ]},
+    {"name": "fog clip excludes greater value", "args": ["@light", "@position"], "memory": [
+      {"addr": "0x006B66E0", "f32": 200.0},
+      {"addr": "@player", "offset": "0x34", "hex": "000000000000000000000000"},
+      {"addr": "@position", "offset": "0x0", "f32": 100.5},
+      {"addr": "@position", "offset": "0x4", "f32": 0.0},
+      {"addr": "@position", "offset": "0x8", "f32": 0.0}
+    ]},
+    {"name": "quarter-distance boundary is unchanged", "args": ["@light", "@position"], "memory": [
+      {"addr": "@position", "offset": "0x0", "f32": -1.0},
+      {"addr": "@position", "offset": "0x4", "f32": -0.5},
+      {"addr": "@position", "offset": "0x8", "f32": -3.75}
+    ]},
+    {"name": "distance above quarter updates", "args": ["@light", "@position"], "memory": [
+      {"addr": "@position", "offset": "0x0", "f32": -1.0},
+      {"addr": "@position", "offset": "0x4", "f32": -0.5},
+      {"addr": "@position", "offset": "0x8", "f32": -3.749}
+    ]},
+    {"name": "point light x, y, z are distinct (x uses lightLocation[0])", "args": ["@light", "@position"], "callees": {
+      "@getPointLightXYZ": {"name": "t3dGetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ignore"], "ret": 0,
+        "writes": [{"arg": 1, "offset": 0, "hex": "000030410000a44100000842"}]}
+    }}
+  ],
+  "fuzz": {
+    "seed": 4281067,
+    "count": 30,
+    "args": [
+      {"choices": ["@light"]},
+      {"choices": ["@position"]}
+    ],
+    "memory": [
+      {"addr": "0x006E4D8C", "type": "ptr", "choices": ["@player", 0]},
+      {"addr": "0x006B66E0", "type": "float", "range": [0, 600]},
+      {"addr": "@player", "offset": "0x34", "type": "float", "count": 3, "range": [-100, 100]},
+      {"addr": "@position", "offset": "0x0", "type": "float", "count": 4, "range": [-100, 100]}
+    ]
+  }
+}

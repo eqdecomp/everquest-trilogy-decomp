@@ -1,0 +1,224 @@
+{
+  "function": "t3dSetWorldTag",
+  "original": "0x1001e094",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "new_tag",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "old_tag": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "tag_copy": {
+      "size": "0x400",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@tag_copy"
+    },
+    "0x10068160": {
+      "name": "_strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "old tag present, short tag: old tag freed, copy stored, returns 0",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x4",
+          "u32": "@old_tag"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no old tag: nothing freed, copy stored, returns 0",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty string: allocates 1 byte, copies only the terminator",
+      "args": [
+        "@world",
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x4",
+          "u32": "@old_tag"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "long tag: 73 bytes allocated and copied",
+      "args": [
+        "@world",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0123456789"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x4",
+          "u32": "@old_tag"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails with an old tag: old tag freed, tag cleared, no copy, returns 0xffff3d41",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x4",
+          "u32": "@old_tag"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49855
+      }
+    },
+    {
+      "name": "allocation fails without an old tag: tag cleared, no copy, returns 0xffff3d41",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49855
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 123028,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "a",
+          "abc",
+          "Tag",
+          "Dungeon of Doom",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@world",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": [
+          "@old_tag",
+          0
+        ]
+      }
+    ]
+  }
+}

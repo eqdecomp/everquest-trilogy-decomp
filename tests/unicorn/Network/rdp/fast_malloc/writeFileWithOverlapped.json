@@ -1,0 +1,151 @@
+{
+  "function": "writeFileWithOverlapped_guess",
+  "original": "0x004f6d30",
+  "sources": ["src/Network/rdp/fast_malloc.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "u32"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "state": {
+      "size": "0x90",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1c", "u32": "0x11111111"},
+        {"offset": "0x4c", "u32": 4},
+        {"offset": "0x7c", "u32": 10},
+        {"offset": "0x80", "u32": 20},
+        {"offset": "0x84", "u32": 30},
+        {"offset": "0x88", "u32": 40},
+        {"offset": "0x8c", "u32": 50}
+      ]
+    },
+    "item": {
+      "size": "0x90",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": "0x22222222"},
+        {"offset": "0x24", "u32": 24}
+      ]
+    },
+    "item2": {
+      "size": "0x90",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": "0x33333333"},
+        {"offset": "0x24", "u32": 40}
+      ]
+    },
+    "write_fn": {"size": 1, "fill": "zero"},
+    "close_fn": {"size": 1, "fill": "zero"},
+    "last_error_fn": {"size": 1, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x005340bc", "u32": "@write_fn"},
+    {"addr": "0x005341d4", "u32": "@close_fn"},
+    {"addr": "0x005341ac", "u32": "@last_error_fn"}
+  ],
+  "callees": {
+    "@write_fn": {
+      "name": "WriteFile",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "u32", "ptr", "ptr"],
+      "ret": 1,
+      "writes": [{"arg": 3, "offset": 0, "hex": "18000000"}]
+    },
+    "@close_fn": {"name": "CloseHandle", "conv": "stdcall", "args": ["ptr"], "ret": 1},
+    "@last_error_fn": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 0},
+    "0x004f4ac0": {"name": "fast_free_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": "0x12345678"},
+    "0x004f54c0": {"name": "list_add_tail_guess", "conv": "cdecl", "args": ["ptr", "ptr"]}
+  },
+  "cases": [
+    {
+      "name": "synchronous complete write increments complete counter",
+      "args": ["@state", "@item"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "synchronous short write increments partial counter",
+      "args": ["@state", "@item"],
+      "callees": {"@write_fn": {"name": "WriteFile", "conv": "stdcall", "args": ["ptr", "ptr", "u32", "ptr", "ptr"], "ret": 1, "writes": [{"arg": 3, "offset": 0, "hex": "17000000"}]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pending write records time and queues item",
+      "args": ["@state", "@item"],
+      "callees": {
+        "@write_fn": {"name": "WriteFile", "conv": "stdcall", "args": ["ptr", "ptr", "u32", "ptr", "ptr"], "ret": 0},
+        "@last_error_fn": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 997},
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": "0xabcdef01"}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "error 0x6f8 returns five and closes item",
+      "args": ["@state", "@item"],
+      "callees": {
+        "@write_fn": {"name": "WriteFile", "conv": "stdcall", "args": ["ptr", "ptr", "u32", "ptr", "ptr"], "ret": 0},
+        "@last_error_fn": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 1784}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "error 8 returns five",
+      "args": ["@state", "@item"],
+      "callees": {
+        "@write_fn": {"name": "WriteFile", "conv": "stdcall", "args": ["ptr", "ptr", "u32", "ptr", "ptr"], "ret": 0},
+        "@last_error_fn": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 8}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "other error is recorded and returns one",
+      "args": ["@state", "@item"],
+      "callees": {
+        "@write_fn": {"name": "WriteFile", "conv": "stdcall", "args": ["ptr", "ptr", "u32", "ptr", "ptr"], "ret": 0},
+        "@last_error_fn": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 5}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "complete counter wraps at 32 bits",
+      "args": ["@state", "@item"],
+      "memory": [{"addr": "@state", "offset": "0x7c", "u32": "0xffffffff"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "failure counter wraps at 32 bits",
+      "args": ["@state", "@item"],
+      "memory": [{"addr": "@state", "offset": "0x80", "u32": "0xffffffff"}],
+      "callees": {
+        "@write_fn": {"name": "WriteFile", "conv": "stdcall", "args": ["ptr", "ptr", "u32", "ptr", "ptr"], "ret": 0},
+        "@last_error_fn": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 5}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "a second item object is written from its own buffer",
+      "args": ["@state", "@item2"],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 5205296,
+    "count": 32,
+    "args": [
+      {"choices": ["@state"]},
+      {"choices": ["@item"]}
+    ],
+    "memory": [
+      {"addr": "@item", "offset": "0x24", "type": "u32", "range": [0, 128]},
+      {"addr": "@state", "offset": "0x4c", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@state", "offset": "0x7c", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@state", "offset": "0x80", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@state", "offset": "0x88", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@state", "offset": "0x8c", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

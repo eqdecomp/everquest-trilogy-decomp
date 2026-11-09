@@ -1,0 +1,546 @@
+{
+  "function": "t3dCreateParticleCloud",
+  "original": "0x1003ffe2",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "relatedInstance",
+      "type": "ptr"
+    },
+    {
+      "name": "baseOffset",
+      "type": "int"
+    },
+    {
+      "name": "referenceA",
+      "type": "ptr"
+    },
+    {
+      "name": "referenceB",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "relatedinstance": {
+      "size": "0x120",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x90",
+          "u32": 0
+        }
+      ]
+    },
+    "referencea": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "referenceb": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "record": {
+      "size": "0x120",
+      "fill": "zero"
+    },
+    "shared": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "blit": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": "@source"
+        }
+      ]
+    },
+    "source": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": "@buffer"
+        }
+      ]
+    },
+    "buffer": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100a16c0",
+      "f32": 1.5
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@record"
+    },
+    "0x10041903": {
+      "name": "t3dInitPCloudInstBase",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int",
+        "float",
+        "int",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10041adf": {
+      "name": "t3dFreePCloudInstBase",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000cfbf": {
+      "name": "t3dCreateBlitSprite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@blit"
+    },
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation fails: nothing else runs, returns 0",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        1,
+        "@referencea",
+        "@referenceb"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "link fails, no references, no shared object: record freed, related instance untouched",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        0,
+        0,
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "link fails with both references: nothing shared, record freed",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        -7,
+        "@referencea",
+        "@referenceb"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "link fails with a shared object set: blit never created",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        2,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "linked, no references, no shared object: returns the record early",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        0,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "linked, referenceA only, no shared object",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        3,
+        "@referencea",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "linked, referenceB only, no shared object",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        3,
+        0,
+        "@referenceb"
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "linked, both references, no shared object",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        -2,
+        "@referencea",
+        "@referenceb"
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "linked, shared object, blit fails, no references: unshare, unlink, free",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        1,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ],
+      "callees": {
+        "0x1000cfbf": {
+          "name": "t3dCreateBlitSprite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "linked, shared object, blit fails, both references: shared before the failure",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        1,
+        "@referencea",
+        "@referenceb"
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ],
+      "callees": {
+        "0x1000cfbf": {
+          "name": "t3dCreateBlitSprite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "linked, shared object, blit ok, no references: sprite fields copied",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        1,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ]
+    },
+    {
+      "name": "linked, shared object, blit ok, both references",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        -9,
+        "@referencea",
+        "@referenceb"
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ]
+    },
+    {
+      "name": "linked, shared object, blit ok, referenceA only",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        0,
+        "@referencea",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ]
+    },
+    {
+      "name": "linked, shared object, blit ok, referenceB only",
+      "args": [
+        "@dictionary",
+        "@relatedinstance",
+        0,
+        0,
+        "@referenceb"
+      ],
+      "memory": [
+        {
+          "addr": "@relatedinstance",
+          "offset": "0x90",
+          "u32": "@shared"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 262114,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@relatedinstance"
+        ]
+      },
+      {
+        "range": [
+          -16,
+          64
+        ]
+      },
+      {
+        "choices": [
+          "@referencea",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@referenceb",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@relatedinstance",
+        "offset": "0x90",
+        "type": "ptr",
+        "choices": [
+          "@shared",
+          0
+        ]
+      },
+      {
+        "addr": "@dictionary",
+        "offset": "0x8",
+        "type": "int",
+        "range": [
+          -1000,
+          1000
+        ]
+      },
+      {
+        "addr": "0x100a16c0",
+        "type": "float",
+        "range": [
+          -4,
+          4
+        ]
+      }
+    ]
+  }
+}

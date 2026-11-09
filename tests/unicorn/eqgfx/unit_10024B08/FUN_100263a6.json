@@ -1,0 +1,178 @@
+{
+  "function": "createFilePositionSource_guess",
+  "original": "0x100263a6",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "file",
+      "type": "ptr"
+    },
+    {
+      "name": "path",
+      "type": "cstr"
+    },
+    {
+      "name": "unusedValue",
+      "type": "int"
+    },
+    {
+      "name": "reservedValue",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "file": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x18",
+      "fill": "zero"
+    },
+    "pathBuffer": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@source",
+        "@pathBuffer"
+      ]
+    },
+    "0x10026525": {
+      "name": "GetSourcePosition_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "outer allocation fails",
+      "args": [
+        "@file",
+        0,
+        0,
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null path preserves position",
+      "args": [
+        "@file",
+        0,
+        17,
+        -9
+      ]
+    },
+    {
+      "name": "empty path allocates one byte",
+      "args": [
+        "@file",
+        "",
+        0,
+        2147483647
+      ]
+    },
+    {
+      "name": "inner allocation fails and source is freed",
+      "args": [
+        "@file",
+        "abc",
+        -2147483648,
+        23
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@source",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "successful path copy at allocation boundary",
+      "args": [
+        "@file",
+        "0123456789abcdef",
+        1,
+        -1
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 156582,
+    "count": 36,
+    "args": [
+      {
+        "choices": [
+          "@file"
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "x",
+          "ab",
+          "renderer/zone.s3d"
+        ]
+      },
+      {
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2147483647
+        ]
+      },
+      {
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2147483647
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

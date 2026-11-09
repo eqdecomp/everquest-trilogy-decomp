@@ -1,0 +1,221 @@
+{
+  "function": "EQMain_GetCurrentValue_guess",
+  "original": "0x10011c00",
+  "sources": [
+    "src/eqmain/unit_10011A50.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "ret_obj": {"size": "0x40", "fill": "random", "init": [{"offset": "0x20", "u32": 305419896}]},
+    "ret_obj2": {"size": "0x40", "fill": "random", "init": [{"offset": "0x20", "u32": 2147483648}]},
+    "cur_obj": {"size": "0x40", "fill": "random", "init": [{"offset": "0x28", "u16": 65533}]},
+    "cur_obj2": {"size": "0x40", "fill": "random", "init": [{"offset": "0x28", "u16": 32767}]}
+  },
+  "memory": [
+    {"addr": "0x1004d1c8", "u32": 0},
+    {"addr": "0x1004d224", "u32": "@cur_obj"},
+    {"addr": "0x1004d230", "u32": "@ret_obj"}
+  ],
+  "callees": {
+    "0x100061d0": {
+      "name": "FUN_100061d0",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 1234567
+    }
+  },
+  "cases": [
+    {
+      "name": "result 2: returns the int at +0x20 of the other object, no call",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 2},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 305419896}
+    },
+    {
+      "name": "result 2: high-bit value at +0x20 comes back negative",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 2},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj2"}
+      ],
+      "expect": {"ret": -2147483648}
+    },
+    {
+      "name": "result 2: zero at +0x20 of the other object",
+      "args": [],
+      "objects": {
+        "zero_obj": {"size": "0x40", "fill": "random", "init": [{"offset": "0x20", "u32": 0}]}
+      },
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 2},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@zero_obj"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "result 2: current object pointer is never read (null)",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 2},
+        {"addr": "0x1004d224", "u32": 0},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 305419896}
+    },
+    {
+      "name": "result 0: calls FUN_100061d0 with index -3 and returns its eax",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "result 1: not 2, calls FUN_100061d0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 1},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "result 3: not 2, calls FUN_100061d0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 3},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "result 0xffffffff: not 2, calls FUN_100061d0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 4294967295},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "result 0x80000002: low word is 2 but not equal, calls FUN_100061d0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 2147483650},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "result 0x102: low byte is 2 but not equal, calls FUN_100061d0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 258},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "index: short 32767 is the largest positive index",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_obj2"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "index: short -32768 (0x8000) sign-extends",
+      "args": [],
+      "objects": {
+        "cur_min": {"size": "0x40", "fill": "random", "init": [{"offset": "0x28", "u16": 32768}]}
+      },
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_min"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "index: only the low word of the dword at +0x28 is read (0xffff8001 gives -32767)",
+      "args": [],
+      "objects": {
+        "cur_hi": {"size": "0x40", "fill": "random", "init": [{"offset": "0x28", "u32": 4294934529}]}
+      },
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_hi"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "result 0: other object pointer is never read (null)",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": 0}
+      ],
+      "expect": {"ret": 1234567}
+    },
+    {
+      "name": "callee returns 0: the zero passes through",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "callees": {
+        "0x100061d0": {"name": "FUN_100061d0", "conv": "cdecl", "args": ["int", "int"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "callee returns -1: the value passes through",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004d1c8", "u32": 0},
+        {"addr": "0x1004d224", "u32": "@cur_obj"},
+        {"addr": "0x1004d230", "u32": "@ret_obj"}
+      ],
+      "callees": {
+        "0x100061d0": {"name": "FUN_100061d0", "conv": "cdecl", "args": ["int", "int"], "ret": -1}
+      },
+      "expect": {"ret": -1}
+    }
+  ],
+  "fuzz": {
+    "seed": 72704,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004d1c8", "type": "u32", "choices": [0, 1, 2, 3, 4294967295, 2147483650, 258]},
+      {"addr": "0x1004d224", "type": "u32", "choices": ["@cur_obj", "@cur_obj2"]},
+      {"addr": "0x1004d230", "type": "u32", "choices": ["@ret_obj", "@ret_obj2"]},
+      {"addr": "@cur_obj", "offset": "0x28", "type": "short", "range": [-40, 70]},
+      {"addr": "@cur_obj2", "offset": "0x28", "type": "short", "range": [-40, 70]}
+    ]
+  }
+}

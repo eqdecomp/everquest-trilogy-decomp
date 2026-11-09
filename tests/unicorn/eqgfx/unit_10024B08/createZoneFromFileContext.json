@@ -1,0 +1,84 @@
+{
+  "function": "createZoneFromFileContext_guess",
+  "original": "0x100250be",
+  "sources": ["src/eqgfx/unit_10024B08.c"],
+  "conv": "cdecl",
+  "args": [{"name": "fileContext", "type": "ptr"}],
+  "ret": "int",
+  "objects": {
+    "filecontext": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@engine"},
+        {"offset": "0x8044", "u32": "@ambiententry"}
+      ]
+    },
+    "ambiententry": {"size": "0x40", "fill": "zero"},
+    "engine": {"size": "0x100", "fill": "zero"},
+    "zone": {"size": "0x20", "fill": "zero"},
+    "region": {"size": "0x20", "fill": "zero"},
+    "lightskip": {"size": "0x40", "fill": "zero"}
+  },
+  "callees": {
+    "0x1002055a": {"name": "t3dCreateZone", "conv": "cdecl", "args": ["ptr"], "ret": "@zone"},
+    "0x100174b8": {"name": "t3dSetObjectTag", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 0},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x10019346": {"name": "t3dGetRegionFromRegionNumber", "conv": "cdecl", "args": ["ptr", "int"], "ret": "@region"},
+    "0x10020674": {"name": "t3dAddRegionToZone", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"]},
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@lightskip"},
+    "0x100205ae": {"name": "t3dDestroyZone", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x100223f5": {"name": "decryptData_guess", "conv": "cdecl", "args": ["ptr", "ptr", "u32"]},
+    "0x10020666": {"name": "t3dSetLightSkipFrames", "conv": "cdecl", "args": ["ptr", "ptr"]}
+  },
+  "cases": [
+    {"name": "empty context fields", "args": ["@filecontext"]},
+    {"name": "zone creation fails", "args": ["@filecontext"], "callees": {"0x1002055a": {"ret": 0}}},
+    {"name": "non-null sentinel zone reaches flag write", "args": ["@filecontext"], "memory": [
+      {"addr": "@filecontext", "offset": "0x8064", "u32": 1}
+    ], "callees": {"0x1002055a": {"ret": 1}}},
+    {"name": "positive tag adds dictionary entry", "args": ["@filecontext"], "memory": [
+      {"addr": "@filecontext", "offset": "0x38", "u32": 100},
+      {"addr": "@ambiententry", "offset": "0x0", "u32": 7}
+    ]},
+    {"name": "negative tag conversion", "args": ["@filecontext"], "memory": [
+      {"addr": "@filecontext", "offset": "0x38", "u32": 100},
+      {"addr": "@ambiententry", "offset": "0x0", "u32": "0xfffffffb"}
+    ]},
+    {"name": "tag already present", "args": ["@filecontext"], "memory": [
+      {"addr": "@ambiententry", "offset": "0x0", "u32": "0xffffffff"}
+    ], "callees": {"0x100174b8": {"ret": 1}}},
+    {"name": "ambient flag and one region", "args": ["@filecontext"], "memory": [
+      {"addr": "@filecontext", "offset": "0x8064", "u32": 1},
+      {"addr": "@ambiententry", "offset": "0x8", "u32": 1},
+      {"addr": "@ambiententry", "offset": "0xc", "u32": 15},
+      {"addr": "@ambiententry", "offset": "0x10", "u32": 0}
+    ]},
+    {"name": "three regions and light skip frames", "args": ["@filecontext"], "memory": [
+      {"addr": "@ambiententry", "offset": "0x8", "u32": 3},
+      {"addr": "@ambiententry", "offset": "0xc", "u32": 4},
+      {"addr": "@ambiententry", "offset": "0x10", "u32": 5},
+      {"addr": "@ambiententry", "offset": "0x14", "u32": 6},
+      {"addr": "@ambiententry", "offset": "0x18", "u32": 8},
+      {"addr": "@ambiententry", "offset": "0x1c", "u32": "0x12345678"}
+    ]},
+    {"name": "light skip allocation fails", "args": ["@filecontext"], "memory": [
+      {"addr": "@ambiententry", "offset": "0xc", "u32": 12}
+    ], "callees": {"0x10050c48": {"ret": 0}}}
+    ,{"name": "one byte light skip buffer", "args": ["@filecontext"], "memory": [
+      {"addr": "@ambiententry", "offset": "0xc", "u32": 1}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 151742,
+    "count": 32,
+    "args": [{"choices": ["@filecontext"]}],
+    "memory": [
+      {"addr": "@filecontext", "offset": "0x38", "type": "int", "range": [-100, 100]},
+      {"addr": "@filecontext", "offset": "0x8064", "type": "u32", "choices": [0, 1]},
+      {"addr": "@ambiententry", "offset": "0x0", "type": "int", "choices": [-12, 0, 2, 12]},
+      {"addr": "@ambiententry", "offset": "0x8", "type": "u32", "range": [0, 4]},
+      {"addr": "@ambiententry", "offset": "0xc", "type": "u32", "count": 6, "range": [0, 32]}
+    ]
+  }
+}

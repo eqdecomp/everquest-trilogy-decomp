@@ -1,0 +1,210 @@
+{
+  "function": "HandleCorpseLootResponse_guess",
+  "original": "0x004960f2",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "message",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "main": {
+      "size": "0x6c900",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x94", "u32": 2 },
+        { "offset": "0x6c5e0", "u32": "0x12345678" },
+        { "offset": "0x6c5e4", "u32": 0 },
+        { "offset": "0x6c8b6", "u16": "0x1234" },
+        { "offset": "0x6c8b8", "u16": "0x2345" }
+      ]
+    },
+    "message": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": 8, "u16": "0x1234" }
+      ]
+    },
+    "owner_a": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@vtable_a" },
+        { "offset": "0x10", "u32": 1 }
+      ]
+    },
+    "owner_b": {
+      "size": "0x1ec",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@vtable_b" },
+        { "offset": "0x10", "u32": 1 }
+      ]
+    },
+    "vtable_a": {
+      "size": "0x10",
+      "init": [
+        { "offset": 8, "u32": "@callback_a" }
+      ]
+    },
+    "vtable_b": {
+      "size": "0x10",
+      "init": [
+        { "offset": 8, "u32": "@callback_b" }
+      ]
+    },
+    "callback_a": { "size": "0x10" },
+    "callback_b": { "size": "0x10" },
+    "everquest": { "size": "0x10", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x006b6538", "size": "0x58", "fill": "zero" },
+    { "addr": "0x006e4e44", "u32": "@main" },
+    { "addr": "0x006018c0", "u32": "@owner_a" },
+    { "addr": "0x00604984", "u32": "@owner_b" },
+    { "addr": "0x006b6588", "u32": 8 },
+    { "addr": "0x006efe2c", "u32": "@everquest" }
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [ "cstr", "int" ],
+      "ret": 0
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [ "ptr" ]
+    },
+    "0x005213e9": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": [ "ptr" ],
+      "ret": 123456789
+    },
+    "@callback_a": {
+      "name": "owner_a_vfunc8",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    },
+    "@callback_b": {
+      "name": "owner_b_vfunc8",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "unaligned-adjacent-global-does-not-satisfy-main-pointer",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "0x006e4e44", "u32": 0 },
+        { "addr": "0x006e4e45", "u32": "@main" }
+      ]
+    },
+    {
+      "name": "global-main-null-returns-before-reads",
+      "args": [ "@message" ],
+      "memory": [ { "addr": "0x006e4e44", "u32": 0 } ]
+    },
+    {
+      "name": "negative-id-runs-both-callbacks-and-wraps-counter",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "@message", "offset": 8, "u16": "0xffff" },
+        { "addr": "@main", "offset": "0x94", "u32": "0xffffffff" },
+        { "addr": "0x006b6588", "u32": 9 }
+      ]
+    },
+    {
+      "name": "both-virtual-flag-gates-disabled-clamps-zero",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "@owner_a", "offset": "0x10", "u32": 0 },
+        { "addr": "@owner_b", "offset": "0x10", "u32": 0 },
+        { "addr": "@message", "offset": 8, "u16": "0xffff" },
+        { "addr": "@main", "offset": "0x94", "u32": 0 }
+      ]
+    },
+    {
+      "name": "only-first-virtual-call",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "0x00604984", "u32": 0 },
+        { "addr": "@message", "offset": 8, "u16": "0xffff" }
+      ]
+    },
+    {
+      "name": "only-second-virtual-call",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "0x006018c0", "u32": 0 },
+        { "addr": "@message", "offset": 8, "u16": "0xffff" }
+      ]
+    },
+    {
+      "name": "matching-first-slot-deletes-and-clears",
+      "args": [ "@message" ],
+      "memory": [ { "addr": "@main", "offset": "0x94", "u32": 1 } ]
+    },
+    {
+      "name": "matching-second-slot-is-null",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "@message", "offset": 8, "u16": "0x2345" },
+        { "addr": "@main", "offset": "0x6c5e4", "u32": 0 }
+      ]
+    },
+    {
+      "name": "matching-slot-29-boundary-deletes",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "@message", "offset": 8, "u16": "0x7777" },
+        { "addr": "@main", "offset": "0x6c8f0", "u16": "0x7777" },
+        { "addr": "@main", "offset": "0x6c654", "u32": "0x76543210" }
+      ]
+    },
+    {
+      "name": "no-item-match-after-thirty-entries",
+      "args": [ "@message" ],
+      "memory": [ { "addr": "@message", "offset": 8, "u16": "0xffff" } ]
+    },
+    {
+      "name": "positive-counter-one-decrements-to-zero",
+      "args": [ "@message" ],
+      "memory": [
+        { "addr": "@message", "offset": 8, "u16": "0xffff" },
+        { "addr": "@main", "offset": "0x94", "u32": 1 },
+        { "addr": "0x006b6588", "u32": 8 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4808946,
+    "count": 40,
+    "args": [
+      { "choices": [ "@message" ] }
+    ],
+    "memory": [
+      { "addr": "0x006e4e44", "type": "ptr", "choices": [ "@main", 0 ] },
+      { "addr": "0x006018c0", "type": "ptr", "choices": [ "@owner_a", 0 ] },
+      { "addr": "0x00604984", "type": "ptr", "choices": [ "@owner_b", 0 ] },
+      { "addr": "0x006b6588", "type": "int", "range": [ 0, 10 ] },
+      { "addr": "@main", "offset": "0x94", "type": "int", "range": [ -3, 4 ] },
+      { "addr": "@message", "offset": 8, "type": "u16", "choices": [ 0, 1, "0x1234", "0x2345", "0x7777", "0x7fff", "0x8000", "0xffff" ] },
+      { "addr": "@main", "offset": "0x6c8b6", "type": "u16", "count": 30, "stride": 2, "choices": [ 0, "0x1234", "0x2345", "0x7777", "0xffff" ] },
+      { "addr": "@main", "offset": "0x6c5e0", "type": "u32", "count": 30, "stride": 4, "choices": [ 0, "0x12345678", "0x76543210" ] },
+      { "addr": "@owner_a", "offset": "0x10", "type": "u32", "choices": [ 0, 1, 2 ] },
+      { "addr": "@owner_b", "offset": "0x10", "type": "u32", "choices": [ 0, 1, 2 ] }
+    ]
+  }
+}

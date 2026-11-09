@@ -1,0 +1,138 @@
+{
+  "function": "EQMain_DrawStrings_guess",
+  "original": "0x1001a340",
+  "sources": [
+    "src/eqmain/unit_10018B60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "wrapper": {"size": "0x40", "fill": "zero"},
+    "wrapper2": {"size": "0x40", "fill": "zero"},
+    "label": {"size": "0x40", "fill": "zero"},
+    "label2": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004CEB8", "u32": "@wrapper"},
+    {"addr": "0x100559A0", "u32": "@label"},
+    {"addr": "@label", "cstr": "Health"},
+    {"addr": "@label2", "cstr": "Score"}
+  ],
+  "callees": {
+    "0x1001a310": {
+      "name": "FUN_1001a310",
+      "conv": "stdcall",
+      "args": []
+    },
+    "0x100082c0": {
+      "name": "FUN_100082c0",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int",
+        "u32",
+        "cstr",
+        "int",
+        "u32"
+      ],
+      "ret": [64, 0]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "width zero puts the second line at 0x13e",
+      "args": ["abc"],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "int", "int", "u32", "cstr", "int", "u32"], "ret": [0, 0]}
+      }
+    },
+    {
+      "name": "width minus 0x13e puts the second line at x 0",
+      "args": ["abc"],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "int", "int", "u32", "cstr", "int", "u32"], "ret": [-318, 0]}
+      }
+    },
+    {
+      "name": "width minus one",
+      "args": ["abc"],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "int", "int", "u32", "cstr", "int", "u32"], "ret": [-1, 0]}
+      }
+    },
+    {
+      "name": "width near int max wraps the second x",
+      "args": ["abc"],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "int", "int", "u32", "cstr", "int", "u32"], "ret": [2147483647, 0]}
+      }
+    },
+    {
+      "name": "width int min",
+      "args": ["abc"],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "int", "int", "u32", "cstr", "int", "u32"], "ret": [-2147483648, 0]}
+      }
+    },
+    {
+      "name": "second call's return is discarded",
+      "args": ["abc"],
+      "callees": {
+        "0x100082c0": {"name": "FUN_100082c0", "conv": "cdecl", "args": ["int", "int", "int", "u32", "cstr", "int", "u32"], "ret": [64, 12345]}
+      }
+    },
+    {
+      "name": "long string",
+      "args": ["The quick brown fox jumps over the lazy dog 0123456789"]
+    },
+    {
+      "name": "null wrapper still drawn",
+      "args": ["abc"],
+      "memory": [{"addr": "0x1004CEB8", "u32": 0}]
+    },
+    {
+      "name": "second text global",
+      "args": ["abc"],
+      "memory": [{"addr": "0x100559A0", "u32": "@label2"}]
+    },
+    {
+      "name": "second surface wrapper",
+      "args": ["abc"],
+      "memory": [{"addr": "0x1004CEB8", "u32": "@wrapper2"}]
+    },
+    {
+      "name": "param aliases the text global",
+      "args": ["@label"]
+    }
+  ],
+  "fuzz": {
+    "seed": 107328,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "0x1004CEB8", "type": "ptr", "choices": [0, "@wrapper", "@wrapper2"]},
+      {"addr": "0x100559A0", "type": "ptr", "choices": ["@label", "@label2"]}
+    ]
+  }
+}

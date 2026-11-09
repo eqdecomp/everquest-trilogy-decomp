@@ -1,0 +1,98 @@
+{
+  "function": "EQ_TextIO_UpdateBuffer_owner_guess::UpdateBufferFromRawTextLines",
+  "original": "0x0048cf56",
+  "sources": ["src/EverQuest/EQ_TextIO.cpp"],
+  "conv": "thiscall",
+  "this": "@eq_textio_updatebuffer_owner",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eq_textio_updatebuffer_owner": {"size": 4, "fill": "zero"},
+    "text_buffer": {"size": 4, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E20CC", "u32": 0},
+    {"addr": "0x006B772B", "size": 127746, "fill": "random"},
+    {"addr": "0x006D6BF4", "size": 1000, "fill": "random"},
+    {"addr": "0x006D6FDC", "u32": 37},
+    {"addr": "0x006E0FEA", "u16": 91},
+    {"addr": "0x006B7800", "cstr": "first raw line"}
+  ],
+  "callees": {
+    "0x0048D0C4": {
+      "name": "GetRawTextLine",
+      "conv": "thiscall",
+      "args": ["cstr", "ptr", "ptr"],
+      "ret": 0
+    },
+    "0x0048CCE7": {
+      "name": "EQ_TextIO_ProcessTextWithWordWrapping_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int", "int"]
+    },
+    "0x0048CAF2": {
+      "name": "EQ_TextIO_ResetTextBufferAndUpdateDisplay_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "null text buffer skips initialization and all callees",
+      "memory": [{"addr": "0x006E20CC", "u32": 0}]
+    },
+    {
+      "name": "false raw-line result initializes then resets",
+      "memory": [{"addr": "0x006E20CC", "u32": "@text_buffer"}],
+      "regs": {"ebx": "0x7f0efff8", "esi": 0},
+      "callees": {"0x0048D0C4": {"ret": 0}}
+    },
+    {
+      "name": "true result with null output pointer stops before wrapping",
+      "memory": [{"addr": "0x006E20CC", "u32": "@text_buffer"}],
+      "regs": {"ebx": "0x7f0efff8", "esi": 0},
+      "callees": {
+        "0x0048D0C4": {
+          "ret": 1,
+          "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "one raw line followed by end of input",
+      "memory": [{"addr": "0x006E20CC", "u32": "@text_buffer"}],
+      "regs": {"ebx": "0x7f0efff8", "esi": "0x006b7800"},
+      "callees": {
+        "0x0048D0C4": {
+          "ret": [1, 0],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "00786b00"},
+            {"arg": 2, "offset": 0, "hex": "05000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "two successful lines preserve loop call order",
+      "memory": [{"addr": "0x006E20CC", "u32": "@text_buffer"}],
+      "regs": {"ebx": "0x7f0efff8", "esi": "0x006b7800"},
+      "callees": {
+        "0x0048D0C4": {
+          "ret": [1, 1, 0],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "00786b00"},
+            {"arg": 2, "offset": 0, "hex": "05000000"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4771670,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x006D6BF4", "type": "u16", "range": [0, 65535], "count": 500}
+    ]
+  }
+}

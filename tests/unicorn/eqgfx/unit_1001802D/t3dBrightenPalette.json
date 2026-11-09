@@ -1,0 +1,148 @@
+{
+  "function": "t3dBrightenPalette",
+  "original": "0x100184d8",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "palette",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x420",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x414",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@palette"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag zero: else range 10..245",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 0}
+      ]
+    },
+    {
+      "name": "flag set, zero entries",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x14", "fill": "zero", "size": 1024}
+      ]
+    },
+    {
+      "name": "flag zero, zero entries",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 0},
+        {"addr": "@palette", "offset": "0x14", "fill": "zero", "size": 1024}
+      ]
+    },
+    {
+      "name": "flag set: channel edges and range ends",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x14", "hex": "40404040"},
+        {"addr": "@palette", "offset": "0x18", "hex": "7f80ff00"},
+        {"addr": "@palette", "offset": "0x1c", "hex": "00014080"},
+        {"addr": "@palette", "offset": "0x20", "hex": "7e81c0fe"},
+        {"addr": "@palette", "offset": "0x40c", "hex": "80ff7f01"},
+        {"addr": "@palette", "offset": "0x410", "hex": "40404040"}
+      ]
+    },
+    {
+      "name": "flag zero: channel edges and range ends",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 0},
+        {"addr": "@palette", "offset": "0x38", "hex": "40404040"},
+        {"addr": "@palette", "offset": "0x3c", "hex": "7f80ff00"},
+        {"addr": "@palette", "offset": "0x40", "hex": "00014080"},
+        {"addr": "@palette", "offset": "0x44", "hex": "7e81c0fe"},
+        {"addr": "@palette", "offset": "0x3e8", "hex": "80ff7f01"},
+        {"addr": "@palette", "offset": "0x3ec", "hex": "40404040"}
+      ]
+    },
+    {
+      "name": "flag 0x100: nonzero, low byte zero",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 256}
+      ]
+    },
+    {
+      "name": "flag 0x01000000: nonzero, low bytes zero",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 16777216}
+      ]
+    },
+    {
+      "name": "flag 0x80000000: nonzero, sign bit only",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 2147483648}
+      ]
+    },
+    {
+      "name": "flag -1: nonzero, all ones",
+      "args": [
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x414", "u32": 4294967295}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 99544,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@palette"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@palette", "offset": "0x414", "type": "int", "choices": [0, 0, 1, -1, 256, 65536, -2147483648]},
+      {"addr": "@palette", "offset": "0x14", "size": 1024}
+    ]
+  }
+}

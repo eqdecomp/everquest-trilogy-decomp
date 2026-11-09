@@ -1,0 +1,250 @@
+{
+  "function": "PackFsStringReference_guess::initializeStringReferenceWithString_guess",
+  "original": "0x10007540",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "str",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "buf": {
+      "size": "0x200",
+      "fill": "zero"
+    },
+    "obj": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "old": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@buf",
+        "@obj"
+      ]
+    },
+    "0x10007fe0": {
+      "name": "PackFsSharedPtr_guess::updateSharedPointer_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 3 chars, size 4 (one dword, no byte tail)",
+      "args": [
+        "@self",
+        1,
+        "abc"
+      ]
+    },
+    {
+      "name": "empty string: clears only",
+      "args": [
+        "@self",
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "null string: clears only",
+      "args": [
+        "@self",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "1 char, size 2 (no dword, two bytes)",
+      "args": [
+        "@self",
+        0,
+        "a"
+      ]
+    },
+    {
+      "name": "2 chars, size 3 (three bytes)",
+      "args": [
+        "@self",
+        0,
+        "ab"
+      ]
+    },
+    {
+      "name": "4 chars, size 5 (one dword, one byte)",
+      "args": [
+        "@self",
+        0,
+        "abcd"
+      ]
+    },
+    {
+      "name": "7 chars, size 8 (two dwords)",
+      "args": [
+        "@self",
+        0,
+        "abcdefg"
+      ]
+    },
+    {
+      "name": "8 chars, size 9 (two dwords, one byte)",
+      "args": [
+        "@self",
+        0,
+        "abcdefgh"
+      ]
+    },
+    {
+      "name": "old shared pointer and value are overwritten, old object not released",
+      "args": [
+        "@self",
+        0,
+        "abc"
+      ],
+      "objects": {
+        "self": {
+          "size": "0x10",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "@old"
+            },
+            {
+              "offset": "0x4",
+              "u32": "0x12345678"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "buffer allocation returns NULL: the copy writes through NULL",
+      "args": [
+        "@self",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x100338e5": {
+          "ret": [
+            0,
+            "@obj"
+          ]
+        }
+      }
+    },
+    {
+      "name": "new object has a nonzero count that must be reset before incrementing",
+      "args": [
+        "@self",
+        0,
+        "abc"
+      ],
+      "objects": {
+        "obj": {
+          "size": "0x10",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": "0x12345678"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "object allocation returns NULL: its count is read at address 4",
+      "args": [
+        "@self",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x100338e5": {
+          "ret": [
+            "@buf",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "buffer aliases the value field: the final clear is what leaves 0 there",
+      "args": [
+        "@self",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x100338e5": {
+          "ret": [
+            "@self+0x4",
+            "@obj"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 30016,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          0,
+          "",
+          "a",
+          "ab",
+          "abc",
+          "abcd",
+          "abcde",
+          "abcdef",
+          "abcdefg",
+          "abcdefgh",
+          "abcdefghi",
+          "the quick brown fox"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

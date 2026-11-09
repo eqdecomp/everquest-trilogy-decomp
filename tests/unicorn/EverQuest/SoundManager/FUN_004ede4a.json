@@ -1,0 +1,318 @@
+{
+  "function": "SoundSlotTable_guess::DispatchHandleToSlotWithArgs_guess",
+  "original": "0x004ede4a",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@table",
+  "args": [
+    {
+      "name": "handle",
+      "type": "ptr"
+    },
+    {
+      "name": "calleeArgument1",
+      "type": "int"
+    },
+    {
+      "name": "calleeArgument2",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "table": {
+      "size": "0xb50",
+      "fill": "zero"
+    },
+    "handle": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "slot": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004ebe59": {
+      "name": "FUN_004ebe59",
+      "conv": "thiscall",
+      "args": [
+        "u32",
+        "int",
+        "int"
+      ],
+      "ret": 305419896
+    }
+  },
+  "cases": [
+    {
+      "name": "slot zero calls with low word and both arguments",
+      "args": [
+        "@handle",
+        287454020,
+        -2
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x0000abcd"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "slot zero null returns minus one",
+      "args": [
+        "@handle",
+        1,
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x0000ffff"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "slot one call with zero arguments",
+      "args": [
+        "@handle",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x0001ffff"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x10",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "last valid slot 719 calls",
+      "args": [
+        "@handle",
+        2147483647,
+        -2147483648
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02cfffff"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xb48",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "last valid slot null",
+      "args": [
+        "@handle",
+        3,
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02cfffff"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "first out of range slot 720 is rejected even when set",
+      "args": [
+        "@handle",
+        5,
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02d00000"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xb4c",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "slot 721 rejected",
+      "args": [
+        "@handle",
+        7,
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x02d10000"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "high word 0x7fff rejected",
+      "args": [
+        "@handle",
+        9,
+        10
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x7fff0000"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "high word 0x8000 rejected",
+      "args": [
+        "@handle",
+        11,
+        12
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x80000000"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "maximum high word rejected",
+      "args": [
+        "@handle",
+        13,
+        14
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0xffff0000"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "neighboring active slot does not satisfy slot one",
+      "args": [
+        "@handle",
+        15,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": "0x0001aaaa"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@slot"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5168714,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@handle"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@handle",
+        "type": "u32",
+        "range": [
+          0,
+          47251455
+        ]
+      },
+      {
+        "addr": "@table",
+        "offset": "0xc",
+        "type": "u32",
+        "count": 720,
+        "choices": [
+          0,
+          "@slot"
+        ]
+      }
+    ]
+  }
+}

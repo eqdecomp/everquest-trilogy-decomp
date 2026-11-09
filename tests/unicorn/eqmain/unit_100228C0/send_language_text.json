@@ -1,0 +1,127 @@
+{
+  "function": "send_language_text_guess",
+  "original": "0x100228c0",
+  "sources": [
+    "src/eqmain/unit_100228C0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {"addr": "0x1012b918", "u32": 0},
+    {"addr": "0x10125848", "u32": 4660},
+    {"addr": "0x10125914", "size": 64, "fill": "zero"}
+  ],
+  "callees": {
+    "0x10024f90": {
+      "name": "FUN_10024f90",
+      "conv": "cdecl",
+      "args": ["u16"],
+      "passthrough": true
+    },
+    "0x10024fb0": {
+      "name": "FUN_10024fb0",
+      "conv": "cdecl",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x100211b0": {
+      "name": "FUN_100211b0",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "0x10024ff0": {
+      "name": "FUN_10024ff0",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "0x10034117": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x1002c010": {
+      "name": "connection_send_guess",
+      "conv": "cdecl",
+      "args": ["int", "mem:64", "u32", "u32", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [1, "abc"]
+    },
+    {
+      "name": "zeros: byte 0, empty string",
+      "args": [0, ""]
+    },
+    {
+      "name": "high bits of the argument dword (FUN_10024fb0 takes the low byte)",
+      "args": [4660, "hi"]
+    },
+    {
+      "name": "all-ones argument dword",
+      "args": [-1, "x"]
+    },
+    {
+      "name": "append index 2 (after the word 9)",
+      "args": [1, "abc"],
+      "memory": [{"addr": "0x1012b918", "u32": 2}]
+    },
+    {
+      "name": "append index mid-buffer",
+      "args": [7, "tell"],
+      "memory": [{"addr": "0x1012b918", "u32": 64}]
+    },
+    {
+      "name": "append index near the buffer end: appends cross into the index dword",
+      "args": [9, "abcdef"],
+      "memory": [{"addr": "0x1012b918", "u32": 24574}]
+    },
+    {
+      "name": "connection pointer zero",
+      "args": [1, "abc"],
+      "memory": [{"addr": "0x10125848", "u32": 0}]
+    },
+    {
+      "name": "percent signs in the string are data, not format",
+      "args": [2, "100%s%d%%"]
+    },
+    {
+      "name": "embedded spaces",
+      "args": [3, "a b  c"]
+    },
+    {
+      "name": "40-character string",
+      "args": [4, "0123456789012345678901234567890123456789"]
+    }
+  ],
+  "fuzz": {
+    "seed": 141504,
+    "count": 40,
+    "args": [
+      {"range": [-8, 300]},
+      {"choices": ["", "a", "ab", "abc", "hello world", "100%", "%s%d", "x", "0", "tell him hi", "the quick brown fox", "a b  c", "0123456789012345678901234567890123456789"]}
+    ],
+    "memory": [
+      {"addr": "0x1012b918", "type": "u32", "range": [0, 40]},
+      {"addr": "0x10125848", "type": "u32", "choices": [0, 4660, 4294967295]},
+      {"addr": "0x10125914", "size": 64}
+    ]
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "function": "CDisplay::GetEnvironment_guess",
+  "original": "0x004147BB",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {"name": "yBits", "type": "u32"},
+    {"name": "xBits", "type": "u32"},
+    {"name": "zBits", "type": "u32"},
+    {"name": "hasTPTag", "type": "ptr"}
+  ],
+  "ret": "u8",
+  "memory": [
+    {"addr": "@display", "offset": "0x0", "u32": "@render"},
+    {"addr": "@display", "offset": "0x4", "u32": "@world"},
+    {"addr": "@display", "offset": "0x2cb8", "u32": "@zones"},
+    {"addr": "@zones", "offset": "0x4", "u32": 1},
+    {"addr": "@zones", "offset": "0xc", "u32": "@zoneTags"},
+    {"addr": "@zoneTags", "u32": "@zone"},
+    {"addr": "0x006E5310", "u32": "@getZones"},
+    {"addr": "0x006E5314", "u32": "@getUserData"},
+    {"addr": "0x006E52DC", "u32": "@getObjectTag"}
+  ],
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "random"},
+    "render": {"size": 16},
+    "world": {"size": 16},
+    "zones": {"size": 32, "fill": "zero"},
+    "zoneTags": {"size": 16, "fill": "zero"},
+    "zone": {"size": 16, "fill": "zero"},
+    "zoneOld": {"size": 16, "fill": "zero"},
+    "zoneNew0": {"size": 16, "fill": "zero"},
+    "zoneNew1": {"size": 16, "fill": "zero"},
+    "zoneTagsOld": {"size": 8, "fill": "zero"},
+    "userdataXX": {"size": 8, "fill": "zero"},
+    "userdataDR": {"size": 8, "fill": "zero"},
+    "flag": {"size": 4, "fill": "random"},
+    "getZones": {"size": 16},
+    "getUserData": {"size": 16},
+    "getObjectTag": {"size": 16}
+  },
+  "callees": {
+    "@getZones": {
+      "name": "t3dGetZonesContainingWorldXYZPosition",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:12", "ptr"],
+      "ret": 0
+    },
+    "@getUserData": {
+      "name": "t3dGetZoneUserData",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@getObjectTag": {
+      "name": "t3dGetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "585800545000"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero zones clears output flag",
+      "args": [10, 20, 30, "@flag"],
+      "memory": [
+        {"addr": "@zones", "offset": "0x4", "u32": 0},
+        {"addr": "@flag", "u32": 99}
+      ]
+    },
+    {
+      "name": "null zone tag list advances through count without reading tags",
+      "args": [10, 20, 30, "@flag"],
+      "memory": [
+        {"addr": "@zones", "offset": "0x4", "u32": 2},
+        {"addr": "@zones", "offset": "0xc", "u32": 0},
+        {"addr": "@flag", "u32": 99}
+      ]
+    },
+    {
+      "name": "DR zone returns zero and TP tag writes flag",
+      "args": ["0x7f800001", "0x80000000", "0x7fc12345", "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "DR"}]
+    },
+    {
+      "name": "WT zone returns five",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "WT"}]
+    },
+    {
+      "name": "LA zone returns seven",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "LA"}]
+    },
+    {
+      "name": "SL zone returns six",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "SL"}]
+    },
+    {
+      "name": "VW zone returns eight",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "VW"}]
+    },
+    {
+      "name": "W2 zone returns nine",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "W2"}]
+    },
+    {
+      "name": "W3 zone returns ten",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "W3"}]
+    },
+    {
+      "name": "null user data preserves object tag but still detects TP bytes",
+      "args": [10, 20, 30, "@flag"]
+    },
+    {
+      "name": "19-byte object tag is replaced by matching user data",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {
+        "@getObjectTag": {
+          "name": "t3dGetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "ret": 0,
+          "writes": [{"arg": 1, "offset": 0, "hex": "5858585858585858585858585858585858585800"}]
+        },
+        "@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}
+      },
+      "memory": [{"addr": "@userdataDR", "cstr": "WT"}],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "20-byte object tag is not replaced by matching user data",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {
+        "@getObjectTag": {
+          "name": "t3dGetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "ret": 0,
+          "writes": [{"arg": 1, "offset": 0, "hex": "585858585858585858585858585858585858585800"}]
+        },
+        "@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}
+      },
+      "memory": [{"addr": "@userdataDR", "cstr": "WT"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "255-byte tag is not replaced by matching user data",
+      "args": [10, 20, 30, "@flag"],
+      "callees": {
+        "@getObjectTag": {
+          "name": "t3dGetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "ret": 0,
+          "writes": [{"arg": 1, "offset": 0, "hex": "58585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585858585800"}]
+        },
+        "@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}
+      },
+      "memory": [{"addr": "@userdataDR", "cstr": "DR"}]
+    },
+    {
+      "name": "null output pointer still returns zone class",
+      "args": [10, 20, 30, 0],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "memory": [{"addr": "@userdataDR", "cstr": "WT"}]
+    },
+    {
+      "name": "unsigned high-bit zone count processes first entry",
+      "args": [10, 20, 30, "@flag"],
+      "memory": [
+        {"addr": "@zones", "offset": "0x4", "u32": "0x80000000"},
+        {"addr": "@userdataDR", "cstr": "WT"}
+      ],
+      "callees": {"@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdataDR"}},
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "output aliases zone list pointer and helper replacement is reloaded",
+      "args": [10, 20, 30, "@display+0x2cb8"],
+      "memory": [
+        {"addr": "@display", "offset": "0x2cb8", "u32": "@zones"},
+        {"addr": "@zones", "offset": "0x4", "u32": 1},
+        {"addr": "@zoneNew0", "offset": "0x4", "u32": 0}
+      ],
+      "callees": {
+        "@getZones": {
+          "name": "t3dGetZonesContainingWorldXYZPosition",
+          "conv": "cdecl",
+          "args": ["ptr", "mem:12", "ptr"],
+          "ret": 0,
+          "writes": [{"addr": "0x60002cb8", "hex": "702e0060"}]
+        }
+      }
+    },
+    {
+      "name": "user data helper reloads list and tags and loop count",
+      "args": [10, 20, 30, "@flag"],
+      "memory": [
+        {"addr": "@zones", "offset": "0x4", "u32": 2},
+        {"addr": "@zones", "offset": "0xc", "u32": "@zoneTagsOld"},
+        {"addr": "@zoneTagsOld", "u32": "@zoneOld"},
+        {"addr": "@zoneTagsOld", "offset": 4, "u32": "@zoneNew1"},
+        {"addr": "@zoneNew0", "offset": "0x4", "u32": 0},
+        {"addr": "@userdataXX", "cstr": "XX"},
+        {"addr": "@userdataDR", "cstr": "WT"}
+      ],
+      "callees": {
+        "@getUserData": {
+          "name": "t3dGetZoneUserData",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": ["@userdataXX", "@userdataDR"],
+          "writes": [{"addr": "0x60002cb8", "hex": "702e0060"}]
+        }
+      }
+    },
+    {
+      "name": "object tag helper changes list before loop count reload",
+      "args": [10, 20, 30, "@flag"],
+      "memory": [
+        {"addr": "@zones", "offset": "0x4", "u32": 2},
+        {"addr": "@zones", "offset": "0xc", "u32": "@zoneTags"},
+        {"addr": "@zoneTags", "u32": "@zone"},
+        {"addr": "@zoneTags", "offset": 4, "u32": "@zoneOld"},
+        {"addr": "@zoneNew0", "offset": "0x4", "u32": 0}
+      ],
+      "callees": {
+        "@getObjectTag": {
+          "name": "t3dGetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "585800545000"},
+            {"addr": "0x60002cb8", "hex": "702e0060"}
+          ]
+        }
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 87522,
+    "count": 30,
+    "args": [
+      {"choices": [0, 10, "0x80000000", "0x7f800000", "0x7f800001", "0x7fc12345", 4294967295]},
+      {"choices": [0, 20, "0x80000000", "0x7f800000", "0x7f800001", "0x7fc12345", 4294967295]},
+      {"choices": [0, 30, "0x80000000", "0x7f800000", "0x7f800001", "0x7fc12345", 4294967295]},
+      {"choices": [0, "@flag"]}
+    ],
+    "memory": [
+      {"addr": "@zones", "offset": "0x4", "type": "u32", "range": [0, 3]},
+      {"addr": "@zones", "offset": "0xc", "type": "ptr", "choices": ["@zoneTags", 0]},
+      {"addr": "@zoneTags", "offset": "0x4", "type": "ptr", "choices": ["@zone", "@zoneOld"]}
+    ]
+  }
+}

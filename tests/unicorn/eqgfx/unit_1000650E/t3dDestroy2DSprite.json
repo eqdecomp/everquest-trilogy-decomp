@@ -1,0 +1,200 @@
+{
+  "function": "t3dDestroy2DSprite",
+  "original": "0x10007d99",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "sprite": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x88",
+          "u32": "@frame_set"
+        }
+      ]
+    },
+    "frame_set": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 4
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d5a1": {
+      "name": "t3dDestroyVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "busy at one: no owner decrement or cleanup calls",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": "0x0a000300" },
+        { "addr": "@sprite", "offset": "0xc", "u8": 1 },
+        { "addr": "@sprite", "offset": "0x10", "u32": 1 },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" }
+      ],
+      "expect": { "ret": -49851 }
+    },
+    {
+      "name": "busy at negative one: any nonzero use count is rejected",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": "0x0a000300" },
+        { "addr": "@sprite", "offset": "0xc", "u8": 255 },
+        { "addr": "@sprite", "offset": "0x10", "u32": "0xffffffff" },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" }
+      ],
+      "expect": { "ret": -49851 }
+    },
+    {
+      "name": "zero use count and zero entry: volume, helper, then sprite free",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": 0 },
+        { "addr": "@sprite", "offset": "0xc", "u8": 0 },
+        { "addr": "@sprite", "offset": "0x10", "u32": 0 },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" },
+        { "addr": "@frame_set", "offset": "0x10", "u32": 1 }
+      ],
+      "expect": { "ret": 305419896 }
+    },
+    {
+      "name": "bit zero clear with an entry: skip unlink but free the entry",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": "0x0a000300" },
+        { "addr": "@sprite", "offset": "0xc", "u8": 2 },
+        { "addr": "@sprite", "offset": "0x10", "u32": 0 },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" }
+      ],
+      "expect": { "ret": 305419896 }
+    },
+    {
+      "name": "bit zero set with an entry: unlink before helper and free",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": "0x0a000300" },
+        { "addr": "@sprite", "offset": "0xc", "u8": 1 },
+        { "addr": "@sprite", "offset": "0x10", "u32": 0 },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" },
+        { "addr": "@frame_set", "offset": "0x10", "u32": 0 }
+      ],
+      "expect": { "ret": 305419896 }
+    },
+    {
+      "name": "bit zero set with null entry: unlink still receives null, free is skipped",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": 0 },
+        { "addr": "@sprite", "offset": "0xc", "u8": 1 },
+        { "addr": "@sprite", "offset": "0x10", "u32": 0 },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" }
+      ],
+      "expect": { "ret": 305419896 }
+    },
+    {
+      "name": "both entry conditions set: one unlink and one entry free",
+      "args": [
+        "@context",
+        "@sprite"
+      ],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x8", "u32": "0x0a000300" },
+        { "addr": "@sprite", "offset": "0xc", "u8": 3 },
+        { "addr": "@sprite", "offset": "0x10", "u32": 0 },
+        { "addr": "@sprite", "offset": "0x14", "u32": "0x0a000400" }
+      ],
+      "expect": { "ret": 305419896 }
+    }
+  ],
+  "fuzz": {
+    "seed": 32153,
+    "count": 40,
+    "args": [
+      { "choices": ["@context"] },
+      { "choices": ["@sprite"] }
+    ],
+    "memory": [
+      { "addr": "@sprite", "offset": "0x8", "type": "ptr", "choices": [0, "0x0a000300"] },
+      { "addr": "@sprite", "offset": "0xc", "type": "u8", "choices": [0, 1, 2, 3, 255] },
+      { "addr": "@sprite", "offset": "0x10", "type": "u32", "choices": [0, 1, 2, 2147483648, 4294967295] },
+      { "addr": "@sprite", "offset": "0x14", "type": "ptr", "choices": [0, "0x0a000400"] },
+      { "addr": "@frame_set", "offset": "0x10", "type": "int", "range": [-8, 32] }
+    ]
+  }
+}

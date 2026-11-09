@@ -1,0 +1,172 @@
+{
+  "function": "t3dIsPointLightPositionContainedInZone",
+  "original": "0x10020f73",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "int"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002081d": {
+      "name": "t3dIsWorldXYZContainedInZone",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical, callee reports contained",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "callees": {
+        "0x1002081d": {
+          "name": "t3dIsWorldXYZContainedInZone",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "typical, callee reports not contained",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        0,
+        "@light",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee returns -1 (EAX passes through unchanged)",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "callees": {
+        "0x1002081d": {
+          "name": "t3dIsWorldXYZContainedInZone",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "callee returns 0xdeadbeef (EAX passes through unchanged)",
+      "args": [
+        9,
+        "@light",
+        8
+      ],
+      "callees": {
+        "0x1002081d": {
+          "name": "t3dIsWorldXYZContainedInZone",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": -559038737
+        }
+      },
+      "expect": {
+        "ret": -559038737
+      }
+    },
+    {
+      "name": "null light: +0x14 is still passed on, nothing is dereferenced",
+      "args": [
+        1,
+        0,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "extreme world and region values",
+      "args": [
+        -1,
+        "@light",
+        2147483647
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 135027,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@light",
+          0
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

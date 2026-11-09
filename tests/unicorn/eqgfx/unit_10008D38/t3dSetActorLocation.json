@@ -1,0 +1,279 @@
+{
+  "function": "t3dSetActorLocation",
+  "original": "0x1000a764",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "world", "type": "ptr"},
+    {"name": "actor", "type": "ptr"},
+    {"name": "location", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {"size": "0x100", "fill": "random"},
+    "actor": {"size": "0x100", "fill": "random"},
+    "location": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "@actor", "offset": "0xf", "u8": 0},
+    {"addr": "@actor", "offset": "0x10", "f32": 1.0},
+    {"addr": "@actor", "offset": "0x14", "f32": 2.0},
+    {"addr": "@actor", "offset": "0x18", "f32": 3.0},
+    {"addr": "@actor", "offset": "0x1c", "f32": 4.0},
+    {"addr": "@actor", "offset": "0x20", "f32": 5.0},
+    {"addr": "@actor", "offset": "0x24", "f32": 6.0},
+    {"addr": "@actor", "offset": "0x28", "u32": 7},
+    {"addr": "@actor", "offset": "0x54", "u32": 0},
+    {"addr": "@location", "offset": "0x0", "f32": 1.0},
+    {"addr": "@location", "offset": "0x4", "f32": 2.0},
+    {"addr": "@location", "offset": "0x8", "f32": 3.0},
+    {"addr": "@location", "offset": "0xc", "f32": 4.0},
+    {"addr": "@location", "offset": "0x10", "f32": 5.0},
+    {"addr": "@location", "offset": "0x14", "f32": 6.0},
+    {"addr": "@location", "offset": "0x18", "u32": 287454020}
+  ],
+  "callees": {
+    "0x100192c4": {
+      "name": "t3dGetRegionNumberFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:12"],
+      "ret": 5
+    },
+    "0x10001000": {
+      "name": "t3dUpdateTouchedRegions",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 0
+    },
+    "0x100145bb": {
+      "name": "t3dSetPointLightXYZ",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "mem:12"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "same position and orientation: nothing changes, no call",
+      "args": ["@world", "@actor", "@location"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same position, orientation x differs: flag 0x20 and copy",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0xc", "f32": 40.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same position, orientation y differs",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x10", "f32": 50.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same position, orientation z differs",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x14", "f32": 60.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same position, all orientation differs, flags preset",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@actor", "offset": "0xf", "u8": 5},
+        {"addr": "@location", "offset": "0xc", "f32": 40.0},
+        {"addr": "@location", "offset": "0x10", "f32": 50.0},
+        {"addr": "@location", "offset": "0x14", "f32": 60.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same position, orientation NaN counts as changed",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x10", "hex": "0000c07f"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "position -0.0 equals 0.0, orientation same",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x10", "f32": 0.0},
+        {"addr": "@location", "offset": "0x0", "hex": "00000080"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "x differs: moved flag 0x08 only, region stored, light none",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x0", "f32": 10.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "y differs",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x4", "f32": 20.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "z differs",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x8", "f32": 30.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "position NaN counts as moved",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x4", "hex": "0000c07f"}]
+    },
+    {
+      "name": "x differs and orientation x differs: flags 0x28",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@location", "offset": "0xc", "f32": 40.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "x differs and orientation y differs",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@location", "offset": "0x10", "f32": 50.0}
+      ]
+    },
+    {
+      "name": "x differs and orientation z differs",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@location", "offset": "0x14", "f32": 60.0}
+      ]
+    },
+    {
+      "name": "region lookup -1: old region kept, nothing copied, error",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@location", "offset": "0xc", "f32": 40.0}
+      ],
+      "callees": {
+        "0x100192c4": {"name": "t3dGetRegionNumberFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": -1}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "region lookup 0 is accepted",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x0", "f32": 10.0}],
+      "callees": {
+        "0x100192c4": {"name": "t3dGetRegionNumberFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "region lookup -2 is accepted",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x0", "f32": 10.0}],
+      "callees": {
+        "0x100192c4": {"name": "t3dGetRegionNumberFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": -2}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "touched regions -1: error, new region stays stored",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@actor", "offset": "0x54", "u32": 4096}
+      ],
+      "callees": {
+        "0x10001000": {"name": "t3dUpdateTouchedRegions", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": -1}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "touched regions 1 is not an error",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@location", "offset": "0x0", "f32": 10.0}],
+      "callees": {
+        "0x10001000": {"name": "t3dUpdateTouchedRegions", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "point light set, light returns 0",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@actor", "offset": "0x54", "u32": 4096}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "point light set, light returns 5",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@actor", "offset": "0x54", "u32": 4096}
+      ],
+      "callees": {
+        "0x100145bb": {"name": "t3dSetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ptr", "mem:12"], "ret": 5}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "point light set, light returns -3",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@actor", "offset": "0x54", "u32": 4096}
+      ],
+      "callees": {
+        "0x100145bb": {"name": "t3dSetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ptr", "mem:12"], "ret": -3}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "point light ignored when position unchanged",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [{"addr": "@actor", "offset": "0x54", "u32": 4096}],
+      "callees": {
+        "0x100145bb": {"name": "t3dSetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ptr", "mem:12"], "ret": 5}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "point light not reached when touched regions fails",
+      "args": ["@world", "@actor", "@location"],
+      "memory": [
+        {"addr": "@location", "offset": "0x0", "f32": 10.0},
+        {"addr": "@actor", "offset": "0x54", "u32": 4096}
+      ],
+      "callees": {
+        "0x10001000": {"name": "t3dUpdateTouchedRegions", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": -7},
+        "0x100145bb": {"name": "t3dSetPointLightXYZ", "conv": "cdecl", "args": ["ptr", "ptr", "mem:12"], "ret": 5}
+      },
+      "expect": {"ret": -49858}
+    }
+  ],
+  "fuzz": {
+    "seed": 42852,
+    "count": 40,
+    "args": [
+      {"choices": ["@world"]},
+      {"choices": ["@actor"]},
+      {"choices": ["@location"]}
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x10", "type": "float", "choices": [1.0, 2.0], "count": 6},
+      {"addr": "@location", "offset": "0x0", "type": "float", "choices": [1.0, 2.0], "count": 6},
+      {"addr": "@actor", "offset": "0xf", "type": "u8"},
+      {"addr": "@actor", "offset": "0x28", "type": "int", "range": [-3, 9]},
+      {"addr": "@actor", "offset": "0x54", "type": "u32", "choices": ["@world", 0]},
+      {"addr": "@location", "offset": "0x18", "size": 4}
+    ]
+  }
+}

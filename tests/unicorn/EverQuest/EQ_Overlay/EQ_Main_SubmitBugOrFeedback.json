@@ -1,0 +1,118 @@
+{
+  "function": "EQ_Main_SubmitBugOrFeedback_guess",
+  "original": "0x0046360c",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x90000",
+      "fill": "zero"
+    },
+    "profile_a": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0", "cstr": "Bug report from the player profile"}
+      ]
+    },
+    "profile_b": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0", "cstr": "Feedback text from a second profile buffer"}
+      ]
+    },
+    "profile_empty": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@profile_a"}
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:1099",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero selects bug report opcode and copies profile text",
+      "args": ["@self", 1],
+      "memory": [
+        {"addr": "@self", "offset": "0xa8", "u32": 0}
+      ]
+    },
+    {
+      "name": "one selects feedback opcode and copies profile text",
+      "args": ["@self", 0],
+      "memory": [
+        {"addr": "@self", "offset": "0xa8", "u32": 1}
+      ]
+    },
+    {
+      "name": "negative nonzero field selects feedback opcode and alternate text",
+      "args": ["@self", -1],
+      "memory": [
+        {"addr": "@self", "offset": "0xa8", "u32": "0xffffffff"},
+        {"addr": "0x006e4da8", "u32": "@profile_b"}
+      ]
+    },
+    {
+      "name": "high bit set selects feedback opcode",
+      "args": ["@self", 7],
+      "memory": [
+        {"addr": "@self", "offset": "0xa8", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "empty profile text is sent as an empty payload",
+      "args": ["@self", 2],
+      "memory": [
+        {"addr": "@self", "offset": "0xa8", "u32": 0},
+        {"addr": "0x006e4da8", "u32": "@profile_empty"}
+      ]
+    },
+    {
+      "name": "nonzero field with alternate source",
+      "args": ["@self", -9],
+      "memory": [
+        {"addr": "@self", "offset": "0xa8", "u32": 2},
+        {"addr": "0x006e4da8", "u32": "@profile_b"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4601356,
+    "count": 32,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [-10, 10]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0xa8", "type": "u32", "choices": [0, 1, 2, -1, "0x80000000"]},
+      {"addr": "0x006e4da8", "type": "ptr", "choices": ["@profile_a", "@profile_b"]}
+    ]
+  }
+}

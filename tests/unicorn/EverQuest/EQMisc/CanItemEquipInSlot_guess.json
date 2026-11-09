@@ -1,0 +1,94 @@
+{
+  "function": "CanItemEquipInSlot_guess",
+  "original": "0x004A2180",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "character", "type": "ptr"},
+    {"name": "slot_mask", "type": "u32"},
+    {"name": "slot", "type": "short"},
+    {"name": "item", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "ch": {"size": "0x11c", "fill": "zero", "init": [
+      {"offset": "0x114", "u32": 0},
+      {"offset": "0x118", "u32": "@race118"}
+    ]},
+    "item": {"size": "0xd0", "fill": "zero", "init": [
+      {"offset": "0x81", "u8": 3},
+      {"offset": "0xc2", "u8": 0}
+    ]},
+    "race114": {"size": "0x100", "fill": "zero", "init": [{"offset": "0xc2", "u8": 1}]},
+    "race118": {"size": "0x100", "fill": "zero", "init": [{"offset": "0xc2", "u8": 0}]}
+  },
+  "callees": {
+    "0x0043624B": {"name": "EQ_Equipment::IsWeapon", "conv": "thiscall", "args": [], "ret": 1},
+    "0x0041A3E9": {"name": "EQ_Character::HasSkill", "conv": "thiscall", "args": ["int"], "ret": 1}
+  },
+  "cases": [
+    {"name": "null character rejects", "args": [0, 4294967295, 14, "@item"], "expect": {"ret": 0}},
+    {"name": "slot 22 accepts before item read", "args": ["@ch", 0, 22, 0], "expect": {"ret": 1}},
+    {"name": "slot 29 accepts before item read", "args": ["@ch", 0, 29, 0], "expect": {"ret": 1}},
+    {"name": "slot 30 requires the actual mask bit", "args": ["@ch", 1073741824, 30, "@item"], "expect": {"ret": 1}},
+    {"name": "slot 30 absent bit", "args": ["@ch", 0, 30, "@item"], "expect": {"ret": 0}},
+    {"name": "x86 masks shift count at 32", "args": ["@ch", 1, 32, "@item"], "expect": {"ret": 1}},
+    {"name": "x86 masks shift count at 33", "args": ["@ch", 2, 33, "@item"], "expect": {"ret": 1}},
+    {"name": "slot 31 tests mask high bit", "args": ["@ch", 2147483648, 31, "@item"], "expect": {"ret": 1}},
+    {"name": "negative short slot uses low five shift bits", "args": ["@ch", 2147483648, -1, "@item"], "expect": {"ret": 1}},
+    {"name": "item type one rejected", "args": ["@ch", 1, 0, "@item"], "memory": [{"addr": "@item", "offset": "0x81", "u8": 1}], "expect": {"ret": 0}},
+    {"name": "item type two rejected", "args": ["@ch", 1, 0, "@item"], "memory": [{"addr": "@item", "offset": "0x81", "u8": 2}], "expect": {"ret": 0}},
+    {"name": "quiver rejects type 1b before mask", "args": ["@ch", 0, 11, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 27}], "expect": {"ret": 0}},
+    {"name": "quiver rejects type 1c before mask", "args": ["@ch", 0, 11, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 28}], "expect": {"ret": 0}},
+    {"name": "quiver rejects type 1b with slot bit set", "args": ["@ch", 2048, 11, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 27}], "expect": {"ret": 0}},
+    {"name": "quiver rejects type 1c with slot bit set", "args": ["@ch", 2048, 11, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 28}], "expect": {"ret": 0}},
+    {"name": "quiver accepts any ranged item before mask", "args": ["@ch", 0, 11, "@item"], "memory": [{"addr": "@item", "offset": "0xc1", "u8": 255}], "expect": {"ret": 1}},
+    {"name": "quiver ordinary item requires bit", "args": ["@ch", 0, 11, "@item"], "expect": {"ret": 0}},
+    {"name": "slot 21 reserved type accepts before mask", "args": ["@ch", 0, 21, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 19}], "expect": {"ret": 1}},
+    {"name": "slot 21 type 1b accepts before mask", "args": ["@ch", 0, 21, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 27}], "expect": {"ret": 1}},
+    {"name": "slot 21 type 1c accepts before mask", "args": ["@ch", 0, 21, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 28}], "expect": {"ret": 1}},
+    {"name": "slot 21 ordinary item requires bit", "args": ["@ch", 0, 21, "@item"], "expect": {"ret": 0}},
+    {"name": "slot 13 null class pointer keeps initial result", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@ch", "offset": "0x118", "u32": 0}], "expect": {"ret": 1}},
+    {"name": "slot 13 class id 22 permits", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@race118", "offset": "0xc2", "u8": 22}], "expect": {"ret": 1}},
+    {"name": "slot 13 class id 23 rejects", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@race118", "offset": "0xc2", "u8": 23}], "expect": {"ret": 0}},
+    {"name": "slot 13 class id 27 permits", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@race118", "offset": "0xc2", "u8": 27}], "expect": {"ret": 1}},
+    {"name": "slot 13 rejects item id 35", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 35}], "expect": {"ret": 0}},
+    {"name": "slot 13 rejects item id 1", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 1}], "expect": {"ret": 0}},
+    {"name": "slot 13 rejects item id 4", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 4}], "expect": {"ret": 0}},
+    {"name": "slot 13 class id 26 is still in rejected range", "args": ["@ch", 8192, 13, "@item"], "memory": [{"addr": "@race118", "offset": "0xc2", "u8": 26}], "expect": {"ret": 0}},
+    {"name": "slot 14 reserved type rejects", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 35}], "expect": {"ret": 0}},
+    {"name": "slot 14 rejects item id 1", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 1}], "expect": {"ret": 0}},
+    {"name": "slot 14 rejects item id 4", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@item", "offset": "0xc2", "u8": 4}], "expect": {"ret": 0}},
+    {"name": "IsWeapon full EAX decides before HasSkill AL", "args": ["@ch", 16384, 14, "@item"], "callees": {"0x0043624B": {"name": "IsWeapon", "conv": "thiscall", "args": [], "ret": 256}, "0x0041A3E9": {"name": "HasSkill", "conv": "thiscall", "args": ["int"], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "HasSkill low AL ignores high EAX", "args": ["@ch", 16384, 14, "@item"], "callees": {"0x0043624B": {"name": "IsWeapon", "conv": "thiscall", "args": [], "ret": 1}, "0x0041A3E9": {"name": "HasSkill", "conv": "thiscall", "args": ["int"], "ret": 256}}, "expect": {"ret": 0}},
+    {"name": "HasSkill nonzero AL passes", "args": ["@ch", 16384, 14, "@item"], "callees": {"0x0043624B": {"name": "IsWeapon", "conv": "thiscall", "args": [], "ret": 1}, "0x0041A3E9": {"name": "HasSkill", "conv": "thiscall", "args": ["int"], "ret": 257}}, "expect": {"ret": 1}},
+    {"name": "slot 14 other-class item rejects", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}], "expect": {"ret": 0}},
+    {"name": "slot 14 item id 22 with other class permits", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 22}, {"addr": "@race114", "offset": "0xc2", "u8": 2}], "expect": {"ret": 1}},
+    {"name": "slot 14 lower item boundary 23 rejects for other class", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 23}, {"addr": "@race114", "offset": "0xc2", "u8": 2}], "expect": {"ret": 0}},
+    {"name": "slot 14 upper item boundary 26 rejects for other class", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 26}, {"addr": "@race114", "offset": "0xc2", "u8": 2}], "expect": {"ret": 0}},
+    {"name": "slot 14 item id 27 with other class permits", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 27}, {"addr": "@race114", "offset": "0xc2", "u8": 2}], "expect": {"ret": 1}},
+    {"name": "slot 14 class id 4 rejects", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 27}, {"addr": "@race114", "offset": "0xc2", "u8": 4}], "expect": {"ret": 0}},
+    {"name": "slot 14 class id 35 rejects", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 27}, {"addr": "@race114", "offset": "0xc2", "u8": 35}], "expect": {"ret": 0}},
+    {"name": "slot 14 item ids 23 through 26 reject", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@item", "offset": "0xc2", "u8": 23}], "expect": {"ret": 0}},
+    {"name": "IsWeapon helper mutation reloads item id", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@race114", "offset": "0xc2", "u8": 2}, {"addr": "@item", "offset": "0xc2", "u8": 0}], "callees": {"0x0043624B": {"name": "IsWeapon", "conv": "thiscall", "args": [], "ret": 0, "writes": [{"addr": "@item+0xc2", "hex": "17"}]}}, "expect": {"ret": 0}},
+    {"name": "HasSkill helper mutation reloads item id", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@race114", "offset": "0xc2", "u8": 2}, {"addr": "@item", "offset": "0xc2", "u8": 0}], "callees": {"0x0043624B": {"name": "IsWeapon", "conv": "thiscall", "args": [], "ret": 1}, "0x0041A3E9": {"name": "HasSkill", "conv": "thiscall", "args": ["int"], "ret": 1, "writes": [{"addr": "@item+0xc2", "hex": "17"}]}}, "expect": {"ret": 0}},
+    {"name": "HasSkill helper mutation reloads character plus 114 pointer", "args": ["@ch", 16384, 14, "@item"], "memory": [{"addr": "@ch", "offset": "0x114", "u32": "@race114"}, {"addr": "@race114", "offset": "0xc2", "u8": 1}], "callees": {"0x0043624B": {"name": "IsWeapon", "conv": "thiscall", "args": [], "ret": 1}, "0x0041A3E9": {"name": "HasSkill", "conv": "thiscall", "args": ["int"], "ret": 1, "writes": [{"addr": "@ch+0x114", "hex": "00000000"}]}}, "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 87080,
+    "count": 30,
+    "args": [
+      {"choices": ["@ch"]},
+      {"range": [0, 4294967295]},
+      {"choices": [-1, 0, 11, 13, 14, 21, 22, 29, 30, 31, 32, 33, 255]},
+      {"choices": ["@item"]}
+    ],
+    "memory": [
+      {"addr": "@item", "offset": "0x81", "type": "u8", "range": [0, 255]},
+      {"addr": "@item", "offset": "0xc1", "type": "u8", "range": [0, 255]},
+      {"addr": "@item", "offset": "0xc2", "type": "u8", "range": [0, 255]},
+      {"addr": "@race114", "offset": "0xc2", "type": "u8", "range": [0, 255]},
+      {"addr": "@race118", "offset": "0xc2", "type": "u8", "range": [0, 255]}
+    ]
+  }
+}

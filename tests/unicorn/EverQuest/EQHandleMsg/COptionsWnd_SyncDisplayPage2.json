@@ -1,0 +1,175 @@
+{
+  "function": "DispatchGroupUpdateOperation_guess",
+  "original": "0x004a3050",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "owner": {
+      "size": "0x2000",
+      "fill": "random"
+    },
+    "wnd": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xe0",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004a2f02": {
+      "name": "ProcessMSG_WLDGROUP",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 77
+    },
+    "0x004a2f7c": {
+      "name": "RemoveGroupMemberByName_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 88
+    },
+    "0x004a2ffc": {
+      "name": "msg_wldgroup4_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 99
+    },
+    "0x004a2fc7": {
+      "name": "EQ_LoadingS_SetProgressBar2_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 111
+    }
+  },
+  "cases": [
+    {
+      "name": "null owner, mode 0 (no call)",
+      "args": [0, "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 0}]
+    },
+    {
+      "name": "null owner, mode 3 (no call)",
+      "args": [0, "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 3}]
+    },
+    {
+      "name": "null owner, mode 4 (no call)",
+      "args": [0, "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 4}]
+    },
+    {
+      "name": "mode 0 calls ProcessMSG_WLDGROUP(owner, wnd+0x20)",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 0}]
+    },
+    {
+      "name": "mode 1 calls fmodf_guess(owner, wnd+0x20)",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 1}]
+    },
+    {
+      "name": "mode 2 (gap between 1 and 3): returns 0",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 2}]
+    },
+    {
+      "name": "mode 3 calls msg_wldgroup4(owner, wnd+0x20, wnd+0x40) and returns it",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 3}]
+    },
+    {
+      "name": "mode 4 calls SetProgressBar2(owner, wnd)",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 4}]
+    },
+    {
+      "name": "mode 5 returns 1 without a call",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 5}]
+    },
+    {
+      "name": "mode 6 (just above 5): returns 0",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": 6}]
+    },
+    {
+      "name": "mode -1: returns 0",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "mode 0x80000000: returns 0",
+      "args": ["@owner", "@wnd"],
+      "memory": [{"addr": "@wnd", "offset": "0xe0", "u32": "0x80000000"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4862032,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          "@owner",
+          "@owner",
+          "@owner"
+        ]
+      },
+      {
+        "choices": [
+          "@wnd"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@wnd",
+        "offset": "0xe0",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          -1,
+          255
+        ]
+      }
+    ]
+  }
+}

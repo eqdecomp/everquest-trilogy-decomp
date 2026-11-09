@@ -1,0 +1,68 @@
+{
+  "function": "emote_guess",
+  "original": "0x004a6aa3",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "text", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {"size": "0x1000", "fill": "random"},
+    "player": {"size": "0x200", "fill": "zero"},
+    "textbuf": {"size": "0x400", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006e4d8c", "u32": "@player"},
+    {"addr": "@player", "offset": "0xf1", "u8": 0},
+    {"addr": "@textbuf", "cstr": "abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345abcdefghijklmnopqrstuvwxyz012345"}
+  ],
+  "callees": {
+    "0x00524004": {"name": "__strlwr", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x00522a30": {"name": "strstr", "conv": "cdecl", "args": ["cstr", "cstr"], "passthrough": true},
+    "0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "args": ["cstr"]},
+    "0x004d0952": {"name": "CEverQuest::Emote_guess", "conv": "thiscall", "args": []}
+  },
+  "rewrite_aliases": {
+    "__strlwr": "0x00524004",
+    "_strstr": "0x00522a30"
+  },
+  "cases": [
+    {"name": "word ending in a letter gets the suffix", "args": [1, "wave"]},
+    {"name": "word ending in a digit gets the suffix", "args": [0, "x9"]},
+    {"name": "single letter gets the suffix", "args": [0, "a"]},
+    {"name": "ending in punctuation adds nothing", "args": [0, "wave!"]},
+    {"name": "ending in a space adds nothing", "args": [0, "wave "]},
+    {"name": "lone space is emoted (no pair)", "args": [0, " "]},
+    {"name": "empty text prints the two usage lines", "args": [0, ""]},
+    {"name": "two spaces between words stop the emote", "args": [0, "a  b"]},
+    {"name": "two spaces at the very end", "args": [0, "ab  "]},
+    {"name": "two spaces at the start", "args": [0, "  a"]},
+    {"name": "tab then space is a pair", "args": [0, "a\t b"]},
+    {"name": "one space between words is fine", "args": [0, "a b"]},
+    {"name": "says from a non-GM is refused", "args": [0, "he says hi"]},
+    {"name": "says from a GM passes", "memory": [{"addr": "@player", "offset": "0xf1", "u8": 1}], "args": [0, "he says hi"]},
+    {"name": "SAYS is caught by the lower-case copy", "args": [0, "SAYS hi"]},
+    {"name": "says inside a longer word is caught", "args": [0, "xsaysx"]},
+    {"name": "say alone is not caught", "args": [0, "I say hi"]},
+    {"name": "text keeps its case", "args": [0, "ABC"]},
+    {"name": "any non-zero gm byte passes", "memory": [{"addr": "@player", "offset": "0xf1", "u8": 2}], "args": [0, "says"]},
+    {"name": "511 characters are emoted (boundary)", "memory": [{"addr": "@textbuf", "offset": "0x1ff", "u8": 0}], "args": [0, "@textbuf"]},
+    {"name": "512 characters print the usage lines (copy overflows by one NUL into the saved EBP; caller EBP low byte 0 keeps it)", "regs": {"ebp": 2071901184}, "args": [0, "@textbuf"]}
+  ],
+  "fuzz": {
+    "seed": 4876963,
+    "count": 40,
+    "args": [
+      {"range": [-4, 30]},
+      {"choices": ["", " ", "a", "A", "x9", "wave", "wave!", "wave ", "a  b", "ab  ", "  a", "a\tb", "a\t b", "a b", "he says hi", "SAYS hi", "xsaysx", "I say hi", "ABC", "says", "Says", "say", "1", "?", "end.", "say s", "saying", "The quick brown fox jumps over the lazy dog"]}
+    ],
+    "memory": [
+      {"addr": "@player", "offset": "0xf1", "type": "u8", "choices": [0, 1, 2, 128]}
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "function": "OverlayElement_guess::SetOverlayElementRect_guess",
+  "original": "0x00419598",
+  "sources": ["src/EverQuest/EQ_Columns.cpp"],
+  "conv": "thiscall",
+  "this": "@element",
+  "args": [{"name": "rect", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "element": {"size": "0x40", "fill": "random"},
+    "rect": {"size": "0x20", "fill": "random"}
+  },
+  "callees": {
+    "user32.dll!CopyRect": {
+      "conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1,
+      "writes": [{"arg": 0, "hex": "11000000220000003300000044000000"}]
+    }
+  },
+  "_note": "CopyRect is intercepted: verify destination this+4 and all 16 source bytes in the trace, and script a destination write. API overlap/null behavior belongs to CopyRect, not this wrapper.",
+  "cases": [
+    {"name": "ordinary rectangle", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "f6ffffffecffffff64000000c8000000"}]},
+    {"name": "empty rectangle", "args": ["@rect"], "memory": [{"addr": "@rect", "size": 16, "fill": "zero"}]},
+    {"name": "source is destination", "args": ["@element+4"]},
+    {"name": "overlapping rectangle", "args": ["@element+8"]},
+    {"name": "null delegated to API", "args": [0], "callees": {"user32.dll!CopyRect": {"conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0}}}
+  ],
+  "fuzz": {
+    "seed": 4298136, "count": 100,
+    "args": [{"choices": ["@rect", "@element+4", "@element+8"]}],
+    "memory": [{"addr": "@rect", "size": 16}, {"addr": "@element", "size": 64}]
+  }
+}

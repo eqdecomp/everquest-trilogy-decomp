@@ -1,0 +1,536 @@
+{
+  "function": "_t3dAddLightToActor_guess",
+  "original": "0x100012cd",
+  "sources": [
+    "src/eqgfx/unit_10001000.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "tree",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "tree": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "actor": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 7
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@liglist"
+        }
+      ]
+    },
+    "liglist": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 39
+        },
+        {
+          "offset": "0x10",
+          "u32": 3
+        },
+        {
+          "offset": "0x14",
+          "u32": 4
+        },
+        {
+          "offset": "0x18",
+          "u32": "@liglist_lights"
+        }
+      ]
+    },
+    "liglist_lights": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": 7
+        },
+        {
+          "offset": "0x28",
+          "u32": 8
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@light_indices"
+        }
+      ]
+    },
+    "light_indices": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "grown_lights": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "grown_indices": {
+      "size": "0x400",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": [
+        "@grown_lights",
+        "@grown_indices"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: type 0x27, both lists one below capacity (no grow)",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type 0x29, item list full: item list grows",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x0",
+          "u32": 41
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 4
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x14",
+          "u32": 4
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "both lists full: both grow (count == capacity grows)",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 4
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x14",
+          "u32": 4
+        },
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 8
+        },
+        {
+          "addr": "@light",
+          "offset": "0x28",
+          "u32": 8
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type 0x28 is not a light list: nothing touched",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x0",
+          "u32": 40
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type 0x26 (below the pair): nothing touched",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x0",
+          "u32": 38
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type 0x2a (above the pair): nothing touched",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x0",
+          "u32": 42
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "item list grow fails: 0xffff3d3e, light untouched",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 4
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x14",
+          "u32": 4
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "light list grow fails (item list has room): 0xffff3d3e after the item append",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 8
+        },
+        {
+          "addr": "@light",
+          "offset": "0x28",
+          "u32": 8
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "light list grow fails after the item list grew",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 4
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x14",
+          "u32": 4
+        },
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 8
+        },
+        {
+          "addr": "@light",
+          "offset": "0x28",
+          "u32": 8
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": [
+            "@grown_lights",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zero capacities grow to one entry",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unsigned compare: item count 0x80000000 >= capacity 4 grows (a signed compare would not)",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 2147483648
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unsigned compare: light count 0x80000000 >= capacity 4 grows",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 2147483648
+        },
+        {
+          "addr": "@light",
+          "offset": "0x28",
+          "u32": 4
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "logical shift: item capacity 0x80000000 grows to 0xa0000001 (arithmetic shift would give 0x60000001)",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@liglist",
+          "offset": "0x10",
+          "u32": 2147483648
+        },
+        {
+          "addr": "@liglist",
+          "offset": "0x14",
+          "u32": 2147483648
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "logical shift: light capacity 0x80000000 grows (count equals capacity)",
+      "args": [
+        "@tree",
+        "@actor",
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 2147483648
+        },
+        {
+          "addr": "@light",
+          "offset": "0x28",
+          "u32": 2147483648
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4813,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@tree"
+        ]
+      },
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@light"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@liglist",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [39, 41, 39, 41, 40, 38, 42, 0]
+      },
+      {
+        "addr": "@liglist",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [0, 8]
+      },
+      {
+        "addr": "@liglist",
+        "offset": "0x14",
+        "type": "u32",
+        "range": [0, 8]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x4",
+        "type": "i32",
+        "range": [-4, 40]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x24",
+        "type": "u32",
+        "range": [0, 8]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x28",
+        "type": "u32",
+        "range": [0, 8]
+      }
+    ]
+  }
+}

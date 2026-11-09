@@ -1,0 +1,244 @@
+{
+  "function": "createDMTrackFromFileContext_guess",
+  "original": "0x10025a97",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@handle"
+        },
+        {
+          "offset": "0x38",
+          "u32": 512
+        },
+        {
+          "offset": "0x8044",
+          "u32": "@record"
+        },
+        {
+          "offset": "0x804c",
+          "u32": "@data_table"
+        },
+        {
+          "offset": "0x8064",
+          "u32": 1
+        }
+      ]
+    },
+    "handle": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "record": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 4294967280
+        },
+        {
+          "offset": "0x4",
+          "u32": 4294967292
+        }
+      ]
+    },
+    "data_table": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@blob0"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@blob1"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob2"
+        },
+        {
+          "offset": "0xc",
+          "u32": "@blob3"
+        },
+        {
+          "offset": "0x10",
+          "u32": "@blob4"
+        },
+        {
+          "offset": "0x14",
+          "u32": "@blob5"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@blob6"
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@blob7"
+        }
+      ]
+    },
+    "blob0": { "size": "0x10", "fill": "zero" },
+    "blob1": { "size": "0x10", "fill": "zero" },
+    "blob2": { "size": "0x10", "fill": "zero" },
+    "blob3": { "size": "0x10", "fill": "zero" },
+    "blob4": { "size": "0x10", "fill": "zero" },
+    "blob5": { "size": "0x10", "fill": "zero" },
+    "blob6": { "size": "0x10", "fill": "zero" },
+    "blob7": { "size": "0x10", "fill": "zero" },
+    "track": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@blob7"
+    },
+    "0x10010ad8": {
+      "name": "s3dCreateDMTrack",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int", "float"],
+      "ret": "@track"
+    },
+    "0x100174b8": {
+      "name": "t3dSetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "negative data offset: dictionary lookup, negative tag offset, successful tag then dictionary insertion and flag",
+      "args": ["@context"]
+    },
+    {
+      "name": "data offset zero: use first table entry and skip tag for zero record offset",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 0 },
+        { "addr": "@record", "offset": "0x4", "u32": 0 }
+      ]
+    },
+    {
+      "name": "positive data offset 1 and positive record offset: table lookup and zero tag offset",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 17 },
+        { "addr": "@record", "offset": "0x4", "u32": 1 }
+      ]
+    },
+    {
+      "name": "positive data offset 7 and negative record offset: last table entry and file size adjustment",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 4294967264 },
+        { "addr": "@record", "offset": "0x4", "u32": 7 }
+      ]
+    },
+    {
+      "name": "tag result nonzero suppresses dictionary insertion and flag is disabled",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 4294967295 },
+        { "addr": "@context", "offset": "0x8064", "u32": 0 }
+      ],
+      "callees": {
+        "0x100174b8": { "ret": 1 }
+      }
+    },
+    {
+      "name": "created track is null: no tag call or flag write",
+      "args": ["@context"],
+      "callees": {
+        "0x10010ad8": { "ret": 0 }
+      }
+    },
+    {
+      "name": "record offset zero still sets track flag",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 0 }
+      ]
+    },
+    {
+      "name": "INT_MIN data offset and INT_MAX file size exercise signed subtraction",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 2147483647 },
+        { "addr": "@record", "offset": "0x4", "u32": 2147483648 },
+        { "addr": "@context", "offset": "0x38", "u32": 2147483647 }
+      ]
+    },
+    {
+      "name": "tag offset INT_MIN exercises signed subtraction overflow",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 2147483648 },
+        { "addr": "@record", "offset": "0x4", "u32": 2 },
+        { "addr": "@context", "offset": "0x38", "u32": 2147483647 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 154263,
+    "count": 32,
+    "args": [
+      { "choices": ["@context"] }
+    ],
+    "memory": [
+      {
+        "addr": "@record",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [-2147483648, -1, 0, 1, 2147483647]
+      },
+      {
+        "addr": "@record",
+        "offset": "0x4",
+        "type": "int",
+        "choices": [-2147483648, -1, 0, 1, 2, 3, 4, 7]
+      },
+      {
+        "addr": "@context",
+        "offset": "0x38",
+        "type": "int",
+        "range": [0, 1024]
+      },
+      {
+        "addr": "@context",
+        "offset": "0x8064",
+        "type": "int",
+        "choices": [-1, 0, 1]
+      }
+    ]
+  }
+}

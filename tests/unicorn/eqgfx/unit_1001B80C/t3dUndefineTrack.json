@@ -1,0 +1,251 @@
+{
+  "function": "t3dUndefineTrack",
+  "original": "0x1001cb62",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "definition": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@definition_key"},
+        {"offset": "0x10", "u32": 1},
+        {"offset": "0x14", "u32": "@instance_list"},
+        {"offset": "0x18", "u32": "@fallback_list"}
+      ]
+    },
+    "instance_list": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 3},
+        {"offset": "0x4", "u32": "@instance_block"},
+        {"offset": "0x8", "u32": "@default_instance"}
+      ]
+    },
+    "fallback_list": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 2},
+        {"offset": "0x4", "u32": "@fallback_block"},
+        {"offset": "0x8", "u32": "@fallback_default_instance"}
+      ]
+    },
+    "default_instance": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@default_key"},
+        {"offset": "0x10", "u32": 1}
+      ]
+    },
+    "fallback_default_instance": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@fallback_default_key"},
+        {"offset": "0x10", "u32": 1}
+      ]
+    },
+    "definition_key": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "instance_block": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "fallback_block": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "default_key": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "fallback_default_key": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": [3, 7]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "owned list, flags clear (typical)",
+      "args": ["@context", "@definition"]
+    },
+    {
+      "name": "dictionary entries on definition and default instance",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0xc", "u8": 1},
+        {"addr": "@default_instance", "offset": "0xc", "u8": 1}
+      ]
+    },
+    {
+      "name": "keep memory (0x20) on definition",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0xc", "u8": 32}
+      ]
+    },
+    {
+      "name": "dictionary and keep memory (0x21) on definition",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0xc", "u8": 33}
+      ]
+    },
+    {
+      "name": "owned list with null block",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@instance_list", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "owned list with null definition dict key",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "null default dict key",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@default_instance", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "default dict key null but flagged",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@default_instance", "offset": "0xc", "u8": 1},
+        {"addr": "@default_instance", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "instance list null: fallback list, not owned",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ]
+    },
+    {
+      "name": "instance list null and fallback flagged 0x21",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0xc", "u8": 33}
+      ]
+    },
+    {
+      "name": "instance list null, fallback default use count 2",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback_default_instance", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "definition use count 2",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "definition use count 0",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "default instance use count 2",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@default_instance", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "default instance use count 0",
+      "args": ["@context", "@definition"],
+      "memory": [
+        {"addr": "@default_instance", "offset": "0x10", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 117602,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x8", "type": "ptr", "choices": [0, "@definition_key"]},
+      {"addr": "@definition", "offset": "0xc", "type": "u8", "choices": [0, 1, 32, 33]},
+      {"addr": "@definition", "offset": "0x10", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": [0, "@instance_list"]},
+      {"addr": "@instance_list", "offset": "0x4", "type": "ptr", "choices": [0, "@instance_block"]},
+      {"addr": "@default_instance", "offset": "0x8", "type": "ptr", "choices": [0, "@default_key"]},
+      {"addr": "@default_instance", "offset": "0xc", "type": "u8", "choices": [0, 1, 32, 33]},
+      {"addr": "@default_instance", "offset": "0x10", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@fallback_default_instance", "offset": "0x10", "type": "u32", "choices": [1, 2]}
+    ]
+  }
+}

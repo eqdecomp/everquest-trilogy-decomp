@@ -1,0 +1,227 @@
+{
+  "function": "decryptResourceData_guess",
+  "original": "0x1002288d",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "owner": {
+      "size": "0x8048",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@resourceData"
+        },
+        {
+          "offset": "0x8044",
+          "u32": "@encryptedMemory"
+        }
+      ]
+    },
+    "resourceData": {
+      "size": "0x4c",
+      "fill": "zero"
+    },
+    "encryptedMemory": {
+      "size": "0x10002",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u16": 8
+        }
+      ]
+    },
+    "oldData": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "newData": {
+      "size": "0x10000",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@newData"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x100223f5": {
+      "name": "decryptData_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation-fails-with-existing-data",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encryptedMemory",
+          "u16": 8
+        },
+        {
+          "addr": "@resourceData",
+          "offset": "0x48",
+          "u32": "@oldData"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zero-length-no-old-data",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encryptedMemory",
+          "u16": 0
+        },
+        {
+          "addr": "@resourceData",
+          "offset": "0x48",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "one-byte-replaces-old-data",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encryptedMemory",
+          "u16": 1
+        },
+        {
+          "addr": "@resourceData",
+          "offset": "0x48",
+          "u32": "@oldData"
+        }
+      ]
+    },
+    {
+      "name": "maximum-u16-length",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encryptedMemory",
+          "u16": 65535
+        },
+        {
+          "addr": "@resourceData",
+          "offset": "0x48",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "same-old-and-new-pointer",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encryptedMemory",
+          "u16": 2
+        },
+        {
+          "addr": "@resourceData",
+          "offset": "0x48",
+          "u32": "@newData"
+        }
+      ]
+    },
+    {
+      "name": "high-bit-old-pointer",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encryptedMemory",
+          "u16": 9
+        },
+        {
+          "addr": "@resourceData",
+          "offset": "0x48",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 141453,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@owner"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@encryptedMemory",
+        "offset": "0x0",
+        "type": "u16",
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {
+        "addr": "@resourceData",
+        "offset": "0x48",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@oldData",
+          "@newData",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

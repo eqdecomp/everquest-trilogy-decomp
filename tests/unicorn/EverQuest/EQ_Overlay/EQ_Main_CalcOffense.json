@@ -1,0 +1,399 @@
+{
+  "function": "EQ_Main_CalcOffense_guess",
+  "original": "0x0045755e",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "pc": {
+      "size": "0x1fa4",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x114",
+          "u32": "@weapon"
+        }
+      ]
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "weapon": {
+      "size": "0x124",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 0
+        },
+        {
+          "offset": "0xc2",
+          "u8": 7
+        }
+      ]
+    },
+    "container": {
+      "size": "0x124",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 1
+        },
+        {
+          "offset": "0xc2",
+          "u8": 13
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@player"
+    }
+  ],
+  "callees": {
+    "0x0043624b": {
+      "name": "EQ_Equipment::IsWeapon",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 1
+    },
+    "0x004b422a": {
+      "name": "EQPlayer::SkillUsed",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x0041a0c5": {
+      "name": "EQ_Character::compute_tohit_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        0,
+        0
+      ]
+    },
+    "0x0041a32c": {
+      "name": "EQ_Character::offense_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "attached equipment and zero skill return",
+      "args": [
+        "@self",
+        0
+      ],
+      "callees": {
+        "0x004b422a": {
+          "name": "EQPlayer::SkillUsed_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        },
+        "0x0041a0c5": {
+          "name": "EQ_Character::compute_tohit_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 32767
+        },
+        "0x0041a32c": {
+          "name": "EQ_Character::offense_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": -32768
+        }
+      }
+    },
+    {
+      "name": "attached equipment and high skill return",
+      "args": [
+        "@self",
+        1
+      ],
+      "callees": {
+        "0x004b422a": {
+          "name": "EQPlayer::SkillUsed_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 255
+        },
+        "0x0041a0c5": {
+          "name": "EQ_Character::compute_tohit_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": -32768
+        },
+        "0x0041a32c": {
+          "name": "EQ_Character::offense_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 32767
+        }
+      }
+    },
+    {
+      "name": "null inventory slot fallback",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pc",
+          "offset": "0x114",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x0041a0c5": {
+          "name": "EQ_Character::compute_tohit_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": -3
+        },
+        "0x0041a32c": {
+          "name": "EQ_Character::offense_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 4
+        }
+      }
+    },
+    {
+      "name": "non-equipment item fallback",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pc",
+          "offset": "0x114",
+          "u32": "@container"
+        }
+      ]
+    },
+    {
+      "name": "equipment with nonzero item kind fallback",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@weapon",
+          "offset": "0x81",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "equipment rejected by weapon predicate",
+      "args": [
+        "@self",
+        0
+      ],
+      "callees": {
+        "0x0043624b": {
+          "name": "EQ_Equipment::IsWeapon_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fallback signed rounding",
+      "args": [
+        "@self",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@pc",
+          "offset": "0x114",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x0041a0c5": {
+          "name": "EQ_Character::compute_tohit_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": -1
+        },
+        "0x0041a32c": {
+          "name": "EQ_Character::offense_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "division denominator boundary",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pc",
+          "offset": "0x114",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x0041a0c5": {
+          "name": "EQ_Character::compute_tohit_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 372
+        },
+        "0x0041a32c": {
+          "name": "EQ_Character::offense_guess",
+          "conv": "thiscall",
+          "args": [
+            "u32"
+          ],
+          "ret": 372
+        }
+      }
+    },
+    {
+      "name": "unusedEdx INT_MIN ignored (attached weapon)",
+      "args": [
+        "@self",
+        -2147483648
+      ]
+    },
+    {
+      "name": "unusedEdx INT_MAX ignored (attached weapon)",
+      "args": [
+        "@self",
+        2147483647
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4552030,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@pc",
+        "offset": "0x114",
+        "type": "ptr",
+        "choices": [
+          "@weapon",
+          "@container",
+          0
+        ]
+      },
+      {
+        "addr": "@weapon",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@weapon",
+        "offset": "0xc2",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          4,
+          7,
+          13,
+          255
+        ]
+      },
+      {
+        "addr": "@container",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@container",
+        "offset": "0xc2",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          13,
+          255
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "function": "ProcessName",
+  "original": "0x004ea641",
+  "sources": ["src/EverQuest/Win.cpp"],
+  "rewrite": "ProcessName",
+  "conv": "cdecl",
+  "args": [{"name": "param_1", "type": "u32"}],
+  "ret": "void",
+  "objects": {
+    "context": {"size": "0x668", "fill": "zero", "init": [
+      {"offset": "0x660", "u32": "@name_empty"}
+    ]},
+    "everquest": {"size": "0x13f0", "fill": "zero"},
+    "name_empty": {"size": "0x40", "fill": "zero"},
+    "name_one": {"size": "0x40", "fill": "zero"},
+    "name_14": {"size": "0x40", "fill": "zero"},
+    "name_15": {"size": "0x40", "fill": "zero"},
+    "name_16": {"size": "0x40", "fill": "zero"},
+    "name_long": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4e70", "u32": "@context"},
+    {"addr": "0x006e4e74", "u8": 0},
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x0058fba4", "cstr": "Fallback"},
+    {"addr": "0x00600000", "size": "0x668", "fill": "zero"},
+    {"addr": "0x00600664", "u32": 1},
+    {"addr": "@name_empty", "cstr": ""},
+    {"addr": "@name_one", "cstr": "Q"},
+    {"addr": "@name_14", "cstr": "ABCDEFGHIJKLMN"},
+    {"addr": "@name_15", "cstr": "ABCDEFGHIJKLMNO"},
+    {"addr": "@name_16", "cstr": "ABCDEFGHIJKLMNOP"},
+    {"addr": "@name_long", "cstr": "AnOverlongCharacterName"}
+  ],
+  "callees": {
+    "0x005223d0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x005219c0": {"name": "strcpy", "conv": "cdecl", "args": ["ptr", "cstr"], "passthrough": true},
+    "0x00522ecf": {"name": "_isalpha", "conv": "cdecl", "args": ["int"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "null context short circuits", "args": [97], "memory": [
+      {"addr": "0x006e4e70", "u32": 0}
+    ]},
+    {"name": "editing state nonzero short circuits", "args": [97], "memory": [
+      {"addr": "@context", "offset": "0x664", "u32": 1}
+    ]},
+    {"name": "empty name uppercases lowercase first character", "args": [97], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_empty"}
+    ]},
+    {"name": "existing name lowercases uppercase character", "args": [66], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_one"}
+    ]},
+    {"name": "alphabetic character appends to length fourteen", "args": [122], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_14"}
+    ]},
+    {"name": "length fifteen does not append", "args": [97], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_15"}
+    ]},
+    {"name": "backspace empty name does nothing", "args": [8], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_empty"}
+    ]},
+    {"name": "backspace removes final character", "args": [8], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_one"}
+    ]},
+    {"name": "nonalphabetic input leaves a short name alone", "args": [32], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_one"}
+    ]},
+    {"name": "long input is replaced before nonalphabetic input is ignored", "args": [32], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_long"}
+    ]},
+    {"name": "long input is replaced before backspace", "args": [8], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_long"}
+    ]},
+    {"name": "long input is replaced before alpha append", "args": [65], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_long"}
+    ]},
+    {"name": "alpha path preserves an in-range lowercase character", "args": [122], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_one"}
+    ]},
+    {"name": "alpha path preserves an in-range uppercase first character", "args": [65], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_empty"}
+    ]},
+    {"name": "length sixteen is clamped before alpha handling", "args": [48], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_16"}
+    ]},
+    {"name": "uppercase Z in range lowercases after a non-empty name", "args": [90], "memory": [
+      {"addr": "@context", "offset": "0x660", "u32": "@name_one"}
+    ]},
+    {"name": "shifted global address has an independent pointer witness", "args": [97], "memory": [
+      {"addr": "0x006e4e70", "u32": 0},
+      {"addr": "0x006e4e71", "u32": "@context"},
+      {"addr": "@context", "offset": "0x660", "u32": "@name_empty"}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 5154369,
+    "count": 40,
+    "args": [{"choices": [0, 8, 32, 48, 65, 66, 90, 97, 98, 122, 127]}],
+    "memory": [
+      {"addr": "@context", "offset": "0x664", "type": "u32", "choices": [0, 1]},
+      {"addr": "@context", "offset": "0x660", "type": "ptr", "choices": ["@name_empty", "@name_one", "@name_14", "@name_15", "@name_16", "@name_long"]}
+    ]
+  }
+}

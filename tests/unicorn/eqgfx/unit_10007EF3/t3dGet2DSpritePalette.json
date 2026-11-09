@@ -1,0 +1,80 @@
+{
+  "function": "t3dGet2DSpritePalette",
+  "original": "0x10007f1f",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x74", "u32": "0x74647464" },
+        { "offset": "0x78", "u32": "0x78687868" },
+        { "offset": "0x80", "u32": "0x80688068" },
+        { "offset": "0x84", "u32": "0x84688468" },
+        { "offset": "0x88", "u32": "0x88688868" }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "reads the +0x84 slot, not its neighbours",
+      "args": ["@sprite"],
+      "expect": { "ret": "0x84688468" }
+    },
+    {
+      "name": "palette all bits set",
+      "args": ["@sprite"],
+      "objects": {
+        "sprite": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x84", "u32": "0xffffffff" }
+          ]
+        }
+      },
+      "expect": { "ret": "0xffffffff" }
+    },
+    {
+      "name": "palette zero while the neighbours are set",
+      "args": ["@sprite"],
+      "objects": {
+        "sprite": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x80", "u32": "0xffffffff" },
+            { "offset": "0x88", "u32": "0xffffffff" }
+          ]
+        }
+      },
+      "expect": { "ret": 0 }
+    }
+  ],
+  "fuzz": {
+    "seed": 32543,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@sprite"]
+      }
+    ],
+    "memory": [
+      { "addr": "@sprite", "offset": "0x84", "type": "u32" },
+      { "addr": "@sprite", "offset": "0x80", "type": "u32" },
+      { "addr": "@sprite", "offset": "0x88", "type": "u32" }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "function": "FormatAndDispatchWideText_guess",
+  "original": "0x00403129",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "owner_guess", "type": "ptr"},
+    {"name": "pRender_guess", "type": "ptr"},
+    {"name": "info_guess", "type": "ptr"},
+    {"name": "arg_guess", "type": "u32"},
+    {"name": "pArg_guess", "type": "ptr"},
+    {"name": "fmt", "type": "ptr"},
+    {"name": "a6", "type": "int"},
+    {"name": "a7", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "fn": {"size": "0x10", "fill": "zero"},
+    "owner": {"size": "0x2900", "fill": "random"},
+    "prender": {"size": "0x10", "fill": "random"},
+    "info": {"size": "0x60", "fill": "random"},
+    "parg": {"size": "0x10", "fill": "random"},
+    "fmt": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006E51E8", "u32": "@fn"}
+  ],
+  "callees": {
+    "0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": 3},
+    "@fn": {"name": "t3dDeferTextOnOverlayW", "conv": "cdecl", "args": ["mem:16", "int", "int", "int", "int", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "typical: 3 chars, terminated and deferred", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 7, 9]},
+    {"name": "zeros", "args": ["@owner", "@prender", "@info", 0, "@parg", "@fmt", 0, 0]},
+    {"name": "field values flow to the call", "args": ["@owner", "@prender", "@info", "0x12345678", "@parg", "@fmt", 1, 2],
+     "memory": [
+       {"addr": "@info", "offset": "0x4c", "u32": "0x4C4C4C4C"},
+       {"addr": "@info", "offset": "0x50", "u32": "0x50505050"},
+       {"addr": "@prender", "offset": "0x0", "u32": "0xAAAA0001"},
+       {"addr": "@parg", "offset": "0x0", "u32": "0xBBBB0002"}
+     ]},
+    {"name": "error -1: no terminator, no call", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 1, 2],
+     "callees": {"0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": -1}}},
+    {"name": "large negative: no call", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 1, 2],
+     "callees": {"0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": "0x80000000"}}},
+    {"name": "boundary 0: empty string terminated, call made", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 1, 2],
+     "callees": {"0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": 0}}},
+    {"name": "1 char", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 1, 2],
+     "callees": {"0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": 1}}},
+    {"name": "full buffer 0xFFF", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 1, 2],
+     "callees": {"0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": "0xFFF"}}},
+    {"name": "count 0x1000 writes one past the buffer (bug kept)", "args": ["@owner", "@prender", "@info", 1, "@parg", "@fmt", 1, 2],
+     "callees": {"0x0052254d": {"name": "__vsnwprintf", "conv": "cdecl", "args": ["ptr", "int", "ptr", "mem:8"], "ret": "0x1000"}}}
+  ],
+  "fuzz": {
+    "seed": 4206889,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner"]},
+      {"choices": ["@prender"]},
+      {"choices": ["@info"]},
+      {},
+      {"choices": ["@parg"]},
+      {"choices": ["@fmt"]},
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "@info", "offset": "0x4c", "type": "int", "range": [-100000, 100000]},
+      {"addr": "@info", "offset": "0x50", "type": "int", "range": [-100000, 100000]},
+      {"addr": "@prender", "offset": "0x0", "type": "int", "range": [-100000, 100000]},
+      {"addr": "@parg", "offset": "0x0", "type": "int", "range": [-100000, 100000]}
+    ]
+  }
+}

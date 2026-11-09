@@ -1,0 +1,386 @@
+{
+  "function": "CDisplay::SetViewActorByName",
+  "original": "0x00413ED6",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "display": {
+      "size": "0x2e00",
+      "fill": "zero"
+    },
+    "head": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x01",
+          "cstr": "MappedName"
+        },
+        {
+          "offset": "0x70",
+          "u32": "@actor_info"
+        }
+      ]
+    },
+    "actor_info": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "u32": "@actor"
+        }
+      ]
+    },
+    "actor": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "old_actor": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "bad_player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x01",
+          "cstr": "NoActorInfo"
+        }
+      ]
+    },
+    "null_actor_player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x01",
+          "cstr": "NoActor"
+        },
+        {
+          "offset": "0x70",
+          "u32": "@empty_actor_info"
+        }
+      ]
+    },
+    "empty_actor_info": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "everquest": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "trimmed_name": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "cstr": "Trimmed"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006E4D58",
+      "u32": "@head"
+    },
+    {
+      "addr": "0x006E4D8C",
+      "u32": "@player"
+    },
+    {
+      "addr": "0x006EFE2C",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x005917B0",
+      "u32": "@old_actor"
+    }
+  ],
+  "callees": {
+    "0x004B1435": {
+      "name": "EQPlayer::get_player_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x004B146A": {
+      "name": "EQPlayer::get_player_partial_name",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x0040E422": {
+      "name": "CDisplay::SetViewActor",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004D02FD": {
+      "name": "CEverQuest::trimName_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@trimmed_name"
+    },
+    "0x004D055E": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "exact hit with already-current actor returns before SetViewActor or chat",
+      "args": [
+        "MappedName"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@player"
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x005917B0",
+          "u32": "@actor"
+        }
+      ]
+    },
+    {
+      "name": "exact hit with no current view changes view and returns quietly",
+      "args": [
+        "MappedName"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@player"
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x005917B0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "fallback lookup receives fresh head after exact lookup changes global",
+      "args": [
+        "Map"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x006E4D58",
+              "hex": "b0175900"
+            }
+          ]
+        },
+        "0x004B146A": {
+          "name": "EQPlayer::get_player_partial_name_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@player"
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x005917B0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "switch from prior view back to unchanged local player prints own-perspective text",
+      "args": [
+        "MappedName"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@player"
+        }
+      }
+    },
+    {
+      "name": "SetViewActor callback changes local player and trimName changes EQ receiver",
+      "args": [
+        "MappedName"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@player"
+        },
+        "0x0040E422": {
+          "name": "CDisplay::SetViewActor_guess",
+          "conv": "thiscall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x006E4D8C",
+              "hex": "b0175900"
+            }
+          ]
+        },
+        "0x004D02FD": {
+          "name": "CEverQuest::trimName_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@trimmed_name",
+          "writes": [
+            {
+              "addr": "0x006EFE2C",
+              "hex": "b0175900"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "both lookups miss in order and chat reloads EQ receiver after lookup callback",
+      "args": [
+        "Nobody"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x006EFE2C",
+              "hex": "b0175900"
+            }
+          ]
+        },
+        "0x004B146A": {
+          "name": "EQPlayer::get_player_partial_name_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "exact hit without actor info reports caller name",
+      "args": [
+        "NoActorInfo"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@bad_player"
+        }
+      }
+    },
+    {
+      "name": "exact hit with null actor pointer reports caller name",
+      "args": [
+        "NoActor"
+      ],
+      "callees": {
+        "0x004B1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@null_actor_player"
+        }
+      }
+    },
+    {
+      "name": "98-character name exactly fills error message buffer",
+      "args": [
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 12622934,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "",
+          "Nobody",
+          "Map",
+          "MappedName",
+          "Mapped",
+          "NoActor",
+          "LongerName"
+        ]
+      }
+    ]
+  }
+}

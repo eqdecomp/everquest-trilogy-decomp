@@ -1,0 +1,273 @@
+{
+  "function": "NetworkConnection_send_disconnect_message_guess",
+  "original": "0x1002BD40",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x6d4",
+          "u32": 1
+        },
+        {
+          "offset": "0x48c",
+          "u16": 1
+        }
+      ]
+    },
+    "msg": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x100288b0": {
+      "name": "fast_malloc_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@msg"
+    },
+    "0x10030e30": {
+      "name": "bitarray_setbit_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "WINMM.DLL::timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 305419896
+    },
+    "0x10030f30": {
+      "name": "msg_outgoing_init_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002bae0": {
+      "name": "tx_enqueue_outgoing_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "already marked",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "no disconnect pending",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6d4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "already disconnected",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6d8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "allocation failure",
+      "args": [
+        "@conn"
+      ],
+      "callees": {
+        "0x100288b0": {
+          "name": "fast_malloc_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "success ordinary sequence",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 8
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 10
+        }
+      ]
+    },
+    {
+      "name": "success equal sequence wraps bit index",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 65535
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "success sequence underflow wraps to unsigned short",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 32769
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 32768
+        }
+      ]
+    },
+    {
+      "name": "success signed boundary sequence",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 32767
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 32768
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5190260,
+    "count": 36,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x6c8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6d4",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6d8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x488",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          32767,
+          32768,
+          65535
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x48c",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          32767,
+          32768,
+          65535
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,256 @@
+{
+  "function": "EQMain_HandleVersionCommand_guess",
+  "original": "0x10017840",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "version": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "2.0.1"
+        }
+      ]
+    },
+    "version_fmt": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Version %s"
+        }
+      ]
+    },
+    "second_fmt": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "[%s]"
+        }
+      ]
+    },
+    "log_first": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "0x11111111"
+        }
+      ]
+    },
+    "log_second": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "0x22222222"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055AB0",
+      "u32": "@version_fmt"
+    },
+    {
+      "addr": "0x10055AB4",
+      "u32": "@second_fmt"
+    },
+    {
+      "addr": "0x10048028",
+      "cstr": "Build"
+    }
+  ],
+  "callees": {
+    "0x10028720": {
+      "name": "FUN_10028720",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 269732068
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@version"
+    },
+    "0x10020ef0": {
+      "name": "FUN_10020ef0",
+      "conv": "cdecl",
+      "args": [
+        "char"
+      ],
+      "ret": [
+        "@log_first",
+        "@log_second"
+      ]
+    },
+    "0x100224b0": {
+      "name": "FUN_100224b0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int",
+        "char"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "exact lowercase prefix writes both lines",
+      "args": [
+        {
+          "from_image": "0x10048038",
+          "image_size": 8,
+          "as": "cstr"
+        }
+      ]
+    },
+    {
+      "name": "upper-case prefix matches case-insensitively",
+      "args": [
+        "#VERSION"
+      ]
+    },
+    {
+      "name": "mixed case with trailing text still matches",
+      "args": [
+        "#VeRsIoN 2.0 build"
+      ]
+    },
+    {
+      "name": "seven characters do not match (the compare length is 8)",
+      "args": [
+        "#versio"
+      ]
+    },
+    {
+      "name": "ninth character takes part in the compare",
+      "args": [
+        "#version 2"
+      ]
+    },
+    {
+      "name": "last matched character differs",
+      "args": [
+        "#versiom"
+      ]
+    },
+    {
+      "name": "first character differs",
+      "args": [
+        "x#version"
+      ]
+    },
+    {
+      "name": "leading space breaks the prefix",
+      "args": [
+        " #version"
+      ]
+    },
+    {
+      "name": "bare hash does not match",
+      "args": [
+        "#"
+      ]
+    },
+    {
+      "name": "empty string does not match",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "empty second string still writes both lines",
+      "args": [
+        {
+          "from_image": "0x10048038",
+          "image_size": 8,
+          "as": "cstr"
+        }
+      ],
+      "memory": [
+        {
+          "addr": "0x10048028",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "format pointers swapped: each line uses the other format",
+      "args": [
+        {
+          "from_image": "0x10048038",
+          "image_size": 8,
+          "as": "cstr"
+        }
+      ],
+      "memory": [
+        {
+          "addr": "0x10055AB0",
+          "u32": "@second_fmt"
+        },
+        {
+          "addr": "0x10055AB4",
+          "u32": "@version_fmt"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 96320,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          {
+            "from_image": "0x10048038",
+            "image_size": 8,
+            "as": "cstr"
+          },
+          "#VERSION",
+          "#Version x",
+          "#versio",
+          "#versionX",
+          "#vers",
+          "",
+          "#",
+          "x#version",
+          " #version",
+          "#version 3.1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x10048028",
+        "type": "u8",
+        "choices": [
+          0,
+          65,
+          127,
+          200
+        ]
+      }
+    ]
+  }
+}

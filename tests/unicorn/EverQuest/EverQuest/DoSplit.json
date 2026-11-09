@@ -1,0 +1,138 @@
+{
+  "function": "DoSplit",
+  "original": "0x004cfd5f",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {"size": "0x100", "fill": "zero"},
+    "pc": {"size": "0xa00", "fill": "zero", "init": [
+      {"offset": "0x998", "u32": 50}, {"offset": "0x99c", "u32": 40},
+      {"offset": "0x9a0", "u32": 30}, {"offset": "0x9a4", "u32": 20}]},
+    "pcNeg": {"size": "0xa00", "fill": "zero", "init": [
+      {"offset": "0x998", "u32": 4294967291}, {"offset": "0x99c", "u32": 40},
+      {"offset": "0x9a0", "u32": 30}, {"offset": "0x9a4", "u32": 20}]},
+    "pcBroke": {"size": "0xa00", "fill": "zero"},
+    "eqmain": {"size": "0x100", "fill": "zero"},
+    "splitA": {"size": "0x20", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtblA"}, {"offset": "0x10", "u32": 1}]},
+    "splitAoff": {"size": "0x20", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtblA"}, {"offset": "0x10", "u32": 0}]},
+    "splitB": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtblB"}, {"offset": "0x10", "u32": 1}]},
+    "splitBoff": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtblB"}, {"offset": "0x10", "u32": 0}]},
+    "vtblA": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x8", "u32": "@fnA"}]},
+    "vtblB": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x8", "u32": "@fnB"}]},
+    "fnA": {"size": "0x10", "fill": "zero"},
+    "fnB": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006E4DA8", "u32": "@pc"},
+    {"addr": "0x006E4E44", "u32": "@eqmain"},
+    {"addr": "0x005FE968", "u8": 65},
+    {"addr": "0x006018C0", "u32": "@splitA"},
+    {"addr": "0x00604984", "u32": "@splitB"}
+  ],
+  "callees": {
+    "0x004dbc84": {
+      "name": "CEverQuest::GrabFirstWord2_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "ignore"],
+      "passthrough": true
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:16", "u32", "int"]
+    },
+    "@fnA": {"name": "splitHookA", "conv": "thiscall", "args": []},
+    "@fnB": {"name": "splitHookB", "conv": "thiscall", "args": []}
+  },
+  "cases": [
+    {"name": "typical split inside the balance: both hooks run, coins sent and taken", "args": ["10 5 3 2"]},
+    {"name": "every coin equal to the balance: accepted", "args": ["50 40 30 20"]},
+    {"name": "platinum one over the balance: platinum line only", "args": ["51 0 0 0"]},
+    {"name": "gold one over the balance: gold line", "args": ["0 41 0 0"]},
+    {"name": "silver one over the balance: silver line", "args": ["0 0 31 0"]},
+    {"name": "copper one over the balance: copper line", "args": ["0 0 0 21"]},
+    {"name": "platinum and gold over: platinum line first", "args": ["51 41 0 0"]},
+    {"name": "gold and silver over: gold line first", "args": ["0 41 31 0"]},
+    {"name": "silver and copper over: silver line first", "args": ["0 0 31 21"]},
+    {"name": "all four over: platinum line", "args": ["51 41 31 21"]},
+    {"name": "sum zero: three refusal lines", "args": ["0 0 0 0"]},
+    {"name": "empty text: sum zero, three refusal lines", "args": [""]},
+    {"name": "sum exactly one: accepted", "args": ["1"]},
+    {"name": "sum minus one: refused", "args": ["-1"]},
+    {"name": "negative platinum zeroed, gold sent", "args": ["-3 5"]},
+    {"name": "negative gold zeroed", "args": ["5 -2"]},
+    {"name": "negative silver zeroed", "args": ["5 0 -2"]},
+    {"name": "negative copper zeroed", "args": ["5 0 0 -2"]},
+    {"name": "sum positive only through a negative platinum: accepted", "args": ["-2 5"]},
+    {"name": "zero platinum against a negative balance: no compare", "args": ["0 5"],
+     "memory": [{"addr": "0x006E4DA8", "u32": "@pcNeg"}]},
+    {"name": "positive platinum against a negative balance: refused", "args": ["1"],
+     "memory": [{"addr": "0x006E4DA8", "u32": "@pcNeg"}]},
+    {"name": "empty balances: one copper refused", "args": ["0 0 0 1"],
+     "memory": [{"addr": "0x006E4DA8", "u32": "@pcBroke"}]},
+    {"name": "name empty: only the name line, nothing else", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x005FE968", "u8": 0}]},
+    {"name": "name empty and eqmain flag set: name line still printed", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x005FE968", "u8": 0}, {"addr": "@eqmain", "offset": "0x94", "u32": 1}]},
+    {"name": "eqmain flag above zero: returns before parsing", "args": ["10 5 3 2"],
+     "memory": [{"addr": "@eqmain", "offset": "0x94", "u32": 1}]},
+    {"name": "eqmain flag above zero with a refused split: still silent", "args": ["51 0 0 0"],
+     "memory": [{"addr": "@eqmain", "offset": "0x94", "u32": 2}]},
+    {"name": "eqmain flag negative: continues", "args": ["10 5 3 2"],
+     "memory": [{"addr": "@eqmain", "offset": "0x94", "u32": 4294967295}]},
+    {"name": "hook A null: only hook B runs", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x006018C0", "u32": 0}]},
+    {"name": "hook A flag zero: no call to A", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x006018C0", "u32": "@splitAoff"}]},
+    {"name": "hook B null: no call and no flag write", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x00604984", "u32": 0}]},
+    {"name": "hook B flag zero: no call and no flag write", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x00604984", "u32": "@splitBoff"}]},
+    {"name": "both hooks null: nothing called", "args": ["10 5 3 2"],
+     "memory": [{"addr": "0x006018C0", "u32": 0}, {"addr": "0x00604984", "u32": 0}]},
+    {"name": "refused split calls no hook", "args": ["51 0 0 0"]},
+    {"name": "sum overflows negative: refused", "args": ["2147483647 1"]},
+    {"name": "leading spaces skipped by the word grab", "args": ["   8   2"]},
+    {"name": "words after the fourth are ignored", "args": ["1 2 3 4 5 6"]},
+    {"name": "non-numeric words read as zero: refused", "args": ["abc def"]},
+    {"name": "plus sign read by atol", "args": ["+5 6"]}
+  ],
+  "fuzz": {
+    "seed": 5045599,
+    "count": 40,
+    "args": [
+      {"choices": ["10 5 3 2", "50 40 30 20", "51 0 0 0", "0 41 0 0", "0 0 31 0", "0 0 0 21", "0 0 0 0",
+                   "", "1", "-1", "-3 5", "5 -2", "5 0 -2", "5 0 0 -2", "-2 5", "2147483647 1",
+                   "1 2 3 4 5 6", "   8   2", "abc def", "+5 6", "7 x", "3 0 0 1", "50 40 30 21",
+                   "9 9", "12 34 56 78", "1 1 1 1", " 2 "]}
+    ],
+    "memory": [
+      {"addr": "@pc", "offset": "0x998", "type": "int", "count": 4, "range": [-5, 60]},
+      {"addr": "0x005FE968", "type": "u8", "choices": [0, 65], "p": 0.2},
+      {"addr": "@eqmain", "offset": "0x94", "type": "int", "choices": [-1, 0, 1, 2]},
+      {"addr": "0x006018C0", "type": "ptr", "choices": [0, "@splitA", "@splitAoff"]},
+      {"addr": "0x00604984", "type": "ptr", "choices": [0, "@splitB", "@splitBoff"]},
+      {"addr": "@splitA", "offset": "0x10", "type": "int", "choices": [0, 1]},
+      {"addr": "@splitB", "offset": "0x10", "type": "int", "choices": [0, 1]}
+    ]
+  }
+}

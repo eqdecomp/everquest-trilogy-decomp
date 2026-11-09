@@ -1,0 +1,153 @@
+{
+  "function": "t3dSet2DSpriteCenterOffset",
+  "original": "0x10007e78",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "centerOffset",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x88",
+      "fill": "zero"
+    },
+    "centeroffset": {
+      "size": "0x0c",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "distinct words",
+      "args": [
+        "@sprite",
+        "@centeroffset"
+      ],
+      "memory": [
+        {"addr": "@centeroffset", "offset": "0x0", "u32": "0x11223344"},
+        {"addr": "@centeroffset", "offset": "0x4", "u32": "0x55667788"},
+        {"addr": "@centeroffset", "offset": "0x8", "u32": "0x99aabbcc"},
+        {"addr": "@sprite", "offset": "0x78", "u32": "0xdeadbeef"},
+        {"addr": "@sprite", "offset": "0x7c", "u32": "0x7fffffff"},
+        {"addr": "@sprite", "offset": "0x80", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "zero source words",
+      "args": [
+        "@sprite",
+        "@centeroffset"
+      ],
+      "memory": [
+        {"addr": "@centeroffset", "offset": "0x0", "u32": 0},
+        {"addr": "@centeroffset", "offset": "0x4", "u32": 0},
+        {"addr": "@centeroffset", "offset": "0x8", "u32": 0},
+        {"addr": "@sprite", "offset": "0x78", "u32": "0xffffffff"},
+        {"addr": "@sprite", "offset": "0x7c", "u32": "0xffffffff"},
+        {"addr": "@sprite", "offset": "0x80", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "high bit and alternating patterns",
+      "args": [
+        "@sprite",
+        "@centeroffset"
+      ],
+      "memory": [
+        {"addr": "@centeroffset", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@centeroffset", "offset": "0x4", "u32": "0x80000000"},
+        {"addr": "@centeroffset", "offset": "0x8", "u32": "0x7fffffff"},
+        {"addr": "@sprite", "offset": "0x78", "u32": "0xaaaaaaaa"},
+        {"addr": "@sprite", "offset": "0x7c", "u32": "0x55555555"},
+        {"addr": "@sprite", "offset": "0x80", "u32": "0x12345678"}
+      ]
+    },
+    {
+      "name": "source overlaps destination from below and tests forward store order",
+      "args": [
+        "@sprite",
+        "@sprite+0x74"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x74", "u32": "0x01020304"},
+        {"addr": "@sprite", "offset": "0x78", "u32": "0x11121314"},
+        {"addr": "@sprite", "offset": "0x7c", "u32": "0x21222324"},
+        {"addr": "@sprite", "offset": "0x80", "u32": "0x31323334"}
+      ]
+    },
+    {
+      "name": "source overlaps destination from above",
+      "args": [
+        "@sprite",
+        "@sprite+0x7c"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x78", "u32": "0x41424344"},
+        {"addr": "@sprite", "offset": "0x7c", "u32": "0x51525354"},
+        {"addr": "@sprite", "offset": "0x80", "u32": "0x61626364"},
+        {"addr": "@sprite", "offset": "0x84", "u32": "0x71727374"}
+      ]
+    },
+    {
+      "name": "source equals destination",
+      "args": [
+        "@sprite",
+        "@sprite+0x78"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x78", "u32": "0x89abcdef"},
+        {"addr": "@sprite", "offset": "0x7c", "u32": "0x76543210"},
+        {"addr": "@sprite", "offset": "0x80", "u32": "0xfedcba98"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 32376,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@centeroffset"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@centeroffset",
+        "type": "u32",
+        "count": 3,
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x78",
+        "type": "u32",
+        "count": 3,
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

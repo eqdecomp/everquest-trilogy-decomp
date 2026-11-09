@@ -1,0 +1,240 @@
+{
+  "function": "fast_malloc_guess",
+  "original": "0x100288b0",
+  "sources": [
+    "src/eqmain/Network/rdp/fast_malloc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "size",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "b0": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "chunk": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1013d720",
+      "u32": 32
+    },
+    {
+      "addr": "0x1013d724",
+      "u32": 64
+    },
+    {
+      "addr": "0x1013d760",
+      "u32": 136
+    },
+    {
+      "addr": "0x1013d79c",
+      "u32": 280
+    },
+    {
+      "addr": "0x1013d7d8",
+      "u32": 576
+    },
+    {
+      "addr": "0x1013d814",
+      "u32": 4294967295
+    }
+  ],
+  "callees": {
+    "0x10028920": {
+      "name": "allocate_memory_from_pool_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@b0"
+    },
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@chunk"
+    }
+  },
+  "cases": [
+    {
+      "name": "size 0x0 (class 0)",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "size 0x1 (class 0)",
+      "args": [
+        1
+      ]
+    },
+    {
+      "name": "size 0x3f (class 0)",
+      "args": [
+        63
+      ]
+    },
+    {
+      "name": "size 0x40 (class 0, equal to threshold)",
+      "args": [
+        64
+      ]
+    },
+    {
+      "name": "size 0x41 (class 1)",
+      "args": [
+        65
+      ]
+    },
+    {
+      "name": "size 0x30 (class 0, above the 0x20 decoy at 0x1013d720)",
+      "args": [
+        48
+      ]
+    },
+    {
+      "name": "size 0x88 (class 1, equal to threshold)",
+      "args": [
+        136
+      ]
+    },
+    {
+      "name": "size 0x89 (class 2)",
+      "args": [
+        137
+      ]
+    },
+    {
+      "name": "size 0x118 (class 2, equal to threshold)",
+      "args": [
+        280
+      ]
+    },
+    {
+      "name": "size 0x119 (class 3)",
+      "args": [
+        281
+      ]
+    },
+    {
+      "name": "size 0x240 (class 3, equal to threshold)",
+      "args": [
+        576
+      ]
+    },
+    {
+      "name": "size 0x241 (malloc, idx 4)",
+      "args": [
+        577
+      ]
+    },
+    {
+      "name": "size 0x1000 (malloc; end sentinel would be taken as a class)",
+      "args": [
+        4096
+      ]
+    },
+    {
+      "name": "size 0x80000000 (unsigned compare: malloc, not class 0)",
+      "args": [
+        2147483648
+      ]
+    },
+    {
+      "name": "size 0xfffffff8 (size + 8 wraps to 0)",
+      "args": [
+        4294967288
+      ]
+    },
+    {
+      "name": "size 0xffffffff (size + 8 wraps to 7)",
+      "args": [
+        4294967295
+      ]
+    },
+    {
+      "name": "malloc fails",
+      "args": [
+        1280
+      ],
+      "callees": {
+        "0x1003342e": {
+          "name": "_malloc",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "pool returns NULL (class 0)",
+      "args": [
+        48
+      ],
+      "callees": {
+        "0x10028920": {
+          "name": "allocate_memory_from_pool_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "pool returns NULL (class 3)",
+      "args": [
+        512
+      ],
+      "callees": {
+        "0x10028920": {
+          "name": "allocate_memory_from_pool_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 126549,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          0,
+          1024
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1013d724",
+        "type": "u32",
+        "count": 4,
+        "stride": 60,
+        "range": [
+          0,
+          768
+        ],
+        "p": 0.75
+      }
+    ]
+  }
+}

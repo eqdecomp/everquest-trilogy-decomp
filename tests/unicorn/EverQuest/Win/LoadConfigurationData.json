@@ -1,0 +1,267 @@
+{
+  "function": "LoadConfigurationData_guess",
+  "original": "0x004e8d6a",
+  "sources": [
+    "src/EverQuest/Win.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "file": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0057D8A0",
+      "from_image": "0x0057D8A0",
+      "image_size": 13
+    },
+    {
+      "addr": "0x0055C1AC",
+      "cstr": "rb"
+    },
+    {
+      "addr": "0x0056FD18",
+      "cstr": "wb"
+    }
+  ],
+  "callees": {
+    "0x005223bc": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x00522038": {
+      "name": "fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x0052359e": {
+      "name": "fwrite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x00521fbb": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x005245c4": {
+      "name": "feof",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "read open succeeds, not at eof: three reads then close"
+    },
+    {
+      "name": "read open succeeds, at eof: two reads then close",
+      "callees": {
+        "0x005245c4": {
+          "name": "feof",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 16
+        }
+      }
+    },
+    {
+      "name": "eof flag value 1 also skips third read",
+      "callees": {
+        "0x005245c4": {
+          "name": "feof",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "eof high bit set skips third read",
+      "callees": {
+        "0x005245c4": {
+          "name": "feof",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": "0x80000000"
+        }
+      }
+    },
+    {
+      "name": "fread results are ignored",
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "read open fails, write open succeeds: two writes then close",
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": [
+            0,
+            "@file"
+          ]
+        }
+      }
+    },
+    {
+      "name": "write path ignores fwrite results",
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": [
+            0,
+            "@file"
+          ]
+        },
+        "0x0052359e": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "both opens fail: no further calls",
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "unaligned file handle is passed through unchanged",
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": "@file+3"
+        }
+      }
+    },
+    {
+      "name": "unaligned handle on write path",
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": [
+            0,
+            "@file+1"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5148010,
+    "count": 30,
+    "args": [],
+    "callees": {
+      "0x005245c4": {
+        "name": "feof",
+        "conv": "cdecl",
+        "args": [
+          "ptr"
+        ],
+        "ret": [
+          0,
+          1,
+          16,
+          0
+        ]
+      }
+    },
+    "memory": [
+      {
+        "addr": "0x0057D0D0",
+        "type": "u32"
+      },
+      {
+        "addr": "0x0057D1D0",
+        "type": "u32"
+      },
+      {
+        "addr": "0x006EFCC4",
+        "type": "u32"
+      }
+    ]
+  }
+}

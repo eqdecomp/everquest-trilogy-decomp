@@ -1,0 +1,927 @@
+{
+  "function": "CEverQuest_loadCustom_guess",
+  "original": "0x00456a14",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x69000",
+      "fill": "zero"
+    },
+    "pc": {
+      "size": "0x2000",
+      "fill": "zero"
+    },
+    "file": {
+      "size": 16,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "@pc",
+      "cstr": "Hero"
+    },
+    {
+      "addr": "0x006ee3f4",
+      "cstr": "eqworld"
+    },
+    {
+      "addr": "0x006ee3fc",
+      "cstr": "abc-def"
+    },
+    {
+      "addr": "0x00545998",
+      "from_image": "0x00545998",
+      "image_size": 2
+    },
+    {
+      "addr": "0x005921c0",
+      "cstr": "optn"
+    },
+    {
+      "addr": "0x005921c8",
+      "u32": 2
+    }
+  ],
+  "callees": {
+    "0x00456dfe": {
+      "name": "CEverQuest::initCustom_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x00523560": {
+      "name": "_strcspn",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005222d2": {
+      "name": "_fseek",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x005223bc": {
+      "name": "_fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x00522038": {
+      "name": "_fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x00521fbb": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x0041a3e9": {
+      "name": "EQ_Character::HasSkill",
+      "conv": "thiscall",
+      "args": [
+        "u8"
+      ],
+      "ret": [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "0x004567f8": {
+      "name": "CEverQuest::saveCustom_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "v2 eqworld login keeps first three characters",
+      "args": [
+        "@self"
+      ]
+    },
+    {
+      "name": "eqworld login with dot at index 2 trims it",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ee3fc",
+          "cstr": "xy.rest"
+        }
+      ]
+    },
+    {
+      "name": "eqworld login case-insensitive, short suffix",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ee3f4",
+          "cstr": "EQWORLD"
+        },
+        {
+          "addr": "0x006ee3fc",
+          "cstr": "q"
+        }
+      ]
+    },
+    {
+      "name": "eqworld prefix of six characters is not eqworld",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ee3f4",
+          "cstr": "eqworl.Zone"
+        }
+      ]
+    },
+    {
+      "name": "other login cut at the delimiter",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ee3f4",
+          "cstr": "Bob.Server"
+        }
+      ]
+    },
+    {
+      "name": "other login without delimiter",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ee3f4",
+          "cstr": "Solo"
+        }
+      ]
+    },
+    {
+      "name": "other login starting with the delimiter",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ee3f4",
+          "cstr": ".Lead"
+        }
+      ]
+    },
+    {
+      "name": "first fopen fails, fallback file opens",
+      "args": [
+        "@self"
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "_fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": [
+            0,
+            "@file"
+          ]
+        }
+      }
+    },
+    {
+      "name": "both fopen fail, only save runs",
+      "args": [
+        "@self"
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "_fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "version 1 header uses the old 6x6 layout",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "version 0 header uses the old layout",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "negative version uses the old layout",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c8",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "version 3 uses the new layout",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c8",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "bad header with version 5 uses the old layout",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c0",
+          "cstr": "optx"
+        },
+        {
+          "addr": "0x005921c8",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "header with an extra trailing character is not optn",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c0",
+          "cstr": "optn2"
+        }
+      ]
+    },
+    {
+      "name": "first word-array: every kind of skill id, level 9",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "ffff05006300640069007200"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 9
+        }
+      ]
+    },
+    {
+      "name": "first word-array: 0x72 at level 8 is cleared",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "7200720072007200720072006b00"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 8
+        }
+      ]
+    },
+    {
+      "name": "first word-array: 0x72 at level 10 and others kept",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "7200690006006b006f007300"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 10
+        }
+      ]
+    },
+    {
+      "name": "first word-array: unknown id above 99 is cleared, 0x73 and 0x68",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "730068006a006c006e007000"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 60
+        }
+      ]
+    },
+    {
+      "name": "id 100 owned in skills is cleared even when allowed",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "690069006400650072006f00"
+        },
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "69006b006f006400"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 20
+        },
+        {
+          "addr": "@pc",
+          "offset": "0xa2c",
+          "u8": 1
+        },
+        {
+          "addr": "@pc",
+          "offset": "0xa31",
+          "u8": 1
+        },
+        {
+          "addr": "@pc",
+          "offset": "0xa2d",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "second word-array: skill ids allowed and rejected",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "6b006f007200ffff"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 30
+        }
+      ]
+    },
+    {
+      "name": "second word-array: low ids use HasSkill",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "00000100630064"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 30
+        }
+      ],
+      "callees": {
+        "0x0041a3e9": {
+          "name": "EQ_Character::HasSkill_guess",
+          "conv": "thiscall",
+          "args": [
+            "u8"
+          ],
+          "ret": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "second word-array: HasSkill false clears",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "05000600070008000000"
+        }
+      ],
+      "callees": {
+        "0x0041a3e9": {
+          "name": "EQ_Character::HasSkill_guess",
+          "conv": "thiscall",
+          "args": [
+            "u8"
+          ],
+          "ret": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "all HasSkill false",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "0500060007000800090010001100120013001400"
+        }
+      ],
+      "callees": {
+        "0x0041a3e9": {
+          "name": "EQ_Character::HasSkill_guess",
+          "conv": "thiscall",
+          "args": [
+            "u8"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "all HasSkill true",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "0500060007000800090010001100120013001400"
+        }
+      ],
+      "callees": {
+        "0x0041a3e9": {
+          "name": "EQ_Character::HasSkill_guess",
+          "conv": "thiscall",
+          "args": [
+            "u8"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "table entries of kind 2 and 3 pointing at -1 slots are cleared",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "6b00ffff6f006900"
+        },
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "6900ffff6b00ffff6f006900"
+        },
+        {
+          "addr": "@pc",
+          "offset": "0x38",
+          "u8": 30
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6841e",
+          "u8": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68420",
+          "u16": 1
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68422",
+          "u8": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68424",
+          "u16": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68426",
+          "u8": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68428",
+          "u16": 0
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6842a",
+          "u8": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6842c",
+          "u16": 0
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6842e",
+          "u8": 1
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68430",
+          "u16": 1
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68446",
+          "u8": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68448",
+          "u16": 1
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6844a",
+          "u8": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6844c",
+          "u16": 5
+        },
+        {
+          "addr": "@self",
+          "offset": "0x685a6",
+          "u8": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x685a8",
+          "u16": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x685aa",
+          "u8": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x685ac",
+          "u16": 1
+        }
+      ]
+    },
+    {
+      "name": "table entry kind 2 with a high index and non -1 slot is kept",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfec",
+          "hex": "6b006f006900ffff"
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6841e",
+          "u8": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68420",
+          "u16": 0
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68422",
+          "u8": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68424",
+          "u16": 0
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68426",
+          "u8": 4
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68428",
+          "u16": 3
+        }
+      ]
+    },
+    {
+      "name": "old layout then table clearing",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x005921c8",
+          "u32": 1
+        },
+        {
+          "addr": "@self",
+          "offset": "0xff4",
+          "hex": "ffffffffffffffffffffffff"
+        },
+        {
+          "addr": "@self",
+          "offset": "0x6841e",
+          "u8": 3
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68420",
+          "u16": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68422",
+          "u8": 2
+        },
+        {
+          "addr": "@self",
+          "offset": "0x68424",
+          "u16": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4549140,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0xff4",
+        "type": "short",
+        "choices": [
+          -1,
+          0,
+          5,
+          99,
+          100,
+          101,
+          105,
+          107,
+          111,
+          114,
+          115,
+          3,
+          40
+        ],
+        "count": 6
+      },
+      {
+        "addr": "@self",
+        "offset": "0xfec",
+        "type": "short",
+        "choices": [
+          -1,
+          0,
+          5,
+          99,
+          100,
+          101,
+          105,
+          107,
+          111,
+          114,
+          115,
+          3,
+          40
+        ],
+        "count": 4
+      },
+      {
+        "addr": "@self",
+        "offset": "0x6841e",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          2,
+          3,
+          3
+        ],
+        "count": 100,
+        "stride": 4
+      },
+      {
+        "addr": "@self",
+        "offset": "0x68420",
+        "type": "short",
+        "choices": [
+          -2,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "count": 100,
+        "stride": 4
+      },
+      {
+        "addr": "@pc",
+        "offset": "0x9c8",
+        "type": "u8",
+        "choices": [
+          0,
+          1
+        ],
+        "count": 160
+      },
+      {
+        "addr": "@pc",
+        "offset": "0x38",
+        "type": "u8",
+        "range": [
+          0,
+          14
+        ]
+      },
+      {
+        "addr": "0x005921c8",
+        "type": "int",
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "addr": "0x005921c0",
+        "type": "u32",
+        "choices": [
+          1853124719,
+          1853124719,
+          1853124718
+        ]
+      },
+      {
+        "addr": "0x006ee3fc",
+        "type": "u32",
+        "choices": [
+          3030113,
+          3030881,
+          3027809,
+          3026721
+        ]
+      }
+    ]
+  }
+}

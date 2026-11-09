@@ -1,0 +1,237 @@
+{
+  "function": "t3dSetTrackTransformation_guess",
+  "original": "0x1001cfd0",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "transformation",
+      "type": "ptr"
+    },
+    {
+      "name": "scale",
+      "type": "u32"
+    },
+    {
+      "name": "z_angle",
+      "type": "float"
+    },
+    {
+      "name": "x_angle",
+      "type": "float"
+    },
+    {
+      "name": "y_angle",
+      "type": "float"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "transformation": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "position": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 287454020
+        },
+        {
+          "offset": "0x4",
+          "u32": 1432778632
+        },
+        {
+          "offset": "0x8",
+          "u32": 2578103244
+        }
+      ]
+    },
+    "angle_tree": {
+      "size": "0x8d04",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100f3ff4",
+      "u32": "@angle_tree"
+    }
+  ],
+  "callees": {
+    "0x1004f89a": {
+      "name": "t3dEulerToQuaternion",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "float",
+        "float",
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "distinct-angles-and-position",
+      "args": [
+        "@transformation",
+        305419896,
+        37.25,
+        -81.5,
+        143.75,
+        "@position"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x0",
+          "u32": 287454020
+        },
+        {
+          "addr": "@position",
+          "offset": "0x4",
+          "u32": 1432778632
+        },
+        {
+          "addr": "@position",
+          "offset": "0x8",
+          "u32": 2578103244
+        }
+      ]
+    },
+    {
+      "name": "zero-angles-zero-scale",
+      "args": [
+        "@transformation",
+        0,
+        0.0,
+        0.0,
+        0.0,
+        "@position"
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "addr": "@position",
+          "offset": "0x4",
+          "u32": 2143289345
+        },
+        {
+          "addr": "@position",
+          "offset": "0x8",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "angle-limit-boundary",
+      "args": [
+        "@transformation",
+        2147483648,
+        512.0,
+        511.0,
+        -512.0,
+        "@position"
+      ]
+    },
+    {
+      "name": "negative-and-wrap-boundaries",
+      "args": [
+        "@transformation",
+        4294967295,
+        -512.0,
+        1024.0,
+        -1024.0,
+        "@position"
+      ]
+    },
+    {
+      "name": "zero-and-quarter-turns",
+      "args": [
+        "@transformation",
+        1431655765,
+        0.5,
+        128.0,
+        -256.0,
+        "@position"
+      ]
+    },
+    {
+      "name": "position-aliases-quaternion-output",
+      "args": [
+        "@transformation",
+        3735928559,
+        41.0,
+        -73.0,
+        119.0,
+        "@transformation"
+      ]
+    },
+    {
+      "name": "overlapping-forward-copy",
+      "args": [
+        "@transformation",
+        324508639,
+        13.0,
+        71.0,
+        -29.0,
+        "@transformation+0xc"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 118736,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@transformation"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1,
+          305419896,
+          2147483648,
+          4294967295
+        ]
+      },
+      {
+        "range": [-512, 512]
+      },
+      {
+        "range": [-512, 512]
+      },
+      {
+        "range": [-512, 512]
+      },
+      {
+        "choices": [
+          "@position"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@position",
+        "type": "u32",
+        "count": 3,
+        "range": [0, 4294967295]
+      }
+    ]
+  }
+}

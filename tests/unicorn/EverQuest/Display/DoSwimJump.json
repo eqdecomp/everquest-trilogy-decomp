@@ -1,0 +1,85 @@
+{
+  "function": "CDisplay::DoSwimJump",
+  "original": "0x004146A3",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {"name": "player", "type": "ptr"},
+    {"name": "doSwimJump", "type": "char"}
+  ],
+  "ret": "void",
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "zero"},
+    "player": {"size": "0x100", "fill": "zero"},
+    "actor": {"size": "0x100", "fill": "zero"},
+    "world": {"size": 16, "fill": "zero"},
+    "zones": {"size": 32, "fill": "zero"},
+    "zoneTags": {"size": 16, "fill": "zero"},
+    "zone": {"size": 16, "fill": "zero"},
+    "userdata": {"size": 16, "fill": "zero"},
+    "cosine": {"size": 16},
+    "sine": {"size": 16},
+    "region": {"size": 16},
+    "getZones": {"size": 16},
+    "getUserData": {"size": 16},
+    "getObjectTag": {"size": 16}
+  },
+  "memory": [
+    {"addr": "@display", "offset": 4, "u32": "@world"},
+    {"addr": "@display", "offset": "0x2cb8", "u32": "@zones"},
+    {"addr": "@display", "offset": "0xbc", "u32": 200},
+    {"addr": "@player", "offset": "0x70", "u32": "@actor"},
+    {"addr": "@player", "offset": "0x40", "f32": 0.25},
+    {"addr": "@player", "offset": "0x7c", "f32": 1.0},
+    {"addr": "@player", "offset": "0x34", "f32": 0.0},
+    {"addr": "@player", "offset": "0x38", "f32": 0.0},
+    {"addr": "@player", "offset": "0x3c", "f32": 2.0},
+    {"addr": "@player", "offset": "0x54", "f32": 2.0},
+    {"addr": "@actor", "offset": "0x6c", "u32": 100},
+    {"addr": "@actor", "offset": "0xb0", "f32": 2.0},
+    {"addr": "@zones", "offset": 4, "u32": 1},
+    {"addr": "@zones", "offset": "0xc", "u32": "@zoneTags"},
+    {"addr": "@zoneTags", "u32": "@zone"},
+    {"addr": "@userdata", "cstr": "WT"},
+    {"addr": "0x006E524C", "u32": "@cosine"},
+    {"addr": "0x006E5250", "u32": "@sine"},
+    {"addr": "0x006E52E8", "u32": "@region"},
+    {"addr": "0x006E5310", "u32": "@getZones"},
+    {"addr": "0x006E5314", "u32": "@getUserData"},
+    {"addr": "0x006E52DC", "u32": "@getObjectTag"}
+  ],
+  "callees": {
+    "@cosine": {"name": "t3dFloatFastCosine", "conv": "cdecl", "args": ["float"], "ret_float": 0.0},
+    "@sine": {"name": "t3dFloatFastSine", "conv": "cdecl", "args": ["float"], "ret_float": 0.0},
+    "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12", "float"], "ret": 0},
+    "0x00414619": {"name": "CDisplay_GetEnvironmentForPlayer_guess", "conv": "thiscall", "args": ["ptr"], "ret": 1},
+    "@getZones": {"name": "t3dGetZonesContainingWorldXYZPosition", "conv": "cdecl", "args": ["ptr", "mem:12", "ptr"], "ret": 0},
+    "@getUserData": {"name": "t3dGetZoneUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@userdata"},
+    "@getObjectTag": {"name": "t3dGetObjectTag", "conv": "cdecl", "args": ["ptr", "ignore"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "585800545000"}]},
+    "0x004E1C10": {"name": "push_along_heading", "conv": "cdecl", "args": ["ptr", "float"], "ret": 0}
+  },
+  "cases": [
+    {"name": "null player returns", "args": [0, 1]},
+    {"name": "null actor returns", "args": ["@player", 1], "memory": [{"addr": "@player", "offset": "0x70", "u32": 0}]},
+    {"name": "cooldown equality is inactive", "args": ["@player", 1], "memory": [{"addr": "@display", "offset": "0xbc", "u32": 100}]},
+    {"name": "unsigned cooldown and wrapping timestamp", "args": ["@player", 0], "memory": [{"addr": "@display", "offset": "0xbc", "u32": "0xfffffff0"}, {"addr": "@actor", "offset": "0x6c", "u32": "0x7fffffff"}]},
+    {"name": "zero byte still advances cooldown", "args": ["@player", 0]},
+    {"name": "region miss pushes by half unit", "args": ["@player", 1], "callees": {"0x004E1C10": {"name": "push_along_heading_guess", "conv": "cdecl", "args": ["ptr", "float"], "ret": 0}}},
+    {"name": "full EAX nonzero from environment helper still pushes", "args": ["@player", 1], "callees": {"0x00414619": {"name": "CDisplay_GetEnvironmentForPlayer_guess", "conv": "thiscall", "args": ["ptr"], "ret": 256}}},
+    {"name": "zero environment helper result skips push", "args": ["@player", 1], "callees": {"0x00414619": {"name": "CDisplay_GetEnvironmentForPlayer_guess", "conv": "thiscall", "args": ["ptr"], "ret": 0}}},
+    {"name": "environment helper mutates actor pointer but the saved actor is used", "args": ["@player", 128], "memory": [{"addr": "@player", "offset": "0x54", "f32": 0.0}, {"addr": "@actor", "offset": "0xb0", "f32": 2.0}], "callees": {"0x00414619": {"name": "CDisplay_GetEnvironmentForPlayer_guess", "conv": "thiscall", "args": ["ptr"], "ret": 1, "writes": [{"addr": "@player+0x70", "hex": "00000000"}, {"addr": "@player+0x54", "hex": "0000803f"}]}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12", "float"], "ret": 0, "writes": [{"addr": "@player+0x70", "hex": "00000000"}, {"addr": "@player+0x54", "hex": "0000803f"}]}}},
+    {"name": "cooldown store overwrites player actor pointer before required reload", "args": ["@player", 1], "memory": [{"addr": "@display", "offset": "0xbc", "u32": "0xffffffff"}, {"addr": "@player", "offset": "0x70", "u32": "@player+0x4"}, {"addr": "@player", "offset": "0xb4", "f32": 2.0}], "callees": {"0x00414619": {"name": "CDisplay_GetEnvironmentForPlayer_guess", "conv": "thiscall", "args": ["ptr"], "ret": 1}}}
+  ],
+  "fuzz": {
+    "seed": 14603,
+    "count": 30,
+    "args": [{"choices": ["@player", 0]}, {"choices": [0, 1, 127, 128, 255]}],
+    "memory": [
+      {"addr": "@display", "offset": "0xbc", "type": "u32"},
+      {"addr": "@player", "offset": "0x70", "type": "ptr", "choices": ["@actor", 0]},
+      {"addr": "@actor", "offset": "0x6c", "type": "u32"},
+      {"addr": "@actor", "offset": "0xb0", "type": "u32", "choices": [0, "0x3f800000", "0xbf800000", "0x7f800000", "0x7f800001"]}
+    ]
+  }
+}

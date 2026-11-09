@@ -1,0 +1,309 @@
+{
+  "function": "t3dOverlayMerge",
+  "original": "0x100497e9",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "source_handle",
+      "type": "ptr"
+    },
+    {
+      "name": "dest_handle",
+      "type": "ptr"
+    },
+    {
+      "name": "source_rect",
+      "type": "ptr"
+    },
+    {
+      "name": "dest_rect",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "pixel_buffer": {
+      "size": "0x2000",
+      "fill": "random"
+    },
+    "source_handle": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u8": 0},
+        {"offset": "0xc", "u32": "@source_surface"}
+      ]
+    },
+    "dest_handle": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u8": 0},
+        {"offset": "0xc", "u32": "@dest_surface"}
+      ]
+    },
+    "source_rect": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 1},
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x8", "u32": 5},
+        {"offset": "0xc", "u32": 3}
+      ]
+    },
+    "dest_rect": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 20},
+        {"offset": "0x4", "u32": 5},
+        {"offset": "0x8", "u32": 24},
+        {"offset": "0xc", "u32": 8}
+      ]
+    },
+    "source_surface": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@dest_vtable"}
+      ]
+    },
+    "dest_surface": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@dest_vtable"}
+      ]
+    },
+    "dest_vtable": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1c", "u32": "@fn"}
+      ]
+    },
+    "fn": {
+      "size": "0x10"
+    }
+  },
+  "memory": [
+    {"addr": "0x100FB8A8", "u32": 2},
+    {"addr": "@pixel_buffer", "size": "0x2000", "fill": "random"},
+    {"addr": "@pixel_buffer", "offset": "0x102", "u16": 0},
+    {"addr": "@pixel_buffer", "offset": "0x104", "u16": 5},
+    {"addr": "@pixel_buffer", "offset": "0x106", "u16": 0},
+    {"addr": "@pixel_buffer", "offset": "0x108", "u16": 7},
+    {"addr": "@pixel_buffer", "offset": "0x202", "u16": 0},
+    {"addr": "@pixel_buffer", "offset": "0x204", "u16": 9}
+  ],
+  "callees": {
+    "0x10049504": {
+      "name": "t3dOverlayLock",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "00000060"},
+        {"arg": 2, "offset": 0, "hex": "00010000"}
+      ]
+    },
+    "0x10049576": {
+      "name": "t3dOverlayUnlock",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10067D30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "passthrough": true
+    },
+    "@fn": {
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "ptr", "ptr", "int"],
+      "ret": "0x8876023f"
+    }
+  },
+  "cases": [
+    {
+      "name": "opaque different overlays",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0}
+      ]
+    },
+    {
+      "name": "opaque same overlay",
+      "args": ["@source_handle", "@source_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0}
+      ]
+    },
+    {
+      "name": "color key different overlays",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 1}
+      ]
+    },
+    {
+      "name": "color key same overlay",
+      "args": ["@source_handle", "@source_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 1}
+      ]
+    },
+    {
+      "name": "opaque bltfast fails",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0}
+      ],
+      "callees": {
+        "@fn": {
+          "conv": "stdcall",
+          "args": ["ptr", "int", "int", "ptr", "ptr", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "color key bltfast fails",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 1}
+      ],
+      "callees": {
+        "@fn": {
+          "conv": "stdcall",
+          "args": ["ptr", "int", "int", "ptr", "ptr", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "render mode zero",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "0x100FB8A8", "u32": 0}
+      ]
+    },
+    {
+      "name": "render mode three",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "0x100FB8A8", "u32": 3}
+      ]
+    },
+    {
+      "name": "render mode one",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0}
+      ]
+    },
+    {
+      "name": "source surface null",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "dest surface null",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@dest_handle", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero height opaque",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0},
+        {"addr": "@dest_rect", "offset": "0xc", "u32": 5}
+      ]
+    },
+    {
+      "name": "zero height color key",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 1},
+        {"addr": "@dest_rect", "offset": "0xc", "u32": 5}
+      ]
+    },
+    {
+      "name": "zero width opaque",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0},
+        {"addr": "@dest_rect", "offset": "0x8", "u32": 20}
+      ]
+    },
+    {
+      "name": "zero width color key",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 1},
+        {"addr": "@dest_rect", "offset": "0x8", "u32": 20}
+      ]
+    },
+    {
+      "name": "single pixel opaque",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 0},
+        {"addr": "@source_rect", "offset": "0x0", "u32": 0},
+        {"addr": "@source_rect", "offset": "0x4", "u32": 0},
+        {"addr": "@source_rect", "offset": "0x8", "u32": 1},
+        {"addr": "@source_rect", "offset": "0xc", "u32": 1},
+        {"addr": "@dest_rect", "offset": "0x0", "u32": 0},
+        {"addr": "@dest_rect", "offset": "0x4", "u32": 0},
+        {"addr": "@dest_rect", "offset": "0x8", "u32": 1},
+        {"addr": "@dest_rect", "offset": "0xc", "u32": 1}
+      ]
+    },
+    {
+      "name": "single pixel color key",
+      "args": ["@source_handle", "@dest_handle", "@source_rect", "@dest_rect"],
+      "memory": [
+        {"addr": "@source_handle", "offset": "0x8", "u8": 1},
+        {"addr": "@source_rect", "offset": "0x0", "u32": 0},
+        {"addr": "@source_rect", "offset": "0x4", "u32": 0},
+        {"addr": "@source_rect", "offset": "0x8", "u32": 1},
+        {"addr": "@source_rect", "offset": "0xc", "u32": 1},
+        {"addr": "@dest_rect", "offset": "0x0", "u32": 0},
+        {"addr": "@dest_rect", "offset": "0x4", "u32": 0},
+        {"addr": "@dest_rect", "offset": "0x8", "u32": 1},
+        {"addr": "@dest_rect", "offset": "0xc", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 301033,
+    "count": 40,
+    "args": [
+      {"choices": ["@source_handle"]},
+      {"choices": ["@dest_handle", "@source_handle"]},
+      {"choices": ["@source_rect"]},
+      {"choices": ["@dest_rect"]}
+    ],
+    "memory": [
+      {"addr": "@source_handle", "offset": "0x8", "type": "u8", "range": [0, 3]},
+      {"addr": "0x100FB8A8", "type": "int", "range": [0, 3]},
+      {"addr": "@source_rect", "offset": "0x0", "type": "int", "range": [0, 2]},
+      {"addr": "@source_rect", "offset": "0x4", "type": "int", "range": [0, 2]},
+      {"addr": "@source_rect", "offset": "0x8", "type": "int", "range": [5, 10]},
+      {"addr": "@source_rect", "offset": "0xc", "type": "int", "range": [2, 6]},
+      {"addr": "@dest_rect", "offset": "0x0", "type": "int", "range": [10, 24]},
+      {"addr": "@dest_rect", "offset": "0x4", "type": "int", "range": [3, 5]},
+      {"addr": "@dest_rect", "offset": "0x8", "type": "int", "range": [26, 40]},
+      {"addr": "@dest_rect", "offset": "0xc", "type": "int", "range": [7, 9]},
+      {"addr": "@pixel_buffer", "size": "0x2000"}
+    ]
+  }
+}

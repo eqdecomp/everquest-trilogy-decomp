@@ -1,0 +1,55 @@
+{
+  "function": "CDisplay_guess::ToggleView",
+  "original": "0x0040f47f",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "rewrite": "CDisplay_guess::ToggleView",
+  "conv": "thiscall",
+  "this": "@cdisplay",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "cdisplay": {"size": "0x100", "fill": "zero"},
+    "profile": {"size": "0x1fa4", "fill": "zero"},
+    "everquest": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006e4de0", "u32": "@cdisplay"},
+    {"addr": "0x00590154", "u32": 0},
+    {"addr": "0x006b6f2c", "f32": 10.75},
+    {"addr": "0x006b6f2c", "offset": "0x1c", "f32": 20.75},
+    {"addr": "0x006b6f2c", "offset": "0x38", "f32": 30.75},
+    {"addr": "0x006b6f2c", "offset": "0x54", "f32": 40.75},
+    {"addr": "0x006b6f2c", "offset": "0x70", "f32": 50.75},
+    {"addr": "@profile", "offset": "0x104c", "u16": 0}
+  ],
+  "callees": {
+    "0x004cf31a": {"name": "CEverQuest::saveOptions_guess", "conv": "thiscall", "args": []},
+    "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["u8"], "ret": 0},
+    "0x0040e4c6": {"name": "CDisplay::SetViewAngle_guess", "conv": "thiscall", "args": ["int"]}
+  },
+  "cases": [
+    {"name": "intoxication below threshold selects state one", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 69}, {"addr": "0x00590154", "u32": 0}]},
+    {"name": "intoxication threshold selects decrement branch", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 70}, {"addr": "0x00590154", "u32": 4}]},
+    {"name": "intoxication above threshold", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 71}, {"addr": "0x00590154", "u32": 3}]},
+    {"name": "maximum positive intoxication wraps angle low word", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 32767}, {"addr": "0x00590154", "u32": 2}]},
+    {"name": "negative intoxication uses view cycle", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 65535}, {"addr": "0x00590154", "u32": 1}]},
+    {"name": "state two advances to table entry three", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 2}]},
+    {"name": "state three saves before advancing", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 3}]},
+    {"name": "state four saves and positive affect overrides table", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 4}], "callees": {"0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["u8"], "ret": 1}}},
+    {"name": "positive affect preserves full EAX above signed low word", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 4}], "callees": {"0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["u8"], "ret": 65537}}},
+    {"name": "zero affect falls back to entry zero", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 4}], "callees": {"0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["u8"], "ret": 0}}},
+    {"name": "negative signed affect falls back to entry zero", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 4}], "callees": {"0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["u8"], "ret": 65535}}},
+    {"name": "save may clear profile before null check", "memory": [{"addr": "@profile", "offset": "0x104c", "u16": 0}, {"addr": "0x00590154", "u32": 4}], "callees": {"0x004cf31a": {"name": "CEverQuest::saveOptions_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "0x006e4da8", "hex": "00000000"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4256895,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@profile", "offset": "0x104c", "type": "short", "choices": [-32768, -1, 0, 68, 69, 70, 71, 32767]},
+      {"addr": "0x00590154", "type": "int", "choices": [-7, -1, 0, 1, 2, 3, 4, 5, 6, 10]}
+    ]
+  }
+}

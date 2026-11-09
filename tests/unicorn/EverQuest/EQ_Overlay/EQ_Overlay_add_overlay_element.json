@@ -1,0 +1,365 @@
+{
+  "function": "EQ_Overlay::add_overlay_element_guess",
+  "original": "0x00450316",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [
+    {
+      "name": "id",
+      "type": "short"
+    },
+    {
+      "name": "rect",
+      "type": "ptr"
+    },
+    {
+      "name": "left",
+      "type": "short"
+    },
+    {
+      "name": "top",
+      "type": "short"
+    },
+    {
+      "name": "visible",
+      "type": "short"
+    },
+    {
+      "name": "buttonId",
+      "type": "short"
+    },
+    {
+      "name": "imageId",
+      "type": "short"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "the original is void (callers never read EAX); effects are the writes to the new element and the list",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "rect": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "elem": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "other": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "n1": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "n2": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "n3": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@self",
+      "offset": "0x70",
+      "u32": 0
+    },
+    {
+      "addr": "@n1",
+      "offset": "0x20",
+      "u32": 0
+    },
+    {
+      "addr": "@n2",
+      "offset": "0x20",
+      "u32": 0
+    },
+    {
+      "addr": "@n3",
+      "offset": "0x20",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@elem"
+    },
+    "0x00419572": {
+      "name": "InitializeOverlayElement_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": "@elem"
+    },
+    "0x00419598": {
+      "name": "OverlayElement_guess::SetOverlayElementRect_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x0041961e": {
+      "name": "OverlayElement_SetOverlayElementVisibility_guess",
+      "conv": "thiscall",
+      "args": [
+        "short",
+        "short"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "empty list, visible",
+      "args": [
+        5,
+        "@rect",
+        6,
+        7,
+        1,
+        8,
+        9
+      ]
+    },
+    {
+      "name": "empty list, not visible, extreme values",
+      "args": [
+        -32768,
+        "@rect",
+        32767,
+        -1,
+        0,
+        -32768,
+        32767
+      ]
+    },
+    {
+      "name": "visible -1",
+      "args": [
+        1,
+        "@rect",
+        2,
+        3,
+        -1,
+        4,
+        5
+      ]
+    },
+    {
+      "name": "visible 256 (low byte zero)",
+      "args": [
+        1,
+        "@rect",
+        2,
+        3,
+        256,
+        4,
+        5
+      ]
+    },
+    {
+      "name": "visible -32768 (sign bit only)",
+      "args": [
+        1,
+        "@rect",
+        2,
+        3,
+        -32768,
+        4,
+        5
+      ]
+    },
+    {
+      "name": "one node",
+      "args": [
+        10,
+        "@rect",
+        11,
+        12,
+        1,
+        13,
+        14
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x70",
+          "u32": "@n1"
+        }
+      ]
+    },
+    {
+      "name": "two nodes, not visible",
+      "args": [
+        10,
+        "@rect",
+        11,
+        12,
+        0,
+        13,
+        14
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x70",
+          "u32": "@n1"
+        },
+        {
+          "addr": "@n1",
+          "offset": "0x20",
+          "u32": "@n2"
+        }
+      ]
+    },
+    {
+      "name": "three nodes",
+      "args": [
+        20,
+        "@rect",
+        21,
+        22,
+        1,
+        23,
+        24
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x70",
+          "u32": "@n1"
+        },
+        {
+          "addr": "@n1",
+          "offset": "0x20",
+          "u32": "@n2"
+        },
+        {
+          "addr": "@n2",
+          "offset": "0x20",
+          "u32": "@n3"
+        }
+      ]
+    },
+    {
+      "name": "init returns another object",
+      "args": [
+        30,
+        "@rect",
+        31,
+        32,
+        1,
+        33,
+        34
+      ],
+      "callees": {
+        "0x00419572": {
+          "name": "InitializeOverlayElement_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": "@other"
+        }
+      }
+    },
+    {
+      "name": "operator new returns null",
+      "args": [
+        1,
+        "@rect",
+        2,
+        3,
+        1,
+        4,
+        5
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4522774,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@rect"
+        ]
+      },
+      {},
+      {},
+      {
+        "choices": [
+          0,
+          1,
+          -1,
+          2,
+          256,
+          -32768,
+          32767
+        ]
+      },
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0x70",
+        "type": "u32",
+        "choices": [
+          0,
+          "@n1",
+          "@n2"
+        ]
+      },
+      {
+        "addr": "@n1",
+        "offset": "0x20",
+        "type": "u32",
+        "choices": [
+          0,
+          "@n2"
+        ]
+      },
+      {
+        "addr": "@n2",
+        "offset": "0x20",
+        "type": "u32",
+        "choices": [
+          0,
+          "@n3"
+        ]
+      }
+    ]
+  }
+}

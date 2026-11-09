@@ -1,0 +1,239 @@
+{
+  "function": "EQMain_FitFontSize_guess",
+  "original": "0x100080b0",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "cstr"},
+    {"name": "param_5", "type": "int"},
+    {"name": "param_6", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "rec": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [{"offset": "0xc", "u32": "@sub"}]
+    },
+    "sub": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": "@vt"}]
+    },
+    "vt": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"},
+        {"offset": "0x44", "u32": "@fn44"},
+        {"offset": "0x68", "u32": "@fn68"}
+      ]
+    },
+    "fn44": {"size": "0x10", "fill": "zero"},
+    "fn68": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10008230": {
+      "name": "FUN_10008230",
+      "conv": "cdecl",
+      "args": ["int", "int", "u32"],
+      "ret": 0
+    },
+    "gdi32.dll!GetTextExtentPoint32A": {
+      "name": "GetTextExtentPoint32A",
+      "conv": "stdcall",
+      "args": ["int", "cstr", "int", "ignore"],
+      "ret": 1,
+      "writes": [
+        {"arg": 3, "offset": 0, "hex": "100000000c000000"},
+        {"addr": "0x10040038", "hex": "40820010"}
+      ]
+    },
+    "0x10008240": {
+      "name": "GetTextExtentPoint32A_second",
+      "conv": "stdcall",
+      "args": ["int", "cstr", "int", "ignore"],
+      "ret": 1,
+      "writes": [
+        {"arg": 3, "offset": 0, "hex": "0800000006000000"},
+        {"addr": "0x10040038", "hex": "40820010"}
+      ]
+    },
+    "@fn44": {
+      "name": "dc_get",
+      "conv": "stdcall",
+      "args": ["ptr", "ignore"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "78563412"}]
+    },
+    "@fn68": {
+      "name": "dc_release",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null text returns 0",
+      "args": ["@rec", 100, 100, 0, 5, 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fits on the first size",
+      "args": ["@rec", 100, 100, "Hello", 5, 4660],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "width one above the measured width",
+      "args": ["@rec", 17, 100, "Hi", 7, 3],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "height one above the measured height",
+      "args": ["@rec", 100, 13, "Hi", 7, 3],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "negative size id is returned as it is",
+      "args": ["@rec", 100, 100, "Hi", -8, 0],
+      "expect": {"ret": -8}
+    },
+    {
+      "name": "empty text measured as zero by zero",
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "0000000000000000"}]
+        }
+      },
+      "args": ["@rec", 1, 1, "", 4, 2],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "zero measured size",
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "0000000000000000"}]
+        }
+      },
+      "args": ["@rec", 1, 1, "Hi", 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative measured size compares signed",
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "fbfffffffbffffff"}]
+        }
+      },
+      "args": ["@rec", 0, 0, "Hi", 2, 9],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "large measured size",
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["int", "cstr", "int", "ignore"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "e8030000e8030000"}]
+        }
+      },
+      "args": ["@rec", 1001, 1001, "Hi", 3, 7],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "the DC call re-points the record's sub-object (release goes to the new one)",
+      "callees": {
+        "@fn44": {
+          "name": "dc_get",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "78563412"},
+            {"addr": "0x6000000c", "hex": "30000060"}
+          ]
+        }
+      },
+      "args": ["@rec", 100, 100, "Hello", 5, 4660],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "entry ESI is not the text (fits)",
+      "regs": {"esi": 5},
+      "args": ["@rec", 100, 100, "Hello", 5, 4660],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "entry ESI is not the text (null text)",
+      "regs": {"esi": 5},
+      "args": ["@rec", 100, 100, 0, 5, 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "retry: the first measure equals the width, so it does not fit; the next size fits",
+      "args": ["@rec", 16, 100, "Hi", 7, 3],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "retry: the first measure equals the height, so it does not fit; the next size fits",
+      "args": ["@rec", 100, 12, "Hi", 7, 3],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "retry: only the width is above the first measure",
+      "args": ["@rec", 17, 12, "Hi", 7, 3],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "retry: neither is above the first measure",
+      "args": ["@rec", 10, 10, "Hi", 7, 3],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "entry registers are not read (fits)",
+      "regs": {"eax": 2122219134, "ebx": 2122219134, "ecx": 2122219134, "edx": 2122219134, "esi": 2122219134, "edi": 2122219134, "ebp": 2122219134},
+      "args": ["@rec", 100, 100, "Hello", 5, 4660],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "entry registers are not read (null text)",
+      "regs": {"eax": 2122219134, "ebx": 2122219134, "ecx": 2122219134, "edx": 2122219134, "esi": 2122219134, "edi": 2122219134, "ebp": 2122219134},
+      "args": ["@rec", 100, 100, 0, 5, 1],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 32944,
+    "count": 40,
+    "args": [
+      {"choices": ["@rec"]},
+      {"range": [17, 200]},
+      {"range": [13, 200]},
+      {},
+      {"range": [-8, 64]},
+      {}
+    ],
+    "memory": []
+  }
+}

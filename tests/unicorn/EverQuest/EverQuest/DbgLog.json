@@ -1,0 +1,560 @@
+{
+  "function": "DbgLog_guess",
+  "original": "0x004c1703",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "_harness": "__alloca_probe cannot run here: a stub leaves ESP at EBP (the 0x1024-byte frame then overlaps the call stack) and a passthrough never returns (ESP ends lower). So strcpy/strlen/sprintf are scripted: nothing reads the overlapped stack except through them. With ESP = EBP, timeText (EBP-0x24) holds strlen's return address in [0..3] and the earlier pushed args above; strlen's scripted length picks the byte tested for '\\n': len 0x31 -> EBP+0x0C (low byte of the first vararg, a1), len 0x21 -> EBP-0x04 (now = time()).",
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    },
+    {
+      "name": "a2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "stamp": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Sun Oct 04 12:34:56 2026\n"
+        }
+      ]
+    },
+    "file": {
+      "size": 32,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00564E48",
+      "from_image": "0x00564E48",
+      "image_size": 2
+    },
+    {
+      "addr": "0x0056A308",
+      "from_image": "0x0056A308",
+      "image_size": 4
+    },
+    {
+      "addr": "0x0056A30C",
+      "from_image": "0x0056A30C",
+      "image_size": 12
+    },
+    {
+      "addr": "0x0056A33C",
+      "from_image": "0x0056A33C",
+      "image_size": 8
+    },
+    {
+      "addr": "0x006E4E92",
+      "u32": "0xA55A0007"
+    }
+  ],
+  "callees": {
+    "0x005232d0": {
+      "name": "__alloca_probe",
+      "conv": "cdecl",
+      "args": []
+    },
+    "0x00524174": {
+      "name": "vsprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x005213e9": {
+      "name": "time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1790000000
+    },
+    "0x005213d0": {
+      "name": "_ctime",
+      "conv": "cdecl",
+      "args": [
+        "mem:4"
+      ],
+      "ret": "@stamp"
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x005223d0": {
+      "name": "strlen",
+      "conv": "cdecl",
+      "args": [
+        "ignore"
+      ],
+      "ret": 25
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "ignore",
+        "u32",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x005223bc": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x00524138": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr",
+        "ignore"
+      ],
+      "ret": 0
+    },
+    "0x00521fbb": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!InitializeCriticalSection": {
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "__chkstk": "0x005232d0",
+    "_vsprintf": "0x00524174",
+    "_time": "0x005213e9",
+    "_ctime": "0x005213d0",
+    "_strcpy": "0x005219c0",
+    "_strlen": "0x005223d0",
+    "_sprintf": "0x005224fb",
+    "_fprintf": "0x00524138",
+    "_fclose": "0x00521fbb"
+  },
+  "cases": [
+    {
+      "name": "typical: message, stamp, sequence, file written",
+      "args": [
+        "v=%d s=%s",
+        42,
+        "abc"
+      ]
+    },
+    {
+      "name": "no conversions",
+      "args": [
+        "plain",
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "newline at the tested byte (a1 low byte 0x0A) is cleared",
+      "args": [
+        "n%d",
+        10,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen49",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 49
+        }
+      }
+    },
+    {
+      "name": "0x0B at the tested byte is kept",
+      "args": [
+        "n%d",
+        11,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen49",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 49
+        }
+      }
+    },
+    {
+      "name": "0x09 at the tested byte is kept",
+      "args": [
+        "n%d",
+        9,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen49",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 49
+        }
+      }
+    },
+    {
+      "name": "0x0A in the second byte of a1 is not tested (len-1 indexing)",
+      "args": [
+        "n%d",
+        2560,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen49",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 49
+        }
+      }
+    },
+    {
+      "name": "0x0A in the second byte of a1, len 50 tests it",
+      "args": [
+        "n%d",
+        2560,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen50",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 50
+        }
+      }
+    },
+    {
+      "name": "0x0A a1 low byte, len 50 tests the next byte",
+      "args": [
+        "n%d",
+        10,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen50",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 50
+        }
+      }
+    },
+    {
+      "name": "len -1023 tests message[0x400]: its newline is cleared (traced message is cut)",
+      "args": [
+        "%1024d\nXY",
+        1,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen_m",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": -1023
+        }
+      }
+    },
+    {
+      "name": "len -1023 tests message[0x400]: a tab there is kept",
+      "args": [
+        "%1024d\tXY",
+        1,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen_m",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": -1023
+        }
+      }
+    },
+    {
+      "name": "len -1023 tests message[0x400]: newline only at the next byte is kept",
+      "args": [
+        "%1024d.\nY",
+        1,
+        "q"
+      ],
+      "callees": {
+        "0x005223d0": {
+          "name": "strlen_m",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": -1023
+        }
+      }
+    },
+    {
+      "name": "stamp without trailing newline passed to strcpy",
+      "args": [
+        "x%d",
+        1,
+        "q"
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "Sun Oct 04 12:34:56 2026"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "counter wrap prints 65535, wraps only the low word",
+      "args": [
+        "w%s",
+        5,
+        "rap"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4E92",
+          "u32": "0x1234FFFF"
+        }
+      ]
+    },
+    {
+      "name": "counter zero",
+      "args": [
+        "c%d",
+        -1,
+        "z"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4E92",
+          "u32": "0x00000000"
+        }
+      ]
+    },
+    {
+      "name": "counter 0x8000 not sign extended",
+      "args": [
+        "c%d",
+        7,
+        "z"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4E92",
+          "u32": "0x00008000"
+        }
+      ]
+    },
+    {
+      "name": "fopen failure: no fprintf/fclose, counter still bumped",
+      "args": [
+        "f%d",
+        9,
+        "x"
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "different time value passed to ctime",
+      "args": [
+        "t",
+        0,
+        "t"
+      ],
+      "callees": {
+        "0x005213e9": {
+          "name": "time2",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "callee errors ignored",
+      "args": [
+        "e",
+        0,
+        "e"
+      ],
+      "callees": {
+        "0x00524138": {
+          "name": "_fprintf_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr",
+            "ignore"
+          ],
+          "ret": -1
+        },
+        "0x00521fbb": {
+          "name": "fclose_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "mode and line format read from their globals",
+      "args": [
+        "g%d",
+        8,
+        "g"
+      ],
+      "memory": [
+        {
+          "addr": "0x00564E48",
+          "cstr": "w+"
+        },
+        {
+          "addr": "0x0056A308",
+          "cstr": "%s|"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4986627,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "v=%d s=%s",
+          "plain",
+          "%u:%s",
+          "%%%d",
+          "%x|%s\n"
+        ],
+        "type": "cstr"
+      },
+      {
+        "choices": [
+          0,
+          9,
+          10,
+          11,
+          266,
+          2560,
+          -246,
+          65535,
+          -1,
+          70000
+        ],
+        "type": "int"
+      },
+      {
+        "choices": [
+          "abc",
+          "",
+          "note text here",
+          "x"
+        ],
+        "type": "cstr"
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006E4E92",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          32767,
+          32768,
+          65534,
+          65535,
+          305463295
+        ]
+      },
+      {
+        "addr": "0x00564E48",
+        "type": "u16",
+        "choices": [
+          97,
+          119,
+          29793
+        ]
+      }
+    ]
+  }
+}

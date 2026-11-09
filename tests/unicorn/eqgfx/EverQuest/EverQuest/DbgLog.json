@@ -1,0 +1,249 @@
+{
+  "function": "DbgLog_guess",
+  "original": "0x100509ee",
+  "sources": [
+    "src/eqgfx/EverQuest/EverQuest.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dateWithNewline": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Thu Jan  1 00:00:00 1970\n"
+        }
+      ]
+    },
+    "dateWithoutNewline": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Thu Jan  1 00:00:00 1970"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100fbbcc",
+      "u16": 65534
+    },
+    {
+      "addr": "0x10086170",
+      "cstr": "at"
+    },
+    {
+      "addr": "0x100a3670",
+      "cstr": "%s"
+    },
+    {
+      "addr": "0x100a3674",
+      "from_image": "0x100A3674",
+      "image_size": 8
+    },
+    {
+      "addr": "0x100a367c",
+      "from_image": "0x100A367C",
+      "image_size": 12
+    }
+  ],
+  "callees": {
+    "0x10069fe4": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1700000000
+    },
+    "0x1006a0d9": {
+      "name": "_vsprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x1006a0c0": {
+      "name": "_ctime",
+      "conv": "cdecl",
+      "args": [
+        "ignore"
+      ],
+      "ret": "@dateWithNewline"
+    },
+    "0x10067992": {
+      "name": "_sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x10068412": {
+      "name": "openFileWithPath_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "0x7b0000"
+    },
+    "0x100683a5": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "0x10068328": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ignore"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "newline is removed and successful open writes then closes the log",
+      "args": [
+        "entry=%d",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "0x100fbbcc",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "failed open skips fprintf and fclose after formatting",
+      "args": [
+        "failure=%u",
+        4294967295
+      ],
+      "memory": [
+        {
+          "addr": "0x100fbbcc",
+          "u16": 65535
+        }
+      ],
+      "callees": {
+        "0x10068412": {
+          "name": "openFileWithPath_guess",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "timestamp without newline leaves the last character intact",
+      "args": [
+        "plain message",
+        19
+      ],
+      "memory": [
+        {
+          "addr": "0x100fbbcc",
+          "u16": 32768
+        }
+      ],
+      "callees": {
+        "0x1006a0c0": {
+          "name": "_ctime",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": "@dateWithoutNewline"
+        }
+      }
+    },
+    {
+      "name": "counter uses unsigned values at the high boundary",
+      "args": [
+        "count=%d",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "0x100fbbcc",
+          "u16": 32767
+        }
+      ]
+    },
+    {
+      "name": "counter wraps from ffff to zero",
+      "args": [
+        "wrap=%u",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x100fbbcc",
+          "u16": 65535
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 330222,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "plain",
+          "state=%d",
+          "state=%u",
+          "state=%x",
+          "state=%c"
+        ]
+      },
+      {
+        "range": [
+          -32768,
+          65536
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100fbbcc",
+        "type": "u16",
+        "range": [
+          0,
+          65536
+        ]
+      }
+    ]
+  }
+}

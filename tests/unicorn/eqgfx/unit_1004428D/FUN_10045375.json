@@ -1,0 +1,418 @@
+{
+  "function": "t3dComputeSkyLayerLevels_guess",
+  "original": "0x10045375",
+  "sources": [
+    "src/eqgfx/unit_1004428D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sky",
+      "type": "ptr"
+    },
+    {
+      "name": "levels",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "_layout": "sky +0x18 -> layer (SkyLayer_guess): sampleCount u16 @0, scaleIndex u16 @0x12, samples ptr @0x14 (samples+4 is the first 20-byte sample, short value @0), bias float @0x34. g_layer_scale_table = 0x100FB868 floats.",
+  "objects": {
+    "sky": {
+      "size": "0x460",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@layer"
+        }
+      ]
+    },
+    "layer": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@samples"
+        }
+      ]
+    },
+    "samples": {
+      "size": "0xc0",
+      "fill": "zero"
+    },
+    "levels": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@layer",
+      "offset": "0x00",
+      "u16": 1
+    },
+    {
+      "addr": "@layer",
+      "offset": "0x12",
+      "u16": 0
+    },
+    {
+      "addr": "@layer",
+      "offset": "0x34",
+      "f32": 0.0
+    },
+    {
+      "addr": "@samples",
+      "offset": "0x04",
+      "u16": 3
+    },
+    {
+      "addr": "0x100fb868",
+      "offset": "0x00",
+      "f32": 1.0
+    },
+    {
+      "addr": "0x100fb868",
+      "offset": "0x04",
+      "f32": 0.5
+    },
+    {
+      "addr": "0x100fb868",
+      "offset": "0x08",
+      "f32": 0.25
+    },
+    {
+      "addr": "0x100fb868",
+      "offset": "0x0c",
+      "f32": -0.125
+    }
+  ],
+  "callees": {
+    "0x1004ec8d": {
+      "name": "t3dFloatRoundToInt_guess",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "ptr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "07000000"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "one sample, level 7 stores 9",
+      "args": [
+        "@sky",
+        "@levels"
+      ]
+    },
+    {
+      "name": "zero samples: the loop never runs, no call",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "memory": [
+        {
+          "addr": "@layer",
+          "offset": "0x00",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "three samples: stride 20 from samples+4, levels[3] untouched",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "memory": [
+        {
+          "addr": "@layer",
+          "offset": "0x00",
+          "u16": 3
+        },
+        {
+          "addr": "@samples",
+          "offset": "0x18",
+          "u16": "0xfffe"
+        },
+        {
+          "addr": "@samples",
+          "offset": "0x2c",
+          "u16": 5
+        }
+      ]
+    },
+    {
+      "name": "scale index 2 (0.25), bias 0.5, sample -7",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "callees": {
+        "0x1004ec8d": {
+          "name": "FUN_1004ec8d",
+          "conv": "cdecl",
+          "args": [
+            "float",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "07000000"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@layer",
+          "offset": "0x12",
+          "u16": 2
+        },
+        {
+          "addr": "@layer",
+          "offset": "0x34",
+          "f32": 0.5
+        },
+        {
+          "addr": "@samples",
+          "offset": "0x04",
+          "u16": "0xfff9"
+        }
+      ]
+    },
+    {
+      "name": "scale index 3 (-0.125), bias -1, sample 32767",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "memory": [
+        {
+          "addr": "@layer",
+          "offset": "0x12",
+          "u16": 3
+        },
+        {
+          "addr": "@layer",
+          "offset": "0x34",
+          "f32": -1.0
+        },
+        {
+          "addr": "@samples",
+          "offset": "0x04",
+          "u16": "0x7fff"
+        }
+      ]
+    },
+    {
+      "name": "level -3 clamps to 0, stores 16",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "callees": {
+        "0x1004ec8d": {
+          "name": "FUN_1004ec8d",
+          "conv": "cdecl",
+          "args": [
+            "float",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "fdffffff"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "level 0 is not clamped, stores 16",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "callees": {
+        "0x1004ec8d": {
+          "name": "FUN_1004ec8d",
+          "conv": "cdecl",
+          "args": [
+            "float",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "level 15 is not clamped, stores 1",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "callees": {
+        "0x1004ec8d": {
+          "name": "FUN_1004ec8d",
+          "conv": "cdecl",
+          "args": [
+            "float",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0f000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "level 16 clamps to 16, stores 0",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "callees": {
+        "0x1004ec8d": {
+          "name": "FUN_1004ec8d",
+          "conv": "cdecl",
+          "args": [
+            "float",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "10000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "level 40 clamps to 16, stores 0",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "callees": {
+        "0x1004ec8d": {
+          "name": "FUN_1004ec8d",
+          "conv": "cdecl",
+          "args": [
+            "float",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "28000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "eight samples fill the block (last sample at +0x90)",
+      "args": [
+        "@sky",
+        "@levels"
+      ],
+      "memory": [
+        {
+          "addr": "@layer",
+          "offset": "0x00",
+          "u16": 8
+        },
+        {
+          "addr": "@samples",
+          "offset": "0x40",
+          "u16": "0xfffc"
+        },
+        {
+          "addr": "@samples",
+          "offset": "0x90",
+          "u16": "0x8000"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 283509,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sky"
+        ]
+      },
+      {
+        "choices": [
+          "@levels"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@layer",
+        "offset": "0x00",
+        "type": "u16",
+        "range": [0, 8]
+      },
+      {
+        "addr": "@layer",
+        "offset": "0x12",
+        "type": "u16",
+        "range": [0, 3]
+      },
+      {
+        "addr": "@layer",
+        "offset": "0x34",
+        "type": "float",
+        "range": [-4, 4]
+      },
+      {
+        "addr": "@samples",
+        "size": 192
+      },
+      {
+        "addr": "0x100fb868",
+        "type": "float",
+        "count": 4,
+        "range": [-2, 2]
+      }
+    ]
+  }
+}

@@ -1,0 +1,327 @@
+{
+  "function": "t3dFastFileSeek",
+  "original": "0x10021897",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "fastFile",
+      "type": "ptr"
+    },
+    {
+      "name": "offset",
+      "type": "int"
+    },
+    {
+      "name": "origin",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "fastfile": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@stream"
+        }
+      ]
+    },
+    "stream": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@handle"
+        }
+      ]
+    },
+    "handle": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10052d00": {
+      "name": "getFilePosition_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 10
+    },
+    "0x10052a80": {
+      "name": "getFileSize_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 100
+    },
+    "0x10052bc0": {
+      "name": "setFilePosition_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "file pointer is null",
+      "args": [
+        0,
+        1,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "handle record is null",
+      "args": [
+        "@fastfile",
+        1,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@handle",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative offset rejected before calls",
+      "args": [
+        "@fastfile",
+        -1,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "origin 0 seeks relative to current position",
+      "args": [
+        "@fastfile",
+        5,
+        0
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero offset is allowed",
+      "args": [
+        "@fastfile",
+        0,
+        1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "origin 0 at last byte",
+      "args": [
+        "@fastfile",
+        99,
+        0
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "origin 0 at end rejected",
+      "args": [
+        "@fastfile",
+        100,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "origin 1 seeks from current position",
+      "args": [
+        "@fastfile",
+        5,
+        1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "origin 1 last byte before end",
+      "args": [
+        "@fastfile",
+        89,
+        1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "origin 1 exact end rejected",
+      "args": [
+        "@fastfile",
+        90,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "origin 1 past end rejected",
+      "args": [
+        "@fastfile",
+        91,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "origin 2 last byte accepted",
+      "args": [
+        "@fastfile",
+        99,
+        2
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "origin 2 at end rejected",
+      "args": [
+        "@fastfile",
+        100,
+        2
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "invalid origin below range",
+      "args": [
+        "@fastfile",
+        1,
+        -1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "invalid origin above range",
+      "args": [
+        "@fastfile",
+        1,
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "origin 1 addition wraps as signed 32 bit",
+      "args": [
+        "@fastfile",
+        1,
+        1
+      ],
+      "callees": {
+        "0x10052d00": {
+          "name": "getFilePosition_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 2147483647
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "origin 2 uses file size minus current and offset",
+      "args": [
+        "@fastfile",
+        1,
+        2
+      ],
+      "callees": {
+        "0x10052d00": {
+          "name": "getFilePosition_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 20
+        },
+        "0x10052a80": {
+          "name": "getFileSize_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 10
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 137367,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@fastfile",
+          0
+        ]
+      },
+      {},
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@handle",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

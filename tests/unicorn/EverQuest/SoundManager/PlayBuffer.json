@@ -1,0 +1,91 @@
+{
+  "function": "SoundSlotTable_guess::PlayBuffer_guess",
+  "original": "0x004eddb6",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@soundslottable",
+  "args": [
+    {"name": "index", "type": "int"},
+    {"name": "buffer", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "fnacquire": {"size": "0x10", "fill": "zero"},
+    "fnrelease": {"size": "0x10", "fill": "zero"},
+    "fnplay": {"size": "0x10", "fill": "zero"},
+    "slot": {"size": "0x80", "fill": "random"},
+    "slot2": {"size": "0x80", "fill": "random"},
+    "vtable": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x18", "u32": "@fnacquire"},
+      {"offset": "0x1c", "u32": "@fnrelease"},
+      {"offset": "0x24", "u32": "@fnplay"}
+    ]},
+    "soundslottable": {"size": "0xC00", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@vtable"},
+      {"offset": "0x8", "u32": "0"},
+      {"offset": "0xc", "u32": "@slot"},
+      {"offset": "0x10", "u32": "@slot2"},
+      {"offset": "0x14", "u32": "0"},
+      {"offset": "0x18", "u32": "@slot"},
+      {"offset": "0xb48", "u32": "@slot2"},
+      {"offset": "0xb4c", "u32": "@slot"}
+    ]},
+    "buffer": {"size": "0x100", "fill": "random", "init": [
+      {"offset": "0x50", "u32": "0x00000001"}
+    ]}
+  },
+  "memory": [],
+  "callees": {
+    "0x004eca93": {"name": "CountPlayingWithId_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+    "@fnacquire": {"name": "Acquire_guess", "conv": "thiscall", "args": ["int"], "ret": 5},
+    "@fnrelease": {"name": "Release_guess", "conv": "thiscall", "args": ["ptr"], "ret": 0},
+    "@fnplay": {"name": "Play_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": 4660}
+  },
+  "cases": [
+    {"name": "typical: no 0x10 bit, acquire, play, release, play result returned", "args": [1, "@buffer"]},
+    {"name": "index 0 is valid (lower boundary)", "args": [0, "@buffer"]},
+    {"name": "index -1 rejected", "args": [-1, "@buffer"]},
+    {"name": "INT_MIN rejected", "args": [-2147483648, "@buffer"]},
+    {"name": "index 0x2cf is valid (upper boundary)", "args": [719, "@buffer"]},
+    {"name": "index 0x2d0 rejected even though a pointer sits there", "args": [720, "@buffer"]},
+    {"name": "INT_MAX rejected", "args": [2147483647, "@buffer"]},
+    {"name": "empty slot rejected", "args": [2, "@buffer"]},
+    {"name": "mode 0x10, count 0: proceeds", "args": [1, "@buffer"],
+     "memory": [{"addr": "@buffer+0x50", "u32": "0x00000011"}]},
+    {"name": "mode 0x10, count 1: rejected", "args": [1, "@buffer"],
+     "memory": [{"addr": "@buffer+0x50", "u32": "0x00000010"}],
+     "callees": {"0x004eca93": {"name": "CountPlayingWithId_guess", "conv": "thiscall", "args": ["int"], "ret": 1}}},
+    {"name": "mode 0x10, count -1: proceeds (signed compare)", "args": [3, "@buffer"],
+     "memory": [{"addr": "@buffer+0x50", "u32": "0x12345610"}],
+     "callees": {"0x004eca93": {"name": "CountPlayingWithId_guess", "conv": "thiscall", "args": ["int"], "ret": -1}}},
+    {"name": "mode 0x10, count large: rejected", "args": [0, "@buffer"],
+     "memory": [{"addr": "@buffer+0x50", "u32": "0xFFFFFFFF"}],
+     "callees": {"0x004eca93": {"name": "CountPlayingWithId_guess", "conv": "thiscall", "args": ["int"], "ret": 2147483647}}},
+    {"name": "mode bit 0x10 only in the low byte matters (0x1000 set, 0x10 clear)", "args": [1, "@buffer"],
+     "memory": [{"addr": "@buffer+0x50", "u32": "0x0000FFEF"}],
+     "callees": {"0x004eca93": {"name": "CountPlayingWithId_guess", "conv": "thiscall", "args": ["int"], "ret": 1}}},
+    {"name": "acquire returns -1: rejected, no play", "args": [1, "@buffer"],
+     "callees": {"@fnacquire": {"name": "Acquire_guess", "conv": "thiscall", "args": ["int"], "ret": -1}}},
+    {"name": "acquire returns 0: proceeds (boundary)", "args": [1, "@buffer"],
+     "callees": {"@fnacquire": {"name": "Acquire_guess", "conv": "thiscall", "args": ["int"], "ret": 0}}},
+    {"name": "acquire returns INT_MIN: rejected", "args": [0, "@buffer"],
+     "callees": {"@fnacquire": {"name": "Acquire_guess", "conv": "thiscall", "args": ["int"], "ret": -2147483648}}},
+    {"name": "play returns 0", "args": [1, "@buffer"],
+     "callees": {"@fnplay": {"name": "Play_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": 0}}},
+    {"name": "play returns -7", "args": [719, "@buffer"],
+     "callees": {"@fnplay": {"name": "Play_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": -7}}}
+  ],
+  "fuzz": {
+    "seed": 5168566,
+    "count": 40,
+    "args": [
+      {"choices": [-2147483648, -2, -1, 0, 1, 2, 3, 4, 718, 719, 720, 721, 2147483647]},
+      {"choices": ["@buffer"]}
+    ],
+    "memory": [
+      {"addr": "@buffer+0x50", "type": "int", "choices": [0, 1, 16, 17, 32, 64, 4096, -1, -17]}
+    ]
+  }
+}

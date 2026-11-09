@@ -1,0 +1,134 @@
+{
+  "function": "EqfeCfgFindValue_guess",
+  "original": "0x10020ca0",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    },
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x18",
+      "fill": "random"
+    },
+    "found": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "cstr": "42"}
+      ]
+    },
+    "cfg": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "cstr": "width=42\n"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10020f30": {
+      "name": "FUN_10020f30",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@found"
+    },
+    "0x10020f80": {
+      "name": "FUN_10020f80",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 42
+    }
+  },
+  "cases": [
+    {
+      "name": "key found, FUN_10020f80's value returned",
+      "args": ["@self", 1, "abc"]
+    },
+    {
+      "name": "key not found: -1, FUN_10020f80 not called",
+      "args": ["@self", 1, "abc"],
+      "callees": {
+        "0x10020f30": {"name": "FUN_10020f30", "conv": "thiscall", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "empty key, not found: -1",
+      "args": ["@self", 0, ""],
+      "callees": {
+        "0x10020f30": {"name": "FUN_10020f30", "conv": "thiscall", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "key found, value 0 is returned as 0 (not -1)",
+      "args": ["@self", 0, "zz"],
+      "callees": {
+        "0x10020f80": {"name": "FUN_10020f80", "conv": "thiscall", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "key found, negative value passes through",
+      "args": ["@self", 3, "width"],
+      "callees": {
+        "0x10020f80": {"name": "FUN_10020f80", "conv": "thiscall", "args": ["cstr"], "ret": -5}
+      }
+    },
+    {
+      "name": "key found mid-buffer: pointer passed on as is",
+      "args": ["@self", 2, "width"],
+      "callees": {
+        "0x10020f30": {"name": "FUN_10020f30", "conv": "thiscall", "args": ["cstr"], "ret": "@cfg+0x6"}
+      }
+    },
+    {
+      "name": "key found at pointer value 1: non-null boundary, FUN_10020f80 still called",
+      "args": ["@self", 2, "x"],
+      "callees": {
+        "0x10020f30": {"name": "FUN_10020f30", "conv": "thiscall", "args": ["cstr"], "ret": 1},
+        "0x10020f80": {"name": "FUN_10020f80", "conv": "thiscall", "args": ["ignore"], "ret": 7}
+      }
+    },
+    {
+      "name": "key found, value 0x7fffffff passes through",
+      "args": ["@self", 5, "max"],
+      "callees": {
+        "0x10020f80": {"name": "FUN_10020f80", "conv": "thiscall", "args": ["cstr"], "ret": 2147483647}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 134304,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "choices": ["abc", "", "12", "-7", "width=42", "0", "max", "zz"]
+      }
+    ],
+    "memory": []
+  }
+}

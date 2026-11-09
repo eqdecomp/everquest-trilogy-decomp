@@ -1,0 +1,755 @@
+{
+  "function": "rdp_receive_guess",
+  "original": "0x1002ae30",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    },
+    {
+      "name": "timeout",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rdp": {
+      "size": "0x1d8",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e130": {
+      "name": "FUN_1002e130",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 500
+    },
+    "0x1002fd50": {
+      "name": "serial_recv_from_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ignore",
+        "u32",
+        "ignore"
+      ],
+      "ret": -1
+    },
+    "0x100291a0": {
+      "name": "FUN_100291a0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ignore",
+        "u32",
+        "ignore"
+      ],
+      "ret": 0
+    },
+    "0x100303d0": {
+      "name": "usemaphore_decrement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1002e8e0": {
+      "name": "wait_for_semaphore_with_timeout_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": [
+        1,
+        0
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null rdp returns zero without locking",
+      "args": [
+        0,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null rdp returns zero whatever EAX holds on entry",
+      "args": [0, 1],
+      "regs": {"eax": 305419896},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "queued item returns before waiting",
+      "args": [
+        "@rdp",
+        250
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": "0x12345678"
+        }
+      },
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "empty queue with serial link disabled and zero timeout returns zero",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "serial datagrams are all handed over before the wait",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1002fd50": {
+          "name": "serial_recv_from_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ignore",
+            "u32",
+            "ignore"
+          ],
+          "ret": [
+            3,
+            5,
+            -1
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "signalled wait moves the pending list and returns its head",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            "0x2222"
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0x2222"
+      }
+    },
+    {
+      "name": "signalled wait with an empty pending list returns zero at zero timeout",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "infinite wait keeps going while signalled lists stay empty",
+      "args": [
+        "@rdp",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0,
+            "0x3333"
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": [
+            1,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0x3333"
+      }
+    },
+    {
+      "name": "infinite wait gives up when the event fails",
+      "args": [
+        "@rdp",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "deadline already passed after a signal returns zero",
+      "args": [
+        "@rdp",
+        100
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1200
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "deadline reached exactly returns zero",
+      "args": [
+        "@rdp",
+        100
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1100
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "timed wait finds the item on the second pass",
+      "args": [
+        "@rdp",
+        100
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1040
+          ]
+        },
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0,
+            "0x4444"
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0x4444"
+      }
+    },
+    {
+      "name": "timed wait returns zero when the event fails on the second pass",
+      "args": [
+        "@rdp",
+        100
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1040
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "serial drain before a signalled wait hands over the pending item",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1002fd50": {
+          "name": "serial_recv_from_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ignore",
+            "u32",
+            "ignore"
+          ],
+          "ret": [
+            3,
+            -1
+          ]
+        },
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            "0x5555"
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0x5555"
+      }
+    },
+    {
+      "name": "infinite wait drains the serial link again after a signal",
+      "args": [
+        "@rdp",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative timeout other than -1 is a deadline",
+      "args": [
+        "@rdp",
+        -2
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1000
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "pending item after a signal returns without another pass",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            "0x6666"
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0x6666"
+      }
+    },
+    {
+      "name": "deadline one millisecond away loops once more",
+      "args": [
+        "@rdp",
+        100
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x15c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1099
+          ]
+        },
+        "0x1002e130": {
+          "name": "FUN_1002e130",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0,
+            "0x7777"
+          ]
+        },
+        "0x1002e8e0": {
+          "name": "wait_for_event_with_timeout_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": [
+            1,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0x7777"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 175664,
+    "count": 48,
+    "args": [
+      {
+        "choices": [
+          "@rdp"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@rdp",
+        "offset": "0x15c",
+        "type": "int",
+        "choices": [
+          -1,
+          0,
+          2
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0xa4",
+        "size": 24
+      }
+    ]
+  }
+}

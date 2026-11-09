@@ -1,0 +1,170 @@
+{
+  "function": "eqmainPopSlotState_guess",
+  "original": "0x10001c30",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    { "addr": "0x1004CE30", "u32": 4 },
+    { "addr": "0x1004CEB8", "u32": "@obj" },
+    { "addr": "0x1004CD80", "size": 16, "fill": "random" },
+    { "addr": "0x1004CD90", "size": 16, "fill": "random" },
+    { "addr": "0x1004CDA0", "size": 16, "fill": "random" },
+    { "addr": "0x1004CDB0", "size": 16, "fill": "random" },
+    { "addr": "0x1004CDF8", "size": 48, "fill": "random" },
+    { "addr": "0x1004CEC4", "size": 4, "fill": "random" },
+    { "addr": "0x1004CE6C", "size": 4, "fill": "random" },
+    { "addr": "0x1004CD7C", "size": 4, "fill": "random" }
+  ],
+  "callees": {
+    "0x10006c20": {
+      "name": "FUN_10006c20",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "u32"
+      ],
+      "ret": 305419896
+    },
+    "0x10007a80": {
+      "name": "FUN_10007a80",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: top 4 pops slot 3",
+      "args": []
+    },
+    {
+      "name": "top 1 pops slot 0 (first record)",
+      "args": [],
+      "memory": [ { "addr": "0x1004CE30", "u32": 1 } ]
+    },
+    {
+      "name": "top 2 pops slot 1",
+      "args": [],
+      "memory": [ { "addr": "0x1004CE30", "u32": 2 } ]
+    },
+    {
+      "name": "top 3 pops slot 2",
+      "args": [],
+      "memory": [ { "addr": "0x1004CE30", "u32": 3 } ]
+    },
+    {
+      "name": "top 5 reads slot 4, one past the 4-entry tables",
+      "args": [],
+      "memory": [ { "addr": "0x1004CE30", "u32": 5 } ]
+    },
+    {
+      "name": "top 0 reads slot -1 (the DAT_1004CD7C word)",
+      "args": [],
+      "memory": [ { "addr": "0x1004CE30", "u32": 0 } ]
+    },
+    {
+      "name": "first callee retargets the object pointer to 0x1004CD80 (read again after the call)",
+      "args": [],
+      "callees": {
+        "0x10006c20": {
+          "name": "FUN_10006c20",
+          "conv": "cdecl",
+          "args": [ "int", "int", "int", "int", "int", "int", "int", "int", "u32" ],
+          "ret": 305419896,
+          "writes": [ { "addr": "0x1004CEB8", "hex": "80cd0410" } ]
+        }
+      }
+    },
+    {
+      "name": "first callee retargets the index (read again after the call)",
+      "args": [],
+      "callees": {
+        "0x10006c20": {
+          "name": "FUN_10006c20",
+          "conv": "cdecl",
+          "args": [ "int", "int", "int", "int", "int", "int", "int", "int", "u32" ],
+          "ret": 305419896,
+          "writes": [ { "addr": "0x1004CE30", "hex": "02000000" } ]
+        }
+      }
+    },
+    {
+      "name": "second callee retargets the index (the three per-slot reads come after the call)",
+      "args": [],
+      "callees": {
+        "0x10007a80": {
+          "name": "FUN_10007a80",
+          "conv": "cdecl",
+          "args": [ "ptr" ],
+          "ret": 0,
+          "writes": [ { "addr": "0x1004CE30", "hex": "01000000" } ]
+        }
+      }
+    },
+    {
+      "name": "second callee rewrites the per-slot values (copied after the call)",
+      "args": [],
+      "callees": {
+        "0x10007a80": {
+          "name": "FUN_10007a80",
+          "conv": "cdecl",
+          "args": [ "ptr" ],
+          "ret": 0,
+          "writes": [
+            { "addr": "0x1004CDA0", "hex": "a1a2a3a4a5a6a7a8b1b2b3b4b5b6b7b8" },
+            { "addr": "0x1004CDB0", "hex": "c1c2c3c4c5c6c7c8d1d2d3d4d5d6d7d8" },
+            { "addr": "0x1004CD90", "hex": "e1e2e3e4e5e6e7e8f1f2f3f4f5f6f7f8" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "second callee rewrites the record table (record was copied before the call)",
+      "args": [],
+      "callees": {
+        "0x10007a80": {
+          "name": "FUN_10007a80",
+          "conv": "cdecl",
+          "args": [ "ptr" ],
+          "ret": 0,
+          "writes": [
+            { "addr": "0x1004CDF8", "hex": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210" }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 7216,
+    "count": 40,
+    "args": [],
+    "memory": [
+      { "addr": "0x1004CE30", "type": "int", "range": [1, 5] },
+      { "addr": "0x1004CD80", "type": "int", "count": 4 },
+      { "addr": "0x1004CD90", "type": "int", "count": 4 },
+      { "addr": "0x1004CDA0", "type": "int", "count": 4 },
+      { "addr": "0x1004CDB0", "type": "int", "count": 4 },
+      { "addr": "0x1004CDF8", "type": "int", "count": 12 },
+      { "addr": "@obj", "size": 64 }
+    ]
+  }
+}

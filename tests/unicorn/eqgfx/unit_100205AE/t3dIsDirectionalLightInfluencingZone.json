@@ -1,0 +1,487 @@
+{
+  "function": "t3dIsDirectionalLightInfluencingZone",
+  "original": "0x10021436",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@objectTable"
+        }
+      ]
+    },
+    "objectTable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@obj0"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@obj1"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@obj2"
+        }
+      ]
+    },
+    "obj0": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "obj1": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "obj2": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": 3
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@entries"
+        }
+      ]
+    },
+    "entries": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 2
+        },
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x8",
+          "u32": 1
+        }
+      ]
+    },
+    "region": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "mem:4"
+      ],
+      "ret": [
+        0,
+        2,
+        1
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "no entries: 0 and no call, even though the callee would say 1",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first entry hits: callee says 1 on every call, the loop stops after one call",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "second entry hits",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [
+            0,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "last of three entries hits",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "no entry hits: three calls, 0",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "every callee result is 2: not a hit, 0",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 2
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "2 then 1: the 2 is not a hit (== 1, not != 0), the 1 on the second call is",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [
+            2,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "callee returns -1: not a hit",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one entry (object 2 via entries[0]) hits",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "one entry, no hit",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "four entries (entries[3] is 0, object 0): hit on the fourth call",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 4
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": [
+            0,
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "four entries, no hit: four calls, 0",
+      "args": [
+        "@world",
+        "@light",
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x24",
+          "u32": 4
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 10021436,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@light"
+        ]
+      },
+      {
+        "choices": [
+          "@region"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@light",
+        "offset": "0x24",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@entries",
+        "type": "u32",
+        "count": 4,
+        "range": [
+          0,
+          2
+        ]
+      }
+    ]
+  }
+}

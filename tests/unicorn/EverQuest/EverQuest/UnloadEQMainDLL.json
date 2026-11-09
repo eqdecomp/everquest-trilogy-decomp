@@ -1,0 +1,57 @@
+{
+  "function": "UnloadEQMainDLL_guess",
+  "original": "0x004e8d4b",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {"addr": "0x006efe34", "u32": 268435456},
+    {"addr": "0x006ee750", "u32": 268439552}
+  ],
+  "callees": {
+    "kernel32.dll!FreeLibrary": {
+      "name": "FreeLibrary",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "loaded: freed and both globals cleared"
+    },
+    {
+      "name": "not loaded: nothing touched, dll_main kept",
+      "memory": [
+        {"addr": "0x006efe34", "u32": 0},
+        {"addr": "0x006ee750", "u32": 305419896}
+      ]
+    },
+    {
+      "name": "loaded, FreeLibrary fails: still cleared",
+      "callees": {
+        "kernel32.dll!FreeLibrary": {"name": "FreeLibrary", "conv": "stdcall", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "loaded, dll_main already null",
+      "memory": [
+        {"addr": "0x006efe34", "u32": 1},
+        {"addr": "0x006ee750", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5147979,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x006efe34", "type": "u32", "choices": [0, 1, 268435456, 4294967295]},
+      {"addr": "0x006ee750", "type": "u32"}
+    ]
+  }
+}

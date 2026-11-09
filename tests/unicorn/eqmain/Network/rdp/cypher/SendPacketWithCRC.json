@@ -1,0 +1,293 @@
+{
+  "function": "SendPacketWithCRC_guess",
+  "original": "0x1002f8d0",
+  "sources": [
+    "src/eqmain/Network/rdp/cypher.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "ptr"
+    },
+    {
+      "name": "param_5",
+      "type": "int"
+    },
+    {
+      "name": "param_6",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "desc": {
+      "size": "0x40",
+      "init": [
+        {"offset": "0x0", "u32": "@src"},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": "@src+0x10"},
+        {"offset": "0xc", "u32": 0},
+        {"offset": "0x10", "u32": "@src+0x20"},
+        {"offset": "0x14", "u32": 0},
+        {"offset": "0x18", "u32": "@src+0x30"},
+        {"offset": "0x1c", "u32": 0},
+        {"offset": "0x20", "u32": "@src+0x40"},
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x28", "u32": "@src+0x50"},
+        {"offset": "0x2c", "u32": 0},
+        {"offset": "0x30", "u32": "@src+0x60"},
+        {"offset": "0x34", "u32": 0},
+        {"offset": "0x38", "u32": "@src+0x70"},
+        {"offset": "0x3c", "u32": 0}
+      ]
+    },
+    "src": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "param_4": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002f580": {
+      "name": "calculate_crc32_checksum_guess",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "mem:144",
+        "u32"
+      ],
+      "ret": 305419896
+    },
+    "0x10032296": {
+      "name": "htonl",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": 2018915346
+    },
+    "0x100360bf": {
+      "name": "_rand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": [
+        17,
+        34,
+        51,
+        68,
+        85,
+        102,
+        119,
+        136
+      ]
+    },
+    "0x1002f830": {
+      "name": "rdp_encode_guess",
+      "conv": "cdecl",
+      "args": [
+        "mem:144",
+        "int"
+      ]
+    },
+    "0x10032290": {
+      "name": "sendto",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "mem:144",
+        "int",
+        "int",
+        "ptr",
+        "int"
+      ],
+      "ret": -1
+    },
+    "0x100322e4": {
+      "name": "WSAGetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 10035
+    }
+  },
+  "cases": [
+    {
+      "name": "no segments, nothing appended, send ok",
+      "args": [1, "@desc", 0, "@param_4", 0, 0],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no segments, send fails with WSAEWOULDBLOCK",
+      "args": [1, "@desc", 0, "@param_4", 0, 0],
+      "callees": {
+        "0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": -1},
+        "0x100322e4": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10035}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "no segments, send fails with another error",
+      "args": [1, "@desc", 0, "@param_4", 0, 0],
+      "callees": {
+        "0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": -1},
+        "0x100322e4": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10004}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "one byte segment, send ok",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 1}],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three byte segment, short send counts as would block",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 3}],
+      "callees": {
+        "0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 2},
+        "0x100322e4": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10035}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "two segments of 4 and 1 bytes, send ok",
+      "args": [1, "@desc", 2, "@param_4", 0, 0],
+      "memory": [
+        {"addr": "@desc", "offset": "0x4", "u32": 4},
+        {"addr": "@desc", "offset": "0xc", "u32": 1}
+      ],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 5}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero byte first segment, then 2 bytes",
+      "args": [1, "@desc", 2, "@param_4", 0, 0],
+      "memory": [
+        {"addr": "@desc", "offset": "0x4", "u32": 0},
+        {"addr": "@desc", "offset": "0xc", "u32": 2}
+      ],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 2}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "four byte segment, checksum only",
+      "args": [1, "@desc", 1, "@param_4", 0, 1],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 4}],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 8}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no data, checksum and padding to 8",
+      "args": [1, "@desc", 0, "@param_4", 1, 0],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 8}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "four byte segment, checksum and padding to 16",
+      "args": [1, "@desc", 1, "@param_4", 1, 0],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 4}],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 16}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three byte segment, both flags, padding to 8",
+      "args": [1, "@desc", 1, "@param_4", 1, 1],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 3}],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 8}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seven byte segment, checksum and padding to 16",
+      "args": [1, "@desc", 1, "@param_4", 1, 0],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 7}],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 16}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two segments of 5 and 4 bytes, checksum and padding to 16",
+      "args": [1, "@desc", 2, "@param_4", 1, 0],
+      "memory": [
+        {"addr": "@desc", "offset": "0x4", "u32": 5},
+        {"addr": "@desc", "offset": "0xc", "u32": 4}
+      ],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 16}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "padded send fails with WSAEWOULDBLOCK",
+      "args": [1, "@desc", 1, "@param_4", 1, 0],
+      "memory": [{"addr": "@desc", "offset": "0x4", "u32": 4}],
+      "callees": {
+        "0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": -1},
+        "0x100322e4": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10035}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "eight segments of 1 to 8 bytes, checksum only",
+      "args": [1, "@desc", 8, "@param_4", 0, 1],
+      "memory": [
+        {"addr": "@desc", "offset": "0x4", "u32": 1},
+        {"addr": "@desc", "offset": "0xc", "u32": 2},
+        {"addr": "@desc", "offset": "0x14", "u32": 3},
+        {"addr": "@desc", "offset": "0x1c", "u32": 4},
+        {"addr": "@desc", "offset": "0x24", "u32": 5},
+        {"addr": "@desc", "offset": "0x2c", "u32": 6},
+        {"addr": "@desc", "offset": "0x34", "u32": 7},
+        {"addr": "@desc", "offset": "0x3c", "u32": 8}
+      ],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 40}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "eight 16-byte segments, checksum and padding to 136",
+      "args": [1, "@desc", 8, "@param_4", 1, 0],
+      "memory": [
+        {"addr": "@desc", "offset": "0x4", "u32": 16},
+        {"addr": "@desc", "offset": "0xc", "u32": 16},
+        {"addr": "@desc", "offset": "0x14", "u32": 16},
+        {"addr": "@desc", "offset": "0x1c", "u32": 16},
+        {"addr": "@desc", "offset": "0x24", "u32": 16},
+        {"addr": "@desc", "offset": "0x2c", "u32": 16},
+        {"addr": "@desc", "offset": "0x34", "u32": 16},
+        {"addr": "@desc", "offset": "0x3c", "u32": 16}
+      ],
+      "callees": {"0x10032290": {"name": "sendto", "conv": "stdcall", "args": ["u32", "mem:144", "int", "int", "ptr", "int"], "ret": 136}},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 194768,
+    "count": 40,
+    "args": [
+      {"range": [0, 64]},
+      {"choices": ["@desc"]},
+      {"range": [0, 8]},
+      {"choices": ["@param_4"]},
+      {"range": [0, 1]},
+      {"range": [0, 1]}
+    ],
+    "memory": [
+      {"addr": "@desc", "offset": "0x4", "type": "u32", "count": 8, "stride": 8, "range": [0, 16]}
+    ]
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "function": "t3dSetActorDMRGBTrack",
+  "original": "0x1000b402",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0xfc", "u32": "@oldTrack"}
+      ]
+    },
+    "oldTrack": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: the old track is unshared, the new one stored and shared",
+      "args": ["@actor", "@track"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no old track: nothing is unshared, the new track is stored and shared",
+      "args": ["@actor", "@track"],
+      "memory": [
+        {"addr": "@actor", "offset": "0xfc", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null new track: the old one is unshared and the field cleared, nothing shared",
+      "args": ["@actor", 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null new track and no old track: no calls, the field is cleared",
+      "args": ["@actor", 0],
+      "memory": [
+        {"addr": "@actor", "offset": "0xfc", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same track as the old one: unshared first, then stored, then shared",
+      "args": ["@actor", "@oldTrack"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unshare and share return nonzero: the results are ignored, the function still returns 0",
+      "args": ["@actor", "@track"],
+      "callees": {
+        "0x10017dad": {"name": "t3dUnshareObject", "conv": "cdecl", "args": ["ptr"], "ret": 99},
+        "0x10017ce8": {"name": "t3dShareObject", "conv": "cdecl", "args": ["ptr"], "ret": 77}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 46082,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@track",
+          0,
+          "@oldTrack"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0xfc", "type": "u32", "choices": [0, "@oldTrack", "@track"]}
+    ]
+  }
+}

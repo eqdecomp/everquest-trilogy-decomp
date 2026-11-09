@@ -1,0 +1,452 @@
+{
+  "function": "rdp_resort",
+  "original": "0x004ef130",
+  "sources": [
+    "src/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "@rdp"
+        },
+        {
+          "offset": "0x30",
+          "u32": 286331153
+        },
+        {
+          "offset": "0x34",
+          "u32": 572662306
+        }
+      ]
+    },
+    "rdp": {
+      "size": "0x88",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": -1
+        },
+        {
+          "offset": "0x10",
+          "u32": 4660
+        },
+        {
+          "offset": "0x14",
+          "u32": 16843009
+        },
+        {
+          "offset": "0x18",
+          "u32": 33686018
+        },
+        {
+          "offset": "0x1c",
+          "u32": 50529027
+        },
+        {
+          "offset": "0x20",
+          "u32": 67372036
+        },
+        {
+          "offset": "0x34",
+          "u32": 0
+        },
+        {
+          "offset": "0x38",
+          "u32": 0
+        },
+        {
+          "offset": "0x84",
+          "u32": 0
+        }
+      ]
+    },
+    "other": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "@rdp"
+        },
+        {
+          "offset": "0x30",
+          "u32": 286331153
+        },
+        {
+          "offset": "0x34",
+          "u32": 572662306
+        }
+      ]
+    },
+    "enter_fn": {
+      "size": 4
+    },
+    "leave_fn": {
+      "size": 4
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00534194",
+      "u32": "@enter_fn"
+    },
+    {
+      "addr": "0x00534190",
+      "u32": "@leave_fn"
+    }
+  ],
+  "callees": {
+    "0x004f18b0": {
+      "name": "NetworkConnection_getConnectionStatus_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "1111111122222222"
+        }
+      ]
+    },
+    "@enter_fn": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f4f30": {
+      "name": "updateHeapElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f4fe0": {
+      "name": "Heap_getTopHeapElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@conn"
+    },
+    "0x00500398": {
+      "name": "htonl",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": 16777343
+    },
+    "0x00500392": {
+      "name": "sendto",
+      "conv": "stdcall",
+      "args": [
+        "int",
+        "mem:4",
+        "int",
+        "int",
+        "mem:16",
+        "int"
+      ],
+      "ret": 4
+    },
+    "@leave_fn": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "same status skips heap update",
+      "args": [
+        "@conn",
+        1
+      ]
+    },
+    {
+      "name": "alternate connection pointer is retained through resort",
+      "args": [
+        "@other",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@other",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@other",
+          "offset": "0x34",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004f4fe0": {
+          "name": "Heap_getTopHeapElement_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": "@other"
+        }
+      }
+    },
+    {
+      "name": "changed status sends through remote socket",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x34",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "top heap element differs",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x34",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004f4fe0": {
+          "name": "Heap_getTopHeapElement_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": "@other"
+        }
+      }
+    },
+    {
+      "name": "resort notification already pending",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x34",
+          "u32": 0
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x84",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "notification not requested",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x34",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "invalid remote socket still sets pending flag",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x34",
+          "u32": 0
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": -1
+        }
+      ]
+    },
+    {
+      "name": "local endpoint socket path",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x34",
+          "u32": 0
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x04",
+          "u32": 9
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5173550,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn",
+          "@other"
+        ]
+      },
+      {
+        "range": [
+          -1,
+          1
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x30",
+        "type": "u32",
+        "choices": [
+          286331153,
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x34",
+        "type": "u32",
+        "choices": [
+          572662306,
+          0,
+          2,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@other",
+        "offset": "0x30",
+        "type": "u32",
+        "choices": [
+          286331153,
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@other",
+        "offset": "0x34",
+        "type": "u32",
+        "choices": [
+          572662306,
+          0,
+          2,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x04",
+        "type": "u32",
+        "choices": [
+          -1,
+          9
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          4660,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x84",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

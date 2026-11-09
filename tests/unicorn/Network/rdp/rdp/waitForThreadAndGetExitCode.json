@@ -1,0 +1,200 @@
+{
+  "function": "waitForThreadAndGetExitCode_guess",
+  "original": "0x004f71f0",
+  "sources": [
+    "src/Network/rdp/rdp.c",
+    "src/Network/rdp/connhash.c",
+    "src/Network/rdp/list.c",
+    "src/Network/rdp/uevent.c",
+    "src/Network/rdp/eventq.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "thread",
+      "type": "ptr"
+    },
+    {
+      "name": "code",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "thread": {
+      "size": "0x4",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 119
+        }
+      ]
+    },
+    "code": {
+      "size": "0x4"
+    }
+  },
+  "callees": {
+    "kernel32.dll!WaitForSingleObject": {
+      "name": "WaitForSingleObject",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 6
+    },
+    "kernel32.dll!GetExitCodeThread": {
+      "name": "GetExitCodeThread",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ignore"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "00000000"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "no thread",
+      "args": [
+        "@thread",
+        "@code"
+      ],
+      "objects": {
+        "thread": {
+          "size": "0x4",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            }
+          ]
+        },
+        "code": {
+          "size": "0x4"
+        }
+      }
+    },
+    {
+      "name": "exited 0",
+      "args": [
+        "@thread",
+        "@code"
+      ]
+    },
+    {
+      "name": "exited 5",
+      "args": [
+        "@thread",
+        "@code"
+      ],
+      "callees": {
+        "kernel32.dll!GetExitCodeThread": {
+          "name": "GetExitCodeThread",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ignore"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "05000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "still active",
+      "args": [
+        "@thread",
+        "@code"
+      ],
+      "callees": {
+        "kernel32.dll!GetExitCodeThread": {
+          "name": "GetExitCodeThread",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ignore"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "03010000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "failed",
+      "args": [
+        "@thread",
+        "@code"
+      ],
+      "callees": {
+        "kernel32.dll!GetExitCodeThread": {
+          "name": "GetExitCodeThread",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "03010000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "odd TRUE",
+      "args": [
+        "@thread",
+        "@code"
+      ],
+      "callees": {
+        "kernel32.dll!GetExitCodeThread": {
+          "name": "GetExitCodeThread",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ignore"
+          ],
+          "ret": 7,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

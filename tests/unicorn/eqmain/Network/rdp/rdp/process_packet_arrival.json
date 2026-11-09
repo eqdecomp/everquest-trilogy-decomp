@@ -1,0 +1,482 @@
+{
+  "function": "process_packet_arrival_guess",
+  "original": "0x10028f50",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "rdp", "type": "ptr"},
+    {"name": "conn", "type": "ptr"},
+    {"name": "packet", "type": "ptr"},
+    {"name": "len", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": {"size": "0x200", "fill": "random"},
+    "conn": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@state"},
+        {"offset": "0x28", "u32": 0},
+        {"offset": "0x2c", "u32": 0},
+        {"offset": "0x4c", "u32": 0},
+        {"offset": "0x6d4", "u32": 1},
+        {"offset": "0x6e0", "u32": 0}
+      ]
+    },
+    "state": {"size": "0x100", "fill": "random"},
+    "stats": {"size": "0x400", "fill": "random"},
+    "packet": {"size": "0x100", "fill": "random"},
+    "node": {"size": "0x40", "fill": "random"},
+    "msg": {"size": "0x80", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x100498b4", "u32": "@stats"}
+  ],
+  "callees": {
+    "0x1002d3c0": {
+      "name": "connection_parse_and_validate_arrival_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int", "ignore"],
+      "ret": 0,
+      "writes": [
+        {"arg": 3, "offset": 0, "hex": "0000"},
+        {"arg": 3, "offset": 18, "hex": "0000"},
+        {"arg": 3, "offset": 20, "hex": "0000"}
+      ]
+    },
+    "0x1002f9f0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 0},
+    "0x1002d660": {
+      "name": "NetworkConnection_process_network_packet_data_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore", "mem:4"]
+    },
+    "0x100288b0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["int"], "ret": "@node"},
+    "0x1002de10": {"name": "FUN_1002de10", "conv": "cdecl", "args": ["ptr", "ptr"], "passthrough": true},
+    "0x10028a90": {"name": "FUN_10028a90", "conv": "cdecl", "args": ["ptr"]},
+    "kernel32.dll!EnterCriticalSection": {"name": "EnterCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "kernel32.dll!LeaveCriticalSection": {"name": "LeaveCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x1002df20": {"name": "FUN_1002df20", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x1002e910": {"name": "signalMessageProcessing_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x1002d230": {
+      "name": "NetworkConnection_getConnectionStatus_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore"],
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "00000000"},
+        {"arg": 1, "offset": 4, "hex": "00000000"}
+      ]
+    },
+    "0x1002e480": {"name": "updateHeapElement_guess", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x1002e530": {"name": "Heap_getTopHeapElement_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": 0},
+    "0x10028cd0": {"name": "process_network_message_guess", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"]}
+  },
+  "cases": [
+    {
+      "name": "connected, accepted",
+      "args": ["@rdp", "@conn", "@packet", 16]
+    },
+    {
+      "name": "connected, rejected, no data",
+      "args": ["@rdp", "@conn", "@packet", 32],
+      "callees": {
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "rejected, fin, no message",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0040"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "rejected, fin, message",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0040"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "rejected, data at packet+16, message",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0000"},
+            {"arg": 3, "offset": 18, "hex": "1000"},
+            {"arg": 3, "offset": 20, "hex": "0002"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "accepted, data, no dispatch",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0000"},
+            {"arg": 3, "offset": 18, "hex": "1000"},
+            {"arg": 3, "offset": 20, "hex": "0002"}
+          ]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "flag bit 0 blocks dispatch",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0140"},
+            {"arg": 3, "offset": 18, "hex": "1000"},
+            {"arg": 3, "offset": 20, "hex": "0002"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "bad header, 0x2000 counted",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 2,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0020"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "bad header, no flag",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 2,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0000"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "bad header, carry on 0x168",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@stats", "offset": "0x168", "u32": "0xffffffff"}
+      ],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 2,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0020"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "not connected, pending",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 1}
+      ]
+    },
+    {
+      "name": "not connected, pending, carry on 0xd0",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 1},
+        {"addr": "@stats", "offset": "0xd0", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "not connected, pending, rejected fin, message",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 1}
+      ],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0040"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "not connected, pending, status differs",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 1}
+      ],
+      "callees": {
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "01000000"},
+            {"arg": 1, "offset": 4, "hex": "00000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "not connected, new node, enqueued and signalled",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 0}
+      ]
+    },
+    {
+      "name": "not connected, new node, queue busy",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 0}
+      ],
+      "callees": {
+        "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "not connected, new node, timeout armed, freed",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 0},
+        {"addr": "@conn", "offset": "0x4c", "u32": 1}
+      ]
+    },
+    {
+      "name": "not connected, node without connection",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6e0", "u32": 0}
+      ],
+      "callees": {
+        "0x1002de10": {
+          "name": "FUN_1002de10",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "writes": [{"arg": 0, "offset": 8, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "timeout armed, connected",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x4c", "u32": 1}
+      ]
+    },
+    {
+      "name": "timeout armed, rejected fin, no dispatch",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x4c", "u32": 1}
+      ],
+      "callees": {
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0040"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "timeout armed, carry on 0xc8",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "memory": [
+        {"addr": "@conn", "offset": "0x4c", "u32": 1},
+        {"addr": "@stats", "offset": "0xc8", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "status differs in first dword",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "01000000"},
+            {"arg": 1, "offset": 4, "hex": "00000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "status differs in second dword, fin, message",
+      "args": ["@rdp", "@conn", "@packet", 16],
+      "callees": {
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore"],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "00000000"},
+            {"arg": 1, "offset": 4, "hex": "01000000"}
+          ]
+        },
+        "0x1002d3c0": {
+          "name": "connection_parse_and_validate_arrival_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int", "ignore"],
+          "ret": 0,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "0040"},
+            {"arg": 3, "offset": 18, "hex": "0000"},
+            {"arg": 3, "offset": 20, "hex": "0000"}
+          ]
+        },
+        "0x1002d660": {
+          "name": "NetworkConnection_process_network_packet_data_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "mem:4"],
+          "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]
+        },
+        "0x1002f470": {"name": "FUN_1002f470", "conv": "cdecl", "args": ["ptr", "ignore", "ptr"], "ret": "@msg"}
+      }
+    },
+    {
+      "name": "len wraps",
+      "args": ["@rdp", "@conn", "@packet", -1]
+    }
+  ],
+  "fuzz": {
+    "seed": 167760,
+    "count": 40,
+    "args": [
+      {"choices": ["@rdp"]},
+      {"choices": ["@conn"]},
+      {"choices": ["@packet"]},
+      {"range": [-4, 1024]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x6d4", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6e0", "type": "int", "choices": [0, 0, 1]},
+      {"addr": "@conn", "offset": "0x4c", "type": "int", "choices": [0, 0, 1]},
+      {"addr": "@conn", "offset": "0x28", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x2c", "type": "int", "choices": [0, 1]}
+    ]
+  }
+}

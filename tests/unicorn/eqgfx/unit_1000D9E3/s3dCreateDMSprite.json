@@ -1,0 +1,414 @@
+{
+  "function": "s3dCreateDMSprite",
+  "original": "0x1001034c",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceVolume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "definition": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@vertexset"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@frameset"
+        }
+      ]
+    },
+    "vertexset": {
+      "size": "0xa0",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x34",
+          "u32": "@resource"
+        },
+        {
+          "offset": "0x74",
+          "u32": "@resource"
+        },
+        {
+          "offset": "0x78",
+          "u32": "@resource"
+        },
+        {
+          "offset": "0x7c",
+          "u32": "@resource"
+        }
+      ]
+    },
+    "frameset": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x48",
+          "u32": "@resource"
+        },
+        {
+          "offset": "0x4c",
+          "u32": "@resource"
+        },
+        {
+          "offset": "0x50",
+          "u32": "@resource"
+        },
+        {
+          "offset": "0x54",
+          "u32": "@resource"
+        }
+      ]
+    },
+    "sourcevolume": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x38",
+      "fill": "random"
+    },
+    "volumecopy": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "resource": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@sprite"
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@volumecopy"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure returns null",
+      "args": [
+        "@context",
+        "@definition",
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "vertex set copies center, shares all three objects and duplicates supplied volume",
+      "args": [
+        "@context",
+        "@definition",
+        "@sourcevolume"
+      ]
+    },
+    {
+      "name": "vertex set uses its fallback volume",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ]
+    },
+    {
+      "name": "frame set copies center when vertex set is null",
+      "args": [
+        "@context",
+        "@definition",
+        "@sourcevolume"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "frame set uses fallback volume and skips null shared objects",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@frameset",
+          "offset": "0x48",
+          "u32": 0
+        },
+        {
+          "addr": "@frameset",
+          "offset": "0x4c",
+          "u32": 0
+        },
+        {
+          "addr": "@frameset",
+          "offset": "0x50",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "duplicate failure unshares all acquired objects and frees sprite",
+      "args": [
+        "@context",
+        "@definition",
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "dictionary setup failure unshares objects after nonnull duplicated volume",
+      "args": [
+        "@context",
+        "@definition",
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "frame setup failure cleans two shared objects and skips the null third",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@frameset",
+          "offset": "0x50",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1001564b": {
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "vertex set with sparse shared objects succeeds",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@vertexset",
+          "offset": "0x74",
+          "u32": 0
+        },
+        {
+          "addr": "@vertexset",
+          "offset": "0x78",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 66380,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "@sourcevolume"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [
+          0,
+          "@vertexset"
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x18",
+        "type": "u32",
+        "choices": [
+          "@frameset"
+        ]
+      },
+      {
+        "addr": "@vertexset",
+        "offset": "0x34",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@vertexset",
+        "offset": "0x74",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@vertexset",
+        "offset": "0x78",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@vertexset",
+        "offset": "0x7c",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@frameset",
+        "offset": "0x48",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@frameset",
+        "offset": "0x4c",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@frameset",
+        "offset": "0x50",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      },
+      {
+        "addr": "@frameset",
+        "offset": "0x54",
+        "type": "u32",
+        "choices": [
+          0,
+          "@resource"
+        ]
+      }
+    ]
+  }
+}

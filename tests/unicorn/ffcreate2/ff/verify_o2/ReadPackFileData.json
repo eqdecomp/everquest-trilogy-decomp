@@ -1,0 +1,496 @@
+{
+  "function": "PackFileSystem_guess::ReadPackFileData_guess",
+  "original": "0x004f9730",
+  "sources": [
+    "src/ffcreate2/ff/verify_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfilesystem",
+  "args": [
+    {
+      "name": "dest",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "packfilesystem": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@buffer"
+        }
+      ]
+    },
+    "buffer": {
+      "size": "0x2020",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        },
+        {
+          "offset": "0x2008",
+          "u32": 256
+        },
+        {
+          "offset": "0x200c",
+          "u32": 0
+        },
+        {
+          "offset": "0x2010",
+          "u32": 0
+        },
+        {
+          "offset": "0x2018",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@refill"
+        }
+      ]
+    },
+    "owner": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@name"
+        },
+        {
+          "offset": "0xc",
+          "u32": 1
+        }
+      ]
+    },
+    "name": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "refill": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "dest": {
+      "size": "0x4000",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@name",
+      "cstr": "packfile"
+    },
+    {
+      "addr": "0x006f035c",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x004f8310": {
+      "name": "_verify",
+      "conv": "cdecl",
+      "args": [
+        "bool",
+        "cstr",
+        "int"
+      ]
+    },
+    "@refill": {
+      "name": "refill",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 2048
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@dest",
+        16
+      ]
+    },
+    {
+      "name": "one byte, tail only",
+      "args": [
+        "@dest",
+        1
+      ]
+    },
+    {
+      "name": "three bytes, no dword",
+      "args": [
+        "@dest",
+        3
+      ]
+    },
+    {
+      "name": "seven bytes, dword and tail",
+      "args": [
+        "@dest",
+        7
+      ]
+    },
+    {
+      "name": "unaligned destination",
+      "args": [
+        "@dest+0x1",
+        7
+      ]
+    },
+    {
+      "name": "zero count",
+      "args": [
+        "@dest",
+        0
+      ]
+    },
+    {
+      "name": "end equals pos: nothing left",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2008",
+          "u32": 64
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x200c",
+          "u32": 64
+        }
+      ]
+    },
+    {
+      "name": "end below pos: unsigned compare, nothing left",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2008",
+          "u32": 16
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x200c",
+          "u32": 32
+        }
+      ]
+    },
+    {
+      "name": "count clamped to what is left",
+      "args": [
+        "@dest",
+        256
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2008",
+          "u32": 32
+        }
+      ]
+    },
+    {
+      "name": "copy ends exactly at the buffer end: no refill",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8176
+        }
+      ]
+    },
+    {
+      "name": "buffer offset at the end: refill then copy",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        }
+      ]
+    },
+    {
+      "name": "refill returns 0x2000: verify condition true",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        }
+      ],
+      "callees": {
+        "@refill": {
+          "name": "refill",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 8192
+        }
+      }
+    },
+    {
+      "name": "refill returns 0x2001: verify condition false",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        }
+      ],
+      "callees": {
+        "@refill": {
+          "name": "refill",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 8193
+        }
+      }
+    },
+    {
+      "name": "copy spans the buffer end, then refills",
+      "args": [
+        "@dest",
+        64
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8176
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x2008",
+          "u32": 256
+        }
+      ]
+    },
+    {
+      "name": "two refills in one call",
+      "args": [
+        "@dest",
+        12288
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x2008",
+          "u32": 16384
+        }
+      ]
+    },
+    {
+      "name": "owner null: refill verify gets a null name",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x2018",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "owner flag zero: name not used",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        },
+        {
+          "addr": "@owner",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "trace counter 0x3f: entry recorded, counter to 0x40",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        },
+        {
+          "addr": "0x006f035c",
+          "u32": 63
+        }
+      ]
+    },
+    {
+      "name": "trace table full (0x40): nothing recorded",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        },
+        {
+          "addr": "0x006f035c",
+          "u32": 64
+        }
+      ]
+    },
+    {
+      "name": "trace counter with top bit set: unsigned, nothing recorded",
+      "args": [
+        "@dest",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@buffer",
+          "offset": "0x2010",
+          "u32": 8192
+        },
+        {
+          "addr": "0x006f035c",
+          "u32": 2147483648
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5216048,
+    "count": 60,
+    "args": [
+      {
+        "choices": [
+          "@dest"
+        ]
+      },
+      {
+        "range": [
+          0,
+          12288
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@buffer",
+        "offset": "0x2008",
+        "type": "u32",
+        "range": [
+          0,
+          12288
+        ]
+      },
+      {
+        "addr": "@buffer",
+        "offset": "0x200c",
+        "type": "u32",
+        "range": [
+          0,
+          12288
+        ]
+      },
+      {
+        "addr": "@buffer",
+        "offset": "0x2010",
+        "type": "int",
+        "range": [
+          0,
+          8192
+        ]
+      },
+      {
+        "addr": "@buffer",
+        "offset": "0x2018",
+        "type": "ptr",
+        "choices": [
+          "@owner",
+          0
+        ]
+      },
+      {
+        "addr": "@owner",
+        "offset": "0xc",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "0x006f035c",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          63,
+          64,
+          65,
+          2147483648,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

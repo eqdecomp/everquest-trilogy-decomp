@@ -1,0 +1,145 @@
+{
+  "function": "EQ_TextIO_AddTextToChatBuffer_owner_guess::AddTextToChatBuffer_guess",
+  "original": "0x0048ce57",
+  "sources": [
+    "src/EverQuest/EQ_TextIO.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_textio_addtexttochatbuffer_owner",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    },
+    {
+      "name": "textLength",
+      "type": "u32"
+    },
+    {
+      "name": "continuation",
+      "type": "int"
+    },
+    {
+      "name": "displayOffset",
+      "type": "u16"
+    },
+    {
+      "name": "redraw",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq_textio_addtexttochatbuffer_owner": {
+      "size": "0x1f0",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006b772b", "size": "0x1f900", "fill": "zero"},
+    {"addr": "0x006b772b", "cstr": "slot0"},
+    {"addr": "0x006b782b", "cstr": "slot1"},
+    {"addr": "0x006b792b", "cstr": "slot2"},
+    {"addr": "0x006d692b", "cstr": "slot498"},
+    {"addr": "0x006d6bf4", "u16": 17},
+    {"addr": "0x006d6bf6", "u16": 34},
+    {"addr": "0x006d6fd8", "u16": 13107},
+    {"addr": "0x006e0fea", "u16": 0}
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "passthrough": true
+    },
+    "0x005231d0": {
+      "name": "_strncpy",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr", "u32"],
+      "passthrough": true
+    },
+    "0x0048b9ac": {
+      "name": "EQ_TextIO::draw_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "normal-buffer-order-and-no-draw",
+      "args": ["chat", 4, 0, 13398, 0]
+    },
+    {
+      "name": "prefixed-buffer-and-draw",
+      "args": ["reply", 5, 1, 65535, 1],
+      "memory": [{"addr": "0x006e0fea", "u16": 495}]
+    },
+    {
+      "name": "zero-length-normal",
+      "args": ["", 0, 0, 0, 0]
+    },
+    {
+      "name": "zero-length-prefixed-and-draw",
+      "args": ["x", 0, -1, 48879, -1]
+    },
+    {
+      "name": "one-byte-copy",
+      "args": ["hello", 1, 0, 1, 0]
+    },
+    {
+      "name": "255-byte-padding",
+      "args": ["z", 255, 1, 255, 0]
+    },
+    {
+      "name": "256-byte-padding",
+      "args": ["z", 256, 0, 256, 1]
+    },
+    {
+      "name": "counter-below-limit",
+      "args": ["a", 1, 0, 7, 0],
+      "memory": [{"addr": "0x006e0fea", "u16": 496}]
+    },
+    {
+      "name": "counter-at-limit-after-increment",
+      "args": ["b", 1, 1, 8, 0],
+      "memory": [{"addr": "0x006e0fea", "u16": 497}]
+    },
+    {
+      "name": "counter-clamp",
+      "args": ["c", 1, 0, 9, 0],
+      "memory": [{"addr": "0x006e0fea", "u16": 498}]
+    },
+    {
+      "name": "counter-signed-wrap",
+      "args": ["d", 1, 0, 10, 0],
+      "memory": [{"addr": "0x006e0fea", "u16": 65535}]
+    },
+    {
+      "name": "counter-signed-overflow",
+      "args": ["e", 1, 0, 11, 0],
+      "memory": [{"addr": "0x006e0fea", "u16": 32767}]
+    },
+    {
+      "name": "nonzero-continuation-value",
+      "args": ["xyz", 3, 2, 12, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 4771415,
+    "count": 32,
+    "args": [
+      {},
+      {"range": [0, 40]},
+      {"choices": [-1, 0, 1, 2]},
+      {"range": [0, 65535]},
+      {"choices": [0, 1, -1]}
+    ],
+    "memory": [
+      {"addr": "0x006e0fea", "type": "u16", "range": [0, 510]},
+      {"addr": "0x006d6bf4", "type": "u16", "range": [0, 65535]}
+    ]
+  }
+}

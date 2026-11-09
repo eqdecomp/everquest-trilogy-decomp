@@ -1,0 +1,729 @@
+{
+  "function": "SaveGuildListFile_guess",
+  "original": "0x004DFEC4",
+  "sources": [
+    "src/EverQuest/guilds.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "scratch": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00575FA8",
+      "u32": 1
+    }
+  ],
+  "callees": {
+    "0x005224FB": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005223BC": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": 572662306
+    },
+    "0x005229E8": {
+      "name": "printf",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "0x0052359E": {
+      "name": "fwrite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x00521FBB": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_sprintf": "0x005224FB",
+    "_fopen": "0x005223BC",
+    "_fwrite": "0x0052359E",
+    "_fclose": "0x00521FBB"
+  },
+  "cases": [
+    {
+      "name": "open fail",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first fwrite fail",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 286331153
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first fwrite fail with nonzero fclose",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 286331153
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        },
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count-1 skip",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 4294967295
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count0 skip",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count1 ok",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count1 mismatch",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count511 ok",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 511
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            511
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count512 ok",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "from_image": "0x00575FA8",
+          "image_size": 4
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            512
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count513 clamp",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 513
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            512
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "count INT_MAX clamp",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 2147483647
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            512
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "distinct handle",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 858993459
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "helper writes count before clamp",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 10
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            512
+          ],
+          "writes": [
+            {
+              "addr": "0x00575FA8",
+              "hex": "58020000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "helper writes before final compare",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 572662306
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            1
+          ],
+          "writes": [
+            {
+              "addr": "0x00575FA8",
+              "hex": "63000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count513 header mem4 pre-clamp proof",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 513
+        },
+        {
+          "addr": "0x006E5490",
+          "u32": 2863311530
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 1145324612
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "mem:4",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            512
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "filename format alternate",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 1
+        },
+        {
+          "addr": "0x00575FF8",
+          "cstr": "alt.dat"
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 1145324612
+        },
+        "0x0052359E": {
+          "name": "fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "open-fail format alternate",
+      "memory": [
+        {
+          "addr": "0x00575FA8",
+          "u32": 1
+        },
+        {
+          "addr": "0x00575FE0",
+          "cstr": "Alt open fail : %s"
+        }
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4144602,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x00575FA8",
+        "type": "int",
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          511,
+          512,
+          513
+        ]
+      },
+      {
+        "addr": "0x005588DC",
+        "size": 3
+      }
+    ]
+  }
+}

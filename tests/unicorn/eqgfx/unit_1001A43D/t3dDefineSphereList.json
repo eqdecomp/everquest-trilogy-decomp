@@ -1,0 +1,116 @@
+{
+  "function": "t3dDefineSphereList",
+  "original": "0x1001ad5c",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "dictionary", "type": "ptr"},
+    {"name": "key", "type": "cstr"},
+    {"name": "definitionValue", "type": "int"},
+    {"name": "count", "type": "int"},
+    {"name": "centerData", "type": "ptr"},
+    {"name": "radiusData", "type": "ptr"},
+    {"name": "entryValue", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {"size": "0x100", "fill": "random"},
+    "centerdata": {"size": "0x100", "fill": "random"},
+    "radiusdata": {"size": "0x100", "fill": "random"},
+    "definition": {"size": "0x28", "fill": "zero"},
+    "keycopy": {"size": "0x80", "fill": "zero"},
+    "centerlist": {"size": "0x100", "fill": "zero"},
+    "radiuslist": {"size": "0x100", "fill": "zero"},
+    "childentry": {"size": "0x20", "fill": "zero"},
+    "existing": {"size": "0x28", "fill": "zero", "init": [{"offset": "0", "u32": 3}]},
+    "existingother": {"size": "0x28", "fill": "zero", "init": [{"offset": "0", "u32": 4}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", "@keycopy", "@centerlist", "@radiuslist", "@childentry"]},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 0]},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1000e334": {"name": "t3dRemoveEntryFromDictionary", "conv": "cdecl", "args": ["ptr", "ptr"]}
+  },
+  "cases": [
+    {
+      "name": "existing definition of type 3 is returned unchanged",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": "@existing"}}
+    },
+    {
+      "name": "existing definition with a different type returns null",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": "@existingother"}}
+    },
+    {
+      "name": "definition allocation failure",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": [0]}}
+    },
+    {
+      "name": "key allocation failure frees the definition",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", 0]}}
+    },
+    {
+      "name": "definition registration check rejects the new definition",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [1]}
+      }
+    },
+    {
+      "name": "dictionary insertion failure frees the registered definition",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}}
+    },
+    {
+      "name": "center list allocation failure removes the dictionary entry",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", "@keycopy", 0]}}
+    },
+    {
+      "name": "radius list allocation failure frees the center list",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", "@keycopy", "@centerlist", 0]}}
+    },
+    {
+      "name": "child entry allocation failure frees both lists",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", "@keycopy", "@centerlist", "@radiuslist", 0]}}
+    },
+    {
+      "name": "child entry registration failure frees child and all definition buffers",
+      "args": ["@dictionary", "sphere", 2, 3, "@centerdata", "@radiusdata", 7],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, -1]}}
+    },
+    {
+      "name": "zero count and empty key still define a sphere list",
+      "args": ["@dictionary", "", 0, 0, "@centerdata", "@radiusdata", 0]
+    },
+    {
+      "name": "successful definition copies both arrays and returns definition",
+      "args": ["@dictionary", "sphere", -2, 4, "@centerdata", "@radiusdata", 9]
+    }
+  ],
+  "fuzz": {
+    "seed": 109916,
+    "count": 32,
+    "args": [
+      {"choices": ["@dictionary"]},
+      {},
+      {"range": [-4, 8]},
+      {"range": [0, 12]},
+      {"choices": ["@centerdata"]},
+      {"choices": ["@radiusdata"]},
+      {"range": [-4, 8]}
+    ],
+    "memory": []
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "function": "SetApprovalMode_guess",
+  "original": "0x004a8b39",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "pc": {
+      "size": "0x1fa4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0055b250",
+      "from_image": "0x0055B250",
+      "image_size": 3
+    },
+    {
+      "addr": "0x0055b254",
+      "from_image": "0x0055B254",
+      "image_size": 4
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006e2068",
+      "u32": 0
+    },
+    {
+      "addr": "0x006e4da8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "@pc",
+      "cstr": "Ranger"
+    }
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:36",
+        "u32",
+        "int"
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x00524240": {
+      "name": "strcmpi",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "on enabled state differs sends after chat",
+      "args": [
+        1,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2068",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "on same state only reports",
+      "args": [
+        1,
+        "ON"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2068",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "off disabled state differs sends after chat",
+      "args": [
+        1,
+        "off"
+      ]
+    },
+    {
+      "name": "off with zero parameter skips chat and sends",
+      "args": [
+        0,
+        "OFF"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2068",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "on zero parameter with equal state still sends",
+      "args": [
+        0,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2068",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "unknown reports usage when enabled",
+      "args": [
+        1,
+        "approval"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2068",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "unknown zero parameter returns silently",
+      "args": [
+        0,
+        "approval"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2068",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "recognized with null profile only reports",
+      "args": [
+        1,
+        "off"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4da8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "zero parameter with null profile does not send",
+      "args": [
+        0,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4da8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "case insensitive off boundary suffix is invalid",
+      "args": [
+        1,
+        "offx"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4885305,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -1,
+          1
+        ]
+      },
+      {
+        "choices": [
+          "on",
+          "off",
+          "ON",
+          "Off",
+          "onx",
+          "",
+          "bad",
+          "OFF"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e2068",
+        "type": "int",
+        "range": [
+          -2,
+          2
+        ]
+      },
+      {
+        "addr": "0x006e4da8",
+        "type": "ptr",
+        "choices": [
+          "@pc",
+          "0x0"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "function": "t3dGet3DSpriteDefinitionVertexList",
+  "original": "0x100083c3",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "vertices",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": 3},
+        {"offset": "0x18", "u32": "@sourceA"}
+      ]
+    },
+    "vertices": {
+      "size": "0x400",
+      "fill": "zero"
+    },
+    "sourceA": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "sourceB": {
+      "size": "0x400",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: three 12-byte vertices are copied from the list at +0x18",
+      "args": ["@definition", "@vertices"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero entries: nothing is copied, the destination stays zero",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry: exactly 12 bytes",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two entries: 24 bytes",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "forty entries: 480 bytes fill the destination up to 0x1e0",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 40}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "eighty entries: 960 bytes, the largest count the objects hold",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 80}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "source pointer is the one at +0x18: sourceB is copied, not the +0x1c sourceA",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 3},
+        {"addr": "@definition", "offset": "0x18", "u32": "@sourceB"},
+        {"addr": "@definition", "offset": "0x1c", "u32": "@sourceA"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count is read from +0x14, not the +0x10 slot",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 9},
+        {"addr": "@definition", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count is read from +0x14, not the pointer word at +0x18",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x18", "u32": "@sourceA"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "five entries: the destination is the second argument, the definition is not written",
+      "args": ["@definition", "@vertices"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "alias: the destination is the vertex list itself",
+      "args": ["@definition", "@sourceA"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null destination with count zero: nothing to copy",
+      "args": ["@definition", 0],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 33731,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@definition"]
+      },
+      {
+        "choices": ["@vertices"]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "u32", "range": [0, 80]},
+      {"addr": "@definition", "offset": "0x18", "type": "u32", "choices": ["@sourceA", "@sourceB"]}
+    ]
+  }
+}

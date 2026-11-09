@@ -1,0 +1,278 @@
+{
+  "function": "FindRecordIndexByName_guess",
+  "original": "0x10026040",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "table": {
+      "size": "0x2400",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Alpha"
+        },
+        {
+          "offset": "0x40",
+          "cstr": "Bravo"
+        },
+        {
+          "offset": "0x80",
+          "cstr": "Charlie"
+        },
+        {
+          "offset": "0x100",
+          "cstr": "Delta"
+        },
+        {
+          "offset": "0x940",
+          "cstr": "Mike"
+        },
+        {
+          "offset": "0x18c0",
+          "cstr": "Zulu"
+        },
+        {
+          "offset": "0x1900",
+          "cstr": "Omega"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033730": {
+      "name": "__strcmpi",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "first_record_match",
+      "args": [
+        "@table",
+        0,
+        "alpha"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "second_record_case_insensitive",
+      "args": [
+        "@table",
+        0,
+        "BRAVO"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "empty_name_matches_first_empty_record",
+      "args": [
+        "@table",
+        0,
+        ""
+      ],
+      "expect": {
+        "ret": 3
+      }
+    },
+    {
+      "name": "middle_record_match",
+      "args": [
+        "@table",
+        0,
+        "mike"
+      ],
+      "expect": {
+        "ret": 37
+      }
+    },
+    {
+      "name": "last_scanned_record_match_index_99",
+      "args": [
+        "@table",
+        0,
+        "zulu"
+      ],
+      "expect": {
+        "ret": 99
+      }
+    },
+    {
+      "name": "marker_past_window_not_found_positive_last_compare",
+      "args": [
+        "@table",
+        0,
+        "omega"
+      ],
+      "expect": {
+        "ret": 65535
+      }
+    },
+    {
+      "name": "not_found_negative_last_compare",
+      "args": [
+        "@table",
+        0,
+        "zv"
+      ],
+      "expect": {
+        "ret": 4294967295
+      }
+    },
+    {
+      "name": "not_found_even_last_compare",
+      "args": [
+        "@table",
+        0,
+        "zw"
+      ],
+      "expect": {
+        "ret": 4294967295
+      }
+    },
+    {
+      "name": "not_found_positive_even_last_compare",
+      "args": [
+        "@table",
+        0,
+        "za"
+      ],
+      "expect": {
+        "ret": 65535
+      }
+    },
+    {
+      "name": "window_starts_at_given_record",
+      "args": [
+        "@table+0x40",
+        0,
+        "bravo"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "window_excludes_record_before_start",
+      "args": [
+        "@table+0x40",
+        0,
+        "alpha"
+      ],
+      "expect": {
+        "ret": 65535
+      }
+    },
+    {
+      "name": "window_last_index_99_from_offset",
+      "args": [
+        "@table+0x40",
+        0,
+        "omega"
+      ],
+      "expect": {
+        "ret": 99
+      }
+    },
+    {
+      "name": "window_match_index_98_from_offset",
+      "args": [
+        "@table+0x40",
+        0,
+        "zulu"
+      ],
+      "expect": {
+        "ret": 98
+      }
+    },
+    {
+      "name": "edx_is_ignored",
+      "args": [
+        "@table",
+        12345,
+        "alpha"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 155712,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@table",
+          "@table+0x40",
+          "@table+0x940"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "alpha",
+          "A",
+          "a",
+          "BRAVO",
+          "B",
+          "Z",
+          "zv",
+          "",
+          "zz",
+          "omega",
+          "Mike",
+          "zulu",
+          "ZULU",
+          "nobody",
+          "Delta"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@table",
+        "type": "u8",
+        "count": 144,
+        "stride": 64,
+        "choices": [
+          0,
+          0,
+          65,
+          97,
+          66,
+          98,
+          90,
+          122
+        ],
+        "p": 0.5
+      }
+    ]
+  }
+}

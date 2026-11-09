@@ -1,0 +1,188 @@
+{
+  "function": "t3dGetDirectionalLightCurrentIntensity",
+  "original": "0x10014c85",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "light": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "owner": {
+      "size": "0x28",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 1
+        },
+        {
+          "offset": "0x24",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 4
+        },
+        {
+          "offset": "0x18",
+          "u32": "@values"
+        }
+      ]
+    },
+    "values": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "singleDefinition": {
+      "size": "0x1c",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "@singleDefinition", "offset": "0x14", "u32": 1 },
+    { "addr": "@singleDefinition", "offset": "0x18", "f32": 0.75 },
+    { "addr": "@values", "offset": "0x00", "f32": 1.25 },
+    { "addr": "@values", "offset": "0x04", "f32": -2.5 },
+    { "addr": "@values", "offset": "0x08", "f32": 3.75 },
+    { "addr": "@values", "offset": "0x0c", "f32": -4.125 },
+    { "addr": "@values", "offset": "0x10", "f32": 5.5 },
+    { "addr": "@values", "offset": "0x14", "f32": -6.25 },
+    { "addr": "@values", "offset": "0x18", "f32": 7.875 },
+    { "addr": "@values", "offset": "0x1c", "f32": -8.5 },
+    { "addr": "@values", "offset": "0x20", "f32": 9.125 },
+    { "addr": "@values", "offset": "0x24", "f32": -10.75 },
+    { "addr": "@values", "offset": "0x28", "f32": 11.5 },
+    { "addr": "@values", "offset": "0x2c", "f32": -12.875 },
+    { "addr": "@values", "offset": "0x30", "f32": 13.25 },
+    { "addr": "@values", "offset": "0x34", "f32": -14.5 },
+    { "addr": "@values", "offset": "0x38", "f32": 15.75 },
+    { "addr": "@values", "offset": "0x3c", "f32": -16.125 }
+  ],
+  "callees": {
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "single frame ignores current frame",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": "@singleDefinition" },
+        { "addr": "@owner", "offset": "0x14", "u32": 9 }
+      ]
+    },
+    {
+      "name": "single frame at maximum index",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": "@singleDefinition" },
+        { "addr": "@owner", "offset": "0x14", "u32": 15 }
+      ]
+    },
+    {
+      "name": "multiple frames first entry",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x14", "u32": 0 }
+      ]
+    },
+    {
+      "name": "multiple frames middle entry",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x14", "u32": 2 }
+      ]
+    },
+    {
+      "name": "multiple frames last entry",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 16 },
+        { "addr": "@owner", "offset": "0x14", "u32": 15 }
+      ]
+    },
+    {
+      "name": "two frames is not the single-frame branch",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 2 },
+        { "addr": "@owner", "offset": "0x14", "u32": 1 }
+      ]
+    },
+    {
+      "name": "zero frame count still indexes",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 0 },
+        { "addr": "@owner", "offset": "0x14", "u32": 3 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 85125,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@light"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x24",
+        "type": "u32",
+        "choices": ["@definition", "@singleDefinition"]
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 16]
+      },
+      {
+        "addr": "@values",
+        "type": "float",
+        "count": 16,
+        "range": [-100, 100]
+      },
+      {
+        "addr": "@singleDefinition",
+        "offset": "0x18",
+        "type": "float",
+        "range": [-100, 100]
+      }
+    ]
+  }
+}

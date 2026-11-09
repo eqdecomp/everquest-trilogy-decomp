@@ -1,0 +1,83 @@
+{
+  "function": "t3dFreeReferenceList",
+  "original": "0x100191bd",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "list",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "0x11223344"},
+        {"offset": "0x8", "u32": "0x55667788"},
+        {"offset": "0xc", "u32": "@array"}
+      ]
+    },
+    "array": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: frees the +0xc array, zeroes +4/+8/+0xc",
+      "args": ["@list"]
+    },
+    {
+      "name": "null target: free(0) still called, then zeroes",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "self target: the list itself is handed to free",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "offset": "0xc", "u32": "@list"}
+      ]
+    },
+    {
+      "name": "all fields 0xffffffff, free arg is a raw value",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@list", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "@list", "offset": "0xc", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "null list: both sides fault on the +0xc read",
+      "args": [0]
+    }
+  ],
+  "fuzz": {
+    "seed": 102845,
+    "count": 40,
+    "args": [
+      {"choices": ["@list"]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x4", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@list", "offset": "0x8", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@list", "offset": "0xc", "type": "ptr", "choices": ["@array", 0]}
+    ]
+  }
+}

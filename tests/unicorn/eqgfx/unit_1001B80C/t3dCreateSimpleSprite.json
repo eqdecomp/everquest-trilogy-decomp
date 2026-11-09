@@ -1,0 +1,501 @@
+{
+  "function": "t3dCreateSimpleSprite",
+  "original": "0x1001b824",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "preallocated",
+      "type": "ptr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 4096
+        }
+      ]
+    },
+    "preallocated": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "definition": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 3
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@template"
+        }
+      ]
+    },
+    "template": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": 256
+        }
+      ]
+    },
+    "block": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001b80c": {
+      "name": "s3dCalcSimpleSpriteAllocSize",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@block"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 4660
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10068160": {
+      "name": "_strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: alloc, name, link and dictionary ok",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ]
+    },
+    {
+      "name": "alloc, no name: no strlen, copy or dictionary call",
+      "args": [
+        "@context",
+        0,
+        0,
+        "@definition"
+      ]
+    },
+    {
+      "name": "alloc fails: NULL, nothing else runs",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "alloc ok, link fails: block freed, NULL",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "alloc ok, no name, link fails",
+      "args": [
+        "@context",
+        0,
+        0,
+        "@definition"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "alloc ok, dictionary returns -1: FUN_10015d81, block freed, NULL",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "0xffffffff"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "alloc ok, dictionary returns 1: still success (>= 0)",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "alloc ok, dictionary returns INT_MIN: fails",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "0x80000000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "preallocated, dictionary returns -1: caller's block kept, NULL",
+      "args": [
+        "@context",
+        "@preallocated",
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "0xffffffff"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "preallocated, no name: KEEP flag, returns preallocated",
+      "args": [
+        "@context",
+        "@preallocated",
+        0,
+        "@definition"
+      ]
+    },
+    {
+      "name": "preallocated, name, dictionary ok",
+      "args": [
+        "@context",
+        "@preallocated",
+        "abc",
+        "@definition"
+      ]
+    },
+    {
+      "name": "preallocated, no name, link fails: block freed anyway, NULL",
+      "args": [
+        "@context",
+        "@preallocated",
+        0,
+        "@definition"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "preallocated, name, link fails: freed, NULL",
+      "args": [
+        "@context",
+        "@preallocated",
+        "abc",
+        "@definition"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty name",
+      "args": [
+        "@context",
+        0,
+        "",
+        "@definition"
+      ]
+    },
+    {
+      "name": "long name (45 chars)",
+      "args": [
+        "@context",
+        0,
+        "a_sprite_name_that_is_rather_long_for_testing",
+        "@definition"
+      ]
+    },
+    {
+      "name": "use_count 0xffffffff wraps to 0",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x10",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "unknown_1c 0xffffffff + base_08 1 wraps anim_flags",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "memory": [
+        {
+          "addr": "@template",
+          "offset": "0x1c",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "template zeroed",
+      "args": [
+        "@context",
+        0,
+        "abc",
+        "@definition"
+      ],
+      "memory": [
+        {
+          "addr": "@template",
+          "size": 44,
+          "fill": "zero"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1001824,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@preallocated",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "abc",
+          "",
+          0,
+          "sprite_2",
+          "a_longer_sprite_name_for_the_copy_path_xyz"
+        ]
+      },
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@context",
+        "offset": "0x8",
+        "type": "u32"
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x10",
+        "type": "u32"
+      },
+      {
+        "addr": "@template",
+        "offset": "0x1c",
+        "type": "u32"
+      }
+    ]
+  }
+}

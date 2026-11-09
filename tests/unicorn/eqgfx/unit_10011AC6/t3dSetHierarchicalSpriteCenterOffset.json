@@ -1,0 +1,123 @@
+{
+  "function": "t3dSetHierarchicalSpriteCenterOffset",
+  "original": "0x100135fe",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "offset",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x60",
+      "fill": "random"
+    },
+    "offset": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: floats 1.0, 3.0, -5.0 copied to sprite+0x28",
+      "args": [
+        "@sprite",
+        "@offset"
+      ],
+      "memory": [
+        {"addr": "@offset", "offset": "0x0", "u32": "0x3f800000"},
+        {"addr": "@offset", "offset": "0x4", "u32": "0x40400000"},
+        {"addr": "@offset", "offset": "0x8", "u32": "0xc0a00000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeros overwrite a nonzero center offset",
+      "args": [
+        "@sprite",
+        "@offset"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x28", "u32": "0xffffffff"},
+        {"addr": "@sprite", "offset": "0x2c", "u32": "0xffffffff"},
+        {"addr": "@sprite", "offset": "0x30", "u32": "0xffffffff"},
+        {"addr": "@offset", "offset": "0x0", "u32": 0},
+        {"addr": "@offset", "offset": "0x4", "u32": 0},
+        {"addr": "@offset", "offset": "0x8", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "neighbours of the center offset are not written",
+      "args": [
+        "@sprite",
+        "@offset"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x24", "u32": "0xa5a5a5a5"},
+        {"addr": "@sprite", "offset": "0x34", "u32": "0x5a5a5a5a"},
+        {"addr": "@offset", "offset": "0x0", "u32": "0xdeadbeef"},
+        {"addr": "@offset", "offset": "0x4", "u32": "0x01234567"},
+        {"addr": "@offset", "offset": "0x8", "u32": "0x89abcdef"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "NaN and denormal bit patterns copied unchanged",
+      "args": [
+        "@sprite",
+        "@offset"
+      ],
+      "memory": [
+        {"addr": "@offset", "offset": "0x0", "u32": "0x7fc00001"},
+        {"addr": "@offset", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@offset", "offset": "0x8", "u32": "0x00000001"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "offset points at the center offset itself",
+      "args": [
+        "@sprite",
+        "@sprite+0x28"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x28", "u32": "0x3f000000"},
+        {"addr": "@sprite", "offset": "0x2c", "u32": "0x3f800000"},
+        {"addr": "@sprite", "offset": "0x30", "u32": "0x40000000"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 79358,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@offset"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@offset", "type": "u32", "count": 3},
+      {"addr": "@sprite", "offset": "0x28", "type": "u32", "count": 3}
+    ]
+  }
+}

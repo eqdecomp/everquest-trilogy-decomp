@@ -1,0 +1,160 @@
+{
+  "function": "t3dReadLengthPrefixedXorBytes_guess",
+  "original": "0x10028c3b",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "parser", "type": "ptr"},
+    {"name": "outBuffer", "type": "ptr"},
+    {"name": "width", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {"size": "0x100", "fill": "random"},
+    "outbuffer": {"size": "0x10", "fill": "random"},
+    "block": {"size": "0x1000", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x100762C0", "hex": "a5c317428b6ef091"}
+  ],
+  "callees": {
+    "0x10028d14": {
+      "name": "readBinaryDataWithErrorHandling_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore", "u32"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "0509"}]
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@block"
+    }
+  },
+  "cases": [
+    {"name": "typical one byte prefix", "args": ["@parser", "@outbuffer", 1], "expect": {"ret": 0}},
+    {"name": "typical two byte prefix", "args": ["@parser", "@outbuffer", 2], "expect": {"ret": 0}},
+    {"name": "width zero", "args": ["@parser", "@outbuffer", 0], "expect": {"ret": 0}},
+    {"name": "width negative", "args": ["@parser", "@outbuffer", -1], "expect": {"ret": 0}},
+    {"name": "null parser", "args": [0, "@outbuffer", 1], "expect": {"ret": 0}},
+    {
+      "name": "first read fails",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "allocation fails",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "second read fails",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": [0, 1], "writes": [{"arg": 1, "offset": 0, "hex": "0509"}]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "zero length one byte prefix",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0000"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero length two byte prefix",
+      "args": ["@parser", "@outbuffer", 2],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0000"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one byte prefix ignores high byte",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0a0b"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seven bytes",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0700"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "eight bytes one exact key group",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0800"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nine bytes key index wraps",
+      "args": ["@parser", "@outbuffer", 1],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0900"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sixteen bytes two byte prefix",
+      "args": ["@parser", "@outbuffer", 2],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0010"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "255 bytes two byte prefix",
+      "args": ["@parser", "@outbuffer", 2],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "00ff"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "256 bytes two byte prefix",
+      "args": ["@parser", "@outbuffer", 2],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0100"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "257 bytes two byte prefix",
+      "args": ["@parser", "@outbuffer", 2],
+      "callees": {
+        "0x10028d14": {"name": "readBinaryDataWithErrorHandling_guess", "conv": "cdecl", "args": ["ptr", "ignore", "u32"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "0101"}]}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 166971,
+    "count": 40,
+    "args": [
+      {"choices": ["@parser"]},
+      {"choices": ["@outbuffer"]},
+      {"range": [-3, 4]}
+    ],
+    "memory": [
+      {"addr": "0x100762C0", "size": 8}
+    ]
+  }
+}

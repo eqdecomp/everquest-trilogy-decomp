@@ -1,0 +1,93 @@
+{
+  "function": "atolLeadingDigits_guess",
+  "original": "0x10020f80",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "long",
+  "objects": {
+    "hi": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u8": 49},
+        {"offset": "0x1", "u8": 195}
+      ]
+    },
+    "hi2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u8": 50},
+        {"offset": "0x1", "u8": 255}
+      ]
+    },
+    "hi3": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u8": 195},
+        {"offset": "0x1", "u8": 49}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033861": {
+      "name": "_isdigit",
+      "conv": "cdecl",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x10034ff3": {
+      "name": "_atol",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {"name": "digits then letters stop the copy", "args": ["42abc"], "expect": {"ret": 42}},
+    {"name": "all digits", "args": ["12345"], "expect": {"ret": 12345}},
+    {"name": "single digit", "args": ["7"], "expect": {"ret": 7}},
+    {"name": "empty string skips the loop", "args": [""], "expect": {"ret": 0}},
+    {"name": "letter first skips the loop", "args": ["abc"], "expect": {"ret": 0}},
+    {"name": "leading space is not a digit", "args": [" 12"], "expect": {"ret": 0}},
+    {"name": "leading minus is not a digit", "args": ["-5"], "expect": {"ret": 0}},
+    {"name": "minus after digits ends the copy", "args": ["12-3"], "expect": {"ret": 12}},
+    {"name": "space after digits ends the copy", "args": ["12 34"], "expect": {"ret": 12}},
+    {"name": "tab after digits ends the copy", "args": ["10\t"], "expect": {"ret": 10}},
+    {"name": "leading zeros", "args": ["0042"], "expect": {"ret": 42}},
+    {"name": "0x2f (below '0') is not a digit", "args": ["/1"], "expect": {"ret": 0}},
+    {"name": "0x3a (above '9') is not a digit", "args": [":1"], "expect": {"ret": 0}},
+    {"name": "last digit followed by 0x3a", "args": ["9:"], "expect": {"ret": 9}},
+    {"name": "15 digits fill the buffer", "args": ["123456789012345"]},
+    {"name": "14 digits", "args": ["99999999999999"]},
+    {"name": "16 digits: the terminator store lands past digits[15]", "args": ["1234567890123456"]},
+    {"name": "high-bit byte after a digit (sign-extended to -61)", "args": ["@hi"], "expect": {"ret": 1}},
+    {"name": "high-bit byte after a digit is -1 (EOF value)", "args": ["@hi2"], "expect": {"ret": 2}},
+    {"name": "high-bit byte first (-61) skips the loop", "args": ["@hi3"], "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 135040,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "", "0", "7", "9", "00", "0042", "12", "12345", "42abc", "12-3", " 12", "\t9", "10\t", "-5",
+          "+7", "/1", ":1", "9:", "a1", "1a", "x", "abc", "123 456", "1234567890", "2147483647",
+          "2147483648", "99999999999999", "123456789012345", "1.5", "3,000", "5\n", "00000000000001",
+          "@hi", "@hi2", "@hi3"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

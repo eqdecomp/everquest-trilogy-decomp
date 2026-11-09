@@ -1,0 +1,66 @@
+{
+  "function": "t3dDeferLine",
+  "original": "0x1002edc5",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "points",
+      "type": "ptr"
+    },
+    {
+      "name": "color",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "points": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100f2494", "u32": 0},
+    {"addr": "0x100f2490", "u32": 0},
+    {"addr": "0x100ea790", "size": 32000, "fill": "random"}
+  ],
+  "callees": {},
+  "cases": [
+    {"name": "typical", "args": ["@points", 1], "expect": {"ret": 0}},
+    {"name": "zeros", "args": ["@points", 0], "expect": {"ret": 0}},
+    {"name": "last line slot", "args": ["@points", 1], "memory": [{"addr": "0x100f2494", "u32": 1999}], "expect": {"ret": 0}},
+    {"name": "line table full", "args": ["@points", 1], "memory": [{"addr": "0x100f2494", "u32": 2000}], "expect": {"ret": -1}},
+    {"name": "full table ignores points", "args": [0, 1], "memory": [{"addr": "0x100f2494", "u32": 2000}], "expect": {"ret": -1}},
+    {"name": "line count past the table", "args": ["@points", 1], "memory": [{"addr": "0x100f2494", "u32": 2001}], "expect": {"ret": -1}},
+    {"name": "line count negative", "args": ["@points", 1], "memory": [{"addr": "0x100f2494", "u32": "0xffffffff"}], "expect": {"ret": 0}},
+    {"name": "line count sign bit", "args": ["@points", 1], "memory": [{"addr": "0x100f2494", "u32": "0x80000000"}], "expect": {"ret": 0}},
+    {"name": "last vertex slot", "args": ["@points", 1], "memory": [{"addr": "0x100f2490", "u32": 7999}], "expect": {"ret": 0}},
+    {"name": "vertex table full", "args": ["@points", 1], "memory": [{"addr": "0x100f2490", "u32": 8000}], "expect": {"ret": 0}},
+    {"name": "two vertex slots below the limit", "args": ["@points", 1], "memory": [{"addr": "0x100f2490", "u32": 7998}], "expect": {"ret": 0}},
+    {"name": "colour bits", "args": ["@points", "0x12345678"], "expect": {"ret": 0}},
+    {"name": "colour high byte only", "args": ["@points", "0xff000000"], "expect": {"ret": 0}},
+    {"name": "colour low 24 bits set", "args": ["@points", "0x00ffffff"], "expect": {"ret": 0}},
+    {"name": "colour bits 16 to 23 only", "args": ["@points", "0x00ff0000"], "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 191941,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@points"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "0x100f2494", "type": "int", "choices": [-2, -1, 0, 1, 1998, 1999, 2000, 2001, 5000]},
+      {"addr": "0x100f2490", "type": "int", "choices": [0, 1, 2, 7997, 7998, 7999, 8000, 8001, 9000]},
+      {"addr": "0x100ea790", "size": 32000},
+      {"addr": "@points", "size": 24}
+    ]
+  }
+}

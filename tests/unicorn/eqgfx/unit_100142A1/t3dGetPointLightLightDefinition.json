@@ -1,0 +1,132 @@
+{
+  "function": "t3dGetPointLightLightDefinition",
+  "original": "0x1001459b",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x10", "u32": "@owner" },
+        { "offset": "0x34", "u32": "@owner_alt" }
+      ]
+    },
+    "owner": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x20", "u32": "@definition_alt" },
+        { "offset": "0x24", "u32": "@definition" },
+        { "offset": "0x28", "u32": "@definition_alt" }
+      ]
+    },
+    "owner_alt": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x20", "u32": "@definition" },
+        { "offset": "0x24", "u32": "@definition_alt" },
+        { "offset": "0x28", "u32": "@definition" }
+      ]
+    },
+    "definition": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "definition_alt": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: light's +0x10 owner, its +0x24 slot (@definition, not the +0x20 or +0x28 neighbours)",
+      "args": ["@light"]
+    },
+    {
+      "name": "second owner: returns that owner's +0x24 definition (@definition_alt)",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@light", "offset": "0x10", "u32": "@owner_alt" }
+      ]
+    },
+    {
+      "name": "light's +0x24 holds the other definition: the first hop is +0x10, not +0x24 (@definition)",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@light", "offset": "0x24", "u32": "@definition_alt" }
+      ]
+    },
+    {
+      "name": "light's +0x34 names the other owner: never read (@definition)",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@light", "offset": "0x34", "u32": "@owner_alt" }
+      ]
+    },
+    {
+      "name": "owner's +0x24 slot holds null: returns null",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "owner's +0x24 slot holds 0xffffffff: passes through, never dereferenced",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 4294967295 }
+      ],
+      "expect": { "ret": "0xffffffff" }
+    },
+    {
+      "name": "owner's +0x24 slot holds a small non-address value: passes through",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 1 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "four-byte load: byte-order witness",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 305419896 }
+      ],
+      "expect": { "ret": "0x12345678" }
+    },
+    {
+      "name": "definition record's first word is ignored: the pointer itself is returned",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x0", "u32": 0 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 83355,
+    "count": 40,
+    "args": [
+      { "choices": ["@light"] }
+    ],
+    "memory": [
+      { "addr": "@light", "offset": "0x10", "type": "u32", "choices": ["@owner", "@owner_alt"] },
+      { "addr": "@light", "offset": "0x34", "type": "u32", "choices": ["@owner", "@owner_alt", 0] },
+      { "addr": "@owner", "offset": "0x24", "type": "u32", "choices": ["@definition", "@definition_alt", 0, 1, 4294967295] },
+      { "addr": "@owner_alt", "offset": "0x24", "type": "u32", "choices": ["@definition", "@definition_alt", 0, 1, 4294967295] }
+    ]
+  }
+}

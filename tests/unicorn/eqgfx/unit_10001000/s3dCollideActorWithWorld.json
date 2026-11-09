@@ -1,0 +1,106 @@
+{
+  "function": "s3dCollideActorWithWorld",
+  "original": "0x1000136e",
+  "sources": ["src/eqgfx/unit_10001000.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "actor", "type": "ptr"},
+    {"name": "world", "type": "ptr"},
+    {"name": "collision_context", "type": "int"},
+    {"name": "requested_position", "type": "ptr"},
+    {"name": "collision_mask", "type": "int"},
+    {"name": "segment_callback", "type": "ptr"},
+    {"name": "callback_context", "type": "ptr"},
+    {"name": "hit_position", "type": "ptr"},
+    {"name": "collision_data", "type": "ptr"},
+    {"name": "collision_id", "type": "ptr"},
+    {"name": "include_actor", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {"size": "0x100", "fill": "zero"},
+    "volume": {"size": "0x14", "fill": "zero"},
+    "world": {"size": "0x20", "fill": "zero"},
+    "requested_position": {"size": "0x0c", "fill": "zero"},
+    "segment_callback": {"size": "0x04", "fill": "zero"},
+    "callback_context": {"size": "0x04", "fill": "zero"},
+    "hit_position": {"size": "0x0c", "fill": "zero"},
+    "collision_data": {"size": "0x0c", "fill": "zero"},
+    "collision_id": {"size": "0x04", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@actor", "offset": "0x2c", "u32": "@volume"},
+    {"addr": "@actor", "offset": "0x10", "f32": 10.0},
+    {"addr": "@actor", "offset": "0x14", "f32": 20.0},
+    {"addr": "@actor", "offset": "0x18", "f32": 30.0},
+    {"addr": "@actor", "offset": "0x1c", "f32": 40.0},
+    {"addr": "@actor", "offset": "0x20", "f32": 50.0},
+    {"addr": "@actor", "offset": "0x24", "f32": 60.0},
+    {"addr": "@actor", "offset": "0x28", "f32": 70.0},
+    {"addr": "@actor", "offset": "0x34", "f32": 1.5},
+    {"addr": "@volume", "offset": "0x00", "u32": "0x2a"},
+    {"addr": "@volume", "offset": "0x04", "f32": 0.0},
+    {"addr": "@volume", "offset": "0x08", "f32": 2.5},
+    {"addr": "@volume", "offset": "0x0c", "f32": 0.0},
+    {"addr": "@volume", "offset": "0x10", "f32": 0.0},
+    {"addr": "@requested_position", "offset": "0x00", "f32": 11.0},
+    {"addr": "@requested_position", "offset": "0x04", "f32": 21.0},
+    {"addr": "@requested_position", "offset": "0x08", "f32": 31.0},
+    {"addr": "@hit_position", "offset": "0x00", "f32": 12.0},
+    {"addr": "@hit_position", "offset": "0x04", "f32": 22.0},
+    {"addr": "@hit_position", "offset": "0x08", "f32": 32.0},
+    {"addr": "@collision_data", "offset": "0x00", "u32": 101},
+    {"addr": "@collision_data", "offset": "0x04", "u32": 102},
+    {"addr": "@collision_data", "offset": "0x08", "u32": 103},
+    {"addr": "@collision_id", "offset": "0x00", "u32": 201}
+  ],
+  "callees": {
+    "0x100016dc": {
+      "name": "sphere_collision",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "mem:12", "mem:12", "float", "int", "ptr", "ptr", "ptr", "ptr", "ptr", "ptr"],
+      "ret": 0
+    },
+    "0x1000a764": {"name": "set_actor_location", "conv": "cdecl", "args": ["ptr", "ptr", "mem:28"], "ret": 0},
+    "0x10067992": {"name": "sprintf", "conv": "cdecl", "args": ["ptr", "cstr"], "varargs": "printf", "ret": 0}
+  },
+  "cases": [
+    {"name": "null actor", "args": [0, "@world", 4, "@requested_position", 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 1]},
+    {"name": "null collision volume", "args": ["@actor", "@world", 4, "@requested_position", 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 1], "memory": [{"addr": "@actor", "offset": "0x2c", "u32": 0}]},
+    {"name": "sphere, include actor", "args": ["@actor", "@world", 4, "@requested_position", 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 1]},
+    {"name": "sphere, exclude actor", "args": ["@actor", "@world", 4, "@requested_position", 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0]},
+    {"name": "include only on exact one", "args": ["@actor", "@world", 4, "@requested_position", 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 2]},
+    {"name": "offset sphere", "args": ["@actor", "@world", -7, "@requested_position", "0x7fffffff", "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 1], "memory": [{"addr": "@volume", "offset": "0x00", "u32": "0x2b"}, {"addr": "@volume", "offset": "0x04", "f32": -0.5}, {"addr": "@volume", "offset": "0x08", "f32": 1.25}, {"addr": "@volume", "offset": "0x0c", "f32": -2.0}, {"addr": "@volume", "offset": "0x10", "f32": 3.0}]},
+    {"name": "offset sphere rejects location and restores", "args": ["@actor", "@world", 0, "@requested_position", -1, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 1], "memory": [{"addr": "@volume", "offset": "0x00", "u32": "0x2b"}], "callees": {"0x1000a764": {"name": "set_actor_location", "conv": "cdecl", "args": ["ptr", "ptr", "mem:28"], "ret": [1, 0]}}},
+    {"name": "unsupported below", "args": ["@actor", "@world", 0, "@requested_position", 0, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 1], "memory": [{"addr": "@volume", "offset": "0x00", "u32": "0x29"}]},
+    {"name": "unsupported above", "args": ["@actor", "@world", 0, "@requested_position", 0, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0], "memory": [{"addr": "@volume", "offset": "0x00", "u32": "0x2c"}]}
+  ],
+  "fuzz": {
+    "seed": 4974,
+    "count": 32,
+    "args": [
+      {"choices": ["@actor"]},
+      {"choices": ["@world"]},
+      {"range": [-8, 64]},
+      {"choices": ["@requested_position"]},
+      {"range": [-8, 64]},
+      {"choices": ["@segment_callback"]},
+      {"choices": ["@callback_context"]},
+      {"choices": ["@hit_position"]},
+      {"choices": ["@collision_data"]},
+      {"choices": ["@collision_id"]},
+      {"range": [-1, 2]}
+    ],
+    "memory": [
+      {"addr": "@volume", "offset": "0x00", "type": "int", "choices": [41, 42, 43, 44]},
+      {"addr": "@volume", "offset": "0x04", "type": "float", "range": [-4, 4]},
+      {"addr": "@volume", "offset": "0x08", "type": "float", "range": [-4, 4]},
+      {"addr": "@volume", "offset": "0x0c", "type": "float", "range": [-4, 4]},
+      {"addr": "@volume", "offset": "0x10", "type": "float", "range": [-4, 4]},
+      {"addr": "@actor", "offset": "0x34", "type": "float", "range": [-4, 4]},
+      {"addr": "@actor", "offset": "0x10", "type": "float", "count": 7, "range": [-50, 50]},
+      {"addr": "@requested_position", "offset": "0x00", "type": "float", "count": 3, "range": [-50, 50]},
+      {"addr": "@hit_position", "offset": "0x00", "type": "float", "count": 3, "range": [-50, 50]}
+    ]
+  }
+}

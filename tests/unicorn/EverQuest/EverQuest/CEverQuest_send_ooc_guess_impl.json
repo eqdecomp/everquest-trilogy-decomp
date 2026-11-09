@@ -1,0 +1,109 @@
+{
+  "function": "CEverQuest_send_ooc_guess_class::send_ooc_guess",
+  "original": "0x004d0cec",
+  "rewrite": "CEverQuest_send_ooc_guess_class::send_ooc_guess",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x1800",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4E70", "u32": 0},
+    {"addr": "0x006E4E6C", "u32": 0},
+    {"addr": "0x006B63F8", "u8": 0},
+    {"addr": "0x006B6465", "u8": 0},
+    {"addr": "0x006B6494", "u32": 0}
+  ],
+  "callees": {
+    "0x004d0d77": {
+      "name": "CEverQuest_SendNewText_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "ptr",
+        "cstr"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical text is sent and echoed",
+      "memory": [{"addr": "@self", "offset": "0xba8", "cstr": "hello"}],
+      "args": []
+    },
+    {
+      "name": "empty text",
+      "args": []
+    },
+    {
+      "name": "percent signs in text are not formats",
+      "memory": [{"addr": "@self", "offset": "0xba8", "cstr": "100%d%s%n"}],
+      "args": []
+    },
+    {
+      "name": "one character text",
+      "memory": [{"addr": "@self", "offset": "0xba8", "cstr": "x"}],
+      "args": []
+    },
+    {
+      "name": "gate 0x006E4E70 nonzero blocks sending",
+      "memory": [{"addr": "0x006E4E70", "u32": 1}],
+      "args": []
+    },
+    {
+      "name": "gate 0x006E4E6C high word alone blocks sending",
+      "memory": [{"addr": "0x006E4E6C", "u32": 65536}],
+      "args": []
+    },
+    {
+      "name": "byte below gate 0x006E4E6C does not block sending",
+      "memory": [{"addr": "0x006E4E6B", "u8": 1}],
+      "args": []
+    },
+    {
+      "name": "gate 0x006B63F8 bit 7 alone blocks sending",
+      "memory": [{"addr": "0x006B63F8", "u8": 128}],
+      "args": []
+    },
+    {
+      "name": "gate 0x006B6465 nonzero blocks sending",
+      "memory": [{"addr": "0x006B6465", "u8": 1}],
+      "args": []
+    },
+    {
+      "name": "gate 0x006B6494 all bits set blocks sending",
+      "memory": [{"addr": "0x006B6494", "u32": 4294967295}],
+      "args": []
+    }
+  ],
+  "fuzz": {
+    "seed": 5049580,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x006E4E70", "type": "int", "choices": [0, 0, 0, 1, -1, 256], "p": 0.3},
+      {"addr": "0x006E4E6C", "type": "int", "choices": [0, 0, 0, 1, 65536], "p": 0.3},
+      {"addr": "0x006B63F8", "type": "u8", "choices": [0, 0, 0, 1, 128, 255], "p": 0.3},
+      {"addr": "0x006B6465", "type": "u8", "choices": [0, 0, 0, 1, 128], "p": 0.3},
+      {"addr": "0x006B6494", "type": "int", "choices": [0, 0, 0, 1, -1, 256], "p": 0.3},
+      {"addr": "@self", "offset": "0xba8", "type": "u8", "range": [0, 126], "count": 40, "p": 1},
+      {"addr": "@self", "offset": "0xba8", "type": "u8", "range": [0, 126], "count": 200, "p": 0.2}
+    ]
+  }
+}

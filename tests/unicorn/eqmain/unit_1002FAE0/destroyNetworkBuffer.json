@@ -1,0 +1,283 @@
+{
+  "function": "destroyNetworkBuffer_guess",
+  "original": "0x1002fc60",
+  "sources": [
+    "src/eqmain/unit_1002FAE0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x98",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": "0x4444"},
+        {"offset": "0x50", "u32": 64},
+        {"offset": "0x78", "u32": 0},
+        {"offset": "0x7c", "u32": 0},
+        {"offset": "0x84", "u32": 0}
+      ]
+    },
+    "e1": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "0x1111"},
+        {"offset": "0x1c", "u32": 4}
+      ]
+    },
+    "e2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "0x2222"},
+        {"offset": "0x1c", "u32": 8}
+      ]
+    },
+    "e3": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "0x3333"},
+        {"offset": "0x1c", "u32": 4}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!DeleteCriticalSection": {
+      "name": "DeleteCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!CloseHandle": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 5
+    },
+    "kernel32.dll!GetOverlappedResult": {
+      "name": "GetOverlappedResult",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "ignore", "int"],
+      "ret": [1, 1, 0],
+      "writes": [{"arg": 2, "hex": "04000000"}]
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTimeThunk_guess",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 123456789
+    },
+    "0x1002e120": {
+      "name": "networkQueuePeek_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@e1", "@e2", "@e3", 0]
+    },
+    "0x1002e130": {
+      "name": "networkQueuePop_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@e1", "@e2", "@e3"]
+    },
+    "0x10028a90": {
+      "name": "networkEntryFree_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002e240": {
+      "name": "freeRingBufferMemory_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x10027940": {
+      "name": "FUN_10027940",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: three entries, two transfers and a failure",
+      "args": ["@param_1"]
+    },
+    {
+      "name": "empty queue: no drain, the list and section still go",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "one entry, full transfer (+0x7C)",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1"]}
+      }
+    },
+    {
+      "name": "one entry, short transfer (+0x78)",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e2", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e2"]}
+      }
+    },
+    {
+      "name": "failure with ERROR_IO_INCOMPLETE (996) stops before pop, close and free",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", 0]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 0, "writes": [{"arg": 2, "hex": "04000000"}]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 996}
+      }
+    },
+    {
+      "name": "boundary: failure 995 (one below the stop code) is counted and drained",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 0, "writes": [{"arg": 2, "hex": "04000000"}]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 995}
+      }
+    },
+    {
+      "name": "boundary: failure 997 (one above the stop code) is counted and drained",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 0, "writes": [{"arg": 2, "hex": "04000000"}]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 997}
+      }
+    },
+    {
+      "name": "failure with another error (+0x84), then a short transfer",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [0, 1], "writes": [{"arg": 2, "hex": "04000000"}]}
+      }
+    },
+    {
+      "name": "two entries, the stop code on the second: the first is finished, the second is not",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [1, 0], "writes": [{"arg": 2, "hex": "04000000"}]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 996}
+      }
+    },
+    {
+      "name": "ordering: ok, failed, ok (the failed entry is freed between the two)",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", "@e3", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", "@e3"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [1, 0, 1], "writes": [{"arg": 2, "hex": "04000000"}]}
+      }
+    },
+    {
+      "name": "ordering: pop returns a different entry than the peek, so the size comes from the popped one",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e2"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 1, "writes": [{"arg": 2, "hex": "04000000"}]}
+      }
+    },
+    {
+      "name": "boundary: counters at the edges wrap, pending bytes go negative",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x50", "u32": 2},
+        {"addr": "@param_1", "offset": "0x78", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x7c", "u32": "0x7fffffff"},
+        {"addr": "@param_1", "offset": "0x84", "u32": "0x7fffffff"}
+      ]
+    },
+    {
+      "name": "boundary: zero-size entry with a zero-byte transfer matches (+0x7C)",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@e1", "offset": "0x1c", "u32": 0}
+      ],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", 0]},
+        "0x1002e130": {"name": "networkQueuePop_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 1, "writes": [{"arg": 2, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "junk registers at entry (a read of a register before it is set would show)",
+      "args": ["@param_1"],
+      "regs": {"eax": "0x0bad0001", "ebx": "0x0bad0002", "ecx": "0x0bad0003", "edx": "0x0bad0004", "esi": "0x0bad0005", "edi": "0x0bad0006", "ebp": "0x0bad0007"}
+    },
+    {
+      "name": "boundary: another allocated object, empty queue (the path touches no object memory)",
+      "args": ["@e1"],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "boundary: null object, empty queue (the path touches no object memory)",
+      "args": [0],
+      "callees": {
+        "0x1002e120": {"name": "networkQueuePeek_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 195680,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@param_1"]
+      }
+    ],
+    "memory": [
+      {"addr": "@e1", "offset": "0x1c", "type": "u32", "choices": [0, 4, 4, 8]},
+      {"addr": "@e2", "offset": "0x1c", "type": "u32", "choices": [0, 4, 4, 8]},
+      {"addr": "@e3", "offset": "0x1c", "type": "u32", "choices": [0, 4, 4, 8]},
+      {"addr": "@e1", "offset": "0x18", "type": "u32", "choices": [0, 4369, 8738]},
+      {"addr": "@param_1", "offset": "0x50", "type": "u32", "range": [0, 16]},
+      {"addr": "@param_1", "offset": "0x78", "type": "u32", "choices": [0, 1, 4294967295, 2147483647]},
+      {"addr": "@param_1", "offset": "0x7c", "type": "u32", "choices": [0, 1, 4294967295, 2147483647]},
+      {"addr": "@param_1", "offset": "0x84", "type": "u32", "choices": [0, 1, 4294967295, 2147483647]}
+    ]
+  }
+}

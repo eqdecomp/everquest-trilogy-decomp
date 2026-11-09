@@ -1,0 +1,227 @@
+{
+  "function": "t3dGetPaletteEntry",
+  "original": "0x1001841e",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "palette",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "red",
+      "type": "ptr"
+    },
+    {
+      "name": "green",
+      "type": "ptr"
+    },
+    {
+      "name": "blue",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x430",
+      "fill": "random"
+    },
+    "red": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "green": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "blue": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "index 1 (typical)",
+      "args": [
+        "@palette",
+        1,
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "index 0",
+      "args": [
+        "@palette",
+        0,
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "index 0xff (last valid)",
+      "args": [
+        "@palette",
+        255,
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "index 0x100 (first invalid)",
+      "args": [
+        "@palette",
+        256,
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "index 0xffffffff",
+      "args": [
+        "@palette",
+        "0xffffffff",
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "index 0x80000000 (negative as signed)",
+      "args": [
+        "@palette",
+        "0x80000000",
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "index 0xffffff00 (-256 as signed)",
+      "args": [
+        "@palette",
+        "0xffffff00",
+        "@red",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "null pointers, bad index (checked before any pointer is used)",
+      "args": [
+        0,
+        256,
+        0,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "out pointers aliased (store order)",
+      "args": [
+        "@palette",
+        3,
+        "@red",
+        "@red",
+        "@red"
+      ]
+    },
+    {
+      "name": "red aliases entry byte 1 (green loaded after red stored)",
+      "args": [
+        "@palette",
+        2,
+        "@palette+0x1d",
+        "@green",
+        "@blue"
+      ]
+    },
+    {
+      "name": "green aliases entry byte 2 (blue loaded after green stored)",
+      "args": [
+        "@palette",
+        2,
+        "@red",
+        "@palette+0x1e",
+        "@blue"
+      ]
+    },
+    {
+      "name": "blue aliases entry byte 0 (red loaded first)",
+      "args": [
+        "@palette",
+        2,
+        "@red",
+        "@green",
+        "@palette+0x1c"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 99358,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@palette"
+        ]
+      },
+      {
+        "choices": [
+          0, 1, 2, 3, 127, 128, 254, 255, 256, 257, 511, 65535, 65536,
+          "0x7fffffff", "0x80000000", "0xffffff00", "0xffffffff"
+        ]
+      },
+      {
+        "choices": [
+          "@red",
+          "@green",
+          "@blue",
+          "@palette+0x14",
+          "@palette+0x15"
+        ]
+      },
+      {
+        "choices": [
+          "@red",
+          "@green",
+          "@blue",
+          "@palette+0x16",
+          "@palette+0x17"
+        ]
+      },
+      {
+        "choices": [
+          "@red",
+          "@green",
+          "@blue",
+          "@palette+0x18",
+          "@palette+0x19"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@palette",
+        "offset": "0x14",
+        "size": 1024
+      }
+    ]
+  }
+}

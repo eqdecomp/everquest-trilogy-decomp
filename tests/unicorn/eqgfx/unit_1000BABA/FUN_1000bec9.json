@@ -1,0 +1,353 @@
+{
+  "function": "_t3dResolveBitmapSearchPaths_guess",
+  "original": "0x1000bec9",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "searchList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "searchlist": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x30", "u32": "@plainpath"}
+      ]
+    },
+    "multilist2": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 1},
+        {"offset": "0x30", "u32": "@pathentries2"}
+      ]
+    },
+    "multilist3": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 2},
+        {"offset": "0x30", "u32": "@pathentries3"}
+      ]
+    },
+    "emptylist": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": "0xffffffff"},
+        {"offset": "0x30", "u32": 0}
+      ]
+    },
+    "slashlist": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x30", "u32": "@slashpath"}
+      ]
+    },
+    "backslashlist": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x30", "u32": "@backslashpath"}
+      ]
+    },
+    "mixedlist": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x30", "u32": "@mixedpath"}
+      ]
+    },
+    "pathentries2": {
+      "size": 8,
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "u32": "@plainpath"},
+        {"offset": 4, "u32": "@slashpath"}
+      ]
+    },
+    "pathentries3": {
+      "size": 12,
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "u32": "@plainpath"},
+        {"offset": 4, "u32": "@backslashpath"},
+        {"offset": 8, "u32": "@mixedpath"}
+      ]
+    },
+    "plainpath": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "cstr": "bitmap.bmp"}
+      ]
+    },
+    "slashpath": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "cstr": "folder/bitmap.bmp"}
+      ]
+    },
+    "backslashpath": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "cstr": "C:\\folder\\bitmap.bmp"}
+      ]
+    },
+    "mixedpath": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "cstr": "C:\\folder/bitmap.bmp"}
+      ]
+    },
+    "wldpath": {
+      "size": 16,
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "cstr": "WLDPATH"}
+      ]
+    },
+    "replacement": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100A35D4", "u32": "@wldpath"}
+  ],
+  "callees": {
+    "kernel32.dll!GetEnvironmentVariableA": {
+      "name": "GetEnvironmentVariableA",
+      "conv": "stdcall",
+      "args": ["cstr", "ptr", "u32"],
+      "ret": 8,
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "433A5C776C645C00"}
+      ]
+    },
+    "0x100685b4": {
+      "name": "__stat",
+      "conv": "cdecl",
+      "args": ["cstr", "ignore"],
+      "ret": 0
+    },
+    "kernel32.dll!SearchPathA": {
+      "name": "SearchPathA",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+      ]
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@replacement"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "missing environment variable global",
+      "args": [1, "@searchlist"],
+      "memory": [
+        {"addr": "0x100A35D4", "u32": 0}
+      ]
+    },
+    {
+      "name": "environment variable not found",
+      "args": [1, "@searchlist"],
+      "callees": {
+        "kernel32.dll!GetEnvironmentVariableA": {
+          "conv": "stdcall",
+          "args": ["cstr", "ptr", "u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "wrapped empty path count",
+      "args": [1, "@emptylist"]
+    },
+    {
+      "name": "existing file",
+      "args": [1, "@searchlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": 0}
+      }
+    },
+    {
+      "name": "search miss",
+      "args": [1, "@searchlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 0,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "forward slash search",
+      "args": [1, "@slashlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 8,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "backslash only skips search",
+      "args": [1, "@backslashlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 8,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "both slash forms search",
+      "args": [1, "@mixedlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 8,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "single path replacement",
+      "args": [1, "@searchlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 12,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        },
+        "0x10050c48": {"conv": "cdecl", "args": ["u32"], "ret": "@replacement"}
+      }
+    },
+    {
+      "name": "single path allocation failure",
+      "args": [1, "@searchlist"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 12,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        },
+        "0x10050c48": {"conv": "cdecl", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "two entry ordering and one replacement",
+      "args": [1, "@multilist2"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": [1, -1]},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 12,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        },
+        "0x10050c48": {"conv": "cdecl", "args": ["u32"], "ret": "@replacement"}
+      }
+    },
+    {
+      "name": "three entry ordering",
+      "args": [1, "@multilist3"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": [1, -1, 0]},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 12,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        },
+        "0x10050c48": {"conv": "cdecl", "args": ["u32"], "ret": "@replacement"}
+      }
+    },
+    {
+      "name": "allocation failure cleans all entries and list",
+      "args": [1, "@multilist3"],
+      "callees": {
+        "0x100685b4": {"conv": "cdecl", "args": ["cstr", "ignore"], "ret": [-1, -1, -1]},
+        "kernel32.dll!SearchPathA": {
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "ptr", "u32", "ptr", "ptr"],
+          "ret": 12,
+          "writes": [
+            {"arg": 4, "offset": 0, "hex": "433A5C776C645C7265736F6C7665642E626D7000"}
+          ]
+        },
+        "0x10050c48": {"conv": "cdecl", "args": ["u32"], "ret": ["@replacement", 0]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 48841,
+    "count": 32,
+    "args": [
+      {"range": [-4, 30]},
+      {"choices": ["@searchlist", "@multilist2", "@multilist3", "@emptylist", "@slashlist"]}
+    ],
+    "memory": []
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "function": "StopWave_guess",
+  "original": "0x004e363b",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    },
+    {
+      "name": "id",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "fn_release": {"size": 16},
+    "fn_get": {"size": 16},
+    "vt": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x1C", "u32": "@fn_release"}, {"offset": "0x2C", "u32": "@fn_get"}]},
+    "iface": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vt"}]},
+    "self": {"size": "0x1100", "fill": "random"},
+    "self_freed": {"size": "0x1100", "fill": "random", "init": [
+      {"offset": "0x1008", "u32": "4294967295"}, {"offset": "0x100C", "u32": "4294967295"},
+      {"offset": "0x1010", "u32": "4294967295"}, {"offset": "0x1014", "u32": "4294967295"},
+      {"offset": "0x1018", "u32": "4294967295"}, {"offset": "0x101C", "u32": "4294967295"},
+      {"offset": "0x1020", "u32": "4294967295"}, {"offset": "0x1024", "u32": "4294967295"},
+      {"offset": "0x1028", "u32": "4294967295"}, {"offset": "0x102C", "u32": "4294967295"},
+      {"offset": "0x1030", "u32": "4294967295"}, {"offset": "0x1034", "u32": "4294967295"}]},
+    "self_zero": {"size": "0x1100", "fill": "zero"},
+    "self_minus2": {"size": "0x1100", "fill": "random", "init": [
+      {"offset": "0x1028", "u32": "4294967294"}, {"offset": "0x1008", "u32": "4294967294"}]}
+  },
+  "memory": [
+    {
+      "addr": "0x006E4DD0",
+      "u32": "@iface"
+    }
+  ],
+  "callees": {
+    "@fn_get": {"name": "iface slot 11 (+0x2C)", "conv": "thiscall", "args": ["mem:4"], "ret": 305419896},
+    "@fn_release": {"name": "iface slot 7 (+0x1C)", "conv": "thiscall", "args": ["mem:4"]}
+  },
+  "cases": [
+    {"name": "below range 0x9D", "args": ["@self", 0, 157]},
+    {"name": "low edge 0x9E", "args": ["@self", 0, 158]},
+    {"name": "0x9F", "args": ["@self", 0, 159]},
+    {"name": "0xA0", "args": ["@self", 3, 160]},
+    {"name": "upper edge first range 0xA1", "args": ["@self", 0, 161]},
+    {"name": "low edge second range 0xA2", "args": ["@self", 0, 162]},
+    {"name": "0xA5", "args": ["@self", 0, 165]},
+    {"name": "upper edge 0xA9", "args": ["@self", 0, 169]},
+    {"name": "above range 0xAA", "args": ["@self", 0, 170]},
+    {"name": "zero id", "args": ["@self", 0, 0]},
+    {"name": "negative id", "args": ["@self", 0, -1]},
+    {"name": "min int", "args": ["@self", 0, -2147483648]},
+    {"name": "max int", "args": ["@self", 0, 2147483647]},
+    {"name": "freed handle 0x9E", "args": ["@self_freed", 0, 158]},
+    {"name": "freed handle 0xA1", "args": ["@self_freed", 0, 161]},
+    {"name": "freed handle 0xA2", "args": ["@self_freed", 0, 162]},
+    {"name": "freed handle 0xA9", "args": ["@self_freed", 0, 169]},
+    {"name": "zero handle 0x9E", "args": ["@self_zero", 0, 158]},
+    {"name": "zero handle 0xA2", "args": ["@self_zero", 0, 162]},
+    {"name": "handle -2 0x9E", "args": ["@self_minus2", 0, 158]},
+    {"name": "handle -2 0xA2", "args": ["@self_minus2", 0, 162]},
+    {"name": "slot 11 returns 0, 0xA0", "args": ["@self", 0, 160],
+     "callees": {
+       "@fn_get": {"name": "iface slot 11 (+0x2C)", "conv": "thiscall", "args": ["mem:4"], "ret": 0},
+       "@fn_release": {"name": "iface slot 7 (+0x1C)", "conv": "thiscall", "args": ["mem:4"]}}},
+    {"name": "slot 11 returns -1, 0xA7", "args": ["@self", 0, 167],
+     "callees": {
+       "@fn_get": {"name": "iface slot 11 (+0x2C)", "conv": "thiscall", "args": ["mem:4"], "ret": 4294967295},
+       "@fn_release": {"name": "iface slot 7 (+0x1C)", "conv": "thiscall", "args": ["mem:4"]}}}
+  ],
+  "fuzz": {
+    "seed": 5125691,
+    "count": 40,
+    "args": [
+      {"choices": ["@self", "@self_freed", "@self_zero"]},
+      {},
+      {"choices": [0, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, -158, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "@self+0x1008", "type": "u32", "choices": [4294967295, 0, 7]},
+      {"addr": "@self+0x1014", "type": "u32", "choices": [4294967295, 0, 7]},
+      {"addr": "@self+0x1024", "type": "u32", "choices": [4294967295, 0, 7]},
+      {"addr": "@self+0x1028", "type": "u32", "choices": [4294967295, 0, 7]},
+      {"addr": "@self+0x1030", "type": "u32", "choices": [4294967295, 0, 7]},
+      {"addr": "@self+0x1034", "type": "u32", "choices": [4294967295, 0, 7]}
+    ]
+  }
+}

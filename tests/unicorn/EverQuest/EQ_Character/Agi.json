@@ -1,0 +1,333 @@
+{
+  "function": "EQ_Character_guess::Agi_guess",
+  "original": "0x0041b722",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_character",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "eq_character": {
+      "size": "0x1100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x7c", "u8": 50},
+        {"offset": "0xa0", "u32": "@player"}
+      ]
+    },
+    "player": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x98", "u8": 1}
+      ]
+    },
+    "eqA": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xb1", "u8": 5}
+      ]
+    },
+    "eqB": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc2", "u8": 14},
+        {"offset": "0xb1", "u8": 10}
+      ]
+    },
+    "eqC": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc2", "u8": 14},
+        {"offset": "0xb1", "u8": 252}
+      ]
+    },
+    "eqD": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xb1", "u8": 20}
+      ]
+    },
+    "note": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 2},
+        {"offset": "0xc2", "u8": 14}
+      ]
+    },
+    "bagA": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 1},
+        {"offset": "0xd5", "u8": 3},
+        {"offset": "0xac", "u32": "@eqD"},
+        {"offset": "0xb0", "u32": "@eqB"}
+      ]
+    },
+    "bagB": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 1},
+        {"offset": "0xac", "u32": "@eqB"}
+      ]
+    },
+    "bagC": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 1},
+        {"offset": "0xd5", "u8": 1},
+        {"offset": "0xac", "u32": "@eqD"},
+        {"offset": "0xb0", "u32": "@eqB"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004238a2": {
+      "name": "EQ_Character::TotalSpellAffects_guess",
+      "conv": "thiscall",
+      "args": [
+        "u8"
+      ],
+      "ret": 10
+    },
+    "0x0041b9e0": {
+      "name": "ApplyFatigue_guess",
+      "conv": "thiscall",
+      "args": [
+        "char"
+      ],
+      "ret": 20
+    },
+    "0x0041bb36": {
+      "name": "EQ_Character::encum_factor_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret_float": 1.0
+    }
+  },
+  "cases": [
+    {
+      "name": "empty inventory: 20 + 10 + 0",
+      "args": [],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "first loop sums AGI of equipment in slots 1..20, signed",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0xe4", "u32": "@eqA"},
+        {"addr": "@eq_character", "offset": "0xe8", "u32": "@eqC"},
+        {"addr": "@eq_character", "offset": "0xec", "u32": "@eqD"}
+      ],
+      "expect": {"ret": 51}
+    },
+    {
+      "name": "0x0E equipment in slot 22 counts and breaks the scan",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x138", "u32": "@eqB"},
+        {"addr": "@eq_character", "offset": "0x13c", "u32": "@eqC"}
+      ],
+      "expect": {"ret": 40}
+    },
+    {
+      "name": "note (type 2) with item type 0x0E is not equipment",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x138", "u32": "@note"},
+        {"addr": "@eq_character", "offset": "0x13c", "u32": "@eqB"}
+      ],
+      "expect": {"ret": 40}
+    },
+    {
+      "name": "container in slot 25: inner 0x0E item counted, first inner non-0x0E skipped",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x144", "u32": "@bagA"}
+      ],
+      "expect": {"ret": 40}
+    },
+    {
+      "name": "container with slots 0 is not scanned",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x144", "u32": "@bagB"}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "inner scan stops at slots: a 0x0E item past the last slot is ignored",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x144", "u32": "@bagC"}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "container in the first loop is ignored",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0xe4", "u32": "@bagA"}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "first loop ends at slot 20, slot 21 not summed",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x130", "u32": "@eqB"},
+        {"addr": "@eq_character", "offset": "0x134", "u32": "@eqD"}
+      ],
+      "expect": {"ret": 40}
+    },
+    {
+      "name": "last slot 29 is scanned",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x154", "u32": "@eqB"}
+      ],
+      "expect": {"ret": 40}
+    },
+    {
+      "name": "slot 30 is past the scan: a 0x0E item there is ignored",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x158", "u32": "@eqB"}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "intoxication 100 with player type 0: penalty (100-40)/16 = 3",
+      "args": [],
+      "memory": [
+        {"addr": "@player", "offset": "0x98", "u8": 0},
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 100}
+      ],
+      "expect": {"ret": 27}
+    },
+    {
+      "name": "intoxication 55 is not penalised (needs > 55)",
+      "args": [],
+      "memory": [
+        {"addr": "@player", "offset": "0x98", "u8": 0},
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 55}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "intoxication 56 penalty 1",
+      "args": [],
+      "memory": [
+        {"addr": "@player", "offset": "0x98", "u8": 0},
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 56}
+      ],
+      "expect": {"ret": 29}
+    },
+    {
+      "name": "large intoxication drives the total below 1 and clamps to 1",
+      "args": [],
+      "memory": [
+        {"addr": "@player", "offset": "0x98", "u8": 0},
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 2000}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "negative intoxication (signed short) is not penalised",
+      "args": [],
+      "memory": [
+        {"addr": "@player", "offset": "0x98", "u8": 0},
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 65436}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "player type nonzero skips the intoxication penalty",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 100}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "null player skips the intoxication penalty",
+      "args": [],
+      "memory": [
+        {"addr": "@eq_character", "offset": "0xa0", "u32": 0},
+        {"addr": "@eq_character", "offset": "0x104c", "u16": 100}
+      ],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "product above 255 clamps to 255",
+      "args": [],
+      "callees": {
+        "0x0041bb36": {"name": "EQ_Character::encum_factor_guess", "conv": "thiscall", "args": [], "ret_float": 100.0}
+      },
+      "expect": {"ret": 255}
+    },
+    {
+      "name": "product exactly 255 stays 255",
+      "args": [],
+      "callees": {
+        "0x0041bb36": {"name": "EQ_Character::encum_factor_guess", "conv": "thiscall", "args": [], "ret_float": 8.5}
+      },
+      "expect": {"ret": 255}
+    },
+    {
+      "name": "product below 1 clamps to 1",
+      "args": [],
+      "callees": {
+        "0x0041bb36": {"name": "EQ_Character::encum_factor_guess", "conv": "thiscall", "args": [], "ret_float": 0.01}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "NaN product: the < 1 test is false for NaN, so the result is 1",
+      "args": [],
+      "callees": {
+        "0x0041bb36": {"name": "EQ_Character::encum_factor_guess", "conv": "thiscall", "args": [], "ret_float": "nan"}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "spell effect is a short: 0xFFFB is -5",
+      "args": [],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["u8"], "ret": 65531}
+      },
+      "expect": {"ret": 15}
+    },
+    {
+      "name": "Sta result is a byte: AL of 416 is 160",
+      "args": [],
+      "callees": {
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 416}
+      },
+      "expect": {"ret": 170}
+    }
+  ],
+  "fuzz": {
+    "seed": 4306722,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@eq_character", "offset": "0x7c", "type": "u8", "range": [0, 255]},
+      {"addr": "@eq_character", "offset": "0xe0", "type": "ptr", "choices": [0, "@eqA", "@eqB", "@eqC", "@eqD", "@note", "@bagA", "@bagB", "@bagC"], "count": 30},
+      {"addr": "@eq_character", "offset": "0x104c", "type": "u16", "choices": [0, 40, 55, 56, 57, 100, 120, 2000, 65436]},
+      {"addr": "@player", "offset": "0x98", "type": "u8", "choices": [0, 1]},
+      {"addr": "@eq_character", "offset": "0xa0", "type": "ptr", "choices": [0, "@player"], "p": 0.9}
+    ]
+  }
+}

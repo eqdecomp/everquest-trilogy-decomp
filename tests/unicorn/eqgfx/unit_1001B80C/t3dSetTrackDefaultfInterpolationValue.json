@@ -1,0 +1,192 @@
+{
+  "function": "t3dSetTrackDefaultfInterpolationValue",
+  "original": "0x1001d15e",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "track",
+      "type": "ptr"
+    },
+    {
+      "name": "value",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "track": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076280",
+      "from_image": "0x10076280",
+      "image_size": 4
+    },
+    {
+      "addr": "0x10076284",
+      "f32": 0.0
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@track",
+        0.5
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "lower bound 0.0 (passes, >= 0)",
+      "args": [
+        "@track",
+        0.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative zero (equal to 0.0, passes)",
+      "args": [
+        "@track",
+        -0.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "upper bound 1.0 (passes, <= 1)",
+      "args": [
+        "@track",
+        1.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "just above 1.0 (0x3F800001)",
+      "args": [
+        "@track",
+        1.00000012
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "just below 0.0 (negative subnormal 0x80000001)",
+      "args": [
+        "@track",
+        -1.4e-45
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "smallest positive subnormal (passes)",
+      "args": [
+        "@track",
+        1e-45
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative",
+      "args": [
+        "@track",
+        -0.5
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "above one",
+      "args": [
+        "@track",
+        1.5
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "large positive (FLT_MAX-ish)",
+      "args": [
+        "@track",
+        3e+38
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "large negative",
+      "args": [
+        "@track",
+        -3e+38
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "quiet NaN (unordered fails)",
+      "args": [
+        "@track",
+        "nan"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "negative quiet NaN (unordered fails)",
+      "args": [
+        "@track",
+        "-nan"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "out of range, NULL track is never dereferenced",
+      "args": [
+        0,
+        1.5
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 119134,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@track"
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

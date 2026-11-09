@@ -1,0 +1,170 @@
+{
+  "function": "setupSpriteHierarchy_guess",
+  "original": "0x10012e50",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "node",
+      "type": "ptr"
+    },
+    {
+      "name": "parent",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "sprite": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "otherParent": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "defRoot": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": 20}]
+    },
+    "defLeft": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": 5}]
+    },
+    "defRight": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": 20}]
+    },
+    "defSolo": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": 20}]
+    },
+    "defLeaf": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": 7}]
+    },
+    "kidsRoot": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@left"}, {"offset": "0x4", "u32": "@right"}]
+    },
+    "kidsLeft": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@solo"}]
+    },
+    "kidsRight": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@leaf"}]
+    },
+    "kidsNone": {
+      "size": "0x8",
+      "fill": "zero"
+    },
+    "root": {
+      "size": "0xf4",
+      "fill": "random",
+      "init": [{"offset": "0x8", "u32": "@defRoot"}, {"offset": "0xec", "u32": 2},
+               {"offset": "0xf0", "u32": "@kidsRoot"}]
+    },
+    "left": {
+      "size": "0xf4",
+      "fill": "random",
+      "init": [{"offset": "0x8", "u32": "@defLeft"}, {"offset": "0xec", "u32": 1},
+               {"offset": "0xf0", "u32": "@kidsLeft"}]
+    },
+    "right": {
+      "size": "0xf4",
+      "fill": "random",
+      "init": [{"offset": "0x8", "u32": "@defRight"}, {"offset": "0xec", "u32": 1},
+               {"offset": "0xf0", "u32": "@kidsRight"}]
+    },
+    "solo": {
+      "size": "0xf4",
+      "fill": "random",
+      "init": [{"offset": "0x8", "u32": "@defSolo"}, {"offset": "0xec", "u32": 0},
+               {"offset": "0xf0", "u32": "@kidsNone"}]
+    },
+    "leaf": {
+      "size": "0xf4",
+      "fill": "random",
+      "init": [{"offset": "0x8", "u32": "@defLeaf"}, {"offset": "0xec", "u32": 0},
+               {"offset": "0xf0", "u32": "@kidsNone"}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10012e50": {
+      "name": "setupSpriteHierarchy_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "leaf: plain definition, no children",
+      "args": ["@sprite", "@leaf", "@otherParent"]
+    },
+    {
+      "name": "solo: tagged definition, no children",
+      "args": ["@sprite", "@solo", 0]
+    },
+    {
+      "name": "left: recursion passes the node as the child's parent",
+      "args": ["@sprite", "@left", "@otherParent"]
+    },
+    {
+      "name": "right+leaf: tagged node then plain child",
+      "args": ["@sprite", "@right", "@solo"]
+    },
+    {
+      "name": "whole tree from the root",
+      "args": ["@sprite", "@root", 0]
+    },
+    {
+      "name": "parent aliases the child",
+      "args": ["@sprite", "@left", "@solo"]
+    }
+  ],
+  "fuzz": {
+    "seed": 77392,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@sprite", "@otherParent", 0, "0x40000000"]
+      },
+      {
+        "choices": ["@root", "@left", "@right", "@solo", "@leaf"]
+      },
+      {
+        "choices": [0, "@otherParent", "@root", "@left", "@right", "@solo", "@leaf"]
+      }
+    ],
+    "memory": [
+      {"addr": "@defRoot", "offset": "0x0", "type": "u32", "choices": [20, 5, 19, 21]},
+      {"addr": "@defLeft", "offset": "0x0", "type": "u32", "choices": [20, 5, 19, 21]},
+      {"addr": "@defRight", "offset": "0x0", "type": "u32", "choices": [20, 5, 19, 21]},
+      {"addr": "@defSolo", "offset": "0x0", "type": "u32", "choices": [20, 5, 19, 21]},
+      {"addr": "@defLeaf", "offset": "0x0", "type": "u32", "choices": [20, 5, 19, 21]},
+      {"addr": "@root", "offset": "0xec", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@left", "offset": "0xec", "type": "u32", "choices": [0, 1]},
+      {"addr": "@right", "offset": "0xec", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

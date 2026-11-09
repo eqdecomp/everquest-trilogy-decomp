@@ -1,0 +1,197 @@
+{
+  "function": "gen_bitlen_guess",
+  "original": "0x1000d2e0",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "s",
+      "type": "ptr"
+    },
+    {
+      "name": "desc",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "s": {
+      "size": "0x1800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x16a0", "u32": 0},
+        {"offset": "0x16a4", "u32": 0}
+      ]
+    },
+    "tree": {
+      "size": "0x900",
+      "fill": "zero"
+    },
+    "stree": {
+      "size": "0x900",
+      "fill": "zero"
+    },
+    "extra": {
+      "size": "0x900",
+      "fill": "zero"
+    },
+    "sd": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": "@extra"}
+      ]
+    },
+    "desc": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@tree"},
+        {"offset": "0x8", "u32": "@sd"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "root only: heap_max 572, loop not entered",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 572},
+        {"addr": "@s", "offset": "0x1444", "u32": 300},
+        {"addr": "@tree", "offset": "0x4b0", "hex": "00000700"},
+        {"addr": "@desc", "offset": "0x4", "u32": 285},
+        {"addr": "@sd", "offset": "0x8", "u32": 1024},
+        {"addr": "@sd", "offset": "0x10", "u32": 15}
+      ]
+    },
+    {
+      "name": "one leaf under the root, no overflow",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 571},
+        {"addr": "@s", "offset": "0x1440", "hex": "2c01000005000000"},
+        {"addr": "@tree", "offset": "0x14", "hex": "07002c01"},
+        {"addr": "@desc", "offset": "0x4", "u32": 285},
+        {"addr": "@sd", "offset": "0x8", "u32": 1024},
+        {"addr": "@sd", "offset": "0x10", "u32": 15}
+      ]
+    },
+    {
+      "name": "chain with static tree and extra bits, no overflow",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 569},
+        {"addr": "@s", "offset": "0x1438", "hex": "2c010000900100000a0000000b000000"},
+        {"addr": "@tree", "offset": "0x28", "hex": "0400900106002c01"},
+        {"addr": "@tree", "offset": "0x640", "hex": "00002c01"},
+        {"addr": "@stree", "offset": "0x28", "hex": "0000040000000500"},
+        {"addr": "@extra", "offset": "0x14", "hex": "0200000003000000"},
+        {"addr": "@desc", "offset": "0x4", "u32": 285},
+        {"addr": "@sd", "offset": "0x0", "u32": "@stree"},
+        {"addr": "@sd", "offset": "0x8", "u32": 5},
+        {"addr": "@sd", "offset": "0x10", "u32": 15}
+      ]
+    },
+    {
+      "name": "overflow: fixup scans below max_length, rebuild with a changed leaf",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 563},
+        {"addr": "@s", "offset": "0x1420", "hex": "2c010000900100000a0000000b000000140000000500000006000000070000000800000009000000"},
+        {"addr": "@tree", "offset": "0x14", "hex": "030014000400050005000600060007000700080008002c0109002c01"},
+        {"addr": "@tree", "offset": "0x50", "hex": "00009001"},
+        {"addr": "@tree", "offset": "0x640", "hex": "00002c01"},
+        {"addr": "@desc", "offset": "0x4", "u32": 15},
+        {"addr": "@sd", "offset": "0x8", "u32": 1024},
+        {"addr": "@sd", "offset": "0x10", "u32": 3}
+      ]
+    },
+    {
+      "name": "overflow: two fixup steps, rebuild with a changed leaf",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 565},
+        {"addr": "@s", "offset": "0x1428", "hex": "2c0100000a0000000b0000009001000005000000060000000700000008000000"},
+        {"addr": "@tree", "offset": "0x14", "hex": "04009001010005000600060005000700"},
+        {"addr": "@tree", "offset": "0x28", "hex": "02002c0103002c01"},
+        {"addr": "@tree", "offset": "0x640", "hex": "00002c01"},
+        {"addr": "@desc", "offset": "0x4", "u32": 285},
+        {"addr": "@sd", "offset": "0x8", "u32": 1024},
+        {"addr": "@sd", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "no leaves: max_code -1 makes every node internal",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 571},
+        {"addr": "@s", "offset": "0x1440", "hex": "2c01000090010000"},
+        {"addr": "@tree", "offset": "0x640", "hex": "00002c01"},
+        {"addr": "@desc", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@sd", "offset": "0x8", "u32": 1024},
+        {"addr": "@sd", "offset": "0x10", "u32": 15}
+      ]
+    },
+    {
+      "name": "leaf exactly at max_code, base equal to its number",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 571},
+        {"addr": "@s", "offset": "0x1440", "hex": "2c0100001d010000"},
+        {"addr": "@tree", "offset": "0x474", "hex": "0b002c01"},
+        {"addr": "@extra", "offset": "0x0", "hex": "07000000"},
+        {"addr": "@desc", "offset": "0x4", "u32": 285},
+        {"addr": "@sd", "offset": "0x8", "u32": 285},
+        {"addr": "@sd", "offset": "0x10", "u32": 15}
+      ]
+    },
+    {
+      "name": "length equal to max_length is not an overflow",
+      "args": ["@s", "@desc"],
+      "memory": [
+        {"addr": "@s", "offset": "0x144c", "u32": 571},
+        {"addr": "@s", "offset": "0x1440", "hex": "2c01000005000000"},
+        {"addr": "@tree", "offset": "0x14", "hex": "02002c01"},
+        {"addr": "@desc", "offset": "0x4", "u32": 285},
+        {"addr": "@sd", "offset": "0x8", "u32": 1024},
+        {"addr": "@sd", "offset": "0x10", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 53984,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@s"
+        ]
+      },
+      {
+        "choices": [
+          "@desc"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@s", "offset": "0x144c", "type": "int", "range": [560, 571]},
+      {"addr": "@s", "offset": "0xb54", "type": "int", "count": 573, "range": [8, 572]},
+      {"addr": "@s", "offset": "0x16a0", "type": "u32"},
+      {"addr": "@s", "offset": "0x16a4", "type": "u32"},
+      {"addr": "@tree", "offset": "0x0", "type": "u16", "count": 573, "stride": 4, "range": [0, 1000]},
+      {"addr": "@tree", "offset": "0x2", "type": "u16", "count": 573, "stride": 4, "range": [0, 7]},
+      {"addr": "@stree", "offset": "0x0", "type": "u16", "count": 573, "stride": 4, "range": [0, 1000]},
+      {"addr": "@stree", "offset": "0x2", "type": "u16", "count": 573, "stride": 4, "range": [0, 15]},
+      {"addr": "@extra", "offset": "0x0", "type": "int", "count": 573, "range": [0, 13]},
+      {"addr": "@desc", "offset": "0x4", "type": "int", "range": [-1, 572]},
+      {"addr": "@sd", "offset": "0x0", "type": "ptr", "choices": [0, "@stree"]},
+      {"addr": "@sd", "offset": "0x8", "type": "int", "range": [0, 600]},
+      {"addr": "@sd", "offset": "0x10", "type": "int", "range": [12, 15]}
+    ]
+  }
+}

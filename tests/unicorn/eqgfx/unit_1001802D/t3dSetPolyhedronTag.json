@@ -1,0 +1,398 @@
+{
+  "function": "t3dSetPolyhedronTag",
+  "original": "0x10018deb",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "polyhedron",
+      "type": "ptr"
+    },
+    {
+      "name": "tag",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "polyhedron": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "tagBuffer": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@tagBuffer"
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null tag clears an unregistered key and ignores higher flag bits",
+      "args": [
+        "@context",
+        "@polyhedron",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 254
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000100"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null tag removes a registered key before freeing it and clearing the field",
+      "args": [
+        "@context",
+        "@polyhedron",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 129
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000200"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation failure preserves a registered key without removing or freeing it",
+      "args": [
+        "@context",
+        "@polyhedron",
+        "new-tag"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 1
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000300"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "empty tag still allocates one byte and reports allocation failure",
+      "args": [
+        "@context",
+        "@polyhedron",
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 0
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "non-null tag replaces an unregistered key without dictionary lookup",
+      "args": [
+        "@context",
+        "@polyhedron",
+        "new-tag"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 254
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000400"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty non-null tag replaces a registered key when dictionary lookup finds it",
+      "args": [
+        "@context",
+        "@polyhedron",
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 1
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000500"
+        }
+      ],
+      "callees": {
+        "0x1000e7fe": {
+          "name": "t3dGetPointerFromDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": "0x0a000600"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered tag is added when dictionary lookup misses",
+      "args": [
+        "@context",
+        "@polyhedron",
+        "fresh"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 3
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000700"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered tag with a null old key still removes then adds on a miss",
+      "args": [
+        "@context",
+        "@polyhedron",
+        "replacement"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 1
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered tag remains unadded when dictionary lookup succeeds",
+      "args": [
+        "@context",
+        "@polyhedron",
+        "already-there"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 255
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": "0x0a000800"
+        }
+      ],
+      "callees": {
+        "0x1000e7fe": {
+          "name": "t3dGetPointerFromDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": "0x0a000900"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "long tag exercises the copied terminator and full allocation size",
+      "args": [
+        "@context",
+        "@polyhedron",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x0c",
+          "u8": 0
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x08",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 101867,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@polyhedron"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@polyhedron",
+        "offset": "0x0c",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          128,
+          255
+        ]
+      },
+      {
+        "addr": "@polyhedron",
+        "offset": "0x08",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x0a000100",
+          "0x0a000200",
+          "0x0a000300"
+        ]
+      }
+    ]
+  }
+}

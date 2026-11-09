@@ -1,0 +1,103 @@
+{
+  "function": "connection_sendv",
+  "original": "0x004f3570",
+  "sources": [
+    "src/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "u32"},
+    {"name": "param_5", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc", "u32": "@hash"},
+        {"offset": "0x4bc", "u16": 1},
+        {"offset": "0x620", "u32": 65536},
+        {"offset": "0x77c", "u32": 1}
+      ]
+    },
+    "hash": {"size": "0x80", "fill": "zero"},
+    "vecs": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "u32": "@buf0"},
+        {"offset": 8, "u32": "@buf1"}
+      ]
+    },
+    "buf0": {"size": "0xc801", "fill": "random"},
+    "buf1": {"size": "0x400", "fill": "random"},
+    "msg": {"size": "0x240", "fill": "zero"}
+  },
+  "callees": {
+    "0x004f51c0": {"name": "connhash_lock_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x004ef240": {"name": "rdp_unlock_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x004f48c0": {"name": "fast_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@msg"},
+    "0x004f7d50": {"name": "bitarray_setbit", "conv": "cdecl", "args": ["int", "int"], "ret": 0},
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 200, 300]},
+    "0x004f7eb0": {
+      "name": "msg_outgoing_init",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 40, "hex": "00000000"}]
+    },
+    "0x004f3000": {"name": "tx_enqueue_outgoing", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x004ef130": {"name": "rdp_resort", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "null connection", "args": [0, "@vecs", 0, 0, 0], "expect": {"ret": 6}},
+    {"name": "null vector pointer with zero count", "args": ["@conn", 0, 0, 0, 0], "expect": {"ret": 0}},
+    {"name": "sum exceeds fragmented maximum", "args": ["@conn", "@vecs", 1, 0, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 51201}], "expect": {"ret": 18}},
+    {"name": "nonfragmented size one over limit", "args": ["@conn", "@vecs", 1, 0, 0], "memory": [{"addr": "@vecs", "offset": 4, "u32": 513}], "expect": {"ret": 18}},
+    {"name": "invalid channel", "args": ["@conn", "@vecs", 0, 256, 0], "expect": {"ret": 6}},
+    {"name": "invalid flags", "args": ["@conn", "@vecs", 0, 0, 2], "expect": {"ret": 6}},
+    {"name": "closed connection", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 0}], "expect": {"ret": 13}},
+    {"name": "already sending", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x780", "u32": 1}], "expect": {"ret": 17}},
+    {"name": "send state error", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x770", "u32": 1}], "expect": {"ret": 16}},
+    {"name": "sequence window full", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x4bc", "u16": 2048}], "expect": {"ret": 15}},
+    {"name": "sequence window boundary 0x7ff", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x4bc", "u16": 2047}], "expect": {"ret": 0}},
+    {"name": "insufficient queued capacity", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x60c", "u32": 5}, {"addr": "@conn", "offset": "0x5f4", "u32": 4}, {"addr": "@conn", "offset": "0x5dc", "u32": 3}, {"addr": "@conn", "offset": "0x620", "u32": 11}], "expect": {"ret": 14}},
+    {"name": "capacity equality", "args": ["@conn", "@vecs", 0, 0, 0], "memory": [{"addr": "@conn", "offset": "0x60c", "u32": 5}, {"addr": "@conn", "offset": "0x5f4", "u32": 4}, {"addr": "@conn", "offset": "0x5dc", "u32": 3}, {"addr": "@conn", "offset": "0x620", "u32": 12}], "expect": {"ret": 0}},
+    {"name": "empty fragmented send", "args": ["@conn", "@vecs", 0, 1, 1], "expect": {"ret": 0}},
+    {"name": "nonfragmented 0x200 boundary", "args": ["@conn", "@vecs", 1, 3, 0], "memory": [{"addr": "@vecs", "offset": 4, "u32": 512}], "expect": {"ret": 0}},
+    {"name": "nonfragmented odd multiple vectors", "args": ["@conn", "@vecs", 2, 1, 0], "memory": [{"addr": "@vecs", "offset": 4, "u32": 3}, {"addr": "@vecs", "offset": 12, "u32": 4}], "expect": {"ret": 0}},
+    {"name": "fragment one byte", "args": ["@conn", "@vecs", 1, 0, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 1}], "expect": {"ret": 0}},
+    {"name": "fragment sequence crosses signed short boundary", "args": ["@conn", "@vecs", 1, 0, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 1}, {"addr": "@conn", "offset": "0x4b8", "u16": 32767}, {"addr": "@conn", "offset": "0x4bc", "u16": 32768}], "expect": {"ret": 0}},
+    {"name": "fragment 0x1ff boundary", "args": ["@conn", "@vecs", 1, 0, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 511}], "expect": {"ret": 0}},
+    {"name": "fragment 0x200 boundary", "args": ["@conn", "@vecs", 1, 0, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 512}], "expect": {"ret": 0}},
+    {"name": "fragment crosses vector boundary", "args": ["@conn", "@vecs", 2, 1, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 257}, {"addr": "@vecs", "offset": 12, "u32": 256}], "expect": {"ret": 0}},
+    {"name": "two fragment payload", "args": ["@conn", "@vecs", 1, 2, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 513}], "expect": {"ret": 0}},
+    {"name": "accepted fragmented maximum", "args": ["@conn", "@vecs", 1, 0, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 51200}], "expect": {"ret": 0}},
+    {"name": "malloc failure in second fragment", "args": ["@conn", "@vecs", 1, 1, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 513}], "callees": {"0x004f48c0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": ["@msg", 0]}}, "expect": {"ret": 2}},
+    {"name": "fragment channel sequence increment", "args": ["@conn", "@vecs", 1, 4, 1], "memory": [{"addr": "@vecs", "offset": 4, "u32": 513}, {"addr": "@conn", "offset": "0x754", "u8": 255}], "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 5191024,
+    "count": 36,
+    "args": [
+      {"choices": ["@conn"]},
+      {"choices": ["@vecs"]},
+      {"choices": [0, 1, 2]},
+      {"range": [0, 2]},
+      {"choices": [0, 1]}
+    ],
+    "memory": [
+      {"addr": "@vecs", "offset": 4, "type": "u32", "range": [0, 700]},
+      {"addr": "@vecs", "offset": 12, "type": "u32", "range": [0, 700]},
+      {"addr": "@conn", "offset": "0x77c", "type": "u32", "choices": [0, 1], "p": 0.12},
+      {"addr": "@conn", "offset": "0x780", "type": "u32", "choices": [0, 1], "p": 0.12},
+      {"addr": "@conn", "offset": "0x770", "type": "u32", "choices": [0, 1], "p": 0.12},
+      {"addr": "@conn", "offset": "0x4bc", "type": "u16", "range": [0, 2048], "p": 0.15},
+      {"addr": "@conn", "offset": "0x620", "type": "u32", "range": [0, 2048], "p": 0.15}
+    ]
+  }
+}

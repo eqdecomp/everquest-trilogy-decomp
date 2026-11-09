@@ -1,0 +1,230 @@
+{
+  "function": "AdjustReadPositionByDelta_guess",
+  "original": "0x004f9860",
+  "sources": [
+    "src/ffcreate2/ff/verify_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@pfs",
+  "args": [
+    {"name": "param_2", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "pfs": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf"}
+      ]
+    },
+    "buf": {
+      "size": "0x2024",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"},
+        {"offset": "0x4", "u32": 3},
+        {"offset": "0x2008", "u32": 262144},
+        {"offset": "0x200c", "u32": 256},
+        {"offset": "0x2010", "u32": 256},
+        {"offset": "0x2014", "u32": 4096},
+        {"offset": "0x2018", "u32": 0}
+      ]
+    },
+    "vt": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@fn"}
+      ]
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "name": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "Packfs.pak"}
+      ]
+    },
+    "owner": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@name"},
+        {"offset": "0xc", "u32": 1}
+      ]
+    },
+    "owner_off": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@name"},
+        {"offset": "0xc", "u32": 0}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006f035c", "u32": 0}
+  ],
+  "callees": {
+    "0x0052558e": {"name": "__lseek", "conv": "cdecl", "args": ["int", "long", "int"], "ret": 0},
+    "0x00525270": {"name": "__read", "conv": "cdecl", "args": ["int", "ignore", "int"], "ret": 4,
+                   "writes": [{"arg": 1, "offset": 0, "hex": "10000000"}]},
+    "0x004f8310": {"name": "_verify", "conv": "cdecl", "args": ["bool", "cstr", "cstr"]},
+    "0x0052525f": {"name": "__tell", "conv": "cdecl", "args": ["int"], "ret": 4660},
+    "@fn": {"name": "refill_guess", "conv": "thiscall", "args": [], "ret": 1}
+  },
+  "cases": [
+    {
+      "name": "fast path: newPos past end clamps pos to end",
+      "args": [262000]
+    },
+    {
+      "name": "fast path: newPos exactly end",
+      "args": [261888]
+    },
+    {
+      "name": "fast path signed: end is negative as int, unsigned compare would take the slow path",
+      "args": [1],
+      "memory": [{"addr": "@buf", "offset": "0x2008", "u32": 4294901760}]
+    },
+    {
+      "name": "same block forward: offset and pos move, tell read",
+      "args": [16]
+    },
+    {
+      "name": "same block: offset reaches last byte of block 0",
+      "args": [7935]
+    },
+    {
+      "name": "next block by one byte: no seek, no skip round",
+      "args": [16],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 8176}, {"addr": "@buf", "offset": "0x2010", "u32": 8176}]
+    },
+    {
+      "name": "two blocks forward: one skip round",
+      "args": [16384],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 0}]
+    },
+    {
+      "name": "three blocks forward: two skip rounds",
+      "args": [24592]
+    },
+    {
+      "name": "backward to block 1: seek to block base, no skip round",
+      "args": [-16384],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 24592}]
+    },
+    {
+      "name": "backward to block 2: seek to block base, one skip round",
+      "args": [-16384],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 32768}]
+    },
+    {
+      "name": "negative newPos clamps to zero, same block 0",
+      "args": [-512]
+    },
+    {
+      "name": "negative newPos clamps to zero, backward across blocks",
+      "args": [-32768],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 24592}]
+    },
+    {
+      "name": "wraparound: pos near 2^31 plus arg wraps negative",
+      "args": [32],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 2147483632}]
+    },
+    {
+      "name": "pos above 2^31 (negative int), arg small",
+      "args": [8],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 4294967280}]
+    },
+    {
+      "name": "pos at end, arg -1: back 31 blocks, 30 skip rounds",
+      "args": [-1],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 262144}]
+    },
+    {
+      "name": "DAT_006f035c full (0x40): no file/line record",
+      "args": [24592],
+      "memory": [{"addr": "0x006f035c", "u32": 64}]
+    },
+    {
+      "name": "DAT_006f035c = 5: file/line record at slot 5",
+      "args": [24592],
+      "memory": [{"addr": "0x006f035c", "u32": 5}]
+    },
+    {
+      "name": "owner null: verify gets null name",
+      "args": [24592]
+    },
+    {
+      "name": "owner with flag 0: verify gets null name",
+      "args": [24592],
+      "memory": [{"addr": "@buf", "offset": "0x2018", "u32": "@owner_off"}]
+    },
+    {
+      "name": "owner with flag 1: verify gets the owner name",
+      "args": [24592],
+      "memory": [{"addr": "@buf", "offset": "0x2018", "u32": "@owner"}]
+    },
+    {
+      "name": "refill returns 0: verify gets false",
+      "args": [24592],
+      "callees": {
+        "@fn": {"name": "refill_guess", "conv": "thiscall", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "refill returns -1: verify gets true",
+      "args": [24592],
+      "callees": {
+        "@fn": {"name": "refill_guess", "conv": "thiscall", "args": [], "ret": -1}
+      }
+    },
+    {
+      "name": "tell returns 0x5678 (stored at +0x2020), equal block path",
+      "args": [16],
+      "callees": {
+        "0x0052525f": {"name": "__tell", "conv": "cdecl", "args": ["int"], "ret": 22136}
+      }
+    },
+    {
+      "name": "equal block at block 1 start, arg 0",
+      "args": [0],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 8192}, {"addr": "@buf", "offset": "0x2010", "u32": 0}]
+    },
+    {
+      "name": "pos 0, arg 0: no-op in block 0",
+      "args": [0],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 0}]
+    },
+    {
+      "name": "pos equal to end, arg 0: fast path",
+      "args": [0],
+      "memory": [{"addr": "@buf", "offset": "0x200c", "u32": 262144}]
+    },
+    {
+      "name": "large negative arg clamps to zero, same block",
+      "args": [-100000]
+    }
+  ],
+  "fuzz": {
+    "seed": 5216352,
+    "count": 48,
+    "args": [
+      {"range": [-70000, 300000]}
+    ],
+    "memory": [
+      {"addr": "@buf", "offset": "0x2008", "type": "u32", "choices": [256, 8192, 262144, 2147483648, 4294901760, 4294967295]},
+      {"addr": "@buf", "offset": "0x200c", "type": "u32", "choices": [0, 256, 8176, 8192, 24576, 262144, 2147483632, 4294967280]},
+      {"addr": "@buf", "offset": "0x2010", "type": "u32", "range": [0, 8191]},
+      {"addr": "@buf", "offset": "0x2014", "type": "u32", "range": [0, 1000000]},
+      {"addr": "@buf", "offset": "0x2018", "type": "u32", "choices": ["@owner", "@owner_off", 0]},
+      {"addr": "0x006f035c", "type": "u32", "choices": [0, 5, 63, 64, 65]}
+    ]
+  }
+}

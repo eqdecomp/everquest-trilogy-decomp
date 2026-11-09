@@ -1,0 +1,146 @@
+{
+  "function": "t3dCreateZone",
+  "original": "0x1002055a",
+  "sources": [
+    "src/eqgfx/unit_1001E0E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "0x30004000"
+    },
+    "0x10019012": {
+      "name": "t3dInitReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x100191bd": {
+      "name": "t3dFreeReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation fails",
+      "args": ["@context"],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "reference-list initialization reports nonzero",
+      "args": ["@context"],
+      "callees": {
+        "0x10019012": {
+          "name": "t3dInitReferenceList",
+          "conv": "cdecl",
+          "args": ["ptr", "int"],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": "0x30004000"}
+    },
+    {
+      "name": "verification succeeds with prefilled fields",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x30004000", "offset": "0x0", "u32": 0},
+        {"addr": "0x30004000", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "0x30004000", "offset": "0xc", "u32": "0x80000001"}
+      ],
+      "expect": {"ret": "0x30004000"}
+    },
+    {
+      "name": "verification failure frees list and zone",
+      "args": ["@context"],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null context is passed through to verification",
+      "args": [0],
+      "expect": {"ret": "0x30004000"}
+    },
+    {
+      "name": "zero fields and boundary kind value",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x30004000", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "0x30004000", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "0x30004000", "offset": "0xc", "u32": "0xffffffff"},
+        {"addr": "0x30004000", "offset": "0x10", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": "0x30004000"}
+    }
+  ],
+  "fuzz": {
+    "seed": 132442,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x30004000", "size": 40}
+    ]
+  }
+}

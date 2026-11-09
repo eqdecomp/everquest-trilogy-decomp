@@ -1,0 +1,140 @@
+{
+  "function": "crc_msb_from_zero_guess",
+  "original": "0x1000e5b0",
+  "sources": [
+    "src/eqmain/unit_1000E5B0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "buf",
+      "type": "ptr"
+    },
+    {
+      "name": "len",
+      "type": "int"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "buf": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x1000e5d0": {
+      "name": "FUN_1000e5d0",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "ptr",
+        "int"
+      ],
+      "ret": 305419896
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: one byte, callee returns 0x12345678 (passed through in EAX)",
+      "args": [
+        "@buf",
+        1
+      ]
+    },
+    {
+      "name": "len 0: the callee is still called (no short cut), its 0 comes back",
+      "args": [
+        "@buf",
+        0
+      ],
+      "callees": {
+        "0x1000e5d0": {
+          "name": "FUN_1000e5d0",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "callee returns 0xffffffff: EAX passed through unchanged",
+      "args": [
+        "@buf",
+        5
+      ],
+      "callees": {
+        "0x1000e5d0": {
+          "name": "FUN_1000e5d0",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "ptr",
+            "int"
+          ],
+          "ret": 4294967295
+        }
+      }
+    },
+    {
+      "name": "null buf forwarded as is (the original never checks it)",
+      "args": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "negative len forwarded as int",
+      "args": [
+        "@buf",
+        -1
+      ]
+    },
+    {
+      "name": "INT_MAX len",
+      "args": [
+        "@buf",
+        2147483647
+      ]
+    },
+    {
+      "name": "INT_MIN len",
+      "args": [
+        "@buf",
+        -2147483648
+      ]
+    },
+    {
+      "name": "buf offset by one byte",
+      "args": [
+        "@buf+0x1",
+        7
+      ]
+    },
+    {
+      "name": "raw pointer outside the object",
+      "args": [
+        "0x7a0000",
+        4
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 58800,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@buf",
+          "@buf+0x1",
+          0
+        ]
+      },
+      {}
+    ]
+  }
+}

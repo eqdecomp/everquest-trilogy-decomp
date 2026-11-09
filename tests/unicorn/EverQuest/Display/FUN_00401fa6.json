@@ -1,0 +1,67 @@
+{
+  "function": "DestroyOwnedObjects_guess",
+  "original": "0x00401fa6",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "p",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "p": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0x11223344"},
+        {"offset": "0x4", "u32": "0x55667788"},
+        {"offset": "0x8", "u32": "0x99aabbcc"},
+        {"offset": "0xc", "u32": 0},
+        {"offset": "0x10", "u32": 0}
+      ]
+    },
+    "a": {"size": "0x20", "fill": "zero"},
+    "b": {"size": "0x20", "fill": "zero"}
+  },
+  "callees": {
+    "0x004039cc": {
+      "name": "FUN_004039cc",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x004020d7": {
+      "name": "ResetObjectState_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {"name": "both null", "args": ["@p"]},
+    {"name": "first only", "args": ["@p"], "memory": [{"addr": "@p", "offset": "0xc", "u32": "@a"}]},
+    {"name": "second only", "args": ["@p"], "memory": [{"addr": "@p", "offset": "0x10", "u32": "@b"}]},
+    {"name": "odd preserved word and unaligned cleanup pointers", "args": ["@p"], "memory": [{"addr": "@p", "offset": "0x4", "u32": "0xdeadbeef"}, {"addr": "@p", "offset": "0xc", "u32": "@a+1"}, {"addr": "@p", "offset": "0x10", "u32": "@b+1"}]},
+    {"name": "both distinct, order and all clears", "args": ["@p"], "memory": [{"addr": "@p", "offset": "0xc", "u32": "@a"}, {"addr": "@p", "offset": "0x10", "u32": "@b"}], "callees": {"0x005218bb": {"args": ["ptr"], "conv": "cdecl", "writes": [{"addr": "@p", "hex": "efbeadde"}, {"addr": "@p+0x4", "hex": "78563412"}]}}},
+    {"name": "same object in both slots", "args": ["@p"], "memory": [{"addr": "@p", "offset": "0xc", "u32": "@a"}, {"addr": "@p", "offset": "0x10", "u32": "@a"}]},
+    {"name": "first cleanup clears second slot before it is read", "args": ["@p"], "memory": [{"addr": "@p", "offset": "0xc", "u32": "@a"}, {"addr": "@p", "offset": "0x10", "u32": "@b"}], "callees": {"0x004039cc": {"conv": "thiscall", "args": [], "writes": [{"addr": "@p+0x10", "hex": "00000000"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4202406,
+    "count": 40,
+    "args": [{"choices": ["@p"]}],
+    "memory": [
+      {"addr": "@p", "offset": "0x0", "type": "u32", "choices": [0, 1, "0xdeadbeef"]},
+      {"addr": "@p", "offset": "0x4", "type": "u32", "choices": [0, 2, 3, "0xcafebabe"]},
+      {"addr": "@p", "offset": "0xc", "type": "ptr", "choices": [0, "@a", "@b"]},
+      {"addr": "@p", "offset": "0x10", "type": "ptr", "choices": [0, "@a", "@b"]}
+    ]
+  }
+}

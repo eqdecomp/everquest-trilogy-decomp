@@ -1,0 +1,104 @@
+{
+  "function": "Create3DSceneFrames_guess",
+  "original": "0x004e3f12",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "unused_edx", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "sceneA": {"size": "0x0c", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@rm"},
+      {"offset": "0x4", "u32": "@rootA"},
+      {"offset": "0x8", "u32": "@cameraA"}
+    ]},
+    "sceneB": {"size": "0x0c", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@rm"},
+      {"offset": "0x4", "u32": "@rootB"},
+      {"offset": "0x8", "u32": "@cameraB"}
+    ]},
+    "sceneC": {"size": "0x0c", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@rm"},
+      {"offset": "0x4", "u32": "@rootC"},
+      {"offset": "0x8", "u32": "@cameraC"}
+    ]},
+    "rm": {"size": "0x4", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@rmVtable"}
+    ]},
+    "rmVtable": {"size": "0x14", "fill": "zero", "init": [
+      {"offset": "0x10", "u32": "@createFrameFn"}
+    ]},
+    "rootA": {"size": "0x4", "fill": "zero"},
+    "rootB": {"size": "0x4", "fill": "zero"},
+    "rootC": {"size": "0x4", "fill": "zero"},
+    "cameraA": {"size": "0x4", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@frameVtable"}
+    ]},
+    "cameraB": {"size": "0x4", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@frameVtable"}
+    ]},
+    "cameraC": {"size": "0x4", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@frameVtable"}
+    ]},
+    "frameVtable": {"size": "0x6c", "fill": "zero", "init": [
+      {"offset": "0x68", "u32": "@addChildFn"}
+    ]},
+    "createFrameFn": {"size": "0x4", "fill": "zero"},
+    "addChildFn": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x00501480": {"name": "Direct3DRMCreate", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+    "0x00522dad": {"name": "_exit", "conv": "stdcall", "args": ["int"], "ret": 0},
+    "@createFrameFn": {"name": "IDirect3DRM::CreateFrame", "conv": "stdcall", "args": ["ptr", "ptr", "ptr"], "ret": 0},
+    "@addChildFn": {"name": "IDirect3DRMFrame::AddChild", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0}
+  },
+  "rewrite_aliases": {
+    "_exit": "0x00522dad"
+  },
+  "cases": [
+    {"name": "success zero HRESULTs and root-before-camera order", "args": ["@sceneA", 0]},
+    {"name": "positive HRESULTs and distinct output addresses", "args": ["@sceneB", 7], "callees": {
+      "0x00501480": {"name": "Direct3DRMCreate", "conv": "stdcall", "args": ["ptr"], "ret": 1},
+      "@createFrameFn": {"name": "IDirect3DRM::CreateFrame", "conv": "stdcall", "args": ["ptr", "ptr", "ptr"], "ret": 1}
+    }},
+    {"name": "Direct3DRMCreate negative HRESULT", "args": ["@sceneC", -1], "callees": {
+      "0x00501480": {"name": "Direct3DRMCreate", "conv": "stdcall", "args": ["ptr"], "ret": -1},
+      "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+      "0x00522dad": {"name": "_exit", "conv": "stdcall", "args": ["int"], "ret": 0},
+      "@createFrameFn": {"name": "IDirect3DRM::CreateFrame", "conv": "stdcall", "args": ["ptr", "ptr", "ptr"], "ret": 0},
+      "@addChildFn": {"name": "IDirect3DRMFrame::AddChild", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0}
+    }},
+    {"name": "Direct3DRMCreate minimum signed HRESULT", "args": ["@sceneA", 2147483647], "callees": {
+      "0x00501480": {"name": "Direct3DRMCreate", "conv": "stdcall", "args": ["ptr"], "ret": -2147483648},
+      "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+      "0x00522dad": {"name": "_exit", "conv": "stdcall", "args": ["int"], "ret": 0},
+      "@createFrameFn": {"name": "IDirect3DRM::CreateFrame", "conv": "stdcall", "args": ["ptr", "ptr", "ptr"], "ret": 0},
+      "@addChildFn": {"name": "IDirect3DRMFrame::AddChild", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0}
+    }},
+    {"name": "CreateFrame negative HRESULT", "args": ["@sceneB", -1], "callees": {
+      "0x00501480": {"name": "Direct3DRMCreate", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+      "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+      "0x00522dad": {"name": "_exit", "conv": "stdcall", "args": ["int"], "ret": 0},
+      "@createFrameFn": {"name": "IDirect3DRM::CreateFrame", "conv": "stdcall", "args": ["ptr", "ptr", "ptr"], "ret": -1},
+      "@addChildFn": {"name": "IDirect3DRMFrame::AddChild", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0}
+    }},
+    {"name": "Null root frame value passed through", "args": ["@sceneC", 0], "memory": [
+      {"addr": "@sceneC", "offset": "0x4", "u32": 0}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 5127954,
+    "count": 40,
+    "args": [
+      {"choices": ["@sceneA", "@sceneB", "@sceneC"]},
+      {"choices": [-2147483648, -1, 0, 1, 2147483647]}
+    ],
+    "memory": []
+  }
+}

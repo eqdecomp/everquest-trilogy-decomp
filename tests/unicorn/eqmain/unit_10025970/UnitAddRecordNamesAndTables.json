@@ -1,0 +1,163 @@
+{
+  "function": "UnitAddRecordNamesAndTables_guess",
+  "original": "0x10025cd0",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unused_edx", "type": "int"},
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "u32"},
+    {"name": "param_4", "type": "u32"},
+    {"name": "param_5", "type": "u32"}
+  ],
+  "ret": "short",
+  "objects": {
+    "rec": {"size": "0x8000", "fill": "random"},
+    "pool": {"size": "0x400", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@pool", "offset": "0x10", "cstr": "a"},
+    {"addr": "@pool", "offset": "0x20", "cstr": "ab"},
+    {"addr": "@pool", "offset": "0x30", "cstr": "abc"},
+    {"addr": "@pool", "offset": "0x40", "cstr": "abcd"},
+    {"addr": "@pool", "offset": "0x50", "cstr": "abcde"},
+    {"addr": "@pool", "offset": "0x60", "cstr": "abcdef"},
+    {"addr": "@pool", "offset": "0x70", "cstr": "abcdefg"},
+    {"addr": "@pool", "offset": "0x80", "cstr": "abcdefgh"},
+    {"addr": "@pool", "offset": "0xE0", "cstr": "012345678901234567890123456789012345678901234567"},
+    {"addr": "@pool", "offset": "0x120", "cstr": "012345678901234567890123456789012345678901234567890123456789012"},
+    {"addr": "@pool", "offset": "0x180", "cstr": "0123456789012345678901234567890123456789012345678901234567890123"},
+    {"addr": "@pool", "offset": "0x200", "cstr": "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"}
+  ],
+  "cases": [
+    {
+      "name": "count 0, both strings: slots 0 and 100, tables at index 0",
+      "args": ["@rec", 0, "@pool+0x30", "@pool+0x20", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 0}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "full: count 100 returns 100 and writes nothing (flag kept)",
+      "args": ["@rec", 0, "@pool+0x30", "@pool+0x20", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 100}, {"addr": "@rec", "offset": "0x36B4", "u8": 90}],
+      "expect": {"ret": 100}
+    },
+    {
+      "name": "count 99: slots 99 and 199, count reaches 100",
+      "args": ["@rec", 0, "@pool+0x30", "@pool+0x20", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 99}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 99}
+    },
+    {
+      "name": "count 0, both NULL: tables and count only",
+      "args": ["@rec", 0, 0, 0, "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 0}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 5: first NULL, second copied to slot 105",
+      "args": ["@rec", 0, 0, "@pool+0x40", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 5}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "count 7: first copied to slot 7, second NULL",
+      "args": ["@rec", 0, "@pool+0x70", 0, "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 7}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "count 3: empty strings copy just the NUL",
+      "args": ["@rec", 0, "@pool", "@pool", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 3}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "count 10: 5 and 8 bytes copied (dword run plus byte tail)",
+      "args": ["@rec", 0, "@pool+0x40", "@pool+0x70", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 10}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 10}
+    },
+    {
+      "name": "count 12: 6 and 7 bytes copied (dword run plus byte tail)",
+      "args": ["@rec", 0, "@pool+0x50", "@pool+0x60", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 12}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 12}
+    },
+    {
+      "name": "count 20: 64 chars, the NUL lands in the next record",
+      "args": ["@rec", 0, "@pool+0x180", 0, "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 20}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 20}
+    },
+    {
+      "name": "count 30: 63 chars fill their record exactly",
+      "args": ["@rec", 0, 0, "@pool+0x120", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 30}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 30}
+    },
+    {
+      "name": "count 118: the copied NUL zeroes the count word, stores use index 0",
+      "args": ["@rec", 0, 0, "@pool+0xE0", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 118}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 101: table3[101] is the flag byte, the flag store comes last",
+      "args": ["@rec", 0, 0, 0, "0x11111111", "0x22222222", "0x12345678"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 101}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 101}
+    },
+    {
+      "name": "count 105: 121-byte copy runs under table1[105], the store wins",
+      "args": ["@rec", 0, 0, "@pool+0x200", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 105}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 105}
+    },
+    {
+      "name": "count 300: table1[300] is the count word, later stores re-read it",
+      "args": ["@rec", 0, "@pool+0x30", 0, 5, "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 300}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "count 256: count read as u16 (high byte set)",
+      "args": ["@rec", 0, "@pool+0x30", "@pool+0x20", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 256}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 256}
+    },
+    {
+      "name": "count 117: 63 and 64 chars in the top slots, below the count word",
+      "args": ["@rec", 0, "@pool+0x120", "@pool+0x180", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 117}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 117}
+    },
+    {
+      "name": "count 99: 64-char second copy overflows its NUL into table1[0]",
+      "args": ["@rec", 0, 0, "@pool+0x180", "0x11111111", "0x22222222", "0x33333333"],
+      "memory": [{"addr": "@rec", "offset": "0x36B0", "u16": 99}, {"addr": "@rec", "offset": "0x36B4", "u8": 0}],
+      "expect": {"ret": 99}
+    }
+  ],
+  "fuzz": {
+    "seed": 1025,
+    "count": 40,
+    "args": [
+      {"choices": ["@rec"]},
+      {},
+      {"choices": ["0x0", "@pool", "@pool+0x10", "@pool+0x20", "@pool+0x30", "@pool+0x40", "@pool+0x50", "@pool+0x60", "@pool+0x70", "@pool+0x80", "@pool+0x120", "@pool+0x180"]},
+      {"choices": ["0x0", "@pool", "@pool+0x10", "@pool+0x20", "@pool+0x30", "@pool+0x40", "@pool+0x50", "@pool+0x60", "@pool+0x70", "@pool+0x80", "@pool+0x120", "@pool+0x180"]},
+      {},
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "@rec", "offset": "0x36B0", "type": "u16", "choices": [0, 1, 2, 7, 50, 98, 99, 100, 100, 100, 101, 117, 150, 256]},
+      {"addr": "@rec", "offset": "0x36B4", "type": "u8", "range": [0, 255]}
+    ]
+  }
+}

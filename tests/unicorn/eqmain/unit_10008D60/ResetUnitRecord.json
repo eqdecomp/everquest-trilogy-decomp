@@ -1,0 +1,325 @@
+{
+  "function": "ResetUnitRecord_guess",
+  "original": "0x1000bde0",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rec",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rec": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": "@unit"
+        }
+      ]
+    },
+    "unit": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": 1
+        },
+        {
+          "offset": "0x14",
+          "u32": "@sub"
+        }
+      ]
+    },
+    "sub": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000a3e0": {
+      "name": "FUN_1000a3e0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: unit count 1 sets the flag to 7 and calls FUN_1000a3e0(sub, rec, 0)",
+      "args": [
+        "@rec"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit count 0 sets the flag to 0",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit count 0x100: low byte zero, still nonzero",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0xc",
+          "u32": "0x100"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit count 0x10000: low word zero, still nonzero",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0xc",
+          "u32": "0x10000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit count 0x80000000: sign bit only, still nonzero",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0xc",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit count 0xffffffff",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0xc",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "old flag word 0xffffffff with count 0: overwritten with 0",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0x0",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@unit",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit +0x14 null: callee gets a null first argument",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeroed record and unit: flag 0, callee gets sub",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "size": 32,
+          "fill": "zero"
+        },
+        {
+          "addr": "@rec",
+          "offset": "0x1c",
+          "u32": "@unit"
+        },
+        {
+          "addr": "@unit",
+          "size": 32,
+          "fill": "zero"
+        },
+        {
+          "addr": "@unit",
+          "offset": "0x14",
+          "u32": "@sub"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit is the record: callee gets the record's +0x14, cleared before the read",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x1c",
+          "u32": "@rec"
+        },
+        {
+          "addr": "@rec",
+          "offset": "0xc",
+          "u32": 5
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit null: -2 and the record is left alone",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "record null: -2",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": -2
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 48608,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rec",
+          "@rec",
+          "@rec",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rec",
+        "offset": "0x1c",
+        "type": "u32",
+        "choices": [
+          "@unit",
+          "@unit",
+          "@unit",
+          0
+        ]
+      },
+      {
+        "addr": "@unit",
+        "offset": "0xc",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          "0x100",
+          "0x10000",
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@unit",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [
+          "@sub",
+          "@sub",
+          0
+        ]
+      },
+      {
+        "addr": "@unit",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          "0xffffffff",
+          "0xdeadbeef"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "function": "t3dSetCameraRenderWindow",
+  "original": "0x10049b2f",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "camera",
+      "type": "ptr"
+    },
+    {
+      "name": "window",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "camera": {
+      "size": "0x60",
+      "fill": "random"
+    },
+    "window": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 10},
+        {"offset": "0x4", "u32": 20},
+        {"offset": "0x8", "u32": 110},
+        {"offset": "0xc", "u32": 220}
+      ]
+    },
+    "SetViewport": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "device": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"}
+      ]
+    },
+    "vtable": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x34", "u32": "@SetViewport"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100FB8A8", "u32": 1},
+    {"addr": "0x100FBA6C", "u32": "@device"}
+  ],
+  "callees": {
+    "0x100682d0": {"name": "_memset", "conv": "cdecl", "args": ["ignore", "int", "int"], "passthrough": true},
+    "@SetViewport": {"name": "IDirect3DDevice7::SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "typical: render mode 1 sets the viewport",
+      "args": ["@camera", "@window"]
+    },
+    {
+      "name": "render mode 0: camera only",
+      "args": ["@camera", "@window"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 0}]
+    },
+    {
+      "name": "render mode 2: camera only",
+      "args": ["@camera", "@window"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "render mode -1: camera only",
+      "args": ["@camera", "@window"],
+      "memory": [{"addr": "0x100FB8A8", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "render mode 0x80000001: camera only (DEC is not zero)",
+      "args": ["@camera", "@window"],
+      "memory": [{"addr": "0x100FB8A8", "u32": "0x80000001"}]
+    },
+    {
+      "name": "zero window in render mode 1",
+      "args": ["@camera", "@window"],
+      "memory": [
+        {"addr": "@window", "offset": "0x0", "u32": 0},
+        {"addr": "@window", "offset": "0x4", "u32": 0},
+        {"addr": "@window", "offset": "0x8", "u32": 0},
+        {"addr": "@window", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "negative window in render mode 1",
+      "args": ["@camera", "@window"],
+      "memory": [
+        {"addr": "@window", "offset": "0x0", "u32": "0xffffffce"},
+        {"addr": "@window", "offset": "0x4", "u32": "0xffffffe2"},
+        {"addr": "@window", "offset": "0x8", "u32": 40},
+        {"addr": "@window", "offset": "0xc", "u32": 70}
+      ]
+    },
+    {
+      "name": "reversed window (right < left, bottom < top) in render mode 1",
+      "args": ["@camera", "@window"],
+      "memory": [
+        {"addr": "@window", "offset": "0x0", "u32": 100},
+        {"addr": "@window", "offset": "0x4", "u32": 200},
+        {"addr": "@window", "offset": "0x8", "u32": 10},
+        {"addr": "@window", "offset": "0xc", "u32": 20}
+      ]
+    },
+    {
+      "name": "extreme window (INT_MIN/INT_MAX, wrapping sizes) in render mode 1",
+      "args": ["@camera", "@window"],
+      "memory": [
+        {"addr": "@window", "offset": "0x0", "u32": "0x80000000"},
+        {"addr": "@window", "offset": "0x4", "u32": "0x7fffffff"},
+        {"addr": "@window", "offset": "0x8", "u32": "0x7fffffff"},
+        {"addr": "@window", "offset": "0xc", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "window needing float rounding in render mode 1",
+      "args": ["@camera", "@window"],
+      "memory": [
+        {"addr": "@window", "offset": "0x0", "u32": "0x12345679"},
+        {"addr": "@window", "offset": "0x4", "u32": "0x01000001"},
+        {"addr": "@window", "offset": "0x8", "u32": "0x01000003"},
+        {"addr": "@window", "offset": "0xc", "u32": "0x00ffffff"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 301871,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@camera"
+        ]
+      },
+      {
+        "choices": [
+          "@window"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@window", "type": "int", "count": 4},
+      {"addr": "0x100FB8A8", "type": "int", "choices": [0, 1, 1, 2, 3, -1, 2147483647, -2147483647]}
+    ]
+  }
+}

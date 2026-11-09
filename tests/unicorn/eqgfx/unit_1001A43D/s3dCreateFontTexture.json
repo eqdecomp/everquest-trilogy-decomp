@@ -1,0 +1,73 @@
+{
+  "function": "s3dCreateFontTexture",
+  "original": "0x1001A46C",
+  "sources": ["src/eqgfx/unit_1001A43D.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "renderer", "type": "ptr"},
+    {"name": "textureName", "type": "cstr"},
+    {"name": "fontName", "type": "ptr"},
+    {"name": "fontHeight", "type": "u32"},
+    {"name": "minChar", "type": "int"},
+    {"name": "maxChar", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "renderer": {"size": "0x100", "fill": "random"},
+    "fontname": {"size": "0x100", "fill": "random"},
+    "texture": {"size": "0x30", "fill": "random"},
+    "namecopy": {"size": "0x100", "fill": "random"},
+    "buffer24": {"size": "0x100", "fill": "random"},
+    "buffer28": {"size": "0x100", "fill": "random"},
+    "buffer20": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@texture", "@namecopy", "@buffer24", "@buffer28", "@buffer20"]
+    },
+    "0x1001a5b0": {
+      "name": "s3dCreateFontTextureBMInfo",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr", "u32"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 44, "hex": "80620710"}]
+    },
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x10017ce8": {"name": "t3dShareObject", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {"name": "first allocation fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": [0]}}},
+    {"name": "name allocation fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@texture", 0]}}},
+    {"name": "first glyph array allocation fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@texture", "@namecopy", 0]}}},
+    {"name": "second glyph array allocation fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@texture", "@namecopy", "@buffer24", 0]}}},
+    {"name": "third glyph array allocation fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@texture", "@namecopy", "@buffer24", "@buffer28", 0]}}},
+    {"name": "font texture population fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x1001a5b0": {"name": "FUN_1001a5b0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr", "u32"], "ret": 1, "writes": [{"arg": 1, "offset": 44, "hex": "80620710"}]}}},
+    {"name": "validation fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}}},
+    {"name": "dictionary insertion fails", "args": ["@renderer", "abc", "@fontname", 12, 32, 126], "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}}},
+    {"name": "successful named font", "args": ["@renderer", "abc", "@fontname", 12, 32, 126]},
+    {"name": "successful unnamed font skips dictionary", "args": ["@renderer", 0, "@fontname", 12, 32, 126]},
+    {"name": "empty name and one character", "args": ["@renderer", "", "@fontname", 0, 0, 0]},
+    {"name": "reversed character bounds retain signed size arithmetic", "args": ["@renderer", "abc", "@fontname", "0xffffffff", 5, 3]},
+    {"name": "wide character range", "args": ["@renderer", "font", "@fontname", 24, 0, 255]}
+  ],
+  "fuzz": {
+    "seed": 107628,
+    "count": 36,
+    "args": [
+      {"choices": ["@renderer"]},
+      {},
+      {"choices": ["@fontname"]},
+      {"choices": [0, 1, 12, 24, 255, "0xffffffff"]},
+      {"choices": [-1, 0, 1, 31, 127, 255, 256]},
+      {"choices": [-1, 0, 1, 31, 127, 255, 256]}
+    ],
+    "memory": []
+  }
+}

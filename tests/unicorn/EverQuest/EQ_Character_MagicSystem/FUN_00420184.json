@@ -1,0 +1,77 @@
+{
+  "function": "eqspa_locate_corpse",
+  "original": "0x00420184",
+  "sources": ["src/EverQuest/EQ_Character_MagicSystem.cpp"],
+  "conv": "fastcall",
+  "args": [{"name": "param_1", "type": "ptr"}, {"name": "edx_unused", "type": "int"}],
+  "ret": "void",
+  "objects": {
+    "param_1": {"size": "0x100", "fill": "zero"},
+    "local": {"size": "0x134", "fill": "zero"},
+    "everquest": {"size": "0x40", "fill": "zero"},
+    "target": {"size": "0x134", "fill": "zero"},
+    "head": {"size": "0x134", "fill": "zero"},
+    "c0": {"size": "0x134", "fill": "zero"},
+    "c1": {"size": "0x134", "fill": "zero"},
+    "near": {"size": "0x134", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4dac", "u32": 0},
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006e4d58", "u32": "@head"},
+    {"addr": "@param_1", "offset": "0xa0", "u32": "@local"},
+    {"addr": "@local", "offset": "0x34", "f32": 100.0},
+    {"addr": "@local", "offset": "0x38", "f32": 200.0},
+    {"addr": "@local", "offset": "0x40", "f32": 0.0},
+    {"addr": "@target", "offset": "0x1", "cstr": "orc"},
+    {"addr": "@target", "offset": "0x34", "f32": 120.0},
+    {"addr": "@target", "offset": "0x38", "f32": 220.0},
+    {"addr": "@head", "offset": "0x1", "cstr": "merchant"},
+    {"addr": "@head", "offset": "0x68", "u32": "@c0"},
+    {"addr": "@head", "offset": "0x98", "u8": 1},
+    {"addr": "@c0", "offset": "0x1", "cstr": "orc corpse"},
+    {"addr": "@c0", "offset": "0x34", "f32": 110.0},
+    {"addr": "@c0", "offset": "0x38", "f32": 205.0},
+    {"addr": "@c0", "offset": "0x68", "u32": "@c1"},
+    {"addr": "@c0", "offset": "0x98", "u8": 2},
+    {"addr": "@c1", "offset": "0x1", "cstr": "dragon corpse"},
+    {"addr": "@c1", "offset": "0x34", "f32": 90.0},
+    {"addr": "@c1", "offset": "0x38", "f32": 190.0},
+    {"addr": "@c1", "offset": "0x68", "u32": 0},
+    {"addr": "@c1", "offset": "0x98", "u8": 3},
+    {"addr": "@near", "offset": "0x1", "cstr": "near corpse"},
+    {"addr": "@near", "offset": "0x34", "f32": 75.0},
+    {"addr": "@near", "offset": "0x38", "f32": 175.0}
+  ],
+  "callees": {
+    "0x004d055e": {"name": "dsp_chat", "conv": "thiscall", "args": ["cstr", "int"]},
+    "0x004228e2": {"name": "FindClosest", "conv": "thiscall", "args": ["int", "int", "int", "int"], "ret": 0},
+    "0x004a47f9": {"name": "get_bearing", "conv": "cdecl", "args": ["float", "float", "float", "float"], "ret_float": 1.25},
+    "0x005223d0": {"name": "strlen", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x005316c0": {"name": "strnicmp", "conv": "cdecl", "args": ["cstr", "cstr", "int"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "no target and no closest corpse", "args": ["@param_1", 1], "callees": {"0x004228e2": {"name": "FindClosest", "conv": "thiscall", "args": ["int", "int", "int", "int"], "ret": 0}}},
+    {"name": "closest corpse found", "args": ["@param_1", 2], "callees": {"0x004228e2": {"name": "FindClosest", "conv": "thiscall", "args": ["int", "int", "int", "int"], "ret": "@near"}}},
+    {"name": "existing target with empty spawn list", "args": ["@param_1", 3], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "0x006e4d58", "u32": 0}]},
+    {"name": "skip noncorpse and miss both names", "args": ["@param_1", 4], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@c0", "offset": "0x1", "cstr": "zebra"}, {"addr": "@c1", "offset": "0x1", "cstr": "dragon"}]},
+    {"name": "case insensitive corpse prefix type two", "args": ["@param_1", 5], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@target", "offset": "0x1", "cstr": "OrC"}, {"addr": "@c0", "offset": "0x1", "cstr": "oRc corpse"}]},
+    {"name": "corpse type three prefix match", "args": ["@param_1", 6], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@c0", "offset": "0x98", "u8": 1}, {"addr": "@c1", "offset": "0x1", "cstr": "ORC corpse"}]},
+    {"name": "first duplicate corpse wins", "args": ["@param_1", 7], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@c1", "offset": "0x1", "cstr": "orc corpse"}]},
+    {"name": "empty target matches first corpse", "args": ["@param_1", 8], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@target", "offset": "0x1", "cstr": ""}]},
+    {"name": "candidate shorter than target", "args": ["@param_1", 9], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@target", "offset": "0x1", "cstr": "orcman"}, {"addr": "@c0", "offset": "0x1", "cstr": "orc"}, {"addr": "@c1", "offset": "0x1", "cstr": "dragon"}]},
+    {"name": "all spawn types are noncorpses", "args": ["@param_1", 10], "memory": [{"addr": "0x006e4dac", "u32": "@target"}, {"addr": "@c0", "offset": "0x98", "u8": 1}, {"addr": "@c1", "offset": "0x98", "u8": 0}]},
+    {"name": "unaligned target read witness", "args": ["@param_1", 11], "memory": [{"addr": "0x006e4dac", "u32": 0}, {"addr": "0x006e4d58", "u32": 0}, {"addr": "0x006e4db0", "u8": 1}]}
+  ],
+  "fuzz": {
+    "seed": 4325764,
+    "count": 34,
+    "args": [{"choices": ["@param_1"]}, {}],
+    "memory": [
+      {"addr": "0x006e4dac", "type": "ptr", "choices": [0, "@target"]},
+      {"addr": "@c0", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3]},
+      {"addr": "@target", "offset": "0x1", "type": "u8", "range": [65, 122]},
+      {"addr": "@c0", "offset": "0x1", "type": "u8", "range": [65, 122]}
+    ]
+  }
+}

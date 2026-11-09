@@ -1,0 +1,251 @@
+{
+  "function": "cmd_afk_guess",
+  "original": "0x004a9c33",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "pl": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "eq": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "conn": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@pl"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": "@conn"
+    },
+    {
+      "addr": "@pl",
+      "offset": "0x80",
+      "u32": 4660
+    },
+    {
+      "addr": "@pl",
+      "offset": "0x104",
+      "u32": 0
+    },
+    {
+      "addr": "0x006e1f50",
+      "size": 32,
+      "fill": "random"
+    }
+  ],
+  "callees": {
+    "0x004b2548": {
+      "name": "EQPlayer::SetAfk_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:12",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "afk exact, afk off",
+      "args": [0, "afk"]
+    },
+    {
+      "name": "afk exact, afk on",
+      "args": [0, "afk"],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "mixed case with away text",
+      "args": [0, "AfK back soon"]
+    },
+    {
+      "name": "two characters: not afk, copied",
+      "args": [0, "af"]
+    },
+    {
+      "name": "text, afk off",
+      "args": [0, "hello there"]
+    },
+    {
+      "name": "text, afk on",
+      "args": [0, "hello there"],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "empty, afk 0 toggles on",
+      "args": [0, ""]
+    },
+    {
+      "name": "empty, afk 1 toggles off",
+      "args": [0, ""],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "empty, afk -1 gives 2",
+      "args": [0, ""],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "hex": "ffffffff"
+        }
+      ]
+    },
+    {
+      "name": "empty, afk 5 gives -4",
+      "args": [0, ""],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "afk prefix with afk 2 (print now)",
+      "args": [0, "afk"],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "param_1 unused",
+      "args": [77, "afk"]
+    },
+    {
+      "name": "afk prefix with spawn id zero",
+      "args": [0, "afkk"],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x80",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "strnicmp match, afk off: no away text, clears it",
+      "args": [0, "afk"],
+      "callees": {"0x005316c0": {"name": "__strnicmp", "conv": "cdecl", "args": ["cstr", "cstr", "int"], "ret": 0}}
+    },
+    {
+      "name": "strnicmp match, afk on: away text not copied",
+      "args": [0, "AFK back soon"],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x104",
+          "u32": 1
+        }
+      ],
+      "callees": {"0x005316c0": {"name": "__strnicmp", "conv": "cdecl", "args": ["cstr", "cstr", "int"], "ret": 0}}
+    }
+  ],
+  "fuzz": {
+    "seed": 4889651,
+    "count": 60,
+    "args": [
+      {
+        "range": [-4, 8]
+      },
+      {
+        "choices": [
+          "afk",
+          "AFK",
+          "Afk now",
+          "af",
+          "a",
+          "",
+          "hello",
+          "afkk",
+          "xfk",
+          " afk"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@pl",
+        "offset": "0x104",
+        "type": "int",
+        "range": [-2, 3]
+      },
+      {
+        "addr": "@pl",
+        "offset": "0x80",
+        "type": "u32",
+        "range": [0, 100000]
+      },
+      {
+        "addr": "0x006e1f50",
+        "size": 32
+      }
+    ]
+  }
+}

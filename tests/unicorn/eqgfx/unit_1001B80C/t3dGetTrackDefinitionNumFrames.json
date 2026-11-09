@@ -1,0 +1,105 @@
+{
+  "function": "t3dGetTrackDefinitionNumFrames",
+  "original": "0x1001ce0d",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@instance"},
+        {"offset": "0x18", "u32": "@fallback"}
+      ]
+    },
+    "instance": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 37}
+      ]
+    },
+    "fallback": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 5}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "instance list used",
+      "args": [
+        "@definition"
+      ],
+      "expect": {
+        "ret": 37
+      }
+    },
+    {
+      "name": "fallback list while instance list is null",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0}
+      ],
+      "expect": {
+        "ret": 5
+      }
+    },
+    {
+      "name": "zero frames in instance list",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@instance", "u32": 0}
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative frames in fallback list",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback", "u32": "0xffffffff"}
+      ],
+      "expect": {
+        "ret": -1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 118285,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": ["@instance", 0]},
+      {"addr": "@instance", "offset": "0x0", "type": "int", "range": [-4, 300]},
+      {"addr": "@fallback", "offset": "0x0", "type": "int", "range": [-4, 300]}
+    ]
+  }
+}

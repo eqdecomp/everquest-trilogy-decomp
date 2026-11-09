@@ -1,0 +1,185 @@
+{
+  "function": "EQ_PC_guess::~EQ_PC_guess",
+  "original": "0x0047ef27",
+  "sources": [
+    "src/EverQuest/EQ_PC.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_pc",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eq_pc": {
+      "size": "0xf64",
+      "fill": "zero"
+    },
+    "container": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x81", "u8": 1 }
+      ]
+    },
+    "plain_item": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x81", "u8": 0 }
+      ]
+    },
+    "other_item": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x81", "u8": 2 }
+      ]
+    },
+    "ff_item": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x81", "u8": 255 }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x0043405a": {
+      "name": "EQ_Container::~EQ_Container_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004803ef": {
+      "name": "EQ_PC::InitializeInventorySlots_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004197ff": {
+      "name": "EQ_Character::~EQ_Character_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "all-slots-empty",
+      "args": []
+    },
+    {
+      "name": "first-array-first-slot-container",
+      "args": [],
+      "memory": [
+        { "addr": "@eq_pc", "offset": "0xe0", "u32": "@container" }
+      ]
+    },
+    {
+      "name": "first-array-last-slot-plain",
+      "args": [],
+      "memory": [
+        { "addr": "@eq_pc", "offset": "0x154", "u32": "@plain_item" }
+      ]
+    },
+    {
+      "name": "second-array-first-slot-other-type",
+      "args": [],
+      "memory": [
+        { "addr": "@eq_pc", "offset": "0xf44", "u32": "@other_item" }
+      ]
+    },
+    {
+      "name": "second-array-last-slot-container",
+      "args": [],
+      "memory": [
+        { "addr": "@eq_pc", "offset": "0xf60", "u32": "@container" }
+      ]
+    },
+    {
+      "name": "type-byte-ff-skips-container-dtor",
+      "args": [],
+      "memory": [
+        { "addr": "@eq_pc", "offset": "0xe0", "u32": "@ff_item" },
+        { "addr": "@eq_pc", "offset": "0xf44", "u32": "@plain_item" }
+      ]
+    },
+    {
+      "name": "ordering-across-both-loops-and-reinitialize",
+      "args": [],
+      "memory": [
+        { "addr": "@eq_pc", "offset": "0xe0", "u32": "@plain_item" },
+        { "addr": "@eq_pc", "offset": "0xe4", "u32": "@container" },
+        { "addr": "@eq_pc", "offset": "0x154", "u32": "@other_item" },
+        { "addr": "@eq_pc", "offset": "0xf44", "u32": "@container" },
+        { "addr": "@eq_pc", "offset": "0xf48", "u32": "@plain_item" },
+        { "addr": "@eq_pc", "offset": "0xf60", "u32": "@ff_item" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4714279,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@eq_pc",
+        "offset": "0xe0",
+        "type": "ptr",
+        "choices": [0, "@container", "@plain_item", "@other_item", "@ff_item"],
+        "count": 30
+      },
+      {
+        "addr": "@eq_pc",
+        "offset": "0xf44",
+        "type": "ptr",
+        "choices": [0, "@container", "@plain_item", "@other_item", "@ff_item"],
+        "count": 8
+      },
+      {
+        "addr": "@container",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [0, 1, 2, 255]
+      },
+      {
+        "addr": "@plain_item",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [0, 1, 2, 255]
+      },
+      {
+        "addr": "@other_item",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [0, 1, 2, 255]
+      },
+      {
+        "addr": "@ff_item",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [0, 1, 2, 255]
+      }
+    ]
+  }
+}

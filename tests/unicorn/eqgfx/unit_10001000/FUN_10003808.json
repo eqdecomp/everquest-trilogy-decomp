@@ -1,0 +1,321 @@
+{
+  "function": "s3dCheckPointInProjectedPolygon_guess",
+  "original": "0x10003808",
+  "sources": [
+    "src/eqgfx/unit_10001000.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "point",
+      "type": "ptr"
+    },
+    {
+      "name": "polygon",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "point": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 2.0},
+        {"offset": "0x4", "f32": 2.0},
+        {"offset": "0x8", "f32": 1.0}
+      ]
+    },
+    "polygon": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 4},
+        {"offset": "0x8", "u32": "@records+0x10"},
+        {"offset": "0xc", "f32": 0.0},
+        {"offset": "0x10", "f32": 0.0},
+        {"offset": "0x14", "f32": -1.0},
+        {"offset": "0x1c", "u32": 4}
+      ]
+    },
+    "records": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": "@corner0"},
+        {"offset": "0x28", "u32": "@corner1"},
+        {"offset": "0x3c", "u32": "@corner2"},
+        {"offset": "0x50", "u32": "@corner3"}
+      ]
+    },
+    "corner0": {
+      "size": "0xc",
+      "fill": "zero"
+    },
+    "corner1": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 4.0},
+        {"offset": "0x4", "f32": 1.0}
+      ]
+    },
+    "corner2": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 4.0},
+        {"offset": "0x4", "f32": 4.0},
+        {"offset": "0x8", "f32": 2.0}
+      ]
+    },
+    "corner3": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "f32": 3.0},
+        {"offset": "0x8", "f32": 2.0}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "CCW quad, normal_z <= 0, point inside",
+      "args": ["@point", "@polygon"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "CCW quad, normal_z > 0, same point (winding test flips)",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@polygon", "offset": "0x14", "f32": 1.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CW quad (records reversed), normal_z > 0, point inside: whole loop walked",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x14", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "CW quad, normal_z > 0, point left of the second edge",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x14", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"},
+        {"addr": "@point", "offset": "0x0", "f32": -1.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CCW quad, normal_z <= 0, point left of the first edge",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@point", "offset": "0x0", "f32": -1.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CCW quad, normal_z <= 0, point past the third edge",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@point", "offset": "0x0", "f32": 5.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CCW quad, normal_z <= 0, point past the last (fourth) edge",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@point", "offset": "0x4", "f32": 5.0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CCW quad, point on the first edge: cross product exactly 0 passes",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@point", "offset": "0x0", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "no vertices: loop never entered",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@polygon", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "one vertex: degenerate edge, always passes",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x4", "u32": 1},
+        {"addr": "@point", "offset": "0x0", "f32": -1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three vertices (CW), extra record past the end: the loop must stop at count",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x4", "u32": 3},
+        {"addr": "@polygon", "offset": "0x14", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x3c", "u32": "@corner1"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner2"},
+        {"addr": "@point", "offset": "0x0", "f32": 1.0},
+        {"addr": "@point", "offset": "0x4", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 2 (y/z), normal_x <= 0, CCW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@polygon", "offset": "0x1c", "u32": 2}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 2 (y/z), normal_x <= 0, CCW, point on the top edge (y=3.5, z=2)",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 2},
+        {"addr": "@point", "offset": "0x4", "f32": 3.5},
+        {"addr": "@point", "offset": "0x8", "f32": 2.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 2 (y/z), normal_x > 0, CW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 2},
+        {"addr": "@polygon", "offset": "0xc", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 2 (y/z), normal_x > 0, CCW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 2},
+        {"addr": "@polygon", "offset": "0xc", "f32": 1.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "projection 3 (x/z), normal_y = 0.0 (boundary), CCW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@polygon", "offset": "0x1c", "u32": 3}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "projection 3 (x/z), normal_y <= 0, CW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 3},
+        {"addr": "@polygon", "offset": "0x14", "f32": 0.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 3 (x/z), normal_y > 0, CCW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 3},
+        {"addr": "@polygon", "offset": "0x10", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "normal_z = 0.0 (boundary), CCW, point inside",
+      "args": ["@point", "@polygon"],
+      "memory": [{"addr": "@polygon", "offset": "0x14", "f32": 0.0}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "CW quad, normal_z > 0, first edge fails only in the prev[1] term",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x14", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"},
+        {"addr": "@point", "offset": "0x0", "f32": 3.0},
+        {"addr": "@point", "offset": "0x4", "f32": 0.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "projection 3 (x/z), normal_y > 0, CCW, point on the bottom edge (z=0): cross exactly 0 passes",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 3},
+        {"addr": "@polygon", "offset": "0x10", "f32": 1.0},
+        {"addr": "@point", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 2 (y/z), normal_x > 0, CW, point on an edge (y=0.5, z=0): cross exactly 0 passes",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 2},
+        {"addr": "@polygon", "offset": "0xc", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"},
+        {"addr": "@point", "offset": "0x4", "f32": 0.5},
+        {"addr": "@point", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "CW quad, normal_z > 0, point on an edge (y=0.5): cross exactly 0 passes",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x14", "f32": 1.0},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"},
+        {"addr": "@point", "offset": "0x4", "f32": 0.5}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "projection 3 (x/z), normal_y = 0.0 (<= 0), CW, point on the bottom edge: cross exactly 0 passes",
+      "args": ["@point", "@polygon"],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x1c", "u32": 3},
+        {"addr": "@records", "offset": "0x28", "u32": "@corner3"},
+        {"addr": "@records", "offset": "0x50", "u32": "@corner1"},
+        {"addr": "@point", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 14344,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@point"
+        ]
+      },
+      {
+        "choices": [
+          "@polygon"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@point", "type": "float", "count": 3, "range": [-1, 5]},
+      {"addr": "@corner0", "type": "float", "count": 3, "range": [-1, 5]},
+      {"addr": "@corner1", "type": "float", "count": 3, "range": [-1, 5]},
+      {"addr": "@corner2", "type": "float", "count": 3, "range": [-1, 5]},
+      {"addr": "@corner3", "type": "float", "count": 3, "range": [-1, 5]},
+      {"addr": "@polygon", "offset": "0x4", "type": "int", "range": [2, 4]},
+      {"addr": "@polygon", "offset": "0xc", "type": "float", "count": 3, "choices": [-1.0, 0.0, 1.0]},
+      {"addr": "@polygon", "offset": "0x1c", "type": "int", "choices": [2, 3, 4]}
+    ]
+  }
+}

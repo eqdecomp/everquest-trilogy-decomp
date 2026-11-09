@@ -1,0 +1,260 @@
+{
+  "function": "t3dCreateTrackDef2FromFileContext_guess",
+  "original": "0x10023a3d",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@dictionary"},
+        {"offset": "0x38", "u32": 512},
+        {"offset": "0x8044", "u32": "@definition"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "definition": {
+      "size": "0xa0",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u8": 0},
+        {"offset": "0x8", "u32": 2}
+      ]
+    },
+    "scratch": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "poolMemory": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": 0},
+        {"offset": "0x14", "u32": 0},
+        {"offset": "0x18", "u32": "@branchB"}
+      ]
+    },
+    "branchA": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@childTrackA"}
+      ]
+    },
+    "branchB": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@childTrackB"}
+      ]
+    },
+    "childTrackA": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": 0}
+      ]
+    },
+    "childTrackB": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": 0}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100aade8", "u32": 0}
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@scratch"
+    },
+    "0x1001c7cc": {
+      "name": "DefineTrack_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int", "ptr"],
+      "ret": "@track"
+    },
+    "0x1001c9b4": {
+      "name": "s3dCalcTrackDef2AllocSize",
+      "conv": "cdecl",
+      "args": ["int", "int", "int"],
+      "ret": 96
+    },
+    "0x10019a5c": {
+      "name": "s3dAllocateMemoryFromPool",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": "@poolMemory"
+    },
+    "0x1001c9d8": {
+      "name": "t3dDefineTrack2_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int", "int", "ptr"],
+      "ret": "@track"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "builder allocation failure increments count and returns null",
+      "args": ["@context"],
+      "callees": {
+        "0x10050c48": {"ret": 0}
+      }
+    },
+    {
+      "name": "zero records still defines a track",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "copy one record then define track",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "copy two records and set selected branch B",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x8", "u32": 2},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    },
+    {
+      "name": "builder definition failure releases temporary data",
+      "args": ["@context"],
+      "callees": {
+        "0x1001c7cc": {"ret": 0}
+      }
+    },
+    {
+      "name": "builder selects branch A",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 1},
+        {"addr": "@track", "offset": "0x14", "u32": "@branchA"}
+      ]
+    },
+    {
+      "name": "pool mode adjusts a negative dictionary offset",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "u32": -4},
+        {"addr": "@definition", "offset": "0x4", "u8": 8},
+        {"addr": "@definition", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "pool allocation failure returns the record data pointer",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x4", "u8": 8}
+      ],
+      "callees": {
+        "0x10019a5c": {"ret": 0}
+      }
+    },
+    {
+      "name": "pool definition failure does not free pool data",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x4", "u8": 8}
+      ],
+      "callees": {
+        "0x1001c9d8": {"ret": 0}
+      }
+    },
+    {
+      "name": "pool definition failure keeps temporary buffer null",
+      "args": ["@context"],
+      "regs": {
+        "eax": "0x12345678",
+        "ecx": "@scratch",
+        "edx": "0x23456789",
+        "ebx": "0x3456789a",
+        "esi": "0x456789ab",
+        "edi": "0x56789abc"
+      },
+      "memory": [
+        {"addr": "@definition", "offset": "0x4", "u8": 8}
+      ],
+      "callees": {
+        "0x1001c9d8": {"ret": 0}
+      }
+    },
+    {
+      "name": "pool allocator can change the later dictionary offset read",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@context", "offset": "0x4", "u32": "@definition"},
+        {"addr": "@definition", "offset": "0x0", "u32": -4},
+        {"addr": "@definition", "offset": "0x4", "u8": 8}
+      ],
+      "callees": {
+        "0x10019a5c": {
+          "name": "s3dAllocateMemoryFromPool",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": "@poolMemory",
+          "writes": [
+            {"arg": 0, "offset": 0, "hex": "04000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "pool mode marks both tracks",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x4", "u8": 8},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 145981,
+    "count": 32,
+    "args": [
+      {"choices": ["@context"]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x0", "type": "int", "range": [-4, 4]},
+      {"addr": "@definition", "offset": "0x4", "type": "u8", "choices": [0, 8, 16, 24]},
+      {"addr": "@definition", "offset": "0x8", "type": "int", "range": [0, 4]},
+      {"addr": "@context", "offset": "0x8064", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100aade8", "type": "u32", "range": [0, 1000]}
+    ]
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "function": "t3dCreateSharedMemory",
+  "original": "0x10050b77",
+  "sources": [
+    "src/eqgfx/unit_10050AA7.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "mapping",
+      "type": "ptr"
+    },
+    {
+      "name": "view",
+      "type": "ptr"
+    },
+    {
+      "name": "size",
+      "type": "u32"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "mapping": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "view": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!CreateFileMappingA": {
+      "name": "CreateFileMappingA",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "u32", "u32", "u32", "cstr"],
+      "ret": "0x1234"
+    },
+    "kernel32.dll!MapViewOfFile": {
+      "name": "MapViewOfFile",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32", "u32", "u32"],
+      "ret": "0x30001000"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@mapping", "@view", 1, "abc"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero size, empty name",
+      "args": ["@mapping", "@view", 0, ""],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "max size",
+      "args": ["@mapping", "@view", "0xffffffff", "big"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CreateFileMappingA fails",
+      "args": ["@mapping", "@view", 1, "abc"],
+      "callees": {
+        "kernel32.dll!CreateFileMappingA": {
+          "name": "CreateFileMappingA",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "u32", "u32", "u32", "cstr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "MapViewOfFile fails",
+      "args": ["@mapping", "@view", 1, "abc"],
+      "callees": {
+        "kernel32.dll!MapViewOfFile": {
+          "name": "MapViewOfFile",
+          "conv": "stdcall",
+          "args": ["ptr", "u32", "u32", "u32", "u32"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": -2}
+    }
+  ],
+  "fuzz": {
+    "seed": 330615,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@mapping"
+        ]
+      },
+      {
+        "choices": [
+          "@view"
+        ]
+      },
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

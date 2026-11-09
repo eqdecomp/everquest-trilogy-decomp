@@ -1,0 +1,456 @@
+{
+  "function": "StartOpeningMusic_guess",
+  "original": "0x004e5ac8",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "size": "0xc3",
+  "objects": {
+    "stream": {
+      "size": "0x64",
+      "fill": "zero"
+    },
+    "zeroSequence": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "zeroImage": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "driver": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "sequence": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "fileImage": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006ecdd0",
+      "u32": "@zeroSequence"
+    },
+    {
+      "addr": "0x006ecdcc",
+      "u32": "@zeroImage"
+    }
+  ],
+  "callees": {
+    "mss32.dll!_AIL_init_sequence@12": {
+      "name": "_AIL_init_sequence@12",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr",
+        "int"
+      ],
+      "ret": 1
+    },
+    "mss32.dll!_AIL_start_sequence@4": {
+      "name": "_AIL_start_sequence@4",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "mss32.dll!_AIL_file_read@8": {
+      "name": "_AIL_file_read@8",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "ptr"
+      ],
+      "ret": "@fileImage"
+    },
+    "mss32.dll!_AIL_allocate_sequence_handle@4": {
+      "name": "_AIL_allocate_sequence_handle@4",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@sequence"
+    },
+    "0x004a3d01": {
+      "name": "EQTRACE_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "existing-sequence-returns-before-any-call",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x4c",
+          "u32": "@sequence"
+        }
+      ]
+    },
+    {
+      "name": "pitch-zero-init-failure-traces-and-stops",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_init_sequence@12": {
+          "name": "_AIL_init_sequence@12",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "pitch-zero-init-then-driver-null-clears-file-image",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x50",
+          "u32": "@fileImage"
+        }
+      ]
+    },
+    {
+      "name": "global-sequence-null-skips-pitch-zero-setup",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        },
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": 0
+        },
+        {
+          "addr": "@stream",
+          "offset": "0x50",
+          "u32": "@fileImage"
+        }
+      ]
+    },
+    {
+      "name": "global-image-null-skips-pitch-zero-setup",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecdcc",
+          "u32": 0
+        },
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_file_read@8": {
+          "name": "_AIL_file_read@8",
+          "conv": "stdcall",
+          "args": ["cstr", "ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "driver-null-traces-and-clears-file-image",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": 0
+        },
+        {
+          "addr": "@stream",
+          "offset": "0x50",
+          "u32": "@fileImage"
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "file-read-null-and-allocation-null-traces-load-error",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_file_read@8": {
+          "name": "_AIL_file_read@8",
+          "conv": "stdcall",
+          "args": ["cstr", "ptr"],
+          "ret": 0
+        },
+        "mss32.dll!_AIL_allocate_sequence_handle@4": {
+          "name": "_AIL_allocate_sequence_handle@4",
+          "conv": "stdcall",
+          "args": ["ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "file-read-null-with-handle-traces-open-midi-error",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_file_read@8": {
+          "name": "_AIL_file_read@8",
+          "conv": "stdcall",
+          "args": ["cstr", "ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "file-image-loaded-but-handle-allocation-fails",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_allocate_sequence_handle@4": {
+          "name": "_AIL_allocate_sequence_handle@4",
+          "conv": "stdcall",
+          "args": ["ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "local-init-result-is-ignored-and-sequence-starts",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_init_sequence@12": {
+          "name": "_AIL_init_sequence@12",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "both-init-calls-and-start-order",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": "@driver"
+        }
+      ],
+      "callees": {
+        "mss32.dll!_AIL_init_sequence@12": {
+          "name": "_AIL_init_sequence@12",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "int"],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "driver-null-clears-a-non-even-file-image-word",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": 0
+        },
+        {
+          "addr": "@stream",
+          "offset": "0x50",
+          "u32": 3
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "driver-one-allocates-with-zero-upper-bytes",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": 1
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "driver-high-byte-only-allocates",
+      "args": [
+        "@stream"
+      ],
+      "memory": [
+        {
+          "addr": "@stream",
+          "offset": "0x60",
+          "u32": 16777216
+        },
+        {
+          "addr": "0x006ecdd0",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5135048,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@stream"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@stream",
+        "offset": "0x4c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@sequence"
+        ]
+      },
+      {
+        "addr": "@stream",
+        "offset": "0x50",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@fileImage"
+        ]
+      },
+      {
+        "addr": "@stream",
+        "offset": "0x60",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@driver"
+        ]
+      },
+      {
+        "addr": "0x006ecdd0",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@zeroSequence"
+        ]
+      },
+      {
+        "addr": "0x006ecdcc",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@zeroImage"
+        ]
+      }
+    ]
+  }
+}

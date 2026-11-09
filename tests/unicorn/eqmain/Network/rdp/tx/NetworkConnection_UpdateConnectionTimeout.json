@@ -1,0 +1,667 @@
+{
+  "function": "NetworkConnection_UpdateConnectionTimeout_guess",
+  "original": "0x1002c4a0",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x7b0",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": 4660
+        },
+        {
+          "offset": "0x6f0",
+          "u32": 1000
+        }
+      ]
+    },
+    "param_2": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 7
+        },
+        {
+          "offset": "0x4",
+          "u32": 9
+        }
+      ]
+    },
+    "node_a": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "node_b": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": 100
+        }
+      ]
+    },
+    "node_c": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e120": {
+      "name": "FUN_1002e120",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": [
+        "@node_a",
+        "@node_b",
+        "@node_c"
+      ]
+    },
+    "0x10030d30": {
+      "name": "bandwidth_get_time_empty_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 100
+    },
+    "0x1002afe0": {
+      "name": "getTimeFromEQClient_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 800
+    }
+  },
+  "cases": [
+    {
+      "name": "both fronts empty and 0x6EC clear: early return, flag 1, time 0",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "both fronts empty, 0x6EC set: bandwidth 100 lowered to deadline 1000",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "tx_wait front and 0x6C0 set: returns right after the bandwidth time",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6c0",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@node_a",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "tx_wait front, 0x6C0 clear: deadline 1000 with no tx_sent front",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@node_a",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "only tx_sent front and 0x6C0 set: no return, since && needs the tx_wait front",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6c0",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            "@node_b",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "order: the first call (tx_wait) is node_b with 0x6C0 set: returns after bandwidth",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6c0",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@node_b",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "tx_hold front (third call) is called and ignored",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "0x1002e120": {
+          "name": "FUN_1002e120",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            "@node_b",
+            "@node_c"
+          ]
+        }
+      }
+    },
+    {
+      "name": "0x478 == 0x45: EQ client time 800 replaces bandwidth 100",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        }
+      ]
+    },
+    {
+      "name": "0x45 compared as 16 bits: a non-zero high half at 0x47A still matches",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x47a",
+          "u16": 4660
+        }
+      ]
+    },
+    {
+      "name": "0x478 == 0x44 is not 0x45: bandwidth time stays",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 68
+        }
+      ]
+    },
+    {
+      "name": "0x478 == 0x46 is not 0x45: bandwidth time stays",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 70
+        }
+      ]
+    },
+    {
+      "name": "clamp: uVar5 0x31 is raised to the 0x32 floor (item time 100 + 50)",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x69e",
+          "u16": 49
+        }
+      ]
+    },
+    {
+      "name": "clamp boundary: uVar5 0x33 is kept (not raised)",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x69e",
+          "u16": 51
+        }
+      ]
+    },
+    {
+      "name": "weights: uVar5 = 0x10 + 2 * 0x30 = 0x70 (second field doubled)",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x69e",
+          "u16": 16
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6a0",
+          "u16": 48
+        }
+      ]
+    },
+    {
+      "name": "clamp: uVar5 0xFFFE is kept",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x69e",
+          "u16": 65534
+        }
+      ]
+    },
+    {
+      "name": "clamp boundary: uVar5 0xFFFF saturates to 0xFFFF",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x69e",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "clamp: uVar5 0x10000 (second field 0x8000 doubled) saturates to 0xFFFF",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6a0",
+          "u16": 32768
+        }
+      ]
+    },
+    {
+      "name": "0x6EC clear: the item time replaces the deadline even when the deadline is earlier",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6f0",
+          "u32": 10
+        }
+      ]
+    },
+    {
+      "name": "0x6EC set, deadline 149 is earlier than item time 150: deadline kept",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6f0",
+          "u32": 149
+        }
+      ]
+    },
+    {
+      "name": "0x6EC set, deadline 1000 is later than item time 150: item time taken",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "0x6EC set, deadline 50 is below bandwidth 100: bandwidth stays",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6f0",
+          "u32": 50
+        }
+      ]
+    },
+    {
+      "name": "0x6EC set, deadline equal to item time 150: no change in value",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6f0",
+          "u32": 150
+        }
+      ]
+    },
+    {
+      "name": "signed: item time -1 against deadline 0x7FFFFFFF overflows, deadline kept",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@node_b",
+          "offset": "0xc",
+          "u32": "0xffffffcd"
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6f0",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "signed: negative item time -206 is not taken over bandwidth 100",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@node_b",
+          "offset": "0xc",
+          "u32": "0xffffff00"
+        }
+      ]
+    },
+    {
+      "name": "item time 60 is below bandwidth 100: bandwidth stays",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@node_b",
+          "offset": "0xc",
+          "u32": 10
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 181408,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "choices": [
+          "@param_2"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x478",
+        "type": "u16",
+        "choices": [
+          0,
+          68,
+          69,
+          70
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x69e",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          49,
+          50,
+          51,
+          52,
+          300,
+          65533,
+          65534,
+          65535,
+          32768
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x6a0",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          25,
+          26,
+          40,
+          32767,
+          32768,
+          65535
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x6c0",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x6ec",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x6f0",
+        "type": "int",
+        "range": [
+          -300,
+          1500
+        ]
+      },
+      {
+        "addr": "@node_b",
+        "offset": "0xc",
+        "type": "int",
+        "range": [
+          -300,
+          300
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0xc",
+        "type": "u32"
+      }
+    ]
+  }
+}

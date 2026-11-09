@@ -1,0 +1,177 @@
+{
+  "function": "t3dGet3DSpriteDefinitionPolygonVertexIndexList",
+  "original": "0x1000842e",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "dest",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "polygons": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "index_list": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "dest": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@definition", "offset": "0x20", "u32": 4},
+    {"addr": "@definition", "offset": "0x24", "u32": "@polygons"},
+    {"addr": "@polygons", "offset": "0x04", "u32": 3},
+    {"addr": "@polygons", "offset": "0x08", "u32": "@index_list"},
+    {"addr": "@polygons", "offset": "0x30", "u32": 2},
+    {"addr": "@polygons", "offset": "0x34", "u32": "@index_list+0x40"},
+    {"addr": "@polygons", "offset": "0x5c", "u32": 1},
+    {"addr": "@polygons", "offset": "0x60", "u32": "@index_list+0x80"},
+    {"addr": "@polygons", "offset": "0x88", "u32": 5},
+    {"addr": "@polygons", "offset": "0x8c", "u32": "@index_list+0xc0"}
+  ],
+  "callees": {
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "first polygon: three indices copied",
+      "args": ["@definition", 0, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "second polygon: two indices",
+      "args": ["@definition", 1, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last polygon: five indices",
+      "args": ["@definition", 3, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index equal to the count is out of range",
+      "args": ["@definition", 4, "@dest"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index past the count (no copy)",
+      "args": ["@definition", 5, "@dest"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index 0xffffffff: unsigned compare against the count",
+      "args": ["@definition", 4294967295, "@dest"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "count zero: index 0 is already out of range",
+      "args": ["@definition", 0, "@dest"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 0}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "count zero with a huge index",
+      "args": ["@definition", 4294967294, "@dest"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 0}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "one polygon, index 0 is the last valid one",
+      "args": ["@definition", 0, "@dest"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "boundary: count 1, index 1 is out",
+      "args": ["@definition", 1, "@dest"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 1}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "zero vertex count copies nothing and still returns 0",
+      "args": ["@definition", 0, "@dest"],
+      "memory": [
+        {"addr": "@polygons", "offset": "0x04", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero vertex count on the last polygon",
+      "args": ["@definition", 3, "@dest"],
+      "memory": [
+        {"addr": "@polygons", "offset": "0x88", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sixteen indices: size is count times four",
+      "args": ["@definition", 0, "@dest"],
+      "memory": [
+        {"addr": "@polygons", "offset": "0x04", "u32": 16}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 2 out of 4 polygons copies the one-index list",
+      "args": ["@definition", 2, "@dest"],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 33838,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "range": [-2, 8]
+      },
+      {
+        "choices": [
+          "@dest"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "choices": [0, 1, 2, 3, 4, 5]},
+      {"addr": "@polygons", "offset": "0x04", "type": "u32", "choices": [0, 1, 2, 3, 4, 8, 16], "count": 4, "stride": "0x2c"}
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "function": "t3dGetHierarchicalSpriteDagByTrackName",
+  "original": "0x10013762",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "trackName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "sprite": {
+      "size": "0x128",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 20},
+        {"offset": "0x20", "u32": 3},
+        {"offset": "0x24", "u32": "@dags"}
+      ]
+    },
+    "dags": {
+      "size": "0x3d8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": "@track0"},
+        {"offset": "0x15c", "u32": "@track1"},
+        {"offset": "0x2a4", "u32": "@track2"}
+      ]
+    },
+    "track0": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x8", "u32": "@nameAbc"}]},
+    "track1": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x8", "u32": "@nameXyz"}]},
+    "track2": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x8", "u32": "@nameLast"}]},
+    "nameAbc": {"size": "0x10", "fill": "zero"},
+    "nameXyz": {"size": "0x10", "fill": "zero"},
+    "nameLast": {"size": "0x10", "fill": "zero"},
+    "nameEmpty": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@nameAbc", "cstr": "abc"},
+    {"addr": "@nameXyz", "cstr": "xyz"},
+    {"addr": "@nameLast", "cstr": "last"}
+  ],
+  "callees": {
+    "0x10068A20": {"name": "strcmp", "args": ["cstr", "cstr"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "first entry matches", "args": ["@sprite", "abc"]},
+    {"name": "middle entry matches", "args": ["@sprite", "xyz"]},
+    {"name": "last entry matches", "args": ["@sprite", "last"]},
+    {"name": "duplicate name: first match wins", "args": ["@sprite", "abc"],
+     "memory": [{"addr": "@track2", "offset": "0x8", "u32": "@nameAbc"}]},
+    {"name": "no entry matches", "args": ["@sprite", "nope"], "expect": {"ret": 0}},
+    {"name": "query is a prefix of a name", "args": ["@sprite", "ab"], "expect": {"ret": 0}},
+    {"name": "name is a prefix of the query", "args": ["@sprite", "lastx"], "expect": {"ret": 0}},
+    {"name": "comparison is case sensitive", "args": ["@sprite", "ABC"], "expect": {"ret": 0}},
+    {"name": "empty query matches an empty name", "args": ["@sprite", ""],
+     "memory": [{"addr": "@track1", "offset": "0x8", "u32": "@nameEmpty"}]},
+    {"name": "empty query, no empty name", "args": ["@sprite", ""], "expect": {"ret": 0}},
+    {"name": "null track name is skipped", "args": ["@sprite", "xyz"],
+     "memory": [{"addr": "@track0", "offset": "0x8", "u32": 0}]},
+    {"name": "null track name, no other match", "args": ["@sprite", "abc"],
+     "memory": [{"addr": "@track0", "offset": "0x8", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "dagCount zero", "args": ["@sprite", "abc"],
+     "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "dagCount one: second entry not searched", "args": ["@sprite", "xyz"],
+     "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "dagCount two: third entry not searched", "args": ["@sprite", "last"],
+     "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 2}], "expect": {"ret": 0}},
+    {"name": "type 0x13 is not searched", "args": ["@sprite", "abc"],
+     "memory": [{"addr": "@sprite", "u32": 19}], "expect": {"ret": 0}},
+    {"name": "type 0x15 is not searched", "args": ["@sprite", "abc"],
+     "memory": [{"addr": "@sprite", "u32": 21}], "expect": {"ret": 0}},
+    {"name": "dagCount 0xffffffff (unsigned bound): first entry matches", "args": ["@sprite", "abc"],
+     "memory": [{"addr": "@sprite", "offset": "0x20", "u32": 4294967295}]}
+  ],
+  "fuzz": {
+    "seed": 79714,
+    "count": 40,
+    "args": [
+      {"choices": ["@sprite"]},
+      {"choices": ["abc", "xyz", "last", "ab", "", "lastx", "ABC", "nope"]}
+    ],
+    "memory": [
+      {"addr": "@sprite", "type": "int", "choices": [20, 20, 20, 19, 21, 0]},
+      {"addr": "@sprite", "offset": "0x20", "type": "int", "range": [0, 3]},
+      {"addr": "@track0", "offset": "0x8", "type": "ptr", "choices": ["@nameAbc", "@nameXyz", "@nameLast", "@nameEmpty", 0]},
+      {"addr": "@track1", "offset": "0x8", "type": "ptr", "choices": ["@nameAbc", "@nameXyz", "@nameLast", "@nameEmpty", 0]},
+      {"addr": "@track2", "offset": "0x8", "type": "ptr", "choices": ["@nameAbc", "@nameXyz", "@nameLast", "@nameEmpty", 0]}
+    ]
+  }
+}

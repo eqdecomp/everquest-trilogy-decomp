@@ -1,0 +1,1035 @@
+{
+  "function": "EQ_Character_ExpendItemCharge_guess",
+  "original": "0x00427ee7",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "self": {
+      "size": "0x400",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xa0",
+          "u32": "@a0"
+        },
+        {
+          "offset": "0xf4",
+          "u32": "@equip"
+        }
+      ]
+    },
+    "a0": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "equip": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 0
+        },
+        {
+          "offset": "0xda",
+          "u8": 3
+        }
+      ]
+    },
+    "bag": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 1
+        },
+        {
+          "offset": "0xb8",
+          "u32": "@equip"
+        }
+      ]
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "ui": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4de0",
+      "u32": "@display"
+    },
+    {
+      "addr": "0x006e4e44",
+      "u32": "@ui"
+    }
+  ],
+  "callees": {
+    "0x00427d2a": {
+      "name": "EQ_Character::FindItemByNumber_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "0500"
+        },
+        {
+          "arg": 2,
+          "offset": 0,
+          "hex": "ffff"
+        }
+      ]
+    },
+    "0x00427c70": {
+      "name": "EQ_Character::FindItemByType_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "0500"
+        },
+        {
+          "arg": 2,
+          "offset": 0,
+          "hex": "ffff"
+        }
+      ]
+    },
+    "0x004a1d83": {
+      "name": "Combine_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:12",
+        "u32",
+        "int"
+      ]
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x0040b6e0": {
+      "name": "CDisplay::UpdateItemSlot_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "int",
+        "ptr"
+      ]
+    },
+    "0x0043405a": {
+      "name": "EQ_Container::~EQ_Container_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "by type, equipment charge spent",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ]
+    },
+    {
+      "name": "by number, equipment charge spent",
+      "args": [
+        "@self",
+        0,
+        7,
+        1234
+      ]
+    },
+    {
+      "name": "param_3 low word -1 with high bits set searches by type",
+      "args": [
+        "@self",
+        0,
+        7,
+        131071
+      ]
+    },
+    {
+      "name": "param_3 low word 0 searches by number",
+      "args": [
+        "@self",
+        0,
+        7,
+        -65536
+      ]
+    },
+    {
+      "name": "find by type fails",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "find by number fails",
+      "args": [
+        "@self",
+        0,
+        7,
+        1234
+      ],
+      "callees": {
+        "0x00427d2a": {
+          "name": "EQ_Character::FindItemByNumber_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "ui pointer null skips the display flag store",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4e44",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty slot returns early",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "stack with one charge is deleted",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "stack with zero charges is deleted",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "stack with 255 charges decrements",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "combine zero deletes an equipment item",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "combine zero on a container runs the destructor then deletes",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf4",
+          "u32": "@bag"
+        }
+      ]
+    },
+    {
+      "name": "combine zero in slot 0 clears the display flag",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0000"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        },
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xe0",
+          "u32": "@equip"
+        }
+      ]
+    },
+    {
+      "name": "last charge in slot 0 clears the display flag",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0000"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xe0",
+          "u32": "@equip"
+        },
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "last charge in slot 2 updates UI slot 0",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0200"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xe8",
+          "u32": "@equip"
+        },
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "last charge in slot 13 updates UI slot 7",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0d00"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x114",
+          "u32": "@equip"
+        },
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "combine zero in slot 14 updates UI slot 8",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0e00"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        },
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x118",
+          "u32": "@equip"
+        }
+      ]
+    },
+    {
+      "name": "combine zero in slot 6 skips the UI update",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0600"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        },
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf8",
+          "u32": "@equip"
+        }
+      ]
+    },
+    {
+      "name": "combine zero in slot 1 returns before the UI update",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0100"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        },
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xe4",
+          "u32": "@equip"
+        }
+      ]
+    },
+    {
+      "name": "combine zero with negative slot index",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "ffff"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "ffff"
+            }
+          ]
+        },
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xdc",
+          "u32": "@equip"
+        }
+      ]
+    },
+    {
+      "name": "bag: charge spent in contents",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0500"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "0300"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf4",
+          "u32": "@bag"
+        }
+      ]
+    },
+    {
+      "name": "bag: combine zero deletes the contents item",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0500"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "0300"
+            }
+          ]
+        },
+        "0x004a1d83": {
+          "name": "Combine_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf4",
+          "u32": "@bag"
+        }
+      ]
+    },
+    {
+      "name": "bag: last charge deletes the contents item",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0500"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "0300"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf4",
+          "u32": "@bag"
+        },
+        {
+          "addr": "@equip",
+          "offset": "0xda",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "bag: inventory item that is not a container returns early",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0500"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "0300"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "bag: null contents slot returns early",
+      "args": [
+        "@self",
+        0,
+        7,
+        -1
+      ],
+      "callees": {
+        "0x00427c70": {
+          "name": "EQ_Character::FindItemByType_guess",
+          "conv": "thiscall",
+          "args": [
+            "int",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "0500"
+            },
+            {
+              "arg": 2,
+              "offset": 0,
+              "hex": "0400"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xf4",
+          "u32": "@bag"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4357863,
+    "count": 100,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {},
+      {
+        "choices": [
+          -1,
+          1,
+          7,
+          65535,
+          -65536,
+          131071,
+          1234
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0xf4",
+        "type": "ptr",
+        "choices": [
+          "@equip",
+          "@bag",
+          0
+        ]
+      },
+      {
+        "addr": "@equip",
+        "offset": "0xda",
+        "type": "u8",
+        "range": [
+          0,
+          5
+        ]
+      },
+      {
+        "addr": "@equip",
+        "offset": "0x81",
+        "type": "u8",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@bag",
+        "offset": "0xb8",
+        "type": "ptr",
+        "choices": [
+          "@equip",
+          0
+        ]
+      },
+      {
+        "addr": "0x006e4e44",
+        "type": "ptr",
+        "choices": [
+          "@ui",
+          0
+        ]
+      }
+    ]
+  }
+}

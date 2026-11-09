@@ -1,0 +1,66 @@
+{
+  "function": "bitwriter_put_stored_guess",
+  "original": "0x1000e440",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "w", "type": "ptr"},
+    {"name": "data", "type": "ptr"},
+    {"name": "len", "type": "int"},
+    {"name": "header", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "w": {
+      "size": "0x16c0",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@out"},
+        {"offset": "0x14", "u32": 0},
+        {"offset": "0x16b8", "u32": 0}
+      ]
+    },
+    "data": {"size": "0x200", "fill": "random"},
+    "out": {"size": "0x1000", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e3c0": {"name": "bitwriter_flush_guess", "conv": "cdecl", "args": ["ptr"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "typical: LEN/NLEN and three bytes", "args": ["@w", "@data", 3, 1]},
+    {"name": "no header: copies len bytes only", "args": ["@w", "@data", 5, 0]},
+    {"name": "header only: zero length", "args": ["@w", "@data", 0, 1]},
+    {"name": "zero length, no header: data not read", "args": ["@w", 0, 0, 0]},
+    {"name": "header for any non-zero flag", "args": ["@w", "@data", 2, -1]},
+    {"name": "LEN high byte 1 (length 258)", "args": ["@w", "@data", 258, 1]},
+    {"name": "length 256: low byte 0", "args": ["@w", "@data", 256, 1]},
+    {"name": "length 255: complement of low byte 0", "args": ["@w", "@data", 255, 1]},
+    {"name": "copy 300 bytes without header", "args": ["@w", "@data", 300, 0]},
+    {"name": "pos 64: header and copy mid-buffer", "args": ["@w", "@data", 7, 1],
+      "memory": [{"addr": "@w", "offset": "0x14", "u32": 64}]},
+    {"name": "3 pending bits flush one byte, then header", "args": ["@w", "@data", 2, 1],
+      "memory": [{"addr": "@w", "offset": "0x14", "u32": 16}, {"addr": "@w", "offset": "0x16b8", "u32": 3}, {"addr": "@w", "offset": "0x16b4", "u16": 171}]},
+    {"name": "12 pending bits flush two bytes, then header", "args": ["@w", "@data", 1, 1],
+      "memory": [{"addr": "@w", "offset": "0x14", "u32": 16}, {"addr": "@w", "offset": "0x16b8", "u32": 12}, {"addr": "@w", "offset": "0x16b4", "u16": 48879}]},
+    {"name": "pending bits, zero length, no header", "args": ["@w", 0, 0, 0],
+      "memory": [{"addr": "@w", "offset": "0x16b8", "u32": 4}, {"addr": "@w", "offset": "0x16b4", "u16": 15}]}
+  ],
+  "fuzz": {
+    "seed": 1000440,
+    "count": 40,
+    "args": [
+      {"choices": ["@w"]},
+      {"choices": ["@data"]},
+      {"range": [0, 300]},
+      {"choices": [0, 1, -1]}
+    ],
+    "memory": [
+      {"addr": "@w", "offset": "0x14", "type": "int", "range": [0, 64]},
+      {"addr": "@w", "offset": "0x16b8", "type": "int", "range": [-2, 16]},
+      {"addr": "@w", "offset": "0x16b4", "type": "u16"}
+    ]
+  }
+}

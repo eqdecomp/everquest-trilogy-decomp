@@ -1,0 +1,186 @@
+{
+  "function": "FUN_004039cc_owner_guess::~FUN_004039cc_owner_guess",
+  "original": "0x004039cc",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@owner",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0xdeadbeef"
+        },
+        {
+          "offset": "0x4",
+          "u32": "0xa5a5a5a5"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@block_a"
+        }
+      ]
+    },
+    "block_a": {
+      "size": "0x8",
+      "fill": "random"
+    },
+    "block_b": {
+      "size": "0x8",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x00402267": {
+      "name": "ProcessPointerArrayAndReset_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "null allocation, zero first field",
+      "this": "@owner",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "allocated block and high first-field bit",
+      "this": "@owner",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0",
+          "u32": "0x80000000"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x8",
+          "u32": "@block_a"
+        }
+      ]
+    },
+    {
+      "name": "alternate allocation and all-one first field",
+      "this": "@owner",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x8",
+          "u32": "@block_b"
+        }
+      ]
+    },
+    {
+      "name": "unmapped sentinel allocation pointer",
+      "this": "@owner",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0",
+          "u32": "0x13579bdf"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "low non-null allocation pointer",
+      "this": "@owner",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0",
+          "u32": "0x2468ace0"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4209100,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          1,
+          "0xffffffff",
+          "@block_a",
+          "@block_b"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "function": "EQBBoard::EQBBoard",
+  "original": "0x0049062D",
+  "sources": ["src/EverQuest/EQBBoard.cpp"],
+  "conv": "thiscall",
+  "this": "@board",
+  "args": [{"name": "record", "type": "ptr"}],
+  "ret": "ptr",
+  "objects": {
+    "board": {"size": "0x80", "fill": "random"},
+    "oldHead": {"size": "0x20", "fill": "random"},
+    "record": {"size": "0x80", "fill": "zero"}
+  },
+  "memory": [{"addr": "0x006E4D70", "u32": 0}],
+  "callees": {
+    "0x005219C0": {"name": "strcpy", "conv": "cdecl", "args": ["ptr", "cstr"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "empty list and null record preserve neighboring bytes", "args": [0]},
+    {
+      "name": "ordinary head insertion and null defaults",
+      "args": [0],
+      "memory": [
+        {"addr": "0x006E4D70", "u32": "@oldHead"},
+        {"addr": "@oldHead", "u32": 286331153}
+      ]
+    },
+    {
+      "name": "head points to this",
+      "args": [0],
+      "memory": [{"addr": "0x006E4D70", "u32": "@board"}]
+    },
+    {
+      "name": "global head aliases its own storage and reloads after the write",
+      "args": [0],
+      "memory": [{"addr": "0x006E4D70", "u32": "0x006E4D70"}]
+    },
+    {
+      "name": "record strings and exact byte field copy",
+      "args": ["@record"],
+      "memory": [
+        {"addr": "0x006E4D70", "u32": "@oldHead"},
+        {"addr": "@oldHead", "u32": 572662306},
+        {"addr": "@record", "offset": "0x8", "u32": 287454020},
+        {"addr": "@record", "offset": "0xC", "cstr": "title"},
+        {"addr": "@record", "offset": "0x1C", "cstr": "board text"},
+        {"addr": "@record", "offset": "0x3A", "u8": 254},
+        {"addr": "@record", "offset": "0x3B", "cstr": "tail"}
+      ]
+    },
+    {
+      "name": "record aliases this and copies strings in place",
+      "args": ["@board"],
+      "memory": [
+        {"addr": "0x006E4D70", "u32": 0},
+        {"addr": "@board", "offset": "0x8", "u32": 1432778632},
+        {"addr": "@board", "offset": "0xC", "cstr": "same title"},
+        {"addr": "@board", "offset": "0x1C", "cstr": "same text"},
+        {"addr": "@board", "offset": "0x3A", "u8": 65},
+        {"addr": "@board", "offset": "0x3B", "cstr": "same tail"}
+      ]
+    },
+    {
+      "name": "shifted this overlaps source and destination strings by one byte",
+      "args": ["@board+1"],
+      "memory": [
+        {"addr": "0x006E4D70", "u32": "@oldHead"},
+        {"addr": "@oldHead", "u32": 858993459},
+        {"addr": "@board", "offset": "0x9", "u32": 1144201745},
+        {"addr": "@board", "offset": "0xD", "cstr": "A"},
+        {"addr": "@board", "offset": "0x1D", "cstr": "B"},
+        {"addr": "@board", "offset": "0x3B", "u8": 127},
+        {"addr": "@board", "offset": "0x3C", "cstr": "C"}
+      ]
+    },
+    {
+      "name": "record aliases object; list insertion clears earlier source bytes",
+      "this": "@board+8",
+      "args": ["@board"],
+      "memory": [
+        {"addr": "0x006E4D70", "u32": 0},
+        {"addr": "@board", "offset": "0x1C", "u8": 0},
+        {"addr": "@board", "offset": "0x3A", "u8": 90},
+        {"addr": "@board", "offset": "0x3B", "cstr": ""}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 490621,
+    "count": 30,
+    "args": [{"choices": [0, "@record", "@board", "@board+1"]}],
+    "memory": [
+      {"addr": "0x006E4D70", "type": "ptr", "choices": [0, "@oldHead", "@board", "@board+1", "0x006E4D70"]},
+      {"addr": "@board", "size": 128}
+    ]
+  }
+}

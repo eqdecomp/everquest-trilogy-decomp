@@ -1,0 +1,114 @@
+{
+  "function": "RehashChainTable_guess",
+  "original": "0x00404791",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "requestedCount", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@oldBuckets"},
+        {"offset": "0x8", "u32": "@oldBuckets+0x10"},
+        {"offset": "0xc", "u32": "@oldBuckets+0x10"}
+      ]
+    },
+    "oldBuckets": {"size": "0x100", "fill": "zero"},
+    "newBuckets": {"size": "0x100", "fill": "zero"},
+    "copy0": {"size": "0x40", "fill": "zero"},
+    "copy1": {"size": "0x40", "fill": "zero"},
+    "copy2": {"size": "0x40", "fill": "zero"},
+    "copy3": {"size": "0x40", "fill": "zero"},
+    "copy4": {"size": "0x40", "fill": "zero"},
+    "key0": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x0", "cstr": "amber"}]},
+    "key1": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x0", "cstr": "birch"}]},
+    "key2": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x0", "cstr": "cedar"}]},
+    "key3": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dogwood"}]},
+    "node0": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@node1"}, {"offset": "0x4", "u32": "@key0"}]
+    },
+    "node1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "@key1"}]
+    },
+    "node2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "@key2"}]
+    },
+    "node3": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@key3"}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x0040119e": {"name": "FUN_0040119e", "conv": "stdcall", "args": ["u32"], "ret": 8},
+    "0x00403729": {"name": "identity_guess", "conv": "thiscall", "args": ["ptr"], "ret": 0},
+    "0x004048dc": {"name": "FUN_004048dc", "conv": "thiscall", "this": "ignore", "args": ["u32", "u32"], "passthrough": true},
+    "0x00401366": {"name": "operator_new_guess", "conv": "cdecl", "args": ["u32"], "ret": "@newBuckets"},
+    "kernel32.dll!HeapAlloc": {"conv": "stdcall", "args": ["ptr", "u32", "u32"], "ret": ["@newBuckets", "@copy0", "@copy1", "@copy2", "@copy3", "@copy4"]},
+    "kernel32.dll!HeapFree": {"conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": 1},
+    "0x004037d4": {"name": "hash_guess", "conv": "thiscall", "args": ["mem:8"], "passthrough": true},
+    "0x00401167": {"name": "pool_free_guess", "conv": "thiscall", "this": "mem:12", "args": [], "passthrough": true}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "below current bucket count", "args": ["@self", 0, 3]},
+    {"name": "equal current bucket count", "args": ["@self", 0, 4]},
+    {
+      "name": "normalized count does not grow",
+      "args": ["@self", 0, 5],
+      "callees": {"0x0040119e": {"name": "FUN_0040119e", "conv": "stdcall", "args": ["u32"], "ret": 4}}
+    },
+    {
+      "name": "prime table saturation equality",
+      "args": ["@self", 0, 4294967295],
+      "memory": [
+        {"addr": "@self", "offset": "0x4", "u32": "@self+0x14"},
+        {"addr": "@self", "offset": "0x8", "u32": "@self"}
+      ]
+    },
+    {"name": "empty rehash", "args": ["@self", 0, 5]},
+    {
+      "name": "strict outer bound excludes the next bucket",
+      "args": ["@self", 0, 2],
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": "@oldBuckets+4"},
+        {"addr": "@self", "offset": "0xc", "u32": "@oldBuckets+4"},
+        {"addr": "@oldBuckets", "offset": "0x4", "u32": "@node0"}
+      ]
+    },
+    {
+      "name": "rehash buckets and chain order",
+      "args": ["@self", 0, 5],
+      "memory": [
+        {"addr": "@oldBuckets", "offset": "0x0", "u32": "@node0"},
+        {"addr": "@oldBuckets", "offset": "0x4", "u32": "@node2"},
+        {"addr": "@oldBuckets", "offset": "0xc", "u32": "@node3"}
+      ],
+      "callees": {}
+    }
+  ],
+  "fuzz": {
+    "seed": 4212625,
+    "count": 30,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [0, 1]},
+      {"range": [0, 20]}
+    ],
+    "memory": []
+  }
+}

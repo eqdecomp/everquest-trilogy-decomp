@@ -1,0 +1,123 @@
+{
+  "function": "connection_init_guess",
+  "original": "0x1002d180",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "rdp",
+      "type": "ptr"
+    },
+    {
+      "name": "remote",
+      "type": "ptr"
+    },
+    {
+      "name": "field_064",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x73c",
+      "fill": "random"
+    },
+    "rdp": {
+      "size": "0x1d8",
+      "fill": "random"
+    },
+    "remote": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002b000": {
+      "name": "tx_init_guess",
+      "conv": "cdecl",
+      "args": ["mem:112", "ptr", "ptr"],
+      "writes": [
+        { "arg": 0, "offset": 48, "hex": "11223344" },
+        { "arg": 0, "offset": 80, "hex": "55667788" }
+      ]
+    },
+    "0x1002e930": {
+      "name": "rx_init_guess",
+      "conv": "cdecl",
+      "args": ["mem:112"],
+      "writes": [
+        { "arg": 0, "offset": 32, "hex": "01020304" },
+        { "arg": 0, "offset": 40, "hex": "fffefdfc" },
+        { "arg": 0, "offset": 76, "hex": "0a0b0c0d" }
+      ]
+    },
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": ["mem:24"],
+      "ret": 0,
+      "writes": [
+        { "arg": 0, "offset": 0, "hex": "01000000" }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@conn", "@rdp", "@remote", 1]
+    },
+    {
+      "name": "zero field_064",
+      "args": ["@conn", "@rdp", "@remote", 0]
+    },
+    {
+      "name": "high bit field_064",
+      "args": ["@conn", "@rdp", "@remote", "0x80000000"]
+    },
+    {
+      "name": "all bits field_064",
+      "args": ["@conn", "@rdp", "@remote", "0xffffffff"]
+    },
+    {
+      "name": "null rdp and remote (only passed through)",
+      "args": ["@conn", 0, 0, 7]
+    },
+    {
+      "name": "rdp aliases conn",
+      "args": ["@conn", "@conn", "@remote", 9]
+    },
+    {
+      "name": "remote aliases rdp",
+      "args": ["@conn", "@rdp", "@rdp", 9]
+    }
+  ],
+  "fuzz": {
+    "seed": 184704,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@conn"]
+      },
+      {
+        "choices": ["@rdp"]
+      },
+      {
+        "choices": ["@remote"]
+      },
+      {
+        "range": [0, 4294967295]
+      }
+    ],
+    "memory": [
+      { "addr": "@conn", "offset": "0x0", "size": 112 }
+    ]
+  }
+}

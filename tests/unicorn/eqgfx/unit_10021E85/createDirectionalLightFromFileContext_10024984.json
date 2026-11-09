@@ -1,0 +1,250 @@
+{
+  "function": "createDirectionalLightFromFileContext_guess",
+  "original": "0x10024984",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8080",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@dictionary"},
+        {"offset": "0x38", "u32": 4},
+        {"offset": "0x8044", "u32": "@definition"},
+        {"offset": "0x804c", "u32": "@pointerTable"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "dictionary": {"size": "0x100", "fill": "random"},
+    "definition": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x1c", "u32": 7}
+      ]
+    },
+    "pointerTable": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@lightDef"},
+        {"offset": "0x4", "u32": "@lightDef"},
+        {"offset": "0x8", "u32": "@lightDef"},
+        {"offset": "0xc", "u32": "@lightDef"}
+      ]
+    },
+    "lightDef": {"size": "0x20", "fill": "zero"},
+    "light": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc", "u32": 1}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@lightDef"
+    },
+    "0x10014b20": {
+      "name": "t3dCreateDirectionalLight",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": "@light"
+    },
+    "0x10014628": {
+      "name": "t3dSetDirectionalLightStaticFlag",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x100174b8": {
+      "name": "t3dSetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"]
+    },
+    "0x10014d38": {
+      "name": "t3dAddDirectionalLightToRegion",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: pointer table entry, static bit, negative tag, two regions, flag set",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "u32": "0xfffffffe"},
+        {"addr": "@definition", "offset": "0x8", "u8": 32},
+        {"addr": "@definition", "offset": "0x18", "u32": 2},
+        {"addr": "@definition", "offset": "0x20", "u32": 9},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    },
+    {
+      "name": "defaults: pointer table entry 1, no flags, no tag, no regions",
+      "args": ["@context"]
+    },
+    {
+      "name": "negative pointerOffset -3 looks the definition up in the dictionary",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x4", "u32": "0xfffffffd"}]
+    },
+    {
+      "name": "pointerOffset -1 is the first negative value",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x4", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "pointerOffset 0 reads pointerTable[0]",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "pointerOffset 3 reads pointerTable[3]",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x4", "u32": 3}]
+    },
+    {
+      "name": "null light: nothing else runs and 0 is returned",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "u32": "0xfffffffe"},
+        {"addr": "@definition", "offset": "0x8", "u8": 32},
+        {"addr": "@definition", "offset": "0x18", "u32": 2},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {
+        "0x10014b20": {
+          "name": "t3dCreateDirectionalLight",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "static bit 0x20 calls the setter",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x8", "u8": 32}]
+    },
+    {
+      "name": "flag 0x10 without 0x20 does not call the setter",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x8", "u8": 16}]
+    },
+    {
+      "name": "every bit but 0x20 does not call the setter",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x8", "u8": 223}]
+    },
+    {
+      "name": "tagOffset 0 skips the tag call; the region loop still runs",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x18", "u32": 1}]
+    },
+    {
+      "name": "tagOffset -1 tags with dictionarySize + 1 and adds the entry",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "tagOffset -2 with a nonzero SetObjectTag skips AddEntry",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": "0xfffffffe"}],
+      "callees": {
+        "0x100174b8": {
+          "name": "t3dSetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "tagOffset 3 passes tag 0 and adds the entry",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": 3}]
+    },
+    {
+      "name": "regionCount 1 adds regionIds[0] once",
+      "args": ["@context"],
+      "memory": [{"addr": "@definition", "offset": "0x18", "u32": 1}]
+    },
+    {
+      "name": "regionCount 3 adds regionIds[0..2] in order",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 3},
+        {"addr": "@definition", "offset": "0x20", "u32": 9},
+        {"addr": "@definition", "offset": "0x24", "u32": 11}
+      ]
+    },
+    {
+      "name": "setPolyhedronFlag 0 leaves the light flags alone",
+      "args": ["@context"],
+      "memory": [{"addr": "@context", "offset": "0x8064", "u32": 0}]
+    },
+    {
+      "name": "setPolyhedronFlag 1 ORs 0x10 into the light flags",
+      "args": ["@context"],
+      "memory": [{"addr": "@context", "offset": "0x8064", "u32": 1}]
+    },
+    {
+      "name": "setPolyhedronFlag 2 is nonzero too",
+      "args": ["@context"],
+      "memory": [{"addr": "@context", "offset": "0x8064", "u32": 2}]
+    },
+    {
+      "name": "all branches on: negative pointerOffset, static bit, tag, three regions, flag",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@definition", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@definition", "offset": "0x8", "u8": 32},
+        {"addr": "@definition", "offset": "0x18", "u32": 3},
+        {"addr": "@definition", "offset": "0x20", "u32": 9},
+        {"addr": "@definition", "offset": "0x24", "u32": 11},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 149892,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@context"]
+      }
+    ],
+    "memory": [
+      {"addr": "@context", "offset": "0x38", "type": "int", "range": [0, 6]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "choices": [0, 1, 2]},
+      {"addr": "@definition", "offset": "0x0", "type": "int", "range": [-3, 3]},
+      {"addr": "@definition", "offset": "0x4", "type": "int", "range": [-3, 3]},
+      {"addr": "@definition", "offset": "0x8", "type": "u8", "choices": [0, 16, 32, 33, 223, 255]},
+      {"addr": "@definition", "offset": "0x18", "type": "int", "range": [0, 3]},
+      {"addr": "@definition", "offset": "0x1c", "type": "int", "count": 3, "range": [-8, 40]}
+    ]
+  }
+}

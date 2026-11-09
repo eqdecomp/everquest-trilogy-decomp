@@ -1,0 +1,179 @@
+{
+  "function": "createDMTrackFromFileContext_1002599A_guess",
+  "original": "0x1002599a",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "rewrite": "createDMTrackFromFileContext_1002599A_guess",
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@handle"},
+        {"offset": "0x38", "u32": 100},
+        {"offset": "0x8044", "u32": "@record"},
+        {"offset": "0x8064", "u32": 1}
+      ]
+    },
+    "record": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x8", "u32": 1},
+        {"offset": "0xc", "u32": 0},
+        {"offset": "0x10", "u32": 40},
+        {"offset": "0x14", "u32": 50}
+      ]
+    },
+    "handle": {"size": "0x10", "fill": "zero"},
+    "table": {"size": "0x20", "fill": "zero"},
+    "track": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@table"
+    },
+    "0x1001075c": {
+      "name": "s3dDefineDMTrack",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int", "int", "int", "int", "ptr"],
+      "ret": "@track"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero entries skips allocation and free",
+      "args": ["@context"]
+    },
+    {
+      "name": "one entry uses negative file offset and sets track flag",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": -4},
+        {"addr": "@record", "offset": "0x8", "u32": 1},
+        {"addr": "@record", "offset": "0xc", "u32": 1}
+      ]
+    },
+    {
+      "name": "three entries stride two and nonnegative offset",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": 12},
+        {"addr": "@record", "offset": "0x8", "u32": 2},
+        {"addr": "@record", "offset": "0xc", "u32": 3},
+        {"addr": "@context", "offset": "0x8064", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero stride repeats the same entry pointer",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x8", "u32": 0},
+        {"addr": "@record", "offset": "0xc", "u32": 3}
+      ]
+    },
+    {
+      "name": "negative stride walks entry data backward",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x8", "u32": -1},
+        {"addr": "@record", "offset": "0xc", "u32": 2}
+      ]
+    },
+    {
+      "name": "allocation failure returns zero before define",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 2}
+      ],
+      "callees": {
+        "0x10050c48": {"ret": 0}
+      }
+    },
+    {
+      "name": "allocator changes count before the redundant loop guard",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 1}
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": "@table",
+          "writes": [
+            {"addr": "@record+0xc", "hex": "00000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative count allocates a wrapped size then handles failure",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": -1}
+      ],
+      "callees": {
+        "0x10050c48": {"ret": 0}
+      }
+    },
+    {
+      "name": "defined track may be null",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 1}
+      ],
+      "callees": {
+        "0x1001075c": {"ret": 0}
+      }
+    },
+    {
+      "name": "zero track flag does not set result flags",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": 0}
+      ]
+    },
+    {
+      "name": "nonzero track flag value sets result flags",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": -1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 154010,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]}
+    ],
+    "memory": [
+      {"addr": "@record", "offset": "0x0", "type": "int", "range": [-20, 20]},
+      {"addr": "@record", "offset": "0x8", "type": "int", "range": [-2, 3]},
+      {"addr": "@record", "offset": "0xc", "type": "u32", "range": [0, 4]},
+      {"addr": "@record", "offset": "0x10", "type": "int", "range": [-10, 10]},
+      {"addr": "@record", "offset": "0x14", "type": "int", "range": [-10, 10]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "range": [-1, 1]}
+    ]
+  }
+}

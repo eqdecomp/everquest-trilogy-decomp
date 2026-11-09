@@ -1,0 +1,457 @@
+{
+  "function": "t3dSetActorRenderVolume",
+  "original": "0x1000aa28",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "desc",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "actor": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xf",
+          "u8": 65
+        },
+        {
+          "offset": "0x30",
+          "u32": "@old"
+        },
+        {
+          "offset": "0x34",
+          "f32": 1.25
+        },
+        {
+          "offset": "0x38",
+          "f32": 2.5
+        }
+      ]
+    },
+    "desc": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 42
+        }
+      ]
+    },
+    "old": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "dup": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 2
+        },
+        {
+          "offset": "0x8",
+          "f32": 3.5
+        },
+        {
+          "offset": "0xc",
+          "f32": -0.75
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d5a1": {
+      "name": "t3dDestroyVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@dup"
+    }
+  },
+  "cases": [
+    {
+      "name": "desc_null",
+      "args": [
+        "@context",
+        "@actor",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "desc_null_no_volume",
+      "args": [
+        "@context",
+        "@actor",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x30",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag0",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag0_no_volume",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x30",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag2a_dup",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 42
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag2a_dup_fails",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 42
+        }
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    },
+    {
+      "name": "tag2c_dup",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 44
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag2c_dup_fails",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 44
+        }
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    },
+    {
+      "name": "tag29_unknown",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 41
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "tag2b_unknown",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 43
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "tag2d_unknown",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 45
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "tag1_unknown",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "tag_minus1_unknown",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 4294967295
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "tag_high_bit_unknown",
+      "args": [
+        "@context",
+        "@actor",
+        "@desc"
+      ],
+      "memory": [
+        {
+          "addr": "@desc",
+          "offset": "0x0",
+          "u32": 2147483648
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 43560,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@desc",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@desc",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          4294967295,
+          2147483648
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x30",
+        "type": "ptr",
+        "choices": [
+          "@old",
+          0
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x34",
+        "type": "float"
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x38",
+        "type": "float"
+      },
+      {
+        "addr": "@actor",
+        "offset": "0xf",
+        "type": "u8"
+      },
+      {
+        "addr": "@dup",
+        "offset": "0x0",
+        "type": "u32"
+      },
+      {
+        "addr": "@dup",
+        "offset": "0x8",
+        "type": "float"
+      },
+      {
+        "addr": "@dup",
+        "offset": "0xc",
+        "type": "float"
+      }
+    ]
+  }
+}

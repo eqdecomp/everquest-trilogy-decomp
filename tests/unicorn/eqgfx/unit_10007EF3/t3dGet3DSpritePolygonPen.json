@@ -1,0 +1,194 @@
+{
+  "function": "t3dGet3DSpritePolygonPen",
+  "original": "0x10008b28",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "u8",
+  "objects": {
+    "sprite": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "@frames"},
+        {"offset": "0x2c", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x20", "u32": 3},
+        {"offset": "0x2c", "u32": "@parent"}
+      ]
+    },
+    "parent": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "@parent_frames"}
+      ]
+    },
+    "frames": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "parent_frames": {
+      "size": "0x1000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical frame 1",
+      "args": ["@sprite", 1],
+      "memory": [{"addr": "@frames", "offset": "0x6a", "u8": "0x37"}],
+      "expect": {"ret": "0x37"}
+    },
+    {
+      "name": "first frame",
+      "args": ["@sprite", 0],
+      "memory": [{"addr": "@frames", "offset": "0x1a", "u8": "0x21"}],
+      "expect": {"ret": "0x21"}
+    },
+    {
+      "name": "last frame (count-1)",
+      "args": ["@sprite", 2],
+      "memory": [{"addr": "@frames", "offset": "0xba", "u8": "0x4c"}],
+      "expect": {"ret": "0x4c"}
+    },
+    {
+      "name": "index equals count",
+      "args": ["@sprite", 3],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index past count",
+      "args": ["@sprite", 4],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero",
+      "args": ["@sprite", 0],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count one",
+      "args": ["@sprite", 0],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 1},
+        {"addr": "@frames", "offset": "0x1a", "u8": "0x99"}
+      ],
+      "expect": {"ret": "0x99"}
+    },
+    {
+      "name": "index all ones",
+      "args": ["@sprite", "0xffffffff"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index high bit set (unsigned compare)",
+      "args": ["@sprite", "0x80000000"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "huge count (unsigned compare)",
+      "args": ["@sprite", 1],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": "0x80000000"},
+        {"addr": "@frames", "offset": "0x6a", "u8": "0x5e"}
+      ],
+      "expect": {"ret": "0x5e"}
+    },
+    {
+      "name": "count all ones, index reads",
+      "args": ["@sprite", 5],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": "0xffffffff"},
+        {"addr": "@frames", "offset": "0x1aa", "u8": "0x8e"}
+      ],
+      "expect": {"ret": "0x8e"}
+    },
+    {
+      "name": "wide index scaling",
+      "args": ["@sprite", 19],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": "0x40"},
+        {"addr": "@frames", "offset": "0x60a", "u8": "0x88"}
+      ],
+      "expect": {"ret": "0x88"}
+    },
+    {
+      "name": "own frames win over parent bytes",
+      "args": ["@sprite", 0],
+      "memory": [
+        {"addr": "@frames", "offset": "0x1a", "u8": "0x3c"},
+        {"addr": "@parent_frames", "offset": "0x1a", "u8": "0xc3"}
+      ],
+      "expect": {"ret": "0x3c"}
+    },
+    {
+      "name": "sprite without own frames uses parent's",
+      "args": ["@sprite", 1],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x18", "u32": 0},
+        {"addr": "@frames", "offset": "0x6a", "u8": "0x11"},
+        {"addr": "@parent_frames", "offset": "0x6a", "u8": "0x6b"}
+      ],
+      "expect": {"ret": "0x6b"}
+    },
+    {
+      "name": "fallback frame at bound",
+      "args": ["@sprite", 2],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x18", "u32": 0},
+        {"addr": "@parent_frames", "offset": "0xba", "u8": "0x6c"}
+      ],
+      "expect": {"ret": "0x6c"}
+    },
+    {
+      "name": "fallback index past count",
+      "args": ["@sprite", 3],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "pen byte 0xff",
+      "args": ["@sprite", 0],
+      "memory": [{"addr": "@frames", "offset": "0x1a", "u8": "0xff"}],
+      "expect": {"ret": "0xff"}
+    }
+  ],
+  "fuzz": {
+    "seed": 35624,
+    "count": 45,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "range": [-4, 44]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 8, 40, 44, "0x7fffffff", "0x80000000", "0xffffffff"]},
+      {"addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": [0, "@frames"]}
+    ]
+  }
+}

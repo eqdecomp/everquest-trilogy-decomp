@@ -1,0 +1,395 @@
+{
+  "function": "t3dDuplicateBlitSprite",
+  "original": "0x1000d016",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x70",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": "@reference68"
+        },
+        {
+          "offset": "0x6c",
+          "u32": "@reference6c"
+        }
+      ]
+    },
+    "zeroSource": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": "@reference68"
+        },
+        {
+          "offset": "0x6c",
+          "u32": "@reference6c"
+        }
+      ]
+    },
+    "aliasSource": {
+      "size": "0x70",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": "@sharedReference"
+        },
+        {
+          "offset": "0x6c",
+          "u32": "@sharedReference"
+        }
+      ]
+    },
+    "boundarySource": {
+      "size": "0x70",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": "@referenceMax"
+        },
+        {
+          "offset": "0x6c",
+          "u32": "@referenceMin"
+        }
+      ]
+    },
+    "sprite": {
+      "size": "0x70",
+      "fill": "zero"
+    },
+    "reference68": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 7
+        }
+      ]
+    },
+    "reference6c": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 11
+        }
+      ]
+    },
+    "sharedReference": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 19
+        }
+      ]
+    },
+    "referenceMax": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 2147483647
+        }
+      ]
+    },
+    "referenceMin": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "0x80000000"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@sprite"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:112"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: allocation and helper succeed, copy kept, both references bumped",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "zero-filled source: zeros copied, header fields cleared, references bumped",
+      "args": [
+        "@context",
+        "@zeroSource"
+      ]
+    },
+    {
+      "name": "same reference in both slots is incremented twice",
+      "args": [
+        "@context",
+        "@aliasSource"
+      ]
+    },
+    {
+      "name": "reference counts wrap as signed dwords",
+      "args": [
+        "@context",
+        "@boundarySource"
+      ]
+    },
+    {
+      "name": "helper returns 1: frees the copy and returns null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:112"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "helper returns -1: frees the copy and returns null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:112"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "helper returns INT_MAX: frees the copy and returns null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:112"
+          ],
+          "ret": 2147483647
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails with a null source: returns null without reading the source",
+      "args": [
+        "@context",
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails with a valid source: returns null, no helper call",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null context is passed through to the helper unchanged",
+      "args": [
+        0,
+        "@source"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 53270,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source",
+        "offset": "0x0",
+        "size": "0x68"
+      },
+      {
+        "addr": "@source",
+        "offset": "0x68",
+        "type": "ptr",
+        "choices": [
+          "@reference68",
+          "@reference6c",
+          "@sharedReference",
+          "@referenceMax",
+          "@referenceMin"
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0x6c",
+        "type": "ptr",
+        "choices": [
+          "@reference68",
+          "@reference6c",
+          "@sharedReference",
+          "@referenceMax",
+          "@referenceMin"
+        ]
+      },
+      {
+        "addr": "@reference68",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@reference6c",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@sharedReference",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@referenceMax",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@referenceMin",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

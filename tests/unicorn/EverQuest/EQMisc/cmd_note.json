@@ -1,0 +1,387 @@
+{
+  "function": "cmd_note_guess",
+  "original": "0x004aa172",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "args",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "stamp": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Sun Oct 04 12:34:56 2026\n"
+        }
+      ]
+    },
+    "file": {
+      "size": 32,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00564E3C",
+      "from_image": "0x00564E3C",
+      "image_size": 10
+    },
+    {
+      "addr": "0x00564E48",
+      "from_image": "0x00564E48",
+      "image_size": 2
+    },
+    {
+      "addr": "0x00564E30",
+      "from_image": "0x00564E30",
+      "image_size": 9
+    },
+    {
+      "addr": "0x006EFE2C",
+      "u32": "0x12345678"
+    }
+  ],
+  "callees": {
+    "0x005213e9": {
+      "name": "time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1790000000
+    },
+    "0x005213d0": {
+      "name": "_ctime",
+      "conv": "cdecl",
+      "args": [
+        "mem:4"
+      ],
+      "ret": "@stamp"
+    },
+    "0x005223bc": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x00524138": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr",
+        "cstr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x00521fbb": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "_ctime": "0x005213d0"
+  },
+  "cases": [
+    {
+      "name": "typical: newline stripped, note written, success shown",
+      "args": [
+        1,
+        "abc"
+      ]
+    },
+    {
+      "name": "empty note text",
+      "args": [
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "format characters in note passed as an argument",
+      "args": [
+        0,
+        "%s %d %%"
+      ]
+    },
+    {
+      "name": "stamp without trailing newline kept whole",
+      "args": [
+        0,
+        "x"
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "Sun Oct 04 12:34:56 2026"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "stamp of only a newline becomes empty",
+      "args": [
+        0,
+        "y"
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "only the last newline is stripped",
+      "args": [
+        0,
+        "z"
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "a\n\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "inner newline kept, last char not newline",
+      "args": [
+        0,
+        "z"
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "a\nb"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "31-char stamp ending in newline fills buffer",
+      "args": [
+        0,
+        "long"
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "0123456789012345678901234567890\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "fopen failure prints error, no fprintf/fclose",
+      "args": [
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fopen failure with stamp without newline",
+      "args": [
+        0,
+        ""
+      ],
+      "objects": {
+        "stamp": {
+          "size": "0x40",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "abc"
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "different time value passed to ctime",
+      "args": [
+        0,
+        "t"
+      ],
+      "callees": {
+        "0x005213e9": {
+          "name": "time2",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "callee errors ignored",
+      "args": [
+        0,
+        "e"
+      ],
+      "callees": {
+        "0x00524138": {
+          "name": "_fprintf_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr",
+            "cstr",
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x00521fbb": {
+          "name": "fclose_err",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "file name, mode and format read from their globals",
+      "args": [
+        0,
+        "g"
+      ],
+      "memory": [
+        {
+          "addr": "0x00564E3C",
+          "cstr": "other.txt"
+        },
+        {
+          "addr": "0x00564E48",
+          "cstr": "w+"
+        },
+        {
+          "addr": "0x00564E30",
+          "cstr": "<%s>"
+        }
+      ]
+    },
+    {
+      "name": "different everquest instance",
+      "args": [
+        0,
+        "i"
+      ],
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": "0x0BADF00D"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4890994,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "abc",
+          "",
+          "note text here",
+          "%d%s",
+          "x",
+          "a\n"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x00564E48",
+        "type": "u16",
+        "choices": [
+          97,
+          119,
+          29793
+        ]
+      },
+      {
+        "addr": "0x006EFE2C",
+        "type": "u32",
+        "choices": [
+          0,
+          305419896,
+          1
+        ]
+      }
+    ]
+  }
+}

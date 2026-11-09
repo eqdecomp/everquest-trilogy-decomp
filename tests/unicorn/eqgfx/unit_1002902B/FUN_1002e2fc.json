@@ -1,0 +1,279 @@
+{
+  "function": "_t3dSetDefaultPaletteFile_guess",
+  "original": "0x1002e2fc",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    },
+    {
+      "name": "paletteFileName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@world"
+        }
+      ]
+    },
+    "world": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001e1e9": {
+      "name": "t3dSetWorldDefaultPaletteFileName",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "varargs": "printf"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical success: returns 0, nothing logged",
+      "args": [
+        "@parser",
+        "abc"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty palette name succeeds",
+      "args": [
+        "@parser",
+        ""
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee returns 1: logs the name, returns 1",
+      "args": [
+        "@parser",
+        "missing.pal"
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_fails",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "callee returns 2: still returns 1, not the callee value",
+      "args": [
+        "@parser",
+        "abc"
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_two",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 2
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "callee returns -1: nonzero is failure, returns 1",
+      "args": [
+        "@parser",
+        "abc"
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_minus_one",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "callee returns 0x80000000: nonzero is failure, returns 1",
+      "args": [
+        "@parser",
+        "abc"
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_high_bit",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": "0x80000000"
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "null world, success: callee gets 0",
+      "args": [
+        "@parser",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null world, failure: logs, returns 1",
+      "args": [
+        "@parser",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_null_world_fails",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "long palette name, failure",
+      "args": [
+        "@parser",
+        "a_much_longer_palette_file_name_that_keeps_going_for_a_while_to_see_the_copy_length.pal"
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_long_fails",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "percent sign in the name is logged as data, returns 1",
+      "args": [
+        "@parser",
+        "50%s.pal"
+      ],
+      "callees": {
+        "0x1001e1e9": {
+          "name": "t3dSetWorldDefaultPaletteFileName_percent_fails",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "null parser faults like the original (world is read before any check)",
+      "args": [
+        0,
+        "abc"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 2902,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@parser"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@parser",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          "@world"
+        ]
+      }
+    ]
+  }
+}

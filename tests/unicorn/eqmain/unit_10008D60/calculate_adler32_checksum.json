@@ -1,0 +1,204 @@
+{
+  "function": "calculate_adler32_checksum_guess",
+  "original": "0x10009650",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "adler",
+      "type": "u32"
+    },
+    {
+      "name": "buf",
+      "type": "ptr"
+    },
+    {
+      "name": "len",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "buf": {
+      "size": "0x3000",
+      "fill": "random"
+    }
+  },
+  "max_insns": 1000000,
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "null buf returns 1",
+      "args": [
+        "0x12345678",
+        0,
+        5
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "len 0 returns adler unchanged",
+      "args": [
+        "0x12345678",
+        "@buf",
+        0
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "Wikipedia known value",
+      "args": [
+        1,
+        "@buf",
+        9
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "cstr": "Wikipedia"
+        }
+      ],
+      "expect": {
+        "ret": "0x11e60398"
+      }
+    },
+    {
+      "name": "one byte",
+      "args": [
+        1,
+        "@buf",
+        1
+      ]
+    },
+    {
+      "name": "len 15 byte loop only",
+      "args": [
+        "0x00010001",
+        "@buf",
+        15
+      ]
+    },
+    {
+      "name": "len 16 one group",
+      "args": [
+        "0xdeadbeef",
+        "@buf",
+        16
+      ]
+    },
+    {
+      "name": "len 17 group and a byte",
+      "args": [
+        "0xffffffff",
+        "@buf",
+        17
+      ]
+    },
+    {
+      "name": "len 31 reduces s1 and s2",
+      "args": [
+        "0xfff0fff0",
+        "@buf",
+        31
+      ]
+    },
+    {
+      "name": "len 32 two groups",
+      "args": [
+        "0xfff0fff0",
+        "@buf",
+        32
+      ]
+    },
+    {
+      "name": "len 0x15af just under the block",
+      "args": [
+        "0xffffffff",
+        "@buf",
+        5551
+      ]
+    },
+    {
+      "name": "len 0x15b0 exactly one block",
+      "args": [
+        "0xffffffff",
+        "@buf",
+        5552
+      ]
+    },
+    {
+      "name": "len 0x15b1 block plus a byte",
+      "args": [
+        "0xffffffff",
+        "@buf",
+        5553
+      ]
+    },
+    {
+      "name": "len 0x2b00 two full blocks",
+      "args": [
+        "0x00000001",
+        "@buf",
+        11008
+      ]
+    },
+    {
+      "name": "len 0x3000 three blocks and a rest",
+      "args": [
+        "0x12345678",
+        "@buf",
+        12288
+      ]
+    },
+    {
+      "name": "s1 at 0xfff1 reduces after one byte",
+      "args": [
+        "0x0000fff1",
+        "@buf",
+        1
+      ]
+    },
+    {
+      "name": "s2 at 0xfff1 reduces after one byte",
+      "args": [
+        "0xfff10000",
+        "@buf",
+        1
+      ]
+    },
+    {
+      "name": "max adler one byte",
+      "args": [
+        "0xffffffff",
+        "@buf",
+        1
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 38480,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@buf"
+        ]
+      },
+      {
+        "range": [
+          0,
+          11264
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

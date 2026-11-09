@@ -1,0 +1,194 @@
+{
+  "function": "s3dReallocateClipSegmentStack",
+  "original": "0x10006e31",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "stack",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "stack": {
+      "size": "0x360",
+      "fill": "random",
+      "init": [
+        { "offset": "0x18", "u32": 0 },
+        { "offset": "0x358", "u32": 0 },
+        { "offset": "0x35c", "u32": 0 }
+      ]
+    },
+    "old_segments": { "size": "0x18", "fill": "zero" },
+    "new_segments": { "size": "0x18", "fill": "zero" }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@new_segments"
+    },
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": "@new_segments"
+    }
+  },
+  "cases": [
+    {
+      "name": "null stack buffer allocates the initial capacity",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 0 },
+        { "addr": "@stack", "offset": "0x358", "u32": 0 },
+        { "addr": "@stack", "offset": "0x35c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "capacity exactly required keeps existing storage",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 20 },
+        { "addr": "@stack", "offset": "0x358", "u32": 120 },
+        { "addr": "@stack", "offset": "0x35c", "u32": "@old_segments" }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "capacity one below required reallocates",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 20 },
+        { "addr": "@stack", "offset": "0x358", "u32": 119 },
+        { "addr": "@stack", "offset": "0x35c", "u32": "@old_segments" }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "nonzero pointer value one still enters reallocation branch",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 0 },
+        { "addr": "@stack", "offset": "0x358", "u32": 0 },
+        { "addr": "@stack", "offset": "0x35c", "u32": 1 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "capacity above required keeps existing storage",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 20 },
+        { "addr": "@stack", "offset": "0x358", "u32": 121 },
+        { "addr": "@stack", "offset": "0x35c", "u32": "@old_segments" }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "allocation failure returns the memory error",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 0 },
+        { "addr": "@stack", "offset": "0x358", "u32": 17 },
+        { "addr": "@stack", "offset": "0x35c", "u32": 0 }
+      ],
+      "callees": { "0x10050c48": { "ret": 0 } },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "reallocation failure clears the pointer and returns error",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 0 },
+        { "addr": "@stack", "offset": "0x358", "u32": 0 },
+        { "addr": "@stack", "offset": "0x35c", "u32": "@old_segments" }
+      ],
+      "callees": { "0x10050c8c": { "ret": 0 } },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "negative count wraps addition to zero",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": "0xffffff9c" },
+        { "addr": "@stack", "offset": "0x358", "u32": 0 },
+        { "addr": "@stack", "offset": "0x35c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "negative count plus one wraps to one",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": "0xffffff9d" },
+        { "addr": "@stack", "offset": "0x358", "u32": 1 },
+        { "addr": "@stack", "offset": "0x35c", "u32": "@old_segments" }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "large positive count retains unsigned size arithmetic",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": "0x7fffffff" },
+        { "addr": "@stack", "offset": "0x358", "u32": 0 },
+        { "addr": "@stack", "offset": "0x35c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "reallocation may return the original address",
+      "args": ["@stack"],
+      "memory": [
+        { "addr": "@stack", "offset": "0x18", "u32": 1 },
+        { "addr": "@stack", "offset": "0x358", "u32": 0 },
+        { "addr": "@stack", "offset": "0x35c", "u32": "@old_segments" }
+      ],
+      "callees": { "0x10050c8c": { "ret": "@old_segments" } },
+      "expect": { "ret": 0 }
+    }
+  ],
+  "fuzz": {
+    "seed": 28209,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@stack"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@stack",
+        "offset": "0x18",
+        "type": "int",
+        "range": [-100, 300]
+      },
+      {
+        "addr": "@stack",
+        "offset": "0x358",
+        "type": "u32",
+        "range": [0, 500]
+      },
+      {
+        "addr": "@stack",
+        "offset": "0x35c",
+        "type": "ptr",
+        "choices": ["@old_segments", 0]
+      }
+    ]
+  }
+}

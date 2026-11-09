@@ -1,0 +1,206 @@
+{
+  "function": "testSpriteBoundsAgainstFrustum_guess",
+  "original": "0x1003252c",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "ctx",
+      "type": "ptr"
+    },
+    {
+      "name": "holder",
+      "type": "ptr"
+    },
+    {
+      "name": "parent",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "ctx": {
+      "size": "0x600",
+      "fill": "random"
+    },
+    "holder": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x5c", "u32": "@box"},
+        {"offset": "0x28", "f32": 1.5},
+        {"offset": "0x2c", "f32": -2.25},
+        {"offset": "0x30", "f32": 3.0}
+      ]
+    },
+    "box": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "parent": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10037093": {
+      "name": "transformFrustumWithMatrices",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:48",
+        "ptr",
+        "ignore"
+      ],
+      "writes": [
+        {"arg": 3, "hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"}
+      ]
+    },
+    "0x10030e4a": {
+      "name": "testBoxAgainstPlanes",
+      "conv": "cdecl",
+      "args": [
+        "mem:64",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 42
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: stores the mask, returns 0",
+      "args": [1, "@ctx", "@holder", "@parent"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "outside: returns 1, clipFlags untouched",
+      "args": [1, "@ctx", "@holder", "@parent"],
+      "callees": {
+        "0x10030e4a": {"name": "testBoxAgainstPlanes", "conv": "cdecl", "args": ["mem:64", "ptr", "ptr"], "ret": -1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mask 0: stored, returns 0",
+      "args": [1, "@ctx", "@holder", "@parent"],
+      "callees": {
+        "0x10030e4a": {"name": "testBoxAgainstPlanes", "conv": "cdecl", "args": ["mem:64", "ptr", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "mask 1: stored, returns 0",
+      "args": [1, "@ctx", "@holder", "@parent"],
+      "callees": {
+        "0x10030e4a": {"name": "testBoxAgainstPlanes", "conv": "cdecl", "args": ["mem:64", "ptr", "ptr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "mask -2: only -1 is outside, stored, returns 0",
+      "args": [1, "@ctx", "@holder", "@parent"],
+      "callees": {
+        "0x10030e4a": {"name": "testBoxAgainstPlanes", "conv": "cdecl", "args": ["mem:64", "ptr", "ptr"], "ret": -2}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "mask INT_MAX: stored, returns 0",
+      "args": [1, "@ctx", "@holder", "@parent"],
+      "callees": {
+        "0x10030e4a": {"name": "testBoxAgainstPlanes", "conv": "cdecl", "args": ["mem:64", "ptr", "ptr"], "ret": 2147483647}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "grouping A: (2^100 + 1) - 2^100 = 0 for each row, rotation all 1",
+      "args": [0, "@ctx", "@holder", "@parent"],
+      "memory": [
+        {"addr": "@parent", "offset": "0x10", "f32": 1.2676506002282294e30},
+        {"addr": "@parent", "offset": "0x14", "f32": -1.0},
+        {"addr": "@parent", "offset": "0x18", "f32": -1.2676506002282294e30},
+        {"addr": "@parent", "offset": "0xb0", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xb4", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xb8", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xbc", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xc0", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xc4", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xc8", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xcc", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xd0", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "grouping B: 1 + (2^100 - 2^100) = 1 for each row, rotation all 1",
+      "args": [0, "@ctx", "@holder", "@parent"],
+      "memory": [
+        {"addr": "@parent", "offset": "0x10", "f32": 1.2676506002282294e30},
+        {"addr": "@parent", "offset": "0x14", "f32": -1.2676506002282294e30},
+        {"addr": "@parent", "offset": "0x18", "f32": -1.0},
+        {"addr": "@parent", "offset": "0xb0", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xb4", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xb8", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xbc", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xc0", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xc4", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xc8", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xcc", "f32": 1.0},
+        {"addr": "@parent", "offset": "0xd0", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "held-out reseed: infinite position x zero rotation, NaN sign shows the negate-before-multiply order",
+      "args": [0, "@ctx", "@holder", "@parent"],
+      "memory": [
+        { "addr": "@parent", "offset": "0x10", "f32": 2.0 },
+        { "addr": "@parent", "offset": "0x14", "hex": "0000807f" },
+        { "addr": "@parent", "offset": "0x18", "f32": 3.0 },
+        { "addr": "@parent", "offset": "0xb0", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xb4", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xb8", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xbc", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xc0", "f32": 0.0 },
+        { "addr": "@parent", "offset": "0xc4", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xc8", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xcc", "f32": 1.0 },
+        { "addr": "@parent", "offset": "0xd0", "f32": 1.0 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 206124,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@ctx"
+        ]
+      },
+      {
+        "choices": [
+          "@holder"
+        ]
+      },
+      {
+        "choices": [
+          "@parent"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@parent", "offset": "0x10", "type": "float", "count": 3, "range": [-100, 100]},
+      {"addr": "@parent", "offset": "0x68", "type": "float", "count": 9, "range": [-2, 2]},
+      {"addr": "@parent", "offset": "0xb0", "type": "float", "count": 9, "range": [-2, 2]},
+      {"addr": "@holder", "offset": "0x28", "type": "float", "count": 3, "range": [-100, 100]}
+    ]
+  }
+}

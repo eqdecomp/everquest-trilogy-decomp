@@ -1,0 +1,76 @@
+{
+  "function": "PumpMessagesAndPollKey_guess",
+  "original": "0x10005730",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "bool",
+  "objects": {
+    "fn": {"size": "0x10", "fill": "zero"},
+    "vt": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@fn"}]},
+    "obj0": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x0", "u32": "@vt"}]},
+    "obj1": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x0", "u32": "@vt"}]},
+    "rec0": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": "@obj0"}]},
+    "rec1": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": "@obj1"}]},
+    "rec_null": {"size": "0x20", "fill": "zero"},
+    "node_a": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "@rec0"}]},
+    "node_b": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "@rec1"}]},
+    "node_ab": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "@rec0"}, {"offset": "0x8", "u32": "@node_b"}]},
+    "node_null": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "@rec_null"}]},
+    "node_mixed": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "@rec_null"}, {"offset": "0x8", "u32": "@node_b"}]}
+  },
+  "memory": [
+    {"addr": "0x1004ce90", "u32": 0},
+    {"addr": "0x1004ce7c", "u32": 0},
+    {"addr": "0x1004ce58", "u32": 0},
+    {"addr": "0x100463a4", "u32": 100},
+    {"addr": "0x1004ce5c", "u16": 65}
+  ],
+  "callees": {
+    "winmm.dll!timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 1000},
+    "user32.dll!PeekMessageA": {"name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint", "uint"], "ret": 0},
+    "user32.dll!GetMessageA": {"name": "GetMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint"], "ret": 1},
+    "user32.dll!TranslateMessage": {"name": "TranslateMessage", "conv": "stdcall", "args": ["ignore"], "ret": 1},
+    "user32.dll!DispatchMessageA": {"name": "DispatchMessageA", "conv": "stdcall", "args": ["ignore"], "ret": 0},
+    "0x100280e0": {"name": "FUN_100280e0", "conv": "thiscall", "args": ["ignore"], "ret": 0},
+    "@fn": {"name": "vslot2c", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "timer_off_idle", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "not_due", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 2000}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "due_key_down", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "due_key_up_once", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 0}, {"addr": "0x1004ce5c", "u16": 32768}], "expect": {"ret": false}},
+    {"name": "due_unsigned_stamp", "args": [], "callees": {"winmm.dll!timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": "0x80000000"}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": "0x7fffffff"}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "due_wrap_key_down", "args": [], "callees": {"winmm.dll!timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": "0xfffffff0"}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": "0x20"}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "due_key_7fff", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 32767}], "expect": {"ret": true}},
+    {"name": "message_once", "args": [], "callees": {"user32.dll!PeekMessageA": {"name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint", "uint"], "ret": [1, 0]}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "message_getmessage_zero", "args": [], "callees": {"user32.dll!PeekMessageA": {"name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint", "uint"], "ret": [1, 0]}, "user32.dll!GetMessageA": {"name": "GetMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint"], "ret": 0}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "message_getmessage_negative", "args": [], "callees": {"user32.dll!PeekMessageA": {"name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint", "uint"], "ret": [1, 0]}, "user32.dll!GetMessageA": {"name": "GetMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint"], "ret": -1}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "message_three", "args": [], "callees": {"user32.dll!PeekMessageA": {"name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint", "uint"], "ret": [1, 1, 1, 0]}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "message_then_due", "args": [], "callees": {"user32.dll!PeekMessageA": {"name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "uint", "uint", "uint", "uint"], "ret": [1, 0]}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "event_key_down", "args": [], "callees": {"0x100280e0": {"name": "FUN_100280e0", "conv": "thiscall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "4100"}]}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "event_key_up_then_idle", "args": [], "callees": {"0x100280e0": {"name": "FUN_100280e0", "conv": "thiscall", "args": ["ignore"], "ret": [1, 0], "writes": [{"arg": 0, "offset": 0, "hex": "0080"}]}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "list_one_object", "args": [], "memory": [{"addr": "0x1004ce90", "u32": "@node_a"}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "list_null_record", "args": [], "memory": [{"addr": "0x1004ce90", "u32": "@node_null"}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "list_null_then_object", "args": [], "memory": [{"addr": "0x1004ce90", "u32": "@node_mixed"}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "list_two_objects", "args": [], "memory": [{"addr": "0x1004ce90", "u32": "@node_ab"}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "list_then_event", "args": [], "callees": {"0x100280e0": {"name": "FUN_100280e0", "conv": "thiscall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "4100"}]}}, "memory": [{"addr": "0x1004ce90", "u32": "@node_ab"}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "event_key_down_flag_off", "args": [], "callees": {"0x100280e0": {"name": "FUN_100280e0", "conv": "thiscall", "args": ["ignore"], "ret": 1, "writes": [{"arg": 0, "offset": 0, "hex": "4100"}]}}, "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 0}, {"addr": "0x1004ce58", "u32": 0}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}},
+    {"name": "due_boundary_equal", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 1000}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": false}},
+    {"name": "due_boundary_minus_one", "args": [], "memory": [{"addr": "0x1004ce90", "u32": 0}, {"addr": "0x1004ce7c", "u32": 1}, {"addr": "0x1004ce58", "u32": 999}, {"addr": "0x100463a4", "u32": 100}, {"addr": "0x1004ce5c", "u16": 65}], "expect": {"ret": true}}
+  ],
+  "fuzz": {
+    "seed": 22320,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004ce90", "type": "u32", "choices": [0, "@node_a", "@node_ab", "@node_null", "@node_mixed"]},
+      {"addr": "0x1004ce7c", "type": "u32", "choices": [0, 1, 4294967295]},
+      {"addr": "0x1004ce58", "type": "u32", "choices": [0, 500, 999, 1000, 1001, 2000, 2147483647, 2147483648, 4294967295]},
+      {"addr": "0x100463a4", "type": "u32", "range": [0, 4096]},
+      {"addr": "0x1004ce5c", "type": "u16", "choices": [0, 65, 128, 16384, 32767, 32768, 65535]}
+    ]
+  }
+}

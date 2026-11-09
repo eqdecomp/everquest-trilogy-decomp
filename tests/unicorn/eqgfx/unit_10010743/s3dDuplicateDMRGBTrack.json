@@ -1,0 +1,248 @@
+{
+  "function": "s3dDuplicateDMRGBTrack",
+  "original": "0x10010e89",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@track"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:56"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: validation passes, copy kept, shared object shared; the return is the track (compared with the original)",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "validation returns 0xffff3d3e (-49858): copy freed, returns 0",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": -49858
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "validation returns -1: still the failure path",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "validation returns 1: still the failure path",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:56"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails: returns 0, nothing copied or validated",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "source shared object null: still shared and returned",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "context": {
+          "size": "0x100",
+          "fill": "random"
+        },
+        "source": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x34",
+              "u32": "0"
+            }
+          ]
+        },
+        "track": {
+          "size": "0x38",
+          "fill": "random"
+        }
+      }
+    },
+    {
+      "name": "zeros: context and source all zero",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "objects": {
+        "context": {
+          "size": "0x100",
+          "fill": "zero"
+        },
+        "source": {
+          "size": "0x100",
+          "fill": "zero"
+        },
+        "track": {
+          "size": "0x38",
+          "fill": "random"
+        }
+      }
+    },
+    {
+      "name": "context null: passed through to the validator, source valid",
+      "args": [
+        0,
+        "@source"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 69257,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source",
+        "offset": "0x14",
+        "type": "u32",
+        "count": 8
+      },
+      {
+        "addr": "@source",
+        "offset": "0x34",
+        "type": "u32",
+        "range": [
+          0,
+          3
+        ],
+        "p": 0.5
+      }
+    ]
+  }
+}

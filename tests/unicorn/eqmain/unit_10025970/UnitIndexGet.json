@@ -1,0 +1,123 @@
+{
+  "function": "UnitIndexGet_guess",
+  "original": "0x10025c00",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "record",
+      "type": "ptr"
+    },
+    {
+      "name": "dummy",
+      "type": "int"
+    },
+    {
+      "name": "index",
+      "type": "int"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "record": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@table"
+        }
+      ]
+    },
+    "table": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "index 1 -> table[1], +0xc stores 1",
+      "args": [
+        "@record",
+        0,
+        1
+      ]
+    },
+    {
+      "name": "index 0 -> table[0]",
+      "args": [
+        "@record",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "last entry index 31 -> table[31]",
+      "args": [
+        "@record",
+        0,
+        31
+      ]
+    },
+    {
+      "name": "table is the record: table[3] is the +0xc just stored (store before load)",
+      "args": [
+        "@record",
+        0,
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@record",
+          "offset": "0x8",
+          "u32": "@record"
+        }
+      ],
+      "expect": {
+        "ret": 3
+      }
+    },
+    {
+      "name": "dummy EDX nonzero is ignored",
+      "args": [
+        "@record",
+        "0xdeadbeef",
+        7
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 154624,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@record"
+        ]
+      },
+      {},
+      {
+        "range": [
+          0,
+          31
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@record",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@table",
+          "@record"
+        ],
+        "p": 0.3
+      }
+    ]
+  }
+}

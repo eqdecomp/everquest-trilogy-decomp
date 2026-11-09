@@ -1,0 +1,160 @@
+{
+  "function": "lockTextureMemory_guess",
+  "original": "0x1000cd5b",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "holder",
+      "type": "ptr"
+    },
+    {
+      "name": "desc",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "holder": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x60",
+          "u32": "@surface"
+        }
+      ]
+    },
+    "desc": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "surface": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x64",
+          "u32": "@lock"
+        },
+        {
+          "offset": "0x6c",
+          "u32": "@restore"
+        }
+      ]
+    },
+    "lock": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "restore": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@lock": {
+      "conv": "stdcall",
+      "args": ["ptr", "int", "mem:4", "int", "int"],
+      "ret": 0
+    },
+    "@restore": {
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "lock-ok",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lock-ok-positive",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lock-fail-generic",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": -1}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "lock-fail-near-miss",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": "0x887601c3"}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "lost-restore-fails",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": "0x887601c2"},
+        "@restore": {"conv": "stdcall", "args": ["ptr"], "ret": -1}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "lost-restore-ok-lock-ok",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": ["0x887601c2", 0]},
+        "@restore": {"conv": "stdcall", "args": ["ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lost-restore-ok-lock-fails",
+      "args": ["@holder", "@desc"],
+      "callees": {
+        "@lock": {"conv": "stdcall", "args": ["ptr", "int", "mem:4", "int", "int"], "ret": ["0x887601c2", -1]},
+        "@restore": {"conv": "stdcall", "args": ["ptr"], "ret": 0}
+      },
+      "expect": {"ret": -49858}
+    }
+  ],
+  "fuzz": {
+    "seed": 52571,
+    "count": 30,
+    "args": [
+      {
+        "choices": ["@holder"]
+      },
+      {
+        "choices": ["@desc"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@desc",
+        "offset": "0x4",
+        "size": 16
+      }
+    ]
+  }
+}

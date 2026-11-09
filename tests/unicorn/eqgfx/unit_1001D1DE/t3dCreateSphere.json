@@ -1,0 +1,135 @@
+{
+  "function": "t3dCreateSphere",
+  "original": "0x1001d37c",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "radius",
+      "type": "float"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "sphere": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@sphere"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical radius",
+      "args": [
+        1.5
+      ]
+    },
+    {
+      "name": "zero radius",
+      "args": [
+        0.0
+      ]
+    },
+    {
+      "name": "negative radius",
+      "args": [
+        -2.5
+      ]
+    },
+    {
+      "name": "denormal radius",
+      "args": [
+        1e-40
+      ]
+    },
+    {
+      "name": "large radius",
+      "args": [
+        1e30
+      ]
+    },
+    {
+      "name": "allocation fails returns null without writing",
+      "args": [
+        1.5
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "stale definition overwritten with null",
+      "args": [
+        3.0
+      ],
+      "memory": [
+        {
+          "addr": "@sphere",
+          "offset": "0x4",
+          "u32": "0xdeadbeef"
+        }
+      ]
+    },
+    {
+      "name": "stale type overwritten with 0x2a",
+      "args": [
+        3.0
+      ],
+      "memory": [
+        {
+          "addr": "@sphere",
+          "offset": "0x0",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "stale radius overwritten",
+      "args": [
+        3.0
+      ],
+      "memory": [
+        {
+          "addr": "@sphere",
+          "offset": "0x8",
+          "f32": 9.0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 119676,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sphere",
+        "size": 12
+      }
+    ]
+  }
+}

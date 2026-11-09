@@ -1,0 +1,162 @@
+{
+  "function": "t3dSet3DSpritePolygonSimpleSprite",
+  "original": "0x10008bc9",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "sprite", "type": "ptr"},
+    {"name": "frameIndex", "type": "u32"},
+    {"name": "simpleSprite", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "0x100f4100"},
+        {"offset": "0x2c", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [{"offset": "0x20", "u32": 4}]
+    }
+  },
+  "memory": [
+    {"addr": "0x100f4100", "size": "0x140", "fill": "zero"},
+    {"addr": "0x100f4100", "offset": "0x1c", "u32": "0x100f4300"},
+    {"addr": "0x100f4100", "offset": "0x6c", "u32": "0x100f4310"},
+    {"addr": "0x100f4100", "offset": "0xbc", "u32": "0x100f4320"},
+    {"addr": "0x100f4100", "offset": "0x10c", "u32": "0x100f4330"},
+    {"addr": "0x100f4300", "size": "0x60", "fill": "zero"},
+    {"addr": "0x100f4300", "u32": 1},
+    {"addr": "0x100f4300", "offset": "0x10", "u32": 1},
+    {"addr": "0x100f4300", "offset": "0x20", "u32": 0},
+    {"addr": "0x100f4300", "offset": "0x30", "u32": 1},
+    {"addr": "0x100f4300", "offset": "0x40", "u32": 1},
+    {"addr": "0x100f4300", "offset": "0x50", "u32": 0}
+  ],
+  "callees": {
+    "0x1000897d": {
+      "name": "ensureSpriteFrames",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "replace populated sprite, unshare precedes store and share",
+      "args": ["@sprite", 1, "0x100f4340"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "old pointer null skips unshare",
+      "args": ["@sprite", 0, "0x100f4340"],
+      "memory": [{"addr": "0x100f4100", "offset": "0x1c", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "old object with zero first dword skips unshare",
+      "args": ["@sprite", 2, "0x100f4340"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null new pointer is stored without sharing",
+      "args": ["@sprite", 3, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "new object with zero first dword is stored without sharing",
+      "args": ["@sprite", 0, "0x100f4350"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index equal to frame count is rejected",
+      "args": ["@sprite", 4, "0x100f4340"],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "index beyond frame count is rejected",
+      "args": ["@sprite", 5, "0x100f4340"],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "zero frame count rejects index zero",
+      "args": ["@sprite", 0, "0x100f4340"],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "unsigned frame count high bit remains large",
+      "args": ["@sprite", 3, "0x100f4340"],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": "0xffffffff"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null frame array and allocation failure returns error",
+      "args": ["@sprite", 1, "0x100f4340"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "null frame array and allocation success uses populated frames",
+      "args": ["@sprite", 1, "0x100f4340"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x1000897d": {
+          "name": "ensureSpriteFrames",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [{"arg": 0, "offset": 24, "hex": "00410f10"}]
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "maximum unsigned index is rejected",
+      "args": ["@sprite", "0xffffffff", "0x100f4340"],
+      "expect": {"ret": -49858}
+    }
+  ],
+  "fuzz": {
+    "seed": 35785,
+    "count": 40,
+    "args": [
+      {"choices": ["@sprite"]},
+      {"range": [0, 6]},
+      {"choices": [0, "0x100f4340", "0x100f4350"]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 4]},
+      {"addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": [0, "0x100f4100"]},
+      {"addr": "0x100f4100", "offset": "0x1c", "type": "ptr", "choices": [0, "0x100f4300", "0x100f4310", "0x100f4320", "0x100f4330"]},
+      {"addr": "0x100f4100", "offset": "0x6c", "type": "ptr", "choices": [0, "0x100f4300", "0x100f4310", "0x100f4320", "0x100f4330"]},
+      {"addr": "0x100f4100", "offset": "0xbc", "type": "ptr", "choices": [0, "0x100f4300", "0x100f4310", "0x100f4320", "0x100f4330"]},
+      {"addr": "0x100f4100", "offset": "0x10c", "type": "ptr", "choices": [0, "0x100f4300", "0x100f4310", "0x100f4320", "0x100f4330"]},
+      {"addr": "0x100f4300", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x10", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x20", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x30", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x40", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x50", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x40", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100f4300", "offset": "0x50", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

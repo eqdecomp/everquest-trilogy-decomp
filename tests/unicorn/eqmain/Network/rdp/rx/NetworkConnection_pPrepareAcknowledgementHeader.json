@@ -1,0 +1,308 @@
+{
+  "function": "NetworkConnection_pPrepareAcknowledgementHeader_guess",
+  "original": "0x1002f2a0",
+  "sources": [
+    "src/eqmain/Network/rdp/rx.c",
+    "src/eqmain/Network/rdp/log.c",
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    },
+    {
+      "name": "flags",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "random"
+    },
+    "out": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "flags": {
+      "size": 8,
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100322ae": {
+      "name": "htons",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": 13330
+    },
+    "0x10030d70": {
+      "name": "copyBitfieldToBuffer_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "count 0: returns 0 and leaves out, flags and the ack fields alone",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 0},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 130},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "ack_min 9 past rx_base (ack_min branch), min == max: no mask, returns 2",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 109},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "ack_min 8 past rx_base is the rx_base branch (boundary), 2-byte mask",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 108},
+        {"addr": "@conn", "offset": "0x208", "u16": 110},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "ack_min 9 past rx_base, 3-byte mask (ack_max 130)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 130},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "ack_min 9 past rx_base, 1-byte mask (ack_max one past ack_min)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 110},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "mask length 14: ack_max - ack_min = 112 (top of the 14 band)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 221},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "mask length 15 exactly: ack_max - ack_min = 113",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 222},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 17}
+    },
+    {
+      "name": "mask capped at 15: ack_max - ack_min = 121 (16 by the formula)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 230},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 17}
+    },
+    {
+      "name": "ack_max below ack_min wraps (u16 difference) and is capped at 15",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 100},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 17}
+    },
+    {
+      "name": "rx_base branch raises ack_max that was behind rx_base (delta > 0): no mask",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 104},
+        {"addr": "@conn", "offset": "0x208", "u16": 90},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "rx_base branch raises ack_max one behind rx_base (delta == 1, the 0 < delta boundary): no mask",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 104},
+        {"addr": "@conn", "offset": "0x208", "u16": 99},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "rx_base branch keeps ack_max that is ahead of rx_base (delta < 0): 1-byte mask",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 104},
+        {"addr": "@conn", "offset": "0x208", "u16": 105},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "rx_base branch, ack_min one below rx_base, 1-byte mask",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 99},
+        {"addr": "@conn", "offset": "0x208", "u16": 102},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "rx_base branch, ack_min equal to rx_base and ack_max too (diff 0): no mask",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 100},
+        {"addr": "@conn", "offset": "0x208", "u16": 100},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "signed ack_min: 0x8005 is below rx_base 16 (short compare takes the rx_base branch)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 16},
+        {"addr": "@conn", "offset": "0x206", "u16": 32773},
+        {"addr": "@conn", "offset": "0x208", "u16": 32},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "signed delta: rx_base 0x8000 against ack_max 5 (short delta wraps positive, ack_max raised)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 32768},
+        {"addr": "@conn", "offset": "0x206", "u16": 32768},
+        {"addr": "@conn", "offset": "0x208", "u16": 5},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "flags already set: the bits are OR-ed in, not assigned (0xFFFF stays)",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 1},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 109},
+        {"addr": "@conn", "offset": "0x208", "u16": 130},
+        {"addr": "@flags", "u16": 65535}
+      ],
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "ack_count 0x8000 is still nonzero (unsigned test), diff 0",
+      "args": ["@conn", "@out", "@flags"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x204", "u16": 32768},
+        {"addr": "@conn", "offset": "0x17c", "u16": 100},
+        {"addr": "@conn", "offset": "0x206", "u16": 100},
+        {"addr": "@conn", "offset": "0x208", "u16": 100},
+        {"addr": "@flags", "u16": 0}
+      ],
+      "expect": {"ret": 2}
+    }
+  ],
+  "fuzz": {
+    "seed": 193184,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          "@out"
+        ]
+      },
+      {
+        "choices": [
+          "@flags"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x204", "type": "u16", "range": [0, 3]},
+      {"addr": "@conn", "offset": "0x17c", "type": "u16", "range": [0, 60]},
+      {"addr": "@conn", "offset": "0x206", "type": "u16", "range": [0, 60]},
+      {"addr": "@conn", "offset": "0x208", "type": "u16", "range": [0, 130]},
+      {"addr": "@conn", "offset": "0x180", "size": 128},
+      {"addr": "@flags", "type": "u16"}
+    ]
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "function": "SwapNPCMaterials_guess",
+  "original": "0x004060a7",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {
+      "name": "player",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "display": {
+      "size": "0x2e00",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2de8", "u32": 0}
+      ]
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "@actor"},
+        {"offset": "0xd4", "u8": 5},
+        {"offset": "0xe4", "u8": 255},
+        {"offset": "0xf4", "u32": 1}
+      ]
+    },
+    "actor": {
+      "size": "0x280",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4660},
+        {"offset": "0x250", "u32": 4096}
+      ]
+    },
+    "fn_numskins": {"size": "0x10"},
+    "fn_getskin": {"size": "0x10"},
+    "fn_getpalette": {"size": "0x10"},
+    "fn_numentries": {"size": "0x10"},
+    "fn_getentry": {"size": "0x10"},
+    "fn_gettag": {"size": "0x10"}
+  },
+  "memory": [
+    {"addr": "0x006e5110", "u32": "@fn_numskins"},
+    {"addr": "0x006e5114", "u32": "@fn_getskin"},
+    {"addr": "0x006e5100", "u32": "@fn_getpalette"},
+    {"addr": "0x006e5108", "u32": "@fn_numentries"},
+    {"addr": "0x006e5104", "u32": "@fn_getentry"},
+    {"addr": "0x006e52dc", "u32": "@fn_gettag"}
+  ],
+  "callees": {
+    "0x00407334": {
+      "name": "CDisplay::SwapHead_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "int", "int", "int", "int"]
+    },
+    "0x004b156c": {
+      "name": "EQPlayer::GetActorTag_guess",
+      "conv": "thiscall",
+      "args": ["ignore"],
+      "writes": [{"arg": 0, "offset": 0, "hex": "48554d00"}]
+    },
+    "0x00406b0d": {
+      "name": "CDisplay::ReplaceMaterial",
+      "conv": "thiscall",
+      "args": ["cstr", "cstr", "ptr", "ptr", "int"],
+      "ret": 0
+    },
+    "0x004122ea": {
+      "name": "CDisplay::SetPlayerConstantAmbient_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "ptr"]
+    },
+    "@fn_numskins": {
+      "name": "s3dGetNumSkinsAttachedToHierarchicalSprite",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 2
+    },
+    "@fn_getskin": {
+      "name": "s3dGetSkinAttachedToHierarchicalSprite",
+      "conv": "cdecl",
+      "args": ["int", "ptr"],
+      "ret": 12288
+    },
+    "@fn_getpalette": {
+      "name": "s3dGetDMSpriteMaterialPalette",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 16384
+    },
+    "@fn_numentries": {
+      "name": "s3dGetNumMaterialPaletteEntries",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 2
+    },
+    "@fn_getentry": {
+      "name": "s3dGetMaterialPaletteEntry",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 20480
+    },
+    "@fn_gettag": {
+      "name": "t3dGetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore"],
+      "writes": [{"arg": 1, "offset": 0, "hex": "48554d48453031303000"}]
+    }
+  },
+  "cases": [
+    {"name": "typical: two skins, no helm, two materials", "args": ["@player"], "expect": {"ret": 1}},
+    {"name": "null player", "args": [0], "expect": {"ret": 0}},
+    {"name": "actor info null", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0x70", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "actor first dword null", "args": ["@player"], "memory": [{"addr": "@actor", "offset": "0x0", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "hier sprite null", "args": ["@player"], "memory": [{"addr": "@actor", "offset": "0x250", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "texture 0", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xd4", "u8": 0}]},
+    {"name": "texture 0x1e", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xd4", "u8": 30}]},
+    {"name": "texture 0x1f", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xd4", "u8": 31}], "expect": {"ret": 0}},
+    {"name": "texture 0x80 (negative)", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xd4", "u8": 128}], "expect": {"ret": 0}},
+    {"name": "texture 0xff (-1)", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xd4", "u8": 255}], "expect": {"ret": 0}},
+    {"name": "texture 12 (new name digits)", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xd4", "u8": 12}]},
+    {"name": "no skins", "args": ["@player"], "callees": {"@fn_numskins": {"conv": "cdecl", "args": ["ptr"], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "numSkins -1 (unsigned count)", "args": ["@player"], "callees": {"@fn_numskins": {"conv": "cdecl", "args": ["ptr"], "ret": -1}}, "expect": {"ret": 1}},
+    {"name": "one skin, helm 0: no head swap", "args": ["@player"], "callees": {"@fn_numskins": {"conv": "cdecl", "args": ["ptr"], "ret": 1}}, "memory": [{"addr": "@player", "offset": "0xe4", "u8": 0}]},
+    {"name": "two skins, helm 0: head swap", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xe4", "u8": 0}]},
+    {"name": "two skins, helm 7: head swap", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xe4", "u8": 7}]},
+    {"name": "helm 0x80 (negative): no head swap", "args": ["@player"], "memory": [{"addr": "@player", "offset": "0xe4", "u8": 128}]},
+    {"name": "no materials", "args": ["@player"], "callees": {"@fn_numentries": {"conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}}},
+    {"name": "one material", "args": ["@player"], "callees": {"@fn_numentries": {"conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}}},
+    {"name": "three materials", "args": ["@player"], "callees": {"@fn_numentries": {"conv": "cdecl", "args": ["ptr", "ptr"], "ret": 3}}},
+    {"name": "name length 8", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d484530313000"}]}}},
+    {"name": "name all zeros", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d48453030303000"}]}}},
+    {"name": "name all nines", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d48453939393900"}]}}},
+    {"name": "tag char 0 differs", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "58554d48453031303000"}]}}},
+    {"name": "tag char 1 differs", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48584d48453031303000"}]}}},
+    {"name": "tag char 2 differs", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48555848453031303000"}]}}},
+    {"name": "digit 5 is '/'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d48452f31303000"}]}}},
+    {"name": "digit 5 is ':'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d48453a31303000"}]}}},
+    {"name": "digit 6 is '/'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d4845302f303000"}]}}},
+    {"name": "digit 6 is ':'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d4845303a303000"}]}}},
+    {"name": "digit 7 is '/'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d484530302f3000"}]}}},
+    {"name": "digit 7 is ':'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d484530303a3000"}]}}},
+    {"name": "digit 8 is '/'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d48453030302f00"}]}}},
+    {"name": "digit 8 is ':'", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d48453030303a00"}]}}},
+    {"name": "chars 3 and 4 unchecked", "args": ["@player"], "callees": {"@fn_gettag": {"conv": "cdecl", "args": ["ptr", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "48554d5a5a3031303000"}]}}},
+    {"name": "infravision on, body 1", "args": ["@player"], "memory": [{"addr": "@display", "offset": "0x2de8", "u32": 1}]},
+    {"name": "infravision on, body 8: no ambient", "args": ["@player"], "memory": [{"addr": "@display", "offset": "0x2de8", "u32": 1}, {"addr": "@player", "offset": "0xf4", "u32": 8}]},
+    {"name": "infravision on, body 3: no ambient", "args": ["@player"], "memory": [{"addr": "@display", "offset": "0x2de8", "u32": 1}, {"addr": "@player", "offset": "0xf4", "u32": 3}]},
+    {"name": "infravision on, body 5: no ambient", "args": ["@player"], "memory": [{"addr": "@display", "offset": "0x2de8", "u32": 1}, {"addr": "@player", "offset": "0xf4", "u32": 5}]},
+    {"name": "infravision on, body 2", "args": ["@player"], "memory": [{"addr": "@display", "offset": "0x2de8", "u32": 1}, {"addr": "@player", "offset": "0xf4", "u32": 2}]}
+  ],
+  "fuzz": {
+    "seed": 4219047,
+    "count": 40,
+    "args": [
+      {"choices": ["@player", "@player", "@player", 0]}
+    ],
+    "memory": [
+      {"addr": "@player", "offset": "0xd4", "type": "u8", "choices": [0, 5, 12, 29, 30, 31, 127, 128, 255]},
+      {"addr": "@player", "offset": "0xe4", "type": "u8", "choices": [0, 1, 7, 127, 128, 255]},
+      {"addr": "@player", "offset": "0xf4", "type": "int", "choices": [0, 1, 2, 3, 5, 8, -1]},
+      {"addr": "@player", "offset": "0x70", "type": "ptr", "choices": ["@actor", "@actor", 0]},
+      {"addr": "@actor", "offset": "0x0", "type": "u32", "choices": [0, 4660]},
+      {"addr": "@actor", "offset": "0x250", "type": "ptr", "choices": [0, 4096]},
+      {"addr": "@display", "offset": "0x2de8", "type": "int", "choices": [0, 1]}
+    ]
+  }
+}

@@ -1,0 +1,555 @@
+{
+  "function": "t3dGetCompositeSpriteDefinitionTransformation",
+  "original": "0x1000d7d2",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "frameData",
+      "type": "ptr"
+    },
+    {
+      "name": "partIndex",
+      "type": "u32"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    },
+    {
+      "name": "scaleOut",
+      "type": "ptr"
+    },
+    {
+      "name": "headingOut",
+      "type": "ptr"
+    },
+    {
+      "name": "pitchOut",
+      "type": "ptr"
+    },
+    {
+      "name": "rollOut",
+      "type": "ptr"
+    },
+    {
+      "name": "translationOut",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "framedata": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 3
+        },
+        {
+          "offset": "0x18",
+          "u32": 4
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@parts"
+        }
+      ]
+    },
+    "parts": {
+      "size": "0x270",
+      "fill": "random"
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "scaleout": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "headingout": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "pitchout": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "rollout": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "translationout": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100fc77c",
+      "u32": "@fn"
+    }
+  ],
+  "callees": {
+    "@fn": {
+      "name": "partScale",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 0.75
+    },
+    "0x1004f049": {
+      "name": "t3dCalculateHeadingPitchRollFromCoefficients",
+      "conv": "cdecl",
+      "args": [
+        "mem:36",
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: part 1 of frame 2 (cell 9)",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "first cell of the first frame",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "last cell of the last frame (cell 11)",
+      "args": [
+        "@framedata",
+        3,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "middle frame, first part (cell 4: frameCount would give 6)",
+      "args": [
+        "@framedata",
+        0,
+        1,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "partIndex == partsPerFrame fails (scale is still stored)",
+      "args": [
+        "@framedata",
+        4,
+        1,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "frameIndex == frameCount fails",
+      "args": [
+        "@framedata",
+        0,
+        3,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "partIndex 0xffffffff fails (unsigned compare)",
+      "args": [
+        "@framedata",
+        4294967295,
+        0,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "frameIndex 0x80000000 fails (unsigned compare)",
+      "args": [
+        "@framedata",
+        0,
+        2147483648,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "callee status -1: failure returns 0xffff3d3e, no translation copy",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "callees": {
+        "0x1004f049": {
+          "name": "t3dCalculateHeadingPitchRollFromCoefficients",
+          "conv": "cdecl",
+          "args": [
+            "mem:36",
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "callee status INT_MIN: negative, failure",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "callees": {
+        "0x1004f049": {
+          "name": "t3dCalculateHeadingPitchRollFromCoefficients",
+          "conv": "cdecl",
+          "args": [
+            "mem:36",
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -2147483648
+        }
+      }
+    },
+    {
+      "name": "callee status 0: success returns 0 (not failure)",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "callees": {
+        "0x1004f049": {
+          "name": "t3dCalculateHeadingPitchRollFromCoefficients",
+          "conv": "cdecl",
+          "args": [
+            "mem:36",
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "callee status 0x7fffffff: success returns it unchanged",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "callees": {
+        "0x1004f049": {
+          "name": "t3dCalculateHeadingPitchRollFromCoefficients",
+          "conv": "cdecl",
+          "args": [
+            "mem:36",
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2147483647
+        }
+      }
+    },
+    {
+      "name": "scale function returns -2.5 (negative matrix)",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "callees": {
+        "@fn": {
+          "name": "partScale",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": -2.5
+        }
+      }
+    },
+    {
+      "name": "scale function returns 0.0 (zero matrix)",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "callees": {
+        "@fn": {
+          "name": "partScale",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": 0.0
+        }
+      }
+    },
+    {
+      "name": "scale output overlaps the part's scale (product reads the stored value)",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@parts+0x30",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "scale output overlaps rotation[0] (matrix reads the stored value)",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@parts",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ]
+    },
+    {
+      "name": "translation output overlaps the translation (copy runs in order)",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@parts+0x20"
+      ]
+    },
+    {
+      "name": "infinite part scale",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "memory": [
+        {
+          "addr": "@parts",
+          "offset": "0x30",
+          "u32": 2139095040
+        }
+      ]
+    },
+    {
+      "name": "signalling NaN part scale",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "memory": [
+        {
+          "addr": "@parts",
+          "offset": "0x30",
+          "u32": 2139095041
+        }
+      ]
+    },
+    {
+      "name": "denormal part scale",
+      "args": [
+        "@framedata",
+        0,
+        0,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "memory": [
+        {
+          "addr": "@parts",
+          "offset": "0x30",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "negative zero part scale on cell 9",
+      "args": [
+        "@framedata",
+        1,
+        2,
+        "@scaleout",
+        "@headingout",
+        "@pitchout",
+        "@rollout",
+        "@translationout"
+      ],
+      "memory": [
+        {
+          "addr": "@parts",
+          "offset": "0x1d4",
+          "u32": 2147483648
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 7041,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@framedata"
+        ]
+      },
+      {
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "choices": [
+          "@scaleout",
+          "@parts+0x30",
+          "@parts"
+        ]
+      },
+      {
+        "choices": [
+          "@headingout"
+        ]
+      },
+      {
+        "choices": [
+          "@pitchout"
+        ]
+      },
+      {
+        "choices": [
+          "@rollout"
+        ]
+      },
+      {
+        "choices": [
+          "@translationout",
+          "@parts+0x20"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@parts",
+        "type": "float",
+        "count": 156,
+        "range": [
+          -4,
+          4
+        ]
+      }
+    ]
+  }
+}

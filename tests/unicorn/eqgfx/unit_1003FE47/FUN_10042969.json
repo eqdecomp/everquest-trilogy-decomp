@@ -1,0 +1,282 @@
+{
+  "function": "t3dSelectDistanceBand_guess",
+  "original": "0x10042969",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unusedArg",
+      "type": "int"
+    },
+    {
+      "name": "renderObject",
+      "type": "ptr"
+    },
+    {
+      "name": "pos",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "renderobject": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "f32": 0.0},
+        {"offset": "0x14", "f32": 0.0},
+        {"offset": "0x18", "f32": 0.0},
+        {"offset": "0x40", "u32": "@lodtable"},
+        {"offset": "0xE0", "u32": 0}
+      ]
+    },
+    "lodtable": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": "@bands"}
+      ]
+    },
+    "bands": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 0.0},
+        {"offset": "0x4", "f32": 100.0},
+        {"offset": "0x8", "u32": 1},
+        {"offset": "0xC", "f32": 50.0},
+        {"offset": "0x10", "f32": 400.0},
+        {"offset": "0x14", "u32": 2},
+        {"offset": "0x18", "f32": 300.0},
+        {"offset": "0x1C", "f32": 1e30},
+        {"offset": "0x20", "u32": 3}
+      ]
+    },
+    "pos": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "f32": 3.0},
+        {"offset": "0x4", "f32": 4.0},
+        {"offset": "0x8", "f32": 0.0}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: 25 is in band 0; the object does not use band 1's method",
+      "args": [1, "@renderobject", "@pos"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "origin: 0 is short of band 1's start, so band 0 even with band 1's method in use",
+      "args": [0, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 0.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "mode 1: band 0's method whatever the distance (325 would be band 1)",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@lodtable", "offset": "0x0", "u32": 1},
+        {"addr": "@pos", "offset": "0x0", "f32": 18.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "overlap: 75 keeps band 1's method while the object already uses it",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 7.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 1.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "overlap with bit 31 set: the flag is masked off before the compare",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2147483650},
+        {"addr": "@pos", "offset": "0x0", "f32": 7.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 1.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "overlap with another method in use: band 0",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 3},
+        {"addr": "@pos", "offset": "0x0", "f32": 7.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "band 1 start: 50 is inside band 1 (the start compare is inclusive)",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "just short of band 1 start: 49",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 7.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 0.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "band 0 end: 100 is not past band 0, so the scan stops there",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 3},
+        {"addr": "@pos", "offset": "0x0", "f32": 10.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 0.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "z axis: 100 comes from pos z alone",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 0.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 0.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 10.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "past band 1: 500 reaches the open last band (end 1e30), which is returned",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@pos", "offset": "0x0", "f32": 20.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 10.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "clamp: 1e32 is capped at 1e30, so the scan stops at the open last band",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@pos", "offset": "0x0", "f32": 1e16},
+        {"addr": "@pos", "offset": "0x4", "f32": 0.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "open band 1 (end 1e30) stops the scan; the next band starts inside it",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@bands", "offset": "0x10", "f32": 1e30},
+        {"addr": "@bands", "offset": "0x18", "f32": 150.0},
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 3},
+        {"addr": "@pos", "offset": "0x0", "f32": 10.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 10.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "the open last band is the next band: matched and started (350)",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 3},
+        {"addr": "@pos", "offset": "0x0", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 15.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 10.0}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "object offset: the differences are object minus pos (50 from (10,20,30) to (15,25,30))",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@renderobject", "offset": "0x10", "f32": 10.0},
+        {"addr": "@renderobject", "offset": "0x14", "f32": 20.0},
+        {"addr": "@renderobject", "offset": "0x18", "f32": 30.0},
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 15.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 25.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 30.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "NaN end on band 0: the scan stops there and the open-band test falls through",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@bands", "offset": "0x4", "u32": "0x7fc00000"},
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 7.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 1.0}
+      ],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "NaN start on band 1: the start compare fails, so band 0",
+      "args": [1, "@renderobject", "@pos"],
+      "memory": [
+        {"addr": "@bands", "offset": "0xC", "u32": "0x7fc00000"},
+        {"addr": "@renderobject", "offset": "0xE0", "u32": 2},
+        {"addr": "@pos", "offset": "0x0", "f32": 7.0},
+        {"addr": "@pos", "offset": "0x4", "f32": 5.0},
+        {"addr": "@pos", "offset": "0x8", "f32": 1.0}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 272745,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@renderobject"
+        ]
+      },
+      {
+        "choices": [
+          "@pos"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@renderobject", "offset": "0x10", "type": "float", "count": 3, "range": [-20, 20]},
+      {"addr": "@renderobject", "offset": "0xE0", "type": "u32", "choices": [0, 1, 2, 3, 4, 2147483649, 2147483650, 2147483651, 2147483652]},
+      {"addr": "@lodtable", "offset": "0x0", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@bands", "offset": "0x0", "type": "float", "count": 3, "stride": 12, "range": [0, 500]},
+      {"addr": "@bands", "offset": "0x4", "type": "float", "count": 2, "stride": 12, "range": [0, 500]},
+      {"addr": "@bands", "offset": "0x8", "type": "u32", "count": 3, "stride": 12, "choices": [1, 2, 3, 4]},
+      {"addr": "@pos", "offset": "0x0", "type": "float", "count": 3, "range": [-20, 20]}
+    ]
+  }
+}

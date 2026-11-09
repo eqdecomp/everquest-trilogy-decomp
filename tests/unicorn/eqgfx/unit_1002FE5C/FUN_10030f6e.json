@@ -1,0 +1,130 @@
+{
+  "function": "freeObjectAllocations_guess",
+  "original": "0x10030f6e",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "object": {
+      "size": "0x1e0",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1d0",
+          "u32": "0x12345678"
+        },
+        {
+          "offset": "0x1dc",
+          "u32": "0x23456789"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "distinct pointers: frees 1dc before 1d0",
+      "args": [
+        "@object"
+      ]
+    },
+    {
+      "name": "both fields zero",
+      "args": ["@object"],
+      "objects": {
+        "object": {
+          "size": "0x1e0",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x1d0", "u32": 0},
+            {"offset": "0x1dc", "u32": 0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "first field zero",
+      "args": ["@object"],
+      "objects": {
+        "object": {
+          "size": "0x1e0",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x1d0", "u32": 0},
+            {"offset": "0x1dc", "u32": "0x7fffffff"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "second field zero",
+      "args": ["@object"],
+      "objects": {
+        "object": {
+          "size": "0x1e0",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x1d0", "u32": "0xffffffff"},
+            {"offset": "0x1dc", "u32": 0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "same pointer in both fields",
+      "args": ["@object"],
+      "objects": {
+        "object": {
+          "size": "0x1e0",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x1d0", "u32": "0x13579bdf"},
+            {"offset": "0x1dc", "u32": "0x13579bdf"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 200558,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@object",
+        "offset": "0x1d0",
+        "type": "u32",
+        "choices": [0, 1, "0x12345678", "0x7fffffff", "0xffffffff"]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x1dc",
+        "type": "u32",
+        "choices": [0, 2, "0x23456789", "0x80000000", "0xffffffff"]
+      }
+    ]
+  }
+}

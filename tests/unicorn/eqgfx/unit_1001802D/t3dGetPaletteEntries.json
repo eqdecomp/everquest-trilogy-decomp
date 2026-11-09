@@ -1,0 +1,131 @@
+{
+  "function": "t3dGetPaletteEntries",
+  "original": "0x10018457",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "palette",
+      "type": "ptr"
+    },
+    {
+      "name": "firstIndex",
+      "type": "u32"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    },
+    {
+      "name": "dest",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x430",
+      "fill": "random"
+    },
+    "dest": {
+      "size": "0x400",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@palette", 1, 1, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeros",
+      "args": ["@palette", 0, 0, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero at the top edge (no copy)",
+      "args": ["@palette", 256, 0, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero past the end (range check first)",
+      "args": ["@palette", 257, 0, "@dest"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "sum exactly 0x100 (in range)",
+      "args": ["@palette", 252, 4, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sum 0x101 (out of range, dest untouched)",
+      "args": ["@palette", 253, 4, "@dest"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "last entry",
+      "args": ["@palette", 255, 1, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "whole palette",
+      "args": ["@palette", 0, 256, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first index past the end, count 1",
+      "args": ["@palette", 256, 1, "@dest"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "wrapped index: firstIndex + count wraps to 0 and the source wraps to palette+0x10",
+      "args": ["@palette", 4294967295, 1, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null dest with count 0 (never dereferenced)",
+      "args": ["@palette", 5, 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null palette past the end (error, nothing dereferenced)",
+      "args": [0, 257, 1, 0],
+      "expect": {"ret": "0xffff3d3e"}
+    }
+  ],
+  "fuzz": {
+    "seed": 99415,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@palette"
+        ]
+      },
+      {
+        "range": [0, 272]
+      },
+      {
+        "range": [0, 272]
+      },
+      {
+        "choices": [
+          "@dest"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

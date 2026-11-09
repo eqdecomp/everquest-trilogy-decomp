@@ -1,0 +1,195 @@
+{
+  "function": "AddSkillEntryFromData_guess",
+  "original": "0x004ed9c9",
+  "sources": [
+    "src/EverQuest/SkillsSelectWnd.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "owner", "type": "ptr"},
+    {"name": "edx", "type": "int"},
+    {"name": "name", "type": "cstr"},
+    {"name": "index", "type": "int"},
+    {"name": "data", "type": "ptr"},
+    {"name": "destination", "type": "ptr"},
+    {"name": "skillId", "type": "u32"},
+    {"name": "unused", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "owner": {
+      "size": "0xc00",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xbc8", "u8": 5},
+        {"offset": "0xbca", "u8": 9}
+      ]
+    },
+    "ownerFull": {"size": "0xc00", "fill": "random"},
+    "data": {"size": "0x100", "fill": "zero"},
+    "destination": {"size": "0x100", "fill": "zero"},
+    "entry": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x4", "u32": 0}]
+    },
+    "entryWithTypes": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x4", "u32": 1}]
+    },
+    "entryNew": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x4", "u32": 1}]
+    }
+  },
+  "memory": [
+    {"addr": "0x006efeac", "u32": 17}
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@entryNew"
+    },
+    "0x004eb8ec": {
+      "name": "InitSkillsSelectWnd_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": "@entryNew"
+    },
+    "0x004eb9b8": {
+      "name": "SetTypesToDisplay_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004ebbca": {
+      "name": "CreateSkillChild_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "cstr", "ptr", "ptr", "u32"],
+      "ret": 3
+    },
+    "0x004ebde3": {
+      "name": "SetFlag44_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "u8", "int"],
+      "ret": 1
+    },
+    "0x004ee419": {
+      "name": "LookupAndCopyRecord_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "null name returns failure",
+      "args": ["@owner", 0, 0, 0, "@data", "@destination", 3, 0]
+    },
+    {
+      "name": "null data is not checked by original",
+      "args": ["@owner", 0, "skill", 0, 0, "@destination", 3, 0]
+    },
+    {
+      "name": "missing destination returns failure",
+      "args": ["@owner", 0, "skill", 0, "@data", 0, 3, 0]
+    },
+    {
+      "name": "zero skill id returns failure",
+      "args": ["@owner", 0, "skill", 0, "@data", "@destination", 0, 0]
+    },
+    {
+      "name": "upper boundary index rejected",
+      "args": ["@owner", 0, "skill", 720, "@data", "@destination", 3, 0]
+    },
+    {
+      "name": "one above upper boundary rejected",
+      "args": ["@owner", 0, "skill", 721, "@data", "@destination", 3, 0]
+    },
+    {
+      "name": "negative index below sentinel remains unchecked",
+      "args": ["@owner", 0, "skill", -2, "@data", "@destination", 3, 0],
+      "memory": [
+        {"addr": "@owner", "offset": "0x4", "u32": "@entry"}
+      ]
+    },
+    {
+      "name": "existing entry without types flag succeeds",
+      "args": ["@owner", 0, "skill", 0, "@data", "@destination", 3, 0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": "@entry"}
+      ]
+    },
+    {
+      "name": "existing entry with types flag calls setter",
+      "args": ["@owner", 0, "skill", 0, "@data", "@destination", 3, 0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": "@entryWithTypes"}
+      ]
+    },
+    {
+      "name": "last array index succeeds",
+      "args": ["@owner", 0, "skill", 719, "@data", "@destination", 3, 0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xb48", "u32": "@entry"}
+      ]
+    },
+    {
+      "name": "first empty slot is allocated",
+      "args": ["@owner", 0, "skill", -1, "@data", "@destination", 3, 0]
+    },
+    {
+      "name": "sentinel scan starts at the aligned first slot",
+      "args": ["@owner", 0, "skill", -1, "@data", "@destination", 3, 0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xb", "u8": 1}
+      ]
+    },
+    {
+      "name": "scan advances to second slot before allocation",
+      "args": ["@owner", 0, "skill", -1, "@data", "@destination", 3, 0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": 1}
+      ]
+    },
+    {
+      "name": "full slot scan returns failure",
+      "args": ["@ownerFull", 0, "skill", -1, "@data", "@destination", 3, 0]
+    },
+    {
+      "name": "record result mismatch returns failure",
+      "args": ["@owner", 0, "skill", 0, "@data", "@destination", 4, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5167561,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner"]},
+      {"choices": [-1, 0, 1]},
+      {"choices": ["skill", "secondary skill", "x"]},
+      {"choices": [-2, -1, 0, 1, 719, 720, 721]},
+      {"choices": ["@data"]},
+      {"choices": ["@destination"]},
+      {"choices": [0, 3, 4, 7]},
+      {"choices": [-1, 0, 1]}
+    ],
+    "memory": [
+      {"addr": "0x006efeac", "type": "u32", "range": [0, 1000]},
+      {"addr": "@owner", "offset": "0xbc8", "type": "u8", "range": [0, 255]},
+      {"addr": "@owner", "offset": "0xbca", "type": "u8", "range": [0, 255]}
+    ]
+  }
+}

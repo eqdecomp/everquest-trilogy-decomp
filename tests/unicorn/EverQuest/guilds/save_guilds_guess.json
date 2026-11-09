@@ -1,0 +1,20 @@
+{
+  "function": "save_guilds_guess",
+  "original": "0x004DFF8B",
+  "sources": ["src/EverQuest/guilds.cpp"],
+  "rewrite": "save_guilds_guess",
+  "conv": "cdecl",
+  "args": [{"name": "arg", "type": "u32"}],
+  "ret": "int",
+  "callees": {
+    "0x004DFEC4": {"name": "SaveGuildListFile_guess", "conv": "cdecl", "args": ["u32"], "ret": [0]},
+    "kernel32.dll!Sleep": {"name": "Sleep", "conv": "stdcall", "args": ["u32"]}
+  },
+  "cases": [
+    {"name": "any positive value is success", "args": [0], "callees": {"0x004DFEC4": {"name": "SaveGuildListFile_guess", "conv": "cdecl", "args": ["u32"], "ret": 2}}},
+    {"name": "negative value is success", "args": [4294967295], "callees": {"0x004DFEC4": {"name": "SaveGuildListFile_guess", "conv": "cdecl", "args": ["u32"], "ret": -1}}},
+    {"name": "ten failed attempts each sleep", "args": [305419896], "expect": {"ret": 0}, "callees": {"0x004DFEC4": {"name": "SaveGuildListFile_guess", "conv": "cdecl", "args": ["u32"], "ret": 0}}},
+    {"name": "success after two failed attempts", "args": [2147483648], "expect": {"ret": 1}, "callees": {"0x004DFEC4": {"name": "SaveGuildListFile_guess", "conv": "cdecl", "args": ["u32"], "ret": [0, 0, 1]}}}
+  ],
+  "fuzz": {"seed": 41975051, "count": 30, "args": [{"range": [-2147483648, 4294967295]}]}
+}

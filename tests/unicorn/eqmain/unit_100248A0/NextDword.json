@@ -1,0 +1,162 @@
+{
+  "function": "NextDword_guess",
+  "original": "0x10025120",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "buf": {
+      "size": "0x3000",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1012B914",
+      "u32": "@buf+0x10"
+    },
+    {
+      "addr": "0x1012B91C",
+      "u32": 0
+    },
+    {
+      "addr": "@buf+0x10",
+      "hex": "78563412efcdab90"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "first dword (cursor 0)",
+      "args": [],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "second dword (cursor 4)",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012B91C",
+          "u32": 4
+        }
+      ],
+      "expect": {
+        "ret": "0x90abcdef"
+      }
+    },
+    {
+      "name": "last dword that fits (cursor 0x1ffc, end 0x2000)",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012B91C",
+          "u32": 8188
+        },
+        {
+          "addr": "@buf",
+          "offset": "0x200c",
+          "hex": "01020304"
+        }
+      ],
+      "expect": {
+        "ret": "0x04030201"
+      }
+    },
+    {
+      "name": "unaligned cursor that fits (0x1ffb)",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012B91C",
+          "u32": 8187
+        },
+        {
+          "addr": "@buf",
+          "offset": "0x200b",
+          "hex": "aabbccdd"
+        }
+      ],
+      "expect": {
+        "ret": "0xddccbbaa"
+      }
+    },
+    {
+      "name": "cursor 0x1ffd: cursor + 4 = 0x2001 is past the end, returns 0",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012B91C",
+          "u32": 8189
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "cursor at the end 0x2000: returns 0",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012B91C",
+          "u32": 8192
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "cursor wraps (0xfffffffc + 4 == 0 is <= 0x2000): reads 4 bytes before the buffer pointer",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012B91C",
+          "u32": "0xfffffffc"
+        },
+        {
+          "addr": "@buf",
+          "offset": "0x000c",
+          "hex": "0badf00d"
+        }
+      ],
+      "expect": {
+        "ret": "0x0df0ad0b"
+      }
+    },
+    {
+      "name": "zero buffer",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@buf+0x10",
+          "hex": "00000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 151840,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x1012B91C",
+        "type": "u32",
+        "choices": [0, 4, 8, 4088, 8184, 8187, 8188, 8189, 8191, 8192, 8193, 8196, 4294967288, 4294967292, 4294967294, 4294967295, 2147483648, 2147483647, 4096, 7936]
+      },
+      {
+        "addr": "@buf",
+        "size": 12288
+      }
+    ]
+  }
+}

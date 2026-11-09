@@ -1,0 +1,151 @@
+{
+  "function": "EQ_Book_guess::draw_guess",
+  "original": "0x00418ccd",
+  "sources": ["src/EverQuest/EQ_Book.cpp"],
+  "conv": "thiscall",
+  "this": "@book",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "book": {
+      "size": "0x3800",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@book_vtable"},
+        {"offset": "0x84", "u16": 0},
+        {"offset": "0x37ac", "u32": "@child"}
+      ]
+    },
+    "child": {
+      "size": "0xb0",
+      "fill": "zero",
+      "init": [{"offset": "0xac", "u8": 0}]
+    },
+    "book_vtable": {
+      "size": 12,
+      "fill": "zero",
+      "init": [{"offset": "0x8", "u32": "@virtual_draw"}]
+    },
+    "setrect": {"size": 1, "fill": "zero"},
+    "virtual_draw": {"size": 1, "fill": "zero"},
+    "overlay08": {"size": 8, "fill": "zero", "init": [{"offset": "0x4", "u32": "0x00770008"}]},
+    "overlay0c": {"size": 8, "fill": "zero", "init": [{"offset": "0x4", "u32": "0x0077000c"}]}
+  },
+  "memory": [
+    {"addr": "0x0058fc6c", "u32": 1},
+    {"addr": "0x00534248", "u32": "@setrect"},
+    {"addr": "0x006e4e08", "u32": "@overlay08"},
+    {"addr": "0x006e4e0c", "u32": "@overlay0c"}
+  ],
+  "callees": {
+    "0x004504ac": {"name": "IsActive", "conv": "cdecl", "args": [], "ret": 1},
+    "@setrect": {"name": "SetRect", "conv": "stdcall", "args": ["ptr", "int", "int", "int", "int"], "ret": 1},
+    "0x00450125": {"name": "drawPartial", "conv": "thiscall", "args": ["ptr", "ptr", "ptr", "int"]},
+    "0x00418e97": {"name": "DrawBookText", "conv": "thiscall", "args": []},
+    "0x00418e4a": {"name": "DrawBookPages", "conv": "thiscall", "args": []},
+    "@virtual_draw": {"name": "virtual_draw", "conv": "thiscall", "args": [], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "inactive overlay returns before reads for drawing",
+      "args": [],
+      "callees": {"0x004504ac": {"name": "IsActive", "conv": "cdecl", "args": [], "ret": 0}}
+    },
+    {
+      "name": "non-one render mode invokes vtable slot and returns",
+      "args": [],
+      "memory": [{"addr": "0x0058fc6c", "u32": 0}]
+    },
+    {
+      "name": "page cover branch draws background icon then pages",
+      "args": [],
+      "memory": [{"addr": "@book", "offset": "0x84", "u16": 0}]
+    },
+    {
+      "name": "page cover branch skips icon for nonzero page",
+      "args": [],
+      "memory": [{"addr": "@book", "offset": "0x84", "u16": 3}]
+    },
+    {
+      "name": "open book selects first page marker",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 0}
+      ]
+    },
+    {
+      "name": "open book selects second page marker",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 1}
+      ]
+    },
+    {
+      "name": "open book selects third page marker",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 2}
+      ]
+    },
+    {
+      "name": "open book omits marker for page three",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 3}
+      ]
+    },
+    {
+      "name": "signed negative page omits marker",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 65535}
+      ]
+    },
+    {
+      "name": "maximum signed page omits marker",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 32767}
+      ]
+    },
+    {
+      "name": "exactly one is required for full render mode",
+      "args": [],
+      "memory": [{"addr": "0x0058fc6c", "u32": 2}]
+    },
+    {
+      "name": "any nonzero active result continues drawing",
+      "args": [],
+      "callees": {"0x004504ac": {"name": "IsActive", "conv": "cdecl", "args": [], "ret": -1}}
+    },
+    {
+      "name": "child flag value two takes open book branch",
+      "args": [],
+      "memory": [{"addr": "@child", "offset": "0xac", "u8": 2}]
+    },
+    {
+      "name": "minimum signed page omits marker",
+      "args": [],
+      "memory": [
+        {"addr": "@child", "offset": "0xac", "u8": 1},
+        {"addr": "@book", "offset": "0x84", "u16": 32768}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4295885,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x0058fc6c", "type": "int", "choices": [0, 1, 2]},
+      {"addr": "@book", "offset": "0x84", "type": "short", "choices": [-32768, -1, 0, 1, 2, 3, 32767]},
+      {"addr": "@child", "offset": "0xac", "type": "u8", "choices": [0, 1, 2, 255]}
+    ]
+  }
+}

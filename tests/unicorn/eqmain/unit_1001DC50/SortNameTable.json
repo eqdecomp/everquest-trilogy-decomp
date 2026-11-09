@@ -1,0 +1,130 @@
+{
+  "function": "SortNameTable_guess",
+  "original": "0x1001dee0",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "void_ok": "the only caller (FUN_1001e120 at 1001E13C) reads no EAX after the call; EAX on return is a leftover (the last strcmpi result or the object pointer)",
+  "objects": {
+    "obj": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100ecad0", "size": "0x1000", "fill": "random"},
+    {"addr": "0x100f10d8", "u32": "@obj"},
+    {"addr": "0x100f1d26", "u16": 0},
+    {"addr": "0x100f1d30", "cstr": "Bob"}
+  ],
+  "callees": {
+    "0x10033730": {"name": "__strcmpi", "args": ["cstr", "cstr"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "count_zero_trap", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 0},
+      {"addr": "0x100ecad0", "cstr": "Bob"},
+      {"addr": "0x100f1d30", "cstr": "Bob"}]},
+    {"name": "count_negative_trap", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 65535},
+      {"addr": "0x100ecad0", "cstr": "Bob"},
+      {"addr": "0x100f1d30", "cstr": "Bob"}]},
+    {"name": "one_found_case_insensitive", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 1},
+      {"addr": "0x100ecad0", "cstr": "Bob"},
+      {"addr": "0x100f1d30", "cstr": "bOB"}]},
+    {"name": "one_missing", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 1},
+      {"addr": "0x100ecad0", "cstr": "Ann"},
+      {"addr": "0x100f1d30", "cstr": "Bob"}]},
+    {"name": "one_trap_past_count", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 1},
+      {"addr": "0x100ecad0", "cstr": "Ann"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Bob"},
+      {"addr": "0x100f1d30", "cstr": "Bob"}]},
+    {"name": "two_sorted_trap_past_count", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 2},
+      {"addr": "0x100ecad0", "cstr": "Ann"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Bob"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "AAA"},
+      {"addr": "0x100f1d30", "cstr": "Bob"}]},
+    {"name": "two_swap", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 2},
+      {"addr": "0x100ecad0", "cstr": "Bob"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Ann"},
+      {"addr": "0x100f1d30", "cstr": "Ann"}]},
+    {"name": "two_equal_names_no_swap", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 2},
+      {"addr": "0x100ecad0", "cstr": "abc"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "ABC"},
+      {"addr": "0x100f1d30", "cstr": "aBc"}]},
+    {"name": "three_reverse", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 3},
+      {"addr": "0x100ecad0", "cstr": "c"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "b"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "a"},
+      {"addr": "0x100f1d30", "cstr": "b"}]},
+    {"name": "three_not_found_trap_at_count", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 3},
+      {"addr": "0x100ecad0", "cstr": "Ann"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Bob"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "Cat"},
+      {"addr": "0x100ecad0", "offset": "0x348", "cstr": "Dog"},
+      {"addr": "0x100f1d30", "cstr": "Dog"}]},
+    {"name": "four_reverse_needs_three_passes", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 4},
+      {"addr": "0x100ecad0", "cstr": "d"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "c"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "b"},
+      {"addr": "0x100ecad0", "offset": "0x348", "cstr": "a"},
+      {"addr": "0x100f1d30", "cstr": "d"}]},
+    {"name": "mixed_case_duplicates", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 4},
+      {"addr": "0x100ecad0", "cstr": "beta"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Alpha"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "gamma"},
+      {"addr": "0x100ecad0", "offset": "0x348", "cstr": "ALPHA"},
+      {"addr": "0x100f1d30", "cstr": "alpha"}]},
+    {"name": "empty_name_sorts_first", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 3},
+      {"addr": "0x100ecad0", "cstr": "Bob"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": ""},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "Ann"},
+      {"addr": "0x100f1d30", "cstr": ""}]},
+    {"name": "found_last", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 3},
+      {"addr": "0x100ecad0", "cstr": "Ann"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Bob"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "Cat"},
+      {"addr": "0x100f1d30", "cstr": "cat"}]},
+    {"name": "sorted_ascending_no_swaps", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 5},
+      {"addr": "0x100ecad0", "cstr": "a"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "b"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "c"},
+      {"addr": "0x100ecad0", "offset": "0x348", "cstr": "d"},
+      {"addr": "0x100ecad0", "offset": "0x460", "cstr": "e"},
+      {"addr": "0x100f1d30", "cstr": "e"}]},
+    {"name": "first_of_duplicates", "args": [], "memory": [
+      {"addr": "0x100f1d26", "u16": 3},
+      {"addr": "0x100ecad0", "cstr": "Ann"},
+      {"addr": "0x100ecad0", "offset": "0x118", "cstr": "Ann"},
+      {"addr": "0x100ecad0", "offset": "0x230", "cstr": "Bob"},
+      {"addr": "0x100f1d30", "cstr": "ann"}]}
+  ],
+  "fuzz": {
+    "seed": 122592,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x100f1d26", "type": "short", "range": [-2, 12]},
+      {"addr": "0x100ecad0", "type": "u32", "count": 13, "stride": 280,
+       "choices": [0, 97, 65, 98, 66, 25185, 16961, 25153, 16993, 6513249, 4407873, 6505057, 6578785, 25442, 17218, 24931]},
+      {"addr": "0x100f1d30", "type": "u32",
+       "choices": [0, 97, 65, 98, 66, 25185, 16961, 25153, 16993, 6513249, 4407873, 6505057, 6578785, 25442, 17218, 24931]}
+    ]
+  }
+}

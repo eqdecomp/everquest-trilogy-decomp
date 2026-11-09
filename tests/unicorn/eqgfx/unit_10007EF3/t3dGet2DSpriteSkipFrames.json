@@ -1,0 +1,81 @@
+{
+  "function": "t3dGet2DSpriteSkipFrames",
+  "original": "0x10007f09",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "0x55667788"},
+        {"offset": "0x74", "u32": "0x44332211"},
+        {"offset": "0x78", "u32": "0x99aabbcc"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "dword at +0x74 with distinct neighbours",
+      "args": ["@sprite"],
+      "expect": {"ret": "0x44332211"}
+    },
+    {
+      "name": "zero skip count",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x74", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "all ones",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x74", "u32": "0xffffffff"}],
+      "expect": {"ret": "0xffffffff"}
+    },
+    {
+      "name": "sign bit only",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x74", "u32": "0x80000000"}],
+      "expect": {"ret": "0x80000000"}
+    },
+    {
+      "name": "largest positive",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x74", "u32": "0x7fffffff"}],
+      "expect": {"ret": "0x7fffffff"}
+    },
+    {
+      "name": "byte-width witness",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x74", "u32": "0x100"}],
+      "expect": {"ret": "0x100"}
+    },
+    {
+      "name": "null pointer faults at +0x74",
+      "args": [0]
+    }
+  ],
+  "fuzz": {
+    "seed": 32521,
+    "count": 40,
+    "args": [
+      {"choices": ["@sprite"]}
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x70", "type": "u32", "p": 0.5},
+      {"addr": "@sprite", "offset": "0x74", "type": "u32"},
+      {"addr": "@sprite", "offset": "0x78", "type": "u32", "p": 0.5}
+    ]
+  }
+}

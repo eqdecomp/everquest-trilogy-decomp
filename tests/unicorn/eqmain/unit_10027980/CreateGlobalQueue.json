@@ -1,0 +1,123 @@
+{
+  "function": "CreateGlobalFontManager_guess",
+  "original": "0x10027aa0",
+  "sources": [
+    "src/eqmain/unit_10027980.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "block": {"size": "0x4", "fill": "random"},
+    "queue": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x1012c7b8", "u32": 0}
+  ],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new (the 4-byte block)",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@block"
+    },
+    "0x10027b50": {
+      "name": "FUN_10027b50 (AllocRecord3_guess, thiscall, returns this)",
+      "conv": "thiscall",
+      "args": [],
+      "ret": "@block"
+    },
+    "0x10027940": {
+      "name": "FUN_10027940 (1-byte function, cdecl, one argument)",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "ret": 0
+    },
+    "0x10035e98": {
+      "name": "_exit (never returns in the binary; stdcall here so the original's frame unwinds and the run can be compared)",
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "queue already created: the global is returned, nothing is called",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": "@queue"}]
+    },
+    {
+      "name": "boundary: global holds 1, returned unchanged",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "boundary: global holds 0xffffffff, returned unchanged",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 4294967295}],
+      "expect": {"ret": 4294967295}
+    },
+    {
+      "name": "global null: operator_new and the constructor succeed",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 0}]
+    },
+    {
+      "name": "global null: allocation fails, message and _exit(-1) run",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 0}],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new (the 4-byte block)",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "global null: constructor returns 0, message and _exit(-1) run",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 0}],
+      "callees": {
+        "0x10027b50": {
+          "name": "FUN_10027b50 (AllocRecord3_guess, thiscall, returns this)",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "boundary: global holds 0x01000000 (low three bytes zero), returned unchanged",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 16777216}],
+      "expect": {"ret": 16777216}
+    },
+    {
+      "name": "boundary: constructor returns 1 (low byte only), kept in the global with no fatal path",
+      "args": [],
+      "memory": [{"addr": "0x1012c7b8", "u32": 0}],
+      "callees": {
+        "0x10027b50": {
+          "name": "FUN_10027b50 (AllocRecord3_guess, thiscall, returns this)",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 1027010,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1012c7b8", "type": "ptr", "choices": [0, "@queue", 1, 4660, 16777216, 4294967295]}
+    ]
+  }
+}

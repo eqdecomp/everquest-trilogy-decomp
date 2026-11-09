@@ -1,0 +1,380 @@
+{
+  "function": "SendOverlappedPacketWithCRC_guess",
+  "original": "0x004f6e20",
+  "sources": [
+    "src/Network/rdp/fast_malloc.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "sender", "type": "ptr"},
+    {"name": "segments", "type": "ptr"},
+    {"name": "segmentCount", "type": "u32"},
+    {"name": "dest", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "sender": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": 4660},
+        {"offset": "0x20", "u16": 48879},
+        {"offset": "0x38", "u32": 0},
+        {"offset": "0x3c", "u32": "@i0"},
+        {"offset": "0x40", "u32": 1},
+        {"offset": "0x44", "u32": 0},
+        {"offset": "0x48", "u32": 0}
+      ]
+    },
+    "segments": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@d0"},
+        {"offset": "0x4", "u32": 5},
+        {"offset": "0x8", "u32": "@d1"},
+        {"offset": "0xc", "u32": 9}
+      ]
+    },
+    "dest": {"size": "0x10", "fill": "random"},
+    "d0": {"size": "0x100", "fill": "random"},
+    "d1": {"size": "0x100", "fill": "random"},
+    "pkt": {"size": "0x400", "fill": "random"},
+    "i0": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": "@i0"},
+        {"offset": "0x20", "u32": 1792},
+        {"offset": "0x24", "u32": 100}
+      ]
+    },
+    "i1": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": "@i1"},
+        {"offset": "0x20", "u32": 1793},
+        {"offset": "0x24", "u32": 100}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006efed4", "u32": 0}
+  ],
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 287454020
+    },
+    "kernel32.dll!GetOverlappedResult": {
+      "name": "GetOverlappedResult",
+      "conv": "stdcall",
+      "args": ["u32", "ptr", "ignore", "int"],
+      "ret": [1, 0],
+      "writes": [{"arg": 2, "offset": 0, "hex": "64000000"}]
+    },
+    "0x004f5500": {
+      "name": "list_remove_head_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "kernel32.dll!CloseHandle": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 1
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 996
+    },
+    "0x004f48c0": {
+      "name": "fast_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@pkt"
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!CreateEventA": {
+      "name": "CreateEventA",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "ptr"],
+      "ret": 4660
+    },
+    "0x004f6d30": {
+      "name": "writeFileWithOverlapped_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "one odd segment",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two segments, even total",
+      "args": ["@sender", "@segments", 2, "@dest"],
+      "memory": [
+        {"addr": "@segments", "offset": "0x4", "u32": 4},
+        {"addr": "@segments", "offset": "0xc", "u32": 8}
+      ]
+    },
+    {
+      "name": "two segments, odd total",
+      "args": ["@sender", "@segments", 2, "@dest"]
+    },
+    {
+      "name": "no segments",
+      "args": ["@sender", "@segments", 0, "@dest"]
+    },
+    {
+      "name": "all ones carry",
+      "args": ["@sender", "@segments", 2, "@dest"],
+      "memory": [
+        {"addr": "@segments", "offset": "0x4", "u32": 64},
+        {"addr": "@segments", "offset": "0xc", "u32": 33},
+        {"addr": "@d0", "hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+        {"addr": "@d1", "hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+      ]
+    },
+    {
+      "name": "malloc fails",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "callees": {
+        "0x004f48c0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "event fails",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "callees": {
+        "kernel32.dll!CreateEventA": {
+          "name": "CreateEventA", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr"], "ret": 0
+        }
+      },
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "write returns 5",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "callees": {
+        "0x004f6d30": {"name": "writeFileWithOverlapped_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 5}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "write returns 1",
+      "args": ["@sender", "@segments", 2, "@dest"],
+      "callees": {
+        "0x004f6d30": {"name": "writeFileWithOverlapped_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "pending full write reaped",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"}
+      ]
+    },
+    {
+      "name": "pending short write reaped",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"},
+        {"addr": "@i0", "offset": "0x24", "u32": 50}
+      ]
+    },
+    {
+      "name": "pending write failed, other error",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"}
+      ],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult", "conv": "stdcall", "args": ["u32", "ptr", "ignore", "int"], "ret": 0
+        },
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 85}
+      }
+    },
+    {
+      "name": "pending write still in progress",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"}
+      ],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult", "conv": "stdcall", "args": ["u32", "ptr", "ignore", "int"], "ret": 0
+        }
+      }
+    },
+    {
+      "name": "pending head has no data",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"},
+        {"addr": "@i0", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "two pending, both done",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"},
+        {"addr": "@sender", "offset": "0x3c", "u32": "@i1"},
+        {"addr": "@sender", "offset": "0x40", "u32": 2},
+        {"addr": "@i0", "offset": "0x0", "u32": "@i1"},
+        {"addr": "@i1", "offset": "0x4", "u32": "@i0"},
+        {"addr": "@i1", "offset": "0x24", "u32": 30}
+      ],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult", "conv": "stdcall", "args": ["u32", "ptr", "ignore", "int"],
+          "ret": 1, "writes": [{"arg": 2, "offset": 0, "hex": "64000000"}]
+        }
+      }
+    },
+    {
+      "name": "two pending, second still in progress",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"},
+        {"addr": "@sender", "offset": "0x3c", "u32": "@i1"},
+        {"addr": "@sender", "offset": "0x40", "u32": 2},
+        {"addr": "@i0", "offset": "0x0", "u32": "@i1"},
+        {"addr": "@i1", "offset": "0x4", "u32": "@i0"}
+      ]
+    },
+    {
+      "name": "two pending, first failed, second done",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"},
+        {"addr": "@sender", "offset": "0x3c", "u32": "@i1"},
+        {"addr": "@sender", "offset": "0x40", "u32": 2},
+        {"addr": "@i0", "offset": "0x0", "u32": "@i1"},
+        {"addr": "@i1", "offset": "0x4", "u32": "@i0"},
+        {"addr": "@i1", "offset": "0x24", "u32": 77}
+      ],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult", "conv": "stdcall", "args": ["u32", "ptr", "ignore", "int"],
+          "ret": [0, 1], "writes": [{"arg": 2, "offset": 0, "hex": "64000000"}]
+        },
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 996}
+      }
+    },
+    {
+      "name": "two pending, first failed with other error, second done",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "memory": [
+        {"addr": "@sender", "offset": "0x38", "u32": "@i0"},
+        {"addr": "@sender", "offset": "0x3c", "u32": "@i1"},
+        {"addr": "@sender", "offset": "0x40", "u32": 2},
+        {"addr": "@i0", "offset": "0x0", "u32": "@i1"},
+        {"addr": "@i1", "offset": "0x4", "u32": "@i0"},
+        {"addr": "@i1", "offset": "0x24", "u32": 100}
+      ],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult", "conv": "stdcall", "args": ["u32", "ptr", "ignore", "int"],
+          "ret": [0, 1], "writes": [{"arg": 2, "offset": 0, "hex": "64000000"}]
+        },
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 6}
+      }
+    },
+    {
+      "name": "total 0xfff9, n wraps to 1",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "objects": {
+        "dbig": {"size": "0x10100", "fill": "random"},
+        "pbig": {"size": "0x10200", "fill": "random"}
+      },
+      "memory": [
+        {"addr": "@segments", "offset": "0x0", "u32": "@dbig"},
+        {"addr": "@segments", "offset": "0x4", "u32": 65529}
+      ],
+      "callees": {
+        "0x004f48c0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": "@pbig"}
+      }
+    },
+    {
+      "name": "total 0x10005, n wraps to 13",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "objects": {
+        "dbig": {"size": "0x10100", "fill": "random"},
+        "pbig": {"size": "0x10200", "fill": "random"}
+      },
+      "memory": [
+        {"addr": "@segments", "offset": "0x0", "u32": "@dbig"},
+        {"addr": "@segments", "offset": "0x4", "u32": 65541}
+      ],
+      "callees": {
+        "0x004f48c0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": "@pbig"}
+      }
+    },
+    {
+      "name": "total 0x10000, n wraps to 8",
+      "args": ["@sender", "@segments", 1, "@dest"],
+      "objects": {
+        "dbig": {"size": "0x10100", "fill": "random"},
+        "pbig": {"size": "0x10200", "fill": "random"}
+      },
+      "memory": [
+        {"addr": "@segments", "offset": "0x0", "u32": "@dbig"},
+        {"addr": "@segments", "offset": "0x4", "u32": 65536}
+      ],
+      "callees": {
+        "0x004f48c0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["u32"], "ret": "@pbig"}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5205536,
+    "count": 40,
+    "args": [
+      {"choices": ["@sender"]},
+      {"choices": ["@segments"]},
+      {"range": [0, 2]},
+      {"choices": ["@dest"]}
+    ],
+    "memory": [
+      {"addr": "@segments", "offset": "0x4", "type": "u32", "range": [0, 128], "count": 2, "stride": 8},
+      {"addr": "@sender", "offset": "0x38", "type": "ptr", "choices": [0, "@i0"]},
+      {"addr": "@i0", "offset": "0x24", "type": "u32", "choices": [100, 50]},
+      {"addr": "@i0", "offset": "0x8", "type": "ptr", "choices": ["@i0", 0], "p": 0.2}
+    ]
+  }
+}

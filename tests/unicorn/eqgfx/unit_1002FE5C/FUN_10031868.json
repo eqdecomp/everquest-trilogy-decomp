@@ -1,0 +1,288 @@
+{
+  "function": "SplitAllocationSlot_guess",
+  "original": "0x10031868",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "holder",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceIndex",
+      "type": "int"
+    },
+    {
+      "name": "size",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "holder": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1dc",
+          "u32": "@slots"
+        },
+        {
+          "offset": "0x1e4",
+          "u32": 4
+        }
+      ]
+    },
+    "slots": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x30",
+          "u32": 64
+        },
+        {
+          "offset": "0x34",
+          "u32": 128
+        },
+        {
+          "offset": "0x38",
+          "u32": 64
+        },
+        {
+          "offset": "0x3c",
+          "u32": 56
+        },
+        {
+          "offset": "0x40",
+          "u32": 0
+        },
+        {
+          "offset": "0x44",
+          "u32": 0
+        },
+        {
+          "offset": "0x48",
+          "u32": 2
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10031411": {
+      "name": "allocateTextureMemorySlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "04000000"
+        }
+      ]
+    },
+    "0x10031157": {
+      "name": "alignBlockAndComputeUsable_guess",
+      "conv": "cdecl",
+      "args": [
+        "mem:40",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "available below requested size returns error",
+      "args": [
+        "@holder",
+        1,
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "available equals size returns success without splitting",
+      "args": [
+        "@holder",
+        1,
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 8
+        }
+      ]
+    },
+    {
+      "name": "less than reserve but enough requested size does not split",
+      "args": [
+        "@holder",
+        1,
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 23
+        }
+      ]
+    },
+    {
+      "name": "exact reserve boundary splits and updates following link",
+      "args": [
+        "@holder",
+        1,
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 24
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x48",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "no following link",
+      "args": [
+        "@holder",
+        1,
+        9
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 25
+        },
+        {
+          "addr": "@slots",
+          "offset": "0x48",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "allocation failure returns error",
+      "args": [
+        "@holder",
+        1,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 32
+        }
+      ],
+      "callees": {
+        "0x10031411": {
+          "name": "FUN_10031411",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "unsigned request addition wraps",
+      "args": [
+        "@holder",
+        1,
+        4294967288
+      ],
+      "memory": [
+        {
+          "addr": "@slots",
+          "offset": "0x3c",
+          "u32": 8
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 531868,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@holder"
+        ]
+      },
+      {
+        "choices": [
+          1
+        ]
+      },
+      {
+        "range": [
+          0,
+          96
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@slots",
+        "offset": "0x3c",
+        "type": "u32",
+        "range": [
+          0,
+          128
+        ]
+      },
+      {
+        "addr": "@slots",
+        "offset": "0x30",
+        "type": "u32",
+        "range": [
+          0,
+          128
+        ]
+      },
+      {
+        "addr": "@slots",
+        "offset": "0x38",
+        "type": "u32",
+        "range": [
+          0,
+          128
+        ]
+      },
+      {
+        "addr": "@slots",
+        "offset": "0x48",
+        "type": "int",
+        "choices": [
+          -1,
+          2
+        ]
+      }
+    ]
+  }
+}

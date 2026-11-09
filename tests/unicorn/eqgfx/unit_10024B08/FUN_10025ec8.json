@@ -1,0 +1,227 @@
+{
+  "function": "t3dParseBinaryMaterialPal",
+  "original": "0x10025ec8",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@handle"},
+        {"offset": "0x38", "u32": 100},
+        {"offset": "0x8044", "u32": "@record"},
+        {"offset": "0x804c", "u32": "@dataMap"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "handle": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "record": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x8", "u32": 4},
+        {"offset": "0xc", "u32": 0},
+        {"offset": "0x10", "u32": 1},
+        {"offset": "0x14", "u32": 2},
+        {"offset": "0x18", "u32": 3},
+        {"offset": "0x1c", "u32": 4}
+      ]
+    },
+    "dataMap": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@data0"},
+        {"offset": "0x4", "u32": "@data1"},
+        {"offset": "0x8", "u32": "@data2"},
+        {"offset": "0xc", "u32": "@data3"},
+        {"offset": "0x10", "u32": "@data4"}
+      ]
+    },
+    "allocation": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "palette": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 1},
+        {"offset": "0xc", "u32": 3}
+      ]
+    },
+    "data0": {"size": "0x4", "fill": "zero"},
+    "data1": {"size": "0x4", "fill": "zero"},
+    "data2": {"size": "0x4", "fill": "zero"},
+    "data3": {"size": "0x4", "fill": "zero"},
+    "data4": {"size": "0x4", "fill": "zero"},
+    "negativeData": {"size": "0x4", "fill": "zero"},
+    "trace": {"size": "0x4", "fill": "zero"}
+  },
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@allocation",
+      "writes": [{"addr": "@trace", "hex": "48434f4c"}]
+    },
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@negativeData",
+      "writes": [{"addr": "@trace", "hex": "fe070000"}]
+    },
+    "0x10016f39": {
+      "name": "s3dCreateMaterialPalette",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "ptr", "int"],
+      "ret": "@palette",
+      "writes": [{"addr": "@trace", "hex": "391f0100"}]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{"addr": "@trace", "hex": "bb0c0500"}]
+    },
+    "0x100174b8": {
+      "name": "t3dSetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 0,
+      "writes": [{"addr": "@trace", "hex": "b8740100"}]
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "writes": [{"addr": "@trace", "hex": "08dc0000"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure returns zero before creation",
+      "args": ["@context"],
+      "callees": {"0x10050c48": {"ret": 0}}
+    },
+    {
+      "name": "zero entries still create an empty palette",
+      "args": ["@context"],
+      "memory": [{"addr": "@record", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "create failure frees filled positive-offset data",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": 6},
+        {"addr": "@record", "offset": "0x8", "u32": 3},
+        {"addr": "@record", "offset": "0xc", "u32": 4},
+        {"addr": "@record", "offset": "0x10", "u32": 0},
+        {"addr": "@record", "offset": "0x14", "u32": 2}
+      ],
+      "callees": {"0x10016f39": {"ret": 0}}
+    },
+    {
+      "name": "negative data offsets use the dictionary lookup",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x8", "u32": 2},
+        {"addr": "@record", "offset": "0xc", "u32": -4},
+        {"addr": "@record", "offset": "0x10", "u32": -12}
+      ],
+      "callees": {"0x10016f39": {"ret": 0}}
+    },
+    {
+      "name": "positive tag offset becomes zero and failed tag adds the palette",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": 6},
+        {"addr": "@record", "offset": "0x8", "u32": 1},
+        {"addr": "@record", "offset": "0xc", "u32": 0},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    },
+    {
+      "name": "real tag routine receives null for a positive file offset",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": 6},
+        {"addr": "@record", "offset": "0x8", "u32": 1}
+      ],
+      "callees": {
+        "0x100174b8": {
+          "name": "t3dSetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "passthrough": true
+        }
+      }
+    },
+    {
+      "name": "negative tag offset adds the file size and successful tag skips add",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": -8},
+        {"addr": "@record", "offset": "0x8", "u32": 1}
+      ],
+      "callees": {"0x100174b8": {"ret": 1}}
+    },
+    {
+      "name": "zero tag offset skips tagging while setting palette flag",
+      "args": ["@context"],
+      "memory": [{"addr": "@context", "offset": "0x8064", "u32": 1}]
+    },
+    {
+      "name": "tag offset zero and flag disabled preserve palette fields",
+      "args": ["@context"],
+      "memory": [{"addr": "@context", "offset": "0x8064", "u32": 0}]
+    },
+    {
+      "name": "single-entry loop boundary",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x8", "u32": 1},
+        {"addr": "@record", "offset": "0xc", "u32": 3}
+      ]
+    },
+    {
+      "name": "five-entry loop boundary mixes direct and dictionary offsets",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x8", "u32": 5},
+        {"addr": "@record", "offset": "0xc", "u32": 0},
+        {"addr": "@record", "offset": "0x10", "u32": -1},
+        {"addr": "@record", "offset": "0x14", "u32": 4},
+        {"addr": "@record", "offset": "0x18", "u32": -16},
+        {"addr": "@record", "offset": "0x1c", "u32": 2}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 155336,
+    "count": 40,
+    "args": [{"choices": ["@context"]}],
+    "memory": [
+      {"addr": "@record", "offset": "0x0", "type": "int", "choices": [-16, -1, 0, 1, 8]},
+      {"addr": "@record", "offset": "0x8", "type": "u32", "range": [0, 5]},
+      {"addr": "@record", "offset": "0xc", "type": "int", "count": 5, "choices": [-16, -4, -1, 0, 1, 2, 3, 4]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "choices": [0, 1]}
+    ]
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "function": "t3dWriteBytes_guess",
+  "original": "0x1002eca4",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "data",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@stream"
+        }
+      ]
+    },
+    "data": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "stream": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10069a2a": {
+      "name": "fwrite",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 3,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "5a"
+        },
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "a5"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "all requested bytes written",
+      "args": [
+        "@context",
+        "@data",
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "short write",
+      "args": [
+        "@context",
+        "@data",
+        5
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "fwrite reports more than asked",
+      "args": [
+        "@context",
+        "@data",
+        2
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "count zero, fwrite zero",
+      "args": [
+        "@context",
+        "@data",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "callees": {
+        "0x10069a2a": {
+          "name": "fwrite",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "5a"
+            },
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "a5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "count zero, fwrite one",
+      "args": [
+        "@context",
+        "@data",
+        0
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "count at u32 max, fwrite short",
+      "args": [
+        "@context",
+        "@data",
+        "0xffffffff"
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "count at u32 max, fwrite all",
+      "args": [
+        "@context",
+        "@data",
+        "0xffffffff"
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "callees": {
+        "0x10069a2a": {
+          "name": "fwrite",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": "0xffffffff",
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "5a"
+            },
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "a5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "arguments swapped: stream becomes the buffer",
+      "args": [
+        "@data",
+        "@context",
+        3
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "callees": {
+        "0x10069a2a": {
+          "name": "fwrite",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 3
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 191652,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@data"
+        ]
+      },
+      {
+        "range": [
+          0,
+          8
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

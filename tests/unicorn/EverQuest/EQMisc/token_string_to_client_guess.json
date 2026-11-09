@@ -1,0 +1,46 @@
+{
+  "function": "token_string_to_client_guess",
+  "original": "0x004A07E9",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "ptr"},
+    {"name": "text", "type": "cstr"},
+    {"name": "color", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "eqA": {"size": "0x20", "fill": "zero"},
+    "eqB": {"size": "0x20", "fill": "zero"},
+    "unused": {"size": "0x20", "fill": "zero"},
+    "out": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@eqA"},
+    {"addr": "@unused", "cstr": "ignored"},
+    {"addr": "@out", "u32": 0}
+  ],
+  "callees": {
+    "0x004D055E": {
+      "name": "CEverQuest::dsp_chat",
+      "conv": "thiscall",
+      "args": ["cstr", "int"],
+      "writes": [{"addr": "@out", "hex": "5aa55aa5"}]
+    }
+  },
+  "cases": [
+    {"name": "forwards second and third while first is unused", "args": ["@unused", "visible text", 15]},
+    {"name": "negative color is forwarded", "args": ["@unused", "other", -1]},
+    {"name": "empty text still reaches dsp_chat", "args": ["@unused", "", 0], "memory": [{"addr": "0x006EFE2C", "u32": "@eqB"}]}
+  ],
+  "fuzz": {
+    "seed": 87079,
+    "count": 30,
+    "args": [
+      {"choices": ["@unused", "@unused+1"]},
+      {"choices": ["", "one", "two words", "near end"]},
+      {"range": [-2147483648, 2147483647]}
+    ],
+    "memory": [{"addr": "@out", "type": "u32", "range": [0, 4294967295]}]
+  }
+}

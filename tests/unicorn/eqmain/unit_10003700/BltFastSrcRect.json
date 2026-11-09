@@ -1,0 +1,92 @@
+{
+  "function": "BltFastSrcRect_guess",
+  "original": "0x10006c20",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "dst", "type": "ptr"},
+    {"name": "x", "type": "int"},
+    {"name": "y", "type": "int"},
+    {"name": "src", "type": "ptr"},
+    {"name": "sx", "type": "int"},
+    {"name": "sy", "type": "int"},
+    {"name": "w", "type": "int"},
+    {"name": "h", "type": "int"},
+    {"name": "flags", "type": "u32"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "dst": {"size": "0x20", "fill": "random", "init": [{"offset": "0xc", "u32": "@dst_surf"}]},
+    "dst_surf": {"size": "0x40", "fill": "random", "init": [{"offset": "0x0", "u32": "@vt"}]},
+    "src": {"size": "0x20", "fill": "random", "init": [{"offset": "0xc", "u32": "@src_surf"}]},
+    "src_surf": {"size": "0x40", "fill": "random", "init": [{"offset": "0x0", "u32": "@vt"}]},
+    "vt": {"size": "0x40", "fill": "random", "init": [{"offset": "0x1c", "u32": "@bltfast"}]},
+    "logobj": {"size": "0x40", "fill": "random"},
+    "bltfast": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10055a90", "u32": "@logobj"}
+  ],
+  "callees": {
+    "@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": 0},
+    "0x100278a0": {"name": "FUN_100278a0", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "int", "int"], "ret": 305419896}
+  },
+  "cases": [
+    {"name": "success, flags 0", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 0], "expect": {"ret": 1}},
+    {"name": "success, flags bit 0", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 1], "expect": {"ret": 1}},
+    {"name": "success, flags bit 1", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 2], "expect": {"ret": 1}},
+    {"name": "success, flags bits 0 and 1", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 3], "expect": {"ret": 1}},
+    {"name": "success, flags high bits ignored (0xfffffffc)", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, "0xfffffffc"], "expect": {"ret": 1}},
+    {"name": "success, all flag bits set", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, "0xffffffff"], "expect": {"ret": 1}},
+    {"name": "null dst returns entry EAX & ~0xff", "args": [0, 10, 20, "@src", 5, 6, 16, 8, 0], "regs": {"eax": 305419896}, "expect": {"ret": 305419776}},
+    {"name": "null src returns entry EAX & ~0xff", "args": ["@dst", 10, 20, 0, 5, 6, 16, 8, 0], "regs": {"eax": "0xffffffff"}, "expect": {"ret": 4294967040}},
+    {"name": "both null: dst checked first", "args": [0, 0, 0, 0, 0, 0, 0, 0, 0], "regs": {"eax": 255}, "expect": {"ret": 0}},
+    {"name": "null src, entry EAX bit 31", "args": ["@dst", 1, 2, 0, 3, 4, 5, 6, 0], "regs": {"eax": "0x80000001"}, "expect": {"ret": 2147483648}},
+    {"name": "null dst, entry EAX 0xdeadbeef", "args": [0, 1, 2, "@src", 3, 4, 5, 6, 0], "regs": {"eax": "0xdeadbeef"}, "expect": {"ret": 3735928320}},
+    {"name": "BltFast fails (DDERR_SURFACELOST), log 0x12345678", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 0],
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": -2005532222}},
+     "expect": {"ret": 305419776}},
+    {"name": "BltFast returns 1: nonzero is failure", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 1],
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": 1}},
+     "expect": {"ret": 305419776}},
+    {"name": "BltFast returns -1: nonzero is failure", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 2],
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": -1}},
+     "expect": {"ret": 305419776}},
+    {"name": "log returns 0: failure returns 0", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 0],
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": -2005532222},
+                 "0x100278a0": {"name": "FUN_100278a0", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "int", "int"], "ret": 0}},
+     "expect": {"ret": 0}},
+    {"name": "log returns 0xffffffff: high bits kept", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 0],
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": 1},
+                 "0x100278a0": {"name": "FUN_100278a0", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "int", "int"], "ret": -1}},
+     "expect": {"ret": 4294967040}},
+    {"name": "log returns 0x100: bit 8 kept", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 0],
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": 1},
+                 "0x100278a0": {"name": "FUN_100278a0", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "int", "int"], "ret": 256}},
+     "expect": {"ret": 256}},
+    {"name": "failure ignores entry EAX", "args": ["@dst", 10, 20, "@src", 5, 6, 16, 8, 0], "regs": {"eax": "0xdeadbeef"},
+     "callees": {"@bltfast": {"name": "BltFast_guess", "conv": "stdcall", "args": ["ptr", "int", "int", "ptr", "mem:16", "u32"], "ret": 7}},
+     "expect": {"ret": 305419776}},
+    {"name": "sx + w wraps past 0x7fffffff", "args": ["@dst", 0, 0, "@src", 2147483647, 0, 1, 1, 0], "expect": {"ret": 1}},
+    {"name": "negative extents", "args": ["@dst", -3, -4, "@src", -5, -6, -7, -8, 16], "expect": {"ret": 1}},
+    {"name": "zero extents", "args": ["@dst", 1, 2, "@src", 3, 4, 0, 0, 0], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 5017550,
+    "count": 40,
+    "args": [
+      {"choices": ["@dst", "@dst", "@dst", 0]},
+      {"range": [-8, 64]},
+      {"range": [-8, 64]},
+      {"choices": ["@src", "@src", "@src", 0]},
+      {"range": [-8, 64]},
+      {"range": [-8, 64]},
+      {"range": [-8, 64]},
+      {"range": [-8, 64]},
+      {"range": [0, 255]}
+    ],
+    "memory": []
+  }
+}

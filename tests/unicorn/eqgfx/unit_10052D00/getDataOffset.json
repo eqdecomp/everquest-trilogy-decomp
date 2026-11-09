@@ -1,0 +1,143 @@
+{
+  "function": "getDataOffset_guess",
+  "original": "0x10052dc0",
+  "sources": [
+    "src/eqgfx/unit_10052D00.c"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "record",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "record": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x4", "u32": "0x12345678" },
+        { "offset": "0x8", "u32": "0x87654321" },
+        { "offset": "0xc", "u32": "0x55555555" }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "offset 0: the 0xc header size alone",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0x0" }
+      ],
+      "expect": { "ret": "0xc" }
+    },
+    {
+      "name": "offset 1: the constant is added to the loaded dword",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0x1" }
+      ],
+      "expect": { "ret": "0xd" }
+    },
+    {
+      "name": "offset -1 wraps to 0xb",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0xffffffff" }
+      ],
+      "expect": { "ret": "0xb" }
+    },
+    {
+      "name": "offset -12 lands exactly on zero (round-trip of the +0xc)",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0xfffffff4" }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "offset -13 wraps to -1",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0xfffffff3" }
+      ],
+      "expect": { "ret": "0xffffffff" }
+    },
+    {
+      "name": "maxint overflows into the sign bit",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0x7fffffff" }
+      ],
+      "expect": { "ret": "0x8000000b" }
+    },
+    {
+      "name": "minint stays at the top of the range",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0x80000000" }
+      ],
+      "expect": { "ret": "0x8000000c" }
+    },
+    {
+      "name": "low 16 bits zero: the full 32-bit dword is loaded",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0x10000" }
+      ],
+      "expect": { "ret": "0x1000c" }
+    },
+    {
+      "name": "byte-order witness: 0x12345678 + 0xc",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0x12345678" }
+      ],
+      "expect": { "ret": "0x12345684" }
+    },
+    {
+      "name": "byte-order witness: 0xabcd0000 + 0xc",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0xabcd0000" }
+      ],
+      "expect": { "ret": "0xabcd000c" }
+    },
+    {
+      "name": "reads +0, not the +4/+8/+c words (both hold other values)",
+      "args": ["@record"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": "0xdeadbeef" },
+        { "addr": "@record", "offset": "0x4", "u32": "0x0" },
+        { "addr": "@record", "offset": "0xc", "u32": "0x0" }
+      ],
+      "expect": { "ret": "0xdeadbefb" }
+    },
+    {
+      "name": "null record faults like the original (no null check)",
+      "args": [0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5017550,
+    "count": 40,
+    "args": [
+      { "choices": ["@record"] }
+    ],
+    "memory": [
+      {
+        "addr": "@record",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          "0x0", "0x1", "0xb", "0xc", "0xd", "0xff", "0x100", "0xffff", "0x10000", "0x1000",
+          "0x7fffffff", "0x80000000", "0xfffffff3", "0xfffffff4", "0xffffffff",
+          "0x12345678", "0xabcd0000", "0x55555555"
+        ]
+      }
+    ]
+  }
+}

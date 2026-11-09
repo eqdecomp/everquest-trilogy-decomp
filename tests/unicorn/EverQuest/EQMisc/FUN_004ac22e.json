@@ -1,0 +1,84 @@
+{
+  "function": "SetServerFilter_guess",
+  "original": "0x004ac22e",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "command", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {"size": "0x20", "fill": "zero"},
+    "profile_writer": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006b6424", "u32": 0},
+    {"addr": "0x00534188", "u32": "@profile_writer"}
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"]
+    },
+    "0x004cf829": {
+      "name": "CEverQuest::send_update_filters_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    },
+    "@profile_writer": {
+      "name": "WritePrivateProfileStringA",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "cstr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {"name": "off exact", "args": [0, "off"]},
+    {"name": "off case insensitive", "args": [-1, "OFF"]},
+    {"name": "off mixed case prefix", "args": [2147483647, "oFfline"]},
+    {"name": "on exact", "args": [1, "on"]},
+    {"name": "on case insensitive", "args": [0, "ON"]},
+    {"name": "on mixed case prefix", "args": [-2147483648, "Onward"]},
+    {"name": "off requires three characters", "args": [0, "of"]},
+    {"name": "on requires two characters", "args": [0, "o"]},
+    {"name": "unknown command", "args": [0, "other"]},
+    {"name": "empty command", "args": [0, ""]},
+    {
+      "name": "off call order with observable callee writes",
+      "args": [17, "OFF trailing"],
+      "callees": {
+        "0x004d055e": {
+          "name": "CEverQuest::dsp_chat_guess",
+          "conv": "thiscall",
+          "args": ["cstr", "int"],
+          "writes": [{"addr": "0x006b6424", "hex": "efbeadde"}]
+        },
+        "0x004cf829": {
+          "name": "CEverQuest::send_update_filters_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [{"addr": "0x006b6424", "hex": "cefaedfe"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4899374,
+    "count": 40,
+    "args": [
+      {"choices": [-2147483648, -1, 0, 1, 2147483647]},
+      {"choices": ["off", "OFF", "oFf", "offline", "on", "ON", "Onward", "of", "o", "other", "", " off", "on "]}
+    ],
+    "memory": [
+      {"addr": "0x006b6424", "type": "u32", "choices": [0, 1, 2, 23, 4294967295]}
+    ]
+  }
+}

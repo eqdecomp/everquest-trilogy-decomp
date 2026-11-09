@@ -1,0 +1,288 @@
+{
+  "function": "SetupTwoRows_guess",
+  "original": "0x1001f650",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "out_a",
+      "type": "ptr"
+    },
+    {
+      "name": "out_b",
+      "type": "ptr"
+    }
+  ],
+  "ret": "short",
+  "objects": {
+    "out_a": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "out_b": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "draw": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "text_a": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "text_b": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "text_c": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004ceb8",
+      "u32": "@draw"
+    },
+    {
+      "addr": "0x100558a0",
+      "u32": "@text_a"
+    },
+    {
+      "addr": "0x10055930",
+      "u32": "@text_b"
+    },
+    {
+      "addr": "@text_a",
+      "cstr": "first row"
+    },
+    {
+      "addr": "@text_b",
+      "cstr": "second row"
+    },
+    {
+      "addr": "@text_c",
+      "cstr": ""
+    }
+  ],
+  "callees": {
+    "0x10001520": {
+      "name": "FUN_10001520",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": [
+        12288,
+        16384
+      ]
+    },
+    "0x100080b0": {
+      "name": "FUN_100080b0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "cstr",
+        "int",
+        "int"
+      ],
+      "ret": [
+        4369,
+        8738
+      ]
+    },
+    "0x100017b0": {
+      "name": "FUN_100017b0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "cstr",
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: two items, two texts, ret 1",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ]
+    },
+    {
+      "name": "aliased outputs: out_b is out_a",
+      "args": [
+        "@out_a",
+        "@out_a"
+      ]
+    },
+    {
+      "name": "text pointers swapped",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ],
+      "memory": [
+        {
+          "addr": "0x100558a0",
+          "u32": "@text_b"
+        },
+        {
+          "addr": "0x10055930",
+          "u32": "@text_a"
+        }
+      ]
+    },
+    {
+      "name": "empty text in row A",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ],
+      "memory": [
+        {
+          "addr": "0x100558a0",
+          "u32": "@text_c"
+        }
+      ]
+    },
+    {
+      "name": "draw object 0",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004ceb8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "FUN_10001520 returns 0",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ],
+      "callees": {
+        "0x10001520": {
+          "name": "FUN_10001520",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "FUN_100080b0 returns 0 both times",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ],
+      "callees": {
+        "0x100080b0": {
+          "name": "FUN_100080b0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "cstr",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "FUN_100080b0 first return differs from second",
+      "args": [
+        "@out_a",
+        "@out_b"
+      ],
+      "callees": {
+        "0x100080b0": {
+          "name": "FUN_100080b0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "cstr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            5,
+            0
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 7654321,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@out_a",
+          "@out_b"
+        ]
+      },
+      {
+        "choices": [
+          "@out_a",
+          "@out_b"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1004ceb8",
+        "type": "ptr",
+        "choices": [
+          "@draw",
+          0
+        ]
+      },
+      {
+        "addr": "0x100558a0",
+        "type": "ptr",
+        "choices": [
+          "@text_a",
+          "@text_b",
+          "@text_c"
+        ]
+      },
+      {
+        "addr": "0x10055930",
+        "type": "ptr",
+        "choices": [
+          "@text_a",
+          "@text_b",
+          "@text_c"
+        ]
+      }
+    ]
+  }
+}

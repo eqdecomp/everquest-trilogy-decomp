@@ -1,0 +1,131 @@
+{
+  "function": "FindEqDeviceIndex_guess",
+  "original": "0x10018910",
+  "sources": [
+    "src/eqmain/unit_10018560.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u8",
+  "objects": {
+    "file": {"size": "0x100", "fill": "zero"},
+    "dev0": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dev0"}]},
+    "dev1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dev1"}]},
+    "dev2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dev2"}]},
+    "dev3": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dev3"}]},
+    "dev4": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dev4"}]},
+    "dev5": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "dev5"}]}
+  },
+  "memory": [
+    {"addr": "0x10051AD8", "u16": 3},
+    {"addr": "0x10051A54", "u32": "@dev0"},
+    {"addr": "0x10051A58", "u32": "@dev1"},
+    {"addr": "0x10051A5C", "u32": "@dev2"},
+    {"addr": "0x10051A60", "u32": "@dev3"},
+    {"addr": "0x10051A64", "u32": "@dev4"},
+    {"addr": "0x10051A68", "u32": "@dev5"}
+  ],
+  "callees": {
+    "0x1003407f": {"name": "eqdevice_fopen", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": "@file"},
+    "0x100342a2": {"name": "fread", "conv": "cdecl", "args": ["ignore", "int", "int", "ptr"], "ret": 1,
+                   "writes": [{"arg": 0, "offset": 0, "hex": "6465763100"}]},
+    "0x100343b9": {"name": "fclose", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [1, 1, 0]}
+  },
+  "cases": [
+    {
+      "name": "open fails: no read, no compare",
+      "args": [],
+      "callees": {
+        "0x1003407f": {"name": "eqdevice_fopen", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0: no compare",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count -1: no compare",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 65535}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count -32768: no compare",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 32768}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one string, no match",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 1}],
+      "callees": {
+        "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one string, match at index 0",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 1}],
+      "callees": {
+        "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "two strings, match at index 1",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 2}],
+      "callees": {
+        "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [1, 0]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three strings, match at index 2 (fixture default)",
+      "args": [],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three strings, no match",
+      "args": [],
+      "callees": {
+        "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [1, 1, 1]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "six strings, match at index 5",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 6}],
+      "callees": {
+        "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [1, 1, 1, 1, 1, 0]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "six strings, no match",
+      "args": [],
+      "memory": [{"addr": "0x10051AD8", "u16": 6}],
+      "callees": {
+        "0x10033730": {"name": "strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 100624,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x10051AD8", "type": "short", "range": [-4, 6]},
+      {"addr": "0x10051A54", "type": "u32", "count": 6,
+       "choices": ["@dev0", "@dev1", "@dev2", "@dev3", "@dev4", "@dev5"]}
+    ]
+  }
+}

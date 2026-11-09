@@ -1,0 +1,256 @@
+{
+  "function": "FontCache_GetLogFontByHandle_guess",
+  "original": "0x10027d20",
+  "sources": [
+    "src/eqmain/unit_10027980.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    },
+    {
+      "name": "handle",
+      "type": "int"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@list"}
+      ]
+    },
+    "list": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@n1"}
+      ]
+    },
+    "n1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@e1"},
+        {"offset": "0x8", "u32": "@n2"}
+      ]
+    },
+    "n2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@n3"}
+      ]
+    },
+    "n3": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@e3"},
+        {"offset": "0x8", "u32": "@n4"}
+      ]
+    },
+    "n4": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@e4"},
+        {"offset": "0x8", "u32": "@n5"}
+      ]
+    },
+    "n5": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@e5"}
+      ]
+    },
+    "e1": {
+      "size": "0x44",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4097},
+        {"offset": "0x20", "cstr": "Arial"},
+        {"offset": "0x3c", "u8": 0}
+      ]
+    },
+    "e2": {
+      "size": "0x44",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4098},
+        {"offset": "0x20", "cstr": "Tahoma"},
+        {"offset": "0x3c", "u8": 0}
+      ]
+    },
+    "e3": {
+      "size": "0x44",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4099},
+        {"offset": "0x20", "cstr": "Courier New"},
+        {"offset": "0x3c", "u8": 0}
+      ]
+    },
+    "e4": {
+      "size": "0x44",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4099},
+        {"offset": "0x20", "cstr": "Times New Roman"},
+        {"offset": "0x3c", "u8": 0}
+      ]
+    },
+    "e5": {
+      "size": "0x44",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4101},
+        {"offset": "0x20", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZab"},
+        {"offset": "0x3c", "u8": 0}
+      ]
+    },
+    "out": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "first node",
+      "args": ["@self", 0, 4097, "@out"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "third node; a later duplicate (e4) must not win",
+      "args": ["@self", 0, 4099, "@out"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "last node",
+      "args": ["@self", 0, 4101, "@out"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "second node (n2 entry overridden)",
+      "args": ["@self", 0, 4098, "@out"],
+      "memory": [
+        {"addr": "@n2", "offset": "0x4", "u32": "@e2"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "handle 0: the null entry in n2 is skipped, nothing matches",
+      "args": ["@self", 0, 0, "@out"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "handle not in the list",
+      "args": ["@self", 0, 8192, "@out"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first node's entry null: its handle is no longer found",
+      "args": ["@self", 0, 4097, "@out"],
+      "memory": [
+        {"addr": "@n1", "offset": "0x4", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty list",
+      "args": ["@self", 0, 4097, "@out"],
+      "memory": [
+        {"addr": "@list", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "face name 3 chars (strcpy tail of 0 dwords + 4 bytes)",
+      "args": ["@self", 0, 4097, "@out"],
+      "memory": [
+        {"addr": "@e1", "offset": "0x20", "cstr": "Abc"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "face name empty",
+      "args": ["@self", 0, 4097, "@out"],
+      "memory": [
+        {"addr": "@e1", "offset": "0x20", "u8": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "face name 4 chars (one dword + one byte)",
+      "args": ["@self", 0, 4097, "@out"],
+      "memory": [
+        {"addr": "@e1", "offset": "0x20", "cstr": "Abcd"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "face name 28 chars (NUL at the last index before 0x3C)",
+      "args": ["@self", 0, 4101, "@out"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "out at entry+5 (aliases the key: each field must re-read it after the earlier stores)",
+      "args": ["@self", 0, 4097, "@e1+0x5"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "out at entry+8 (aliases the key one dword later)",
+      "args": ["@self", 0, 4101, "@e5+0x8"],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 163104,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@self"]
+      },
+      {},
+      {
+        "choices": [4097, 4098, 4099, 4100, 4101, 0, 8192]
+      },
+      {
+        "choices": ["@out", "@out", "@out", "@out", "@e1+0x5", "@e3+0x5", "@e4+0x8", "@e5+0x8"]
+      }
+    ],
+    "memory": [
+      {"addr": "@list", "type": "ptr", "choices": ["@n1", 0], "p": 0.15},
+      {"addr": "@n1", "offset": "0x4", "type": "ptr", "choices": [0, "@e1"], "p": 0.25},
+      {"addr": "@n2", "offset": "0x4", "type": "ptr", "choices": [0, "@e2"], "p": 0.5},
+      {"addr": "@n3", "offset": "0x4", "type": "ptr", "choices": [0, "@e3"], "p": 0.25},
+      {"addr": "@n4", "offset": "0x4", "type": "ptr", "choices": [0, "@e4"], "p": 0.25},
+      {"addr": "@n5", "offset": "0x4", "type": "ptr", "choices": [0, "@e5"], "p": 0.25},
+      {"addr": "@e1", "offset": "0x4", "size": 28},
+      {"addr": "@e2", "offset": "0x4", "size": 28},
+      {"addr": "@e3", "offset": "0x4", "size": 28},
+      {"addr": "@e4", "offset": "0x4", "size": 28},
+      {"addr": "@e5", "offset": "0x4", "size": 28},
+      {"addr": "@e1", "offset": "0x20", "type": "u8", "count": 28, "choices": [0, 0, 65, 66, 67, 97, 98, 120, 255]},
+      {"addr": "@e2", "offset": "0x20", "type": "u8", "count": 28, "choices": [0, 0, 65, 66, 67, 97, 98, 120, 255]},
+      {"addr": "@e3", "offset": "0x20", "type": "u8", "count": 28, "choices": [0, 0, 65, 66, 67, 97, 98, 120, 255]},
+      {"addr": "@e4", "offset": "0x20", "type": "u8", "count": 28, "choices": [0, 0, 65, 66, 67, 97, 98, 120, 255]},
+      {"addr": "@e5", "offset": "0x20", "type": "u8", "count": 28, "choices": [0, 0, 65, 66, 67, 97, 98, 120, 255]}
+    ]
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "function": "t3dGetZonesInfluencedByDirectionalLight",
+  "original": "0x10021514",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "world", "type": "ptr"},
+    {"name": "light", "type": "ptr"},
+    {"name": "referenceList", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": "@objectTable"}
+      ]
+    },
+    "objectTable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@zone0"},
+        {"offset": "0x4", "u32": "@zone1"}
+      ]
+    },
+    "zone0": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2c", "u32": "@regions0"}
+      ]
+    },
+    "zone1": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2c", "u32": "@regions1"}
+      ]
+    },
+    "regions0": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2c", "u32": 1},
+        {"offset": "0x34", "u32": "@items0"}
+      ]
+    },
+    "regions1": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2c", "u32": 1},
+        {"offset": "0x34", "u32": "@items1"}
+      ]
+    },
+    "items0": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0x11"},
+        {"offset": "0x4", "u32": "0x22"},
+        {"offset": "0x8", "u32": "0x33"}
+      ]
+    },
+    "items1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0x44"}
+      ]
+    },
+    "light": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": 1},
+        {"offset": "0x2c", "u32": "@entries"}
+      ]
+    },
+    "entries": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 1}
+      ]
+    },
+    "referencelist": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001905a": {
+      "name": "t3dClearReferenceList",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": ["int", "ptr", "ignore"],
+      "ret": 0,
+      "writes": [{"arg": 2, "offset": 0, "hex": "01000000"}]
+    },
+    "0x100190f9": {
+      "name": "t3dInsertReferenceIntoList",
+      "conv": "cdecl",
+      "args": ["int", "ptr", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "no entries: the list is cleared and nothing is looked up",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [{"addr": "@light", "offset": "0x24", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one zone without reference items: no lookup",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [{"addr": "@regions0", "offset": "0x2c", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "item already in the list (found): no insert",
+      "args": ["@world", "@light", "@referencelist"],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "ignore"],
+          "ret": 1,
+          "writes": [{"arg": 2, "offset": 0, "hex": "01000000"}]
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "item not in the list: inserted at the position the lookup gave",
+      "args": ["@world", "@light", "@referencelist"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "insert fails: 0xFFFF3D3E",
+      "args": ["@world", "@light", "@referencelist"],
+      "callees": {
+        "0x100190f9": {
+          "name": "t3dInsertReferenceIntoList",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "int"],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "three items: insert, found, insert",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [{"addr": "@regions0", "offset": "0x2c", "u32": 3}],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "ignore"],
+          "ret": [0, 1, 0],
+          "writes": [{"arg": 2, "offset": 0, "hex": "01000000"}]
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three items: second insert fails, the third is not visited",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [{"addr": "@regions0", "offset": "0x2c", "u32": 3}],
+      "callees": {
+        "0x100190f9": {
+          "name": "t3dInsertReferenceIntoList",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "int"],
+          "ret": [0, 1]
+        }
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "two entries: empty first zone, second zone's item inserted",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [
+        {"addr": "@light", "offset": "0x24", "u32": 2},
+        {"addr": "@regions0", "offset": "0x2c", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two entries name the zones in reverse table order",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [
+        {"addr": "@light", "offset": "0x24", "u32": 2},
+        {"addr": "@entries", "offset": "0x0", "u32": 1},
+        {"addr": "@entries", "offset": "0x4", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two entries: insert fails in the first zone, the second is not visited",
+      "args": ["@world", "@light", "@referencelist"],
+      "memory": [{"addr": "@light", "offset": "0x24", "u32": 2}],
+      "callees": {
+        "0x100190f9": {
+          "name": "t3dInsertReferenceIntoList",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "int"],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    }
+  ],
+  "fuzz": {
+    "seed": 136468,
+    "count": 40,
+    "args": [
+      {"choices": ["@world"]},
+      {"choices": ["@light"]},
+      {"choices": ["@referencelist"]}
+    ],
+    "memory": [
+      {"addr": "@light", "offset": "0x24", "type": "int", "range": [0, 3]},
+      {"addr": "@entries", "type": "int", "count": 4, "range": [0, 1]},
+      {"addr": "@regions0", "offset": "0x2c", "type": "int", "range": [0, 3]},
+      {"addr": "@regions1", "offset": "0x2c", "type": "int", "range": [0, 3]}
+    ]
+  }
+}

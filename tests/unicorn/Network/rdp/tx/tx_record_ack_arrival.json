@@ -1,0 +1,107 @@
+{
+  "function": "tx_record_ack_arrival",
+  "original": "0x004f2cd0",
+  "sources": ["src/Network/rdp/tx.c"],
+  "rewrite": "tx_record_ack_arrival",
+  "conv": "cdecl",
+  "args": [
+    {"name": "conn", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x780",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4b8", "u16": 100},
+        {"offset": "0x5f8", "u32": "@sentinel"}
+      ]
+    },
+    "param_2": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@payload"}
+      ]
+    },
+    "payload": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u16": 105}]
+    },
+    "stats": {"size": "0xa0", "fill": "zero"},
+    "sentinel": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x8", "u32": "@packet"}]
+    },
+    "packet": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [{"offset": "0x1a", "u16": 225}]
+    }
+  },
+  "memory": [
+    {"addr": "0x0057F698", "u32": "@stats"}
+  ],
+  "callees": {
+    "0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 105},
+    "0x004f7dd0": {"name": "getbit_guess", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0},
+    "0x004f27f0": {"name": "NetworkConnection_phandle_packet_acknowledgment_guess", "conv": "cdecl", "args": ["int", "u16"]},
+    "0x004f7c90": {"name": "copyBitfieldToBuffer_guess", "conv": "cdecl", "args": ["ptr", "ptr", "int", "int"]},
+    "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": "@packet", "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]},
+    "0x004f3000": {"name": "tx_enqueue_outgoing", "conv": "cdecl", "args": ["int", "int"]},
+    "0x004f7d90": {"name": "clear_bit_and_return_previous_value_guess", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "no ack byte counter wraps at its exact four byte field",
+      "args": ["@conn", "@param_2"],
+      "memory": [
+        {"addr": "@param_2", "u16": 0},
+        {"addr": "@conn", "offset": "0xb4", "u32": 4294967294},
+        {"addr": "@conn", "offset": "0xb8", "u8": 90}
+      ]
+    },
+    {
+      "name": "empty maximum bitmap adds seventeen to a seeded no ack byte counter",
+      "args": ["@conn", "@param_2"],
+      "memory": [
+        {"addr": "@param_2", "u16": 240},
+        {"addr": "@conn", "offset": "0xb4", "u32": 305419896},
+        {"addr": "@conn", "offset": "0xb8", "u8": 165}
+      ]
+    },
+    {"name": "no ack flags skips the prefix parser", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 0}]},
+    {"name": "mask offset positive delta with one set bit", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 8}], "callees": {"0x004f7d90": {"name": "clear_bit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}}},
+    {"name": "mask offset and one trailing bitmap byte", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 40}], "callees": {"0x004f7dd0": {"name": "getbit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}, "0x004f7d90": {"name": "clear_bit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}}},
+    {"name": "mask offset negative delta adjusts bitmap origin", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 24}, {"addr": "@conn", "offset": "0x4b8", "u16": 100}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 98}, "0x004f7dd0": {"name": "getbit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}, "0x004f7d90": {"name": "clear_bit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}}},
+    {"name": "mask offset equal delta does not clear a prefix bit", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 8}, {"addr": "@conn", "offset": "0x4b8", "u16": 105}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 105}, "0x004f7d90": {"name": "clear_bit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}}},
+    {"name": "ack through positive delta acknowledges old bits and advances base", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 4}, {"addr": "@conn", "offset": "0x4b8", "u16": 100}, {"addr": "@packet", "offset": "0x1a", "u16": 225}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 105}, "0x004f7dd0": {"name": "getbit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}}},
+    {"name": "ack through exercises both bitfields", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 20}, {"addr": "@conn", "offset": "0x4b8", "u16": 100}, {"addr": "@packet", "offset": "0x1a", "u16": 225}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 105}, "0x004f7dd0": {"name": "getbit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": [1, 0, 1, 0, 1]}, "0x004f7d90": {"name": "clear_bit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": [1, 0, 1, 0, 1]}}},
+    {"name": "ack through equal base leaves prefix empty", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 4}, {"addr": "@conn", "offset": "0x4b8", "u16": 105}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 105}}},
+    {"name": "ack through negative signed delta", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 4}, {"addr": "@conn", "offset": "0x4b8", "u16": 100}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 95}}},
+    {"name": "ack through trims an expired queued packet", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 4}, {"addr": "@conn", "offset": "0x4b8", "u16": 100}, {"addr": "@packet", "offset": "0x1a", "u16": 104}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 104}}},
+    {"name": "ack through with data present chooses the secondary counter", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 12}, {"addr": "@param_2", "offset": "0x14", "u16": 1}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 105}, "0x004f7dd0": {"name": "getbit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}}},
+    {"name": "wrapped negative mask displacement", "args": ["@conn", "@param_2"], "memory": [{"addr": "@param_2", "u16": 248}, {"addr": "@conn", "offset": "0x4b8", "u16": 32760}], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 5}, "0x004f7dd0": {"name": "getbit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}, "0x004f7d90": {"name": "clear_bit", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}}}
+  ],
+  "fuzz": {
+    "seed": 5188816,
+    "count": 32,
+    "args": [
+      {"choices": ["@conn"]},
+      {"choices": ["@param_2"]}
+    ],
+    "memory": [
+      {"addr": "@param_2", "type": "u16", "range": [0, 255]},
+      {"addr": "@param_2", "offset": "0x14", "type": "u16", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x4b8", "type": "u16", "choices": [0, 1, 99, 100, 105, 32760, 32767, 32768, 65535]},
+      {"addr": "@packet", "offset": "0x1a", "type": "u16", "choices": [0, 100, 104, 105, 224, 225, 32767, 32768, 65535]},
+      {"addr": "@stats", "offset": "0x78", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x80", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x90", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]},
+      {"addr": "@stats", "offset": "0x98", "type": "u32", "choices": [0, 1, 4294967294, 4294967295]}
+    ]
+  }
+}

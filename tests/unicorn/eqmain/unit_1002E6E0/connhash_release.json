@@ -1,0 +1,192 @@
+{
+  "function": "connhash_release_guess",
+  "original": "0x1002e800",
+  "sources": [
+    "src/eqmain/unit_1002E6E0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "hash",
+      "type": "ptr"
+    },
+    {
+      "name": "conn",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "hash": {
+      "size": "0x8",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u16": 16},
+        {"offset": "0x4", "u32": "@buckets"}
+      ]
+    },
+    "buckets": {
+      "size": "0x300",
+      "fill": "random"
+    },
+    "conn": {
+      "size": "0x500",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": 1},
+        {"offset": "0x478", "u16": 2},
+        {"offset": "0x47a", "u16": 4660},
+        {"offset": "0x47c", "u32": 3232235777}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002e170": {
+      "name": "FUN_1002e170",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": "@conn"
+    }
+  },
+  "cases": [
+    {
+      "name": "family 2, shared (refcount 2)",
+      "args": ["@hash", "@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "family 2, last reference",
+      "args": ["@hash", "@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": 1}]
+    },
+    {
+      "name": "family 2, refcount 0 goes to -1",
+      "args": ["@hash", "@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "family 1, shared (refcount 3)",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 1},
+        {"addr": "@conn", "offset": "0x18", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "family 0, last reference (bucket 0)",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 0},
+        {"addr": "@conn", "offset": "0x18", "u32": 1}
+      ]
+    },
+    {
+      "name": "family 10, last reference (bucket 0)",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 10},
+        {"addr": "@conn", "offset": "0x18", "u32": 1}
+      ]
+    },
+    {
+      "name": "last reference, bucket 3 from addr",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x47c", "u32": 3},
+        {"addr": "@conn", "offset": "0x47a", "u16": 0},
+        {"addr": "@conn", "offset": "0x18", "u32": 1}
+      ]
+    },
+    {
+      "name": "last reference, bucket 5 from port",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x47c", "u32": 0},
+        {"addr": "@conn", "offset": "0x47a", "u16": 5},
+        {"addr": "@conn", "offset": "0x18", "u32": 1}
+      ]
+    },
+    {
+      "name": "last reference, size 0 (full 16-bit mask)",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@hash", "u16": 0},
+        {"addr": "@conn", "offset": "0x47c", "u32": 65535},
+        {"addr": "@conn", "offset": "0x47a", "u16": 0},
+        {"addr": "@conn", "offset": "0x18", "u32": 1}
+      ]
+    },
+    {
+      "name": "last reference, size 1 (mask 0)",
+      "args": ["@hash", "@conn"],
+      "memory": [
+        {"addr": "@hash", "u16": 1},
+        {"addr": "@conn", "offset": "0x47c", "u32": 65535},
+        {"addr": "@conn", "offset": "0x18", "u32": 1}
+      ]
+    },
+    {
+      "name": "last reference, removal returns NULL",
+      "args": ["@hash", "@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": 1}],
+      "callees": {
+        "0x1002e170": {
+          "name": "FUN_1002e170",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last reference, removal returns 0x12345678",
+      "args": ["@hash", "@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": 1}],
+      "callees": {
+        "0x1002e170": {
+          "name": "FUN_1002e170",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 305419896
+        }
+      },
+      "expect": {"ret": 305419896}
+    }
+  ],
+  "fuzz": {
+    "seed": 190464,
+    "count": 48,
+    "args": [
+      {
+        "choices": ["@hash"]
+      },
+      {
+        "choices": ["@conn"]
+      }
+    ],
+    "memory": [
+      {"addr": "@hash", "type": "u16", "choices": [0, 1, 2, 3, 4, 8, 16, 32, 256, 32768, 65535]},
+      {"addr": "@conn", "offset": "0x18", "type": "i32", "range": [-2, 3]},
+      {"addr": "@conn", "offset": "0x478", "type": "u16", "choices": [2, 2, 2, 0, 1, 10]},
+      {"addr": "@conn", "offset": "0x47a", "type": "u16"},
+      {"addr": "@conn", "offset": "0x47c", "type": "u32"}
+    ]
+  }
+}

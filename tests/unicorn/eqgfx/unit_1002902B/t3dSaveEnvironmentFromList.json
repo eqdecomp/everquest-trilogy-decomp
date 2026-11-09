@@ -1,0 +1,174 @@
+{
+  "function": "t3dSaveEnvironmentFromList",
+  "original": "0x1002e68e",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "writer",
+      "type": "ptr"
+    },
+    {
+      "name": "actorList",
+      "type": "ptr"
+    },
+    {
+      "name": "kindList",
+      "type": "ptr"
+    },
+    {
+      "name": "kindCount",
+      "type": "u16"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "writer": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "actorlist": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "kindlist": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 24},
+        {"offset": "0x4", "u32": 24},
+        {"offset": "0x8", "u32": 23},
+        {"offset": "0xc", "u32": 25},
+        {"offset": "0x10", "u32": 24}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e6c4": {
+      "name": "t3dSaveAllActorInstances",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "one actor entry (kind 0x18) calls the save once",
+      "args": ["@writer", "@actorlist", "@kindlist", 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one non-actor entry (kind 0x17) makes no call",
+      "args": ["@writer", "@actorlist", "@kindlist", 1],
+      "memory": [{"addr": "@kindlist", "offset": "0x0", "u32": 23}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "kind 0x19 is not an actor",
+      "args": ["@writer", "@actorlist", "@kindlist", 1],
+      "memory": [{"addr": "@kindlist", "offset": "0x0", "u32": 25}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "kind 0 is not an actor",
+      "args": ["@writer", "@actorlist", "@kindlist", 1],
+      "memory": [{"addr": "@kindlist", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "kind with 0x18 in the low byte only is not an actor",
+      "args": ["@writer", "@actorlist", "@kindlist", 1],
+      "memory": [{"addr": "@kindlist", "offset": "0x0", "u32": 65560}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count skips an actor entry",
+      "args": ["@writer", "@actorlist", "@kindlist", 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count never reads kindList",
+      "args": ["@writer", "@actorlist", 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null writer and actor list are passed through",
+      "args": [0, 0, "@kindlist", 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "five entries, three actors, all saves return 0",
+      "args": ["@writer", "@actorlist", "@kindlist", 5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0x10000 is read as its low word (0): no entries",
+      "args": ["@writer", "@actorlist", "@kindlist", 65536],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first save returns nonzero: returned at once",
+      "args": ["@writer", "@actorlist", "@kindlist", 5],
+      "callees": {
+        "0x1002e6c4": {"name": "t3dSaveAllActorInstances", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [7]}
+      },
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "second save returns -3: returned after two calls",
+      "args": ["@writer", "@actorlist", "@kindlist", 5],
+      "callees": {
+        "0x1002e6c4": {"name": "t3dSaveAllActorInstances", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, -3]}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "third (last) actor entry returns nonzero",
+      "args": ["@writer", "@actorlist", "@kindlist", 5],
+      "callees": {
+        "0x1002e6c4": {"name": "t3dSaveAllActorInstances", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 0, 85]}
+      },
+      "expect": {"ret": 85}
+    },
+    {
+      "name": "non-actor entries before the first actor are skipped; that actor's nonzero is returned",
+      "args": ["@writer", "@actorlist", "@kindlist", 3],
+      "memory": [
+        {"addr": "@kindlist", "offset": "0x0", "u32": 23},
+        {"addr": "@kindlist", "offset": "0x4", "u32": 25},
+        {"addr": "@kindlist", "offset": "0x8", "u32": 24}
+      ],
+      "callees": {
+        "0x1002e6c4": {"name": "t3dSaveAllActorInstances", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [4]}
+      },
+      "expect": {"ret": 4}
+    }
+  ],
+  "fuzz": {
+    "seed": 190094,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@writer", 0]
+      },
+      {
+        "choices": ["@actorlist", 0]
+      },
+      {
+        "choices": ["@kindlist"]
+      },
+      {
+        "range": [0, 64]
+      }
+    ],
+    "memory": [
+      {"addr": "@kindlist", "offset": "0x0", "type": "u32", "count": 64, "choices": [24, 24, 24, 23, 25, 0, 1, 65560]}
+    ]
+  }
+}

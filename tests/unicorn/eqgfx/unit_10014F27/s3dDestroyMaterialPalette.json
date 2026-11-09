@@ -1,0 +1,421 @@
+{
+  "function": "s3dDestroyMaterialPalette",
+  "original": "0x10017135",
+  "sources": [
+    "src/eqgfx/unit_10014F27.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "material",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "material": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@entries"
+        }
+      ]
+    },
+    "entries": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x11111111"
+        },
+        {
+          "offset": "0x4",
+          "u32": "0x22222222"
+        },
+        {
+          "offset": "0x8",
+          "u32": "0x33333333"
+        }
+      ]
+    },
+    "key": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "tint": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 74565
+    },
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "in use: use count 1 refuses with 0xffff3d3e and touches nothing",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": "@key"},
+        {"addr": "@material", "offset": "0xc", "u8": 1},
+        {"addr": "@material", "offset": "0x10", "u32": 1},
+        {"addr": "@material", "offset": "0x14", "u32": 2},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": "@tint"}
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "in use: use count 0x10000 (the test is on the whole dword)",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 65536},
+        {"addr": "@material", "offset": "0x14", "u32": 2},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "in use: use count -1",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": "0xffffffff"},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "idle: nothing to remove or unshare, FUN_10015d81's result, then the palette and the block are freed",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "flags bit 0: the dictionary key is removed before FUN_10015d81",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": "@key"},
+        {"addr": "@material", "offset": "0xc", "u8": 1},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "flags 0xfe: bit 0 is clear, so the set key is kept",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": "@key"},
+        {"addr": "@material", "offset": "0xc", "u8": 254},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "flags 3 with a null key: the removal still runs, with a null key",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 3},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "one entry is unshared",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 1},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "two entries: the loop stops at the count",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 2},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "three entries are unshared in order",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 3},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "palette, key and tint all set: freed in the order palette, tint, key, block",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": "@key"},
+        {"addr": "@material", "offset": "0xc", "u8": 1},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 2},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": "@tint"}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "FUN_10015d81 returns -5, which is returned unchanged",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -5
+        }
+      },
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": -5
+      }
+    },
+    {
+      "name": "null palette, no entries: the palette free still runs on a null pointer",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": 0},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "all 16 slots are unshared",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 16},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "tint only: freed after the palette",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": "@tint"}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "key only, flags bit 0 clear: the key is still freed at the end",
+      "args": [
+        "@dictionary",
+        "@material"
+      ],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": "@key"},
+        {"addr": "@material", "offset": "0xc", "u8": 0},
+        {"addr": "@material", "offset": "0x10", "u32": 0},
+        {"addr": "@material", "offset": "0x14", "u32": 0},
+        {"addr": "@material", "offset": "0x18", "u32": "@entries"},
+        {"addr": "@material", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {
+        "ret": 74565
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 10017135,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@material"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@material", "offset": "0x8", "type": "ptr", "choices": [0, "@key"]},
+      {"addr": "@material", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@material", "offset": "0x10", "type": "u32", "choices": [0, 0, 0, 1, 2, 65536]},
+      {"addr": "@material", "offset": "0x14", "type": "u32", "range": [0, 6]},
+      {"addr": "@material", "offset": "0x1c", "type": "ptr", "choices": [0, "@tint"]},
+      {"addr": "@entries", "size": 64}
+    ]
+  }
+}

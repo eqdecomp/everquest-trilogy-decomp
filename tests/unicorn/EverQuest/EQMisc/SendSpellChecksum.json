@@ -1,0 +1,353 @@
+{
+  "function": "SendSpellChecksum_guess",
+  "original": "0x004a3f60",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "data": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "file": {
+      "size": 8,
+      "fill": "zero"
+    },
+    "connection": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "alloc_fn": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "free_fn": {
+      "size": 4,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x005341A0",
+      "u32": "@alloc_fn"
+    },
+    {
+      "addr": "0x00534038",
+      "u32": "@free_fn"
+    },
+    {
+      "addr": "0x0053C2BC",
+      "from_image": "0x0053C2BC",
+      "image_size": 3
+    },
+    {
+      "addr": "0x006B3194",
+      "u32": "@connection"
+    }
+  ],
+  "callees": {
+    "0x005219C0": {
+      "name": "strcpy_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x00523BE0": {
+      "name": "__stat",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 20,
+          "hex": "00040000"
+        }
+      ]
+    },
+    "@alloc_fn": {
+      "name": "GlobalAlloc",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "u32"
+      ],
+      "ret": "@data"
+    },
+    "@free_fn": {
+      "name": "GlobalFree",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x005223BC": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x00522038": {
+      "name": "fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x00521FBB": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004E04A2": {
+      "name": "crc32mem",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": "0x12345678"
+    },
+    "0x004A46F6": {
+      "name": "random_range_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": [
+        0,
+        1,
+        255
+      ]
+    },
+    "0x004E1C45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "ignore",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__stat": "0x00523be0"
+  },
+  "cases": [
+    {
+      "name": "stat failure returns before allocation",
+      "args": [],
+      "callees": {
+        "0x00523BE0": {
+          "name": "stat_failure",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "open failure frees allocated data",
+      "args": [],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen_failure",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "short read closes and frees",
+      "args": [],
+      "callees": {
+        "0x00522038": {
+          "name": "short_read",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "file below minimum returns before freeing",
+      "args": [],
+      "callees": {
+        "0x00523BE0": {
+          "name": "stat_small_file",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 20,
+              "hex": "ff030000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "exact minimum file samples all 256 words and sends",
+      "args": [],
+      "callees": {
+        "0x004A46F6": {
+          "name": "random_at_sample_edges",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            1,
+            255
+          ]
+        }
+      }
+    },
+    {
+      "name": "odd size bounds the random index by complete words",
+      "args": [],
+      "callees": {
+        "0x00523BE0": {
+          "name": "stat_odd_size",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 20,
+              "hex": "05040000"
+            }
+          ]
+        },
+        "0x004A46F6": {
+          "name": "random_odd_file",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            256
+          ]
+        }
+      }
+    },
+    {
+      "name": "large file uses full dword range and ignores close result",
+      "args": [],
+      "callees": {
+        "0x00523BE0": {
+          "name": "stat_large_file",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 20,
+              "hex": "00100000"
+            }
+          ]
+        },
+        "0x004A46F6": {
+          "name": "random_large_file",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            1023
+          ]
+        },
+        "0x00521FBB": {
+          "name": "fclose_nonzero",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "sent packet carries the crc, size and all 512 words",
+      "args": [],
+      "callees": {
+        "0x004E1C45": {
+          "name": "send_message_packet",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "mem:2056",
+            "u32",
+            "int"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4865888,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@data",
+        "size": 4096
+      }
+    ]
+  }
+}

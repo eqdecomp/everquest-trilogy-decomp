@@ -1,0 +1,238 @@
+{
+  "function": "EQPlayer_DisplayWeaponsAndArmor_guess",
+  "original": "0x004b0d95",
+  "sources": [
+    "src/EverQuest/EQPlayer.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "player",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "player": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "@actor"}
+      ]
+    },
+    "actor": {
+      "size": "0x260",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x250", "u32": 1}
+      ]
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4de0", "u32": "@display"}
+  ],
+  "callees": {
+    "0x00407334": {
+      "name": "CDisplay::SwapHead_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "int", "int", "u32", "int"]
+    },
+    "0x0040798e": {
+      "name": "CDisplay::SwapMaterial",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "int", "int", "u32"]
+    },
+    "0x004060a7": {
+      "name": "CDisplay::SwapNPCMaterials_guess",
+      "conv": "thiscall",
+      "args": ["ptr"]
+    },
+    "0x00406edc": {
+      "name": "SwapFace",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "int"],
+      "ret": 0
+    },
+    "0x0040b6e0": {
+      "name": "CDisplay::UpdateItemSlot_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "cstr"]
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "zero word at actor_info+0x250 returns before any swap",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x250", "u32": 0},
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 3},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 8},
+        {"addr": "@player", "offset": "0xac", "u8": 9}
+      ]
+    },
+    {
+      "name": "texture 0xff swaps head and six materials, then the face even at face 0",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 0},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "texture 0xff with face 3 and no weapon models",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 3},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "texture 0xff with face 255 and weapon slot 7 at 255",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 255},
+        {"addr": "@player", "offset": "0xa4", "hex": "10213243546576"},
+        {"addr": "@player", "offset": "0xab", "u8": 255},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "texture 0xff with face 2 and both weapon models",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 2},
+        {"addr": "@player", "offset": "0xa4", "hex": "10213243546576"},
+        {"addr": "@player", "offset": "0xab", "u8": 12},
+        {"addr": "@player", "offset": "0xac", "u8": 200}
+      ]
+    },
+    {
+      "name": "texture 0xff with only weapon slot 8 set",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 7},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 9}
+      ]
+    },
+    {
+      "name": "texture 0xfe takes the NPC path and skips the face at face 0",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 254},
+        {"addr": "@player", "offset": "0xa3", "u8": 0},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "NPC path swaps face 1 with weapon slot 7 at 1",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 0},
+        {"addr": "@player", "offset": "0xa3", "u8": 1},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 1},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "NPC path with texture 0x80 and face 255 and weapon slot 8 at 255",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 128},
+        {"addr": "@player", "offset": "0xa3", "u8": 255},
+        {"addr": "@player", "offset": "0xa4", "hex": "10213243546576"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 255}
+      ]
+    },
+    {
+      "name": "NPC path with zero face draws weapon slots 7 and 8 in order",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 0},
+        {"addr": "@player", "offset": "0xa3", "u8": 0},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 3},
+        {"addr": "@player", "offset": "0xac", "u8": 4}
+      ]
+    },
+    {
+      "name": "NPC path with everything zero",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x250", "u32": 1},
+        {"addr": "@player", "offset": "0xd4", "u8": 0},
+        {"addr": "@player", "offset": "0xa3", "u8": 0},
+        {"addr": "@player", "offset": "0xa4", "hex": "00000000000000"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "actor_info+0x250 with its high bit set still runs the swaps",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x250", "u32": 2147483648},
+        {"addr": "@player", "offset": "0xd4", "u8": 255},
+        {"addr": "@player", "offset": "0xa3", "u8": 1},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 0},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    },
+    {
+      "name": "NPC path weapon slot 7 at 255 formats as IT255",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0xd4", "u8": 0},
+        {"addr": "@player", "offset": "0xa3", "u8": 0},
+        {"addr": "@player", "offset": "0xa4", "hex": "01020304050607"},
+        {"addr": "@player", "offset": "0xab", "u8": 255},
+        {"addr": "@player", "offset": "0xac", "u8": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4918677,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@player"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x250", "type": "u32", "choices": [0, 1, 2, 2147483648, 4294967295]},
+      {"addr": "@player", "offset": "0xd4", "type": "u8", "choices": [0, 1, 127, 128, 254, 255]},
+      {"addr": "@player", "offset": "0xa3", "type": "u8", "choices": [0, 1, 2, 127, 128, 255]},
+      {"addr": "@player", "offset": "0xa4", "type": "u8", "count": 9, "choices": [0, 1, 2, 3, 127, 128, 255]},
+      {"addr": "@player", "offset": "0xb0", "type": "u32", "count": 9, "choices": [0, 1, 2147483647, 4294967295]}
+    ]
+  }
+}

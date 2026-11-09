@@ -1,0 +1,55 @@
+{
+  "function": "t3dD3DInitializeViewport_guess",
+  "original": "0x1004b51c",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "device": {"size": "0x10", "fill": "random", "init": [{"offset": "0", "u32": "@vtable"}]},
+    "vtable": {"size": "0x40", "fill": "random", "init": [{"offset": "0x34", "u32": "0x7f000000"}]}
+  },
+  "memory": [
+    {"addr": "0x100FBA6C", "u32": "@device"},
+    {"addr": "0x100FBA40", "u32": 640},
+    {"addr": "0x100FBA44", "u32": 480},
+    {"addr": "0x100FBA70", "size": 24, "fill": "random"}
+  ],
+  "callees": {
+    "0x100682d0": {"name": "memset", "conv": "cdecl", "args": ["ptr", "int", "uint"], "ret": 0},
+    "0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": 0}
+  },
+  "cases": [
+    {"name": "typical_success", "args": [], "expect": {"ret": 0}},
+    {"name": "device_fails_negative_hr", "args": [],
+     "callees": {"0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": -1}},
+     "expect": {"ret": -1}},
+    {"name": "hr_zero_boundary", "args": [],
+     "callees": {"0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": 0}},
+     "expect": {"ret": 0}},
+    {"name": "hr_one", "args": [],
+     "callees": {"0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": 1}},
+     "expect": {"ret": 0}},
+    {"name": "hr_minus_two", "args": [],
+     "callees": {"0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": -2}},
+     "expect": {"ret": -1}},
+    {"name": "hr_int_max", "args": [],
+     "callees": {"0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": 2147483647}},
+     "expect": {"ret": 0}},
+    {"name": "hr_int_min", "args": [],
+     "callees": {"0x7f000000": {"name": "SetViewport", "conv": "stdcall", "args": ["ptr", "mem:24"], "ret": -2147483648}},
+     "expect": {"ret": -1}}
+  ],
+  "fuzz": {
+    "seed": 308508,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x100FBA40", "type": "u32"},
+      {"addr": "0x100FBA44", "type": "u32"},
+      {"addr": "0x100FBA70", "size": 24}
+    ]
+  }
+}

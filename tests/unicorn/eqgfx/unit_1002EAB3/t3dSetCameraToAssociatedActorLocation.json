@@ -1,0 +1,133 @@
+{
+  "function": "t3dSetCameraToAssociatedActorLocation",
+  "original": "0x1002f625",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "scene",
+      "type": "ptr"
+    },
+    {
+      "name": "camera",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "scene": {
+      "size": "0x180",
+      "fill": "random",
+      "init": [
+        {"offset": "0x17c", "u32": "@actorTable"}
+      ]
+    },
+    "camera": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "actorTable": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@actor0"},
+        {"offset": "0x4", "u32": "@actor1"},
+        {"offset": "0x8", "u32": "@actor2"},
+        {"offset": "0xc", "u32": "@actor3"}
+      ]
+    },
+    "actor0": {"size": "0x40", "fill": "random"},
+    "actor1": {"size": "0x40", "fill": "random"},
+    "actor2": {"size": "0x40", "fill": "random"},
+    "actor3": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x100192c4": {
+      "name": "t3dGetRegionNumberFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:12"],
+      "ret": 5
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: index 1",
+      "args": ["@scene", "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 0 (first table entry)",
+      "args": ["@scene", "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 3 (last table entry)",
+      "args": ["@scene", "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": 3}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index -1",
+      "args": ["@scene", "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": "0xffffffff"}],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "index -2",
+      "args": ["@scene", "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": "0xfffffffe"}],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "null camera",
+      "args": ["@scene", 0],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "null pointers",
+      "args": [0, 0],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "null scene, negative index (the scene is not read)",
+      "args": [0, "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": "0xffffffff"}],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "callee rewrites the position: the copy follows the call",
+      "args": ["@scene", "@camera"],
+      "memory": [{"addr": "@camera", "offset": "0x50", "u32": 2}],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": ["ptr", "mem:12"],
+          "ret": 9,
+          "writes": [{"arg": 1, "offset": 0, "hex": "0000803f0000004000004040"}]
+        }
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 194085,
+    "count": 40,
+    "args": [
+      {"choices": ["@scene"]},
+      {"choices": ["@camera", 0]}
+    ],
+    "memory": [
+      {"addr": "@camera", "offset": "0x50", "type": "int", "range": [-3, 3]},
+      {"addr": "@actor0", "offset": "0x10", "type": "float", "count": 6},
+      {"addr": "@actor1", "offset": "0x10", "type": "float", "count": 6},
+      {"addr": "@actor2", "offset": "0x10", "type": "float", "count": 6},
+      {"addr": "@actor3", "offset": "0x10", "type": "float", "count": 6}
+    ]
+  }
+}

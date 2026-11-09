@@ -1,0 +1,311 @@
+{
+  "function": "PackFsMap_guess::init_guess",
+  "original": "0x10052DD0",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@map",
+  "args": [
+    {
+      "name": "compare_",
+      "type": "ptr"
+    },
+    {
+      "name": "allocator_",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "map": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "n1": {
+      "size": "0x28",
+      "fill": "random"
+    },
+    "n2": {
+      "size": "0x28",
+      "fill": "random"
+    },
+    "oldNil": {
+      "size": "0x28",
+      "fill": "random"
+    },
+    "cmp": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "alc": {
+      "size": "0x4",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100FBC08",
+      "u32": 0
+    },
+    {
+      "addr": "0x100FBC0C",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x10068c72": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@n1",
+        "@n2"
+      ]
+    },
+    "0x10075A66": {
+      "name": "std::_Lockit::_Lockit",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10075b02": {
+      "name": "FUN_10075b02",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "first map: no nil yet, first node becomes nil, nothing freed",
+      "args": [
+        "@cmp",
+        "@alc"
+      ]
+    },
+    {
+      "name": "nil exists: first node freed, head parented to old nil",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "memory": [
+        {
+          "addr": "0x100FBC08",
+          "u32": "@oldNil"
+        },
+        {
+          "addr": "0x100FBC0C",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "refcount wraps from -1",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "memory": [
+        {
+          "addr": "0x100FBC08",
+          "u32": "@oldNil"
+        },
+        {
+          "addr": "0x100FBC0C",
+          "u32": "0xFFFFFFFF"
+        }
+      ]
+    },
+    {
+      "name": "argument order: comparator to +1, allocator to +0",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "memory": [
+        {
+          "addr": "@cmp",
+          "u8": 17
+        },
+        {
+          "addr": "@alc",
+          "u8": 238
+        }
+      ]
+    },
+    {
+      "name": "same byte for both arguments",
+      "args": [
+        "@cmp",
+        "@cmp"
+      ],
+      "memory": [
+        {
+          "addr": "0x100FBC08",
+          "u32": "@oldNil"
+        }
+      ]
+    },
+    {
+      "name": "comparator aliases this: allocator store happens first",
+      "args": [
+        "@map",
+        "@alc"
+      ]
+    },
+    {
+      "name": "allocator aliases this+1: comparator read after allocator store",
+      "args": [
+        "@cmp",
+        "@map+1"
+      ],
+      "memory": [
+        {
+          "addr": "0x100FBC08",
+          "u32": "@oldNil"
+        }
+      ]
+    },
+    {
+      "name": "both allocations return the same block, no nil",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@n1",
+            "@n1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "both allocations return the same block, nil exists",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "memory": [
+        {
+          "addr": "0x100FBC08",
+          "u32": "@oldNil"
+        }
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@n1",
+            "@n1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "head node aliases the map",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@n1",
+            "@map"
+          ]
+        }
+      }
+    },
+    {
+      "name": "nil global points at itself area (reload of nil after store)",
+      "args": [
+        "@cmp",
+        "@alc"
+      ],
+      "memory": [
+        {
+          "addr": "0x100FBC08",
+          "u32": "@n2"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5218016,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@cmp",
+          "@alc",
+          "@map",
+          "@map+1"
+        ]
+      },
+      {
+        "choices": [
+          "@alc",
+          "@cmp",
+          "@map+1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100FBC08",
+        "type": "ptr",
+        "choices": [
+          0,
+          0,
+          "@oldNil",
+          "@n1",
+          "@n2"
+        ]
+      },
+      {
+        "addr": "0x100FBC0C",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          5,
+          "0x7FFFFFFF",
+          "0xFFFFFFFF"
+        ]
+      },
+      {
+        "addr": "@cmp",
+        "size": 4
+      },
+      {
+        "addr": "@alc",
+        "size": 4
+      }
+    ]
+  }
+}

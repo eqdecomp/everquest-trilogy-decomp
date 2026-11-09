@@ -1,0 +1,261 @@
+{
+  "function": "NetworkConnection_getConnectionStatus_guess",
+  "original": "0x1002d230",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "status",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x740",
+      "fill": "zero"
+    },
+    "status": {
+      "size": 8,
+      "fill": "zero"
+    }
+  },
+  "callees": {
+    "0x1002c4a0": {
+      "name": "NetworkConnection_UpdateConnectionTimeout_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "nothing set: state 0, status (1, 0)",
+      "args": ["@conn", "@status"]
+    },
+    {
+      "name": "connected, callee leaves status set: state 0",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}]
+    },
+    {
+      "name": "connected, callee reports due 9000: state 2",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "28230000"}]}}
+    },
+    {
+      "name": "delayed ack: state 2, status (0, 9000)",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x6d8", "u32": 1}, {"addr": "@conn", "offset": "0x6ec", "u32": 1}, {"addr": "@conn", "offset": "0x6f0", "u32": 9000}]
+    },
+    {
+      "name": "field 0x6d8 set, no delayed ack: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x6d8", "u32": 1}, {"addr": "@conn", "offset": "0x6f0", "u32": 9000}]
+    },
+    {
+      "name": "delayed ack but not connected: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d8", "u32": 1}, {"addr": "@conn", "offset": "0x6ec", "u32": 1}, {"addr": "@conn", "offset": "0x6f0", "u32": 9000}]
+    },
+    {
+      "name": "tx timer due: state 3, status (0, tx_time + 10000)",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}]
+    },
+    {
+      "name": "tx timer, tx_time 4660: state 3, due 14660",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x490", "u32": 4660}]
+    },
+    {
+      "name": "tx timer, callee due = tx + 10000: kept, state 2",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "10270000"}]}}
+    },
+    {
+      "name": "tx timer, callee due = tx + 10001: replaced, state 3",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "11270000"}]}}
+    },
+    {
+      "name": "tx timer, callee due 8192 (earlier): kept, state 2",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "00200000"}]}}
+    },
+    {
+      "name": "flag bit 0 clear: no tx timer, rtt block gives 4096, state 4",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "tx timer needs 6bc: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}]
+    },
+    {
+      "name": "tx timer needs 6c8 clear: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6c8", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}]
+    },
+    {
+      "name": "tx timer needs connected: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}]
+    },
+    {
+      "name": "tx timer, byte 0x6d3 set but connected 0: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d3", "u8": 1}]
+    },
+    {
+      "name": "tx timer needs 6d8 clear: nothing",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 1}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x6d8", "u32": 1}]
+    },
+    {
+      "name": "block 2 off at 734 = 3",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x734", "u32": 3}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}]
+    },
+    {
+      "name": "block 2 on at 734 = 2: base 4096, state 4",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x734", "u32": 2}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "734 = 0xffffffff: block off (unsigned compare)",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x734", "u32": "0xffffffff"}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "rtt sum 50 (mean 50): base + 50",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 50}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "rtt sum 51: base + 51",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 51}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "rtt sum 65534: base + 65534",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 65534}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "rtt sum 65535: base + 65535",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 65535}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "rtt sum 65537 clamps to 65535",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 65535}, {"addr": "@conn", "offset": "0x6a0", "u16": 1}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "rtt mean 16, dev 32: sum 80 (dev doubled, mean not swapped)",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 16}, {"addr": "@conn", "offset": "0x6a0", "u16": 32}, {"addr": "@conn", "offset": "0x720", "u32": 4096}]
+    },
+    {
+      "name": "callee due 8192, rtt deadline 4160: replaced, state 4",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 64}, {"addr": "@conn", "offset": "0x720", "u32": 4096}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "00200000"}]}}
+    },
+    {
+      "name": "callee due 4160 equal to rtt deadline: kept, state 2",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 64}, {"addr": "@conn", "offset": "0x720", "u32": 4096}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "40100000"}]}}
+    },
+    {
+      "name": "callee due 4161 one past rtt deadline: replaced, state 4",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 2}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 64}, {"addr": "@conn", "offset": "0x720", "u32": 4096}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "41100000"}]}}
+    },
+    {
+      "name": "4c set, status 1: state 1, due = field 0x50",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x4c", "u32": 1}, {"addr": "@conn", "offset": "0x50", "u32": 1000}]
+    },
+    {
+      "name": "4c set, callee due 1000 equal to field 0x50: kept, state 2",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x4c", "u32": 1}, {"addr": "@conn", "offset": "0x50", "u32": 1000}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "e8030000"}]}}
+    },
+    {
+      "name": "4c set, callee due 1001 past field 0x50: replaced, state 1",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x4c", "u32": 1}, {"addr": "@conn", "offset": "0x50", "u32": 1000}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "e9030000"}]}}
+    },
+    {
+      "name": "combined: tx timer, rtt block, callee due 8192 kept by all three",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x5c", "u8": 3}, {"addr": "@conn", "offset": "0x6bc", "u32": 1}, {"addr": "@conn", "offset": "0x6d4", "u32": 1}, {"addr": "@conn", "offset": "0x490", "u32": 256}, {"addr": "@conn", "offset": "0x71c", "u32": 1}, {"addr": "@conn", "offset": "0x69e", "u16": 64}, {"addr": "@conn", "offset": "0x720", "u32": 12288}],
+      "callees": {"0x1002c4a0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}, {"arg": 1, "offset": 4, "hex": "00200000"}]}}
+    },
+    {
+      "name": "stale state is cleared",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@conn", "offset": "0x30", "u32": 7}]
+    },
+    {
+      "name": "stale status is overwritten",
+      "args": ["@conn", "@status"],
+      "memory": [{"addr": "@status", "u32": 0}, {"addr": "@status", "offset": "0x4", "u32": 999}]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002230,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          "@status"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x30", "type": "int", "range": [-5, 5]},
+      {"addr": "@conn", "offset": "0x4c", "type": "int", "choices": [0, 1, 2]},
+      {"addr": "@conn", "offset": "0x50", "type": "int", "range": [-20000, 20000]},
+      {"addr": "@conn", "offset": "0x5c", "type": "u8", "range": [0, 255]},
+      {"addr": "@conn", "offset": "0x490", "type": "int", "range": [-20000, 20000]},
+      {"addr": "@conn", "offset": "0x69e", "type": "u16", "choices": [0, 1, 25, 49, 50, 51, 52, 1000, 32767, 40000, 65533, 65534, 65535]},
+      {"addr": "@conn", "offset": "0x6a0", "type": "u16", "choices": [0, 1, 2, 16, 25, 26, 32767, 32768, 65535]},
+      {"addr": "@conn", "offset": "0x6bc", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6c8", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6d4", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6d8", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6ec", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6f0", "type": "int", "range": [-20000, 20000]},
+      {"addr": "@conn", "offset": "0x71c", "type": "int", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x720", "type": "int", "range": [-20000, 20000]},
+      {"addr": "@conn", "offset": "0x734", "type": "u32", "choices": [0, 1, 2, 3, 4, 4294967295]},
+      {"addr": "@status", "offset": "0x0", "type": "int", "range": [-3, 3]},
+      {"addr": "@status", "offset": "0x4", "type": "int", "range": [-20000, 20000]}
+    ]
+  }
+}

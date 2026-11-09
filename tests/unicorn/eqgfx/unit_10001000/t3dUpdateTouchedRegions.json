@@ -1,0 +1,163 @@
+{
+  "function": "t3dUpdateTouchedRegions",
+  "original": "0x10001000",
+  "sources": ["src/eqgfx/unit_10001000.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "region_context", "type": "ptr"},
+    {"name": "actor", "type": "ptr"},
+    {"name": "update_context", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "region_context": {"size": "0x100", "fill": "zero"},
+    "actor": {"size": "0x100", "fill": "zero"},
+    "update_context": {"size": "0x100", "fill": "zero"},
+    "sprite": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x34", "u32": "@resource"},
+        {"offset": "0x5c", "u32": "@resource"}
+      ]
+    },
+    "resource": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": "@region_context"},
+        {"offset": "0x18", "u32": "@update_context"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000a68e": {
+      "name": "t3dGetActorSprite",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int"],
+      "ret": "@sprite"
+    },
+    "0x10007379": {
+      "name": "s3dUpdateTouchedRegionsForBoundingBox",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr", "ptr", "ptr"],
+      "ret": 29561
+    },
+    "0x10007118": {
+      "name": "s3dUpdateTouchedRegionsForSphere_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "float", "ptr"],
+      "ret": 28952
+    }
+  },
+  "cases": [
+    {
+      "name": "actor-flag-clear-default",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 2.5},
+        {"addr": "@actor", "offset": "0x38", "f32": 3.0}
+      ]
+    },
+    {
+      "name": "actor-flag-boundary-set-type-48-region-base",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 72},
+        {"addr": "@resource", "offset": "0x0c", "u32": 4194304},
+        {"addr": "@resource", "offset": "0x14", "u32": "@region_context"}
+      ]
+    },
+    {
+      "name": "type-48-region-base-null-uses-fallback-base",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 72},
+        {"addr": "@resource", "offset": "0x0c", "u32": 4194304},
+        {"addr": "@resource", "offset": "0x14", "u32": 0},
+        {"addr": "@resource", "offset": "0x18", "u32": "@update_context"}
+      ]
+    },
+    {
+      "name": "type-48-mask-one-below",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 72},
+        {"addr": "@resource", "offset": "0x0c", "u32": 4194303}
+      ]
+    },
+    {
+      "name": "type-48-mask-one-above",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 72},
+        {"addr": "@resource", "offset": "0x0c", "u32": 4194305}
+      ]
+    },
+    {
+      "name": "type-14-region-flag",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 20},
+        {"addr": "@resource", "offset": "0x0c", "u32": 4194304}
+      ]
+    },
+    {
+      "name": "type-14-region-flag-clear",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 20},
+        {"addr": "@resource", "offset": "0x0c", "u32": 0}
+      ]
+    },
+    {
+      "name": "type-13",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 19}
+      ]
+    },
+    {
+      "name": "type-49",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 16},
+        {"addr": "@sprite", "u32": 73}
+      ]
+    },
+    {
+      "name": "actor-flag-other-bit-default",
+      "args": ["@region_context", "@actor", "@update_context"],
+      "memory": [
+        {"addr": "@actor", "offset": "0x0f", "u8": 32},
+        {"addr": "@actor", "offset": "0x34", "f32": -2.0},
+        {"addr": "@actor", "offset": "0x38", "f32": 4.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4096,
+    "count": 40,
+    "args": [
+      {"choices": ["@region_context"]},
+      {"choices": ["@actor"]},
+      {"choices": ["@update_context"]}
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x0f", "type": "u8", "range": [0, 64]},
+      {"addr": "@actor", "offset": "0x34", "type": "float", "range": [-10, 10], "count": 2},
+      {"addr": "@sprite", "type": "u32", "choices": [72, 20, 19, 73]},
+      {"addr": "@resource", "offset": "0x0c", "type": "u32", "choices": [0, 4194303, 4194304, 4194305, 8388608]},
+      {"addr": "@resource", "offset": "0x14", "type": "ptr", "choices": ["@region_context", 0]},
+      {"addr": "@resource", "offset": "0x18", "type": "ptr", "choices": ["@update_context", 0]}
+    ]
+  }
+}

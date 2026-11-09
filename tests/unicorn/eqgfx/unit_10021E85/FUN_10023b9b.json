@@ -1,0 +1,494 @@
+{
+  "function": "t3dParseBinaryTrackInst",
+  "original": "0x10023b9b",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8080",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@dictionary"},
+        {"offset": "0x38", "u32": 1024},
+        {"offset": "0x8044", "u32": "@trackFile"},
+        {"offset": "0x804c", "u32": "@pointerTable"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "pointerTable": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "trackFile": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 2},
+        {"offset": "0x8", "u32": 0},
+        {"offset": "0xc", "u32": 3}
+      ]
+    },
+    "allocation": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "pointer": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001cc18": {
+      "name": "s3dCalcTrackAllocSize",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 256
+    },
+    "0x10019a5c": {
+      "name": "s3dAllocateMemoryFromPool",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": "@allocation"
+    },
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": "@pointer"
+    },
+    "0x1001cc30": {
+      "name": "t3dCreateTrack",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int",
+        "ptr"
+      ],
+      "ret": "@track"
+    },
+    "0x10020666": {
+      "name": "t3dSetLightSkipFrames",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    },
+    "0x1001d243": {
+      "name": "t3dSetTrackDefaultSpeed",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "float"
+      ]
+    },
+    "0x1001d1a9": {
+      "name": "t3dSetTrackDefaultReverse",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    },
+    "0x1001d1de": {
+      "name": "t3dSetTrackDefaultInterpolate",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: pointer offset 2 (table slot), no dictionary offsets, flags 0, no set-by-context flag",
+      "args": [
+        "@context"
+      ]
+    },
+    {
+      "name": "allocation fails: returns 0 and no track setup runs",
+      "args": [
+        "@context"
+      ],
+      "callees": {
+        "0x10019a5c": {
+          "name": "s3dAllocateMemoryFromPool",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "track creation fails: returns 0 with no track setup",
+      "args": [
+        "@context"
+      ],
+      "callees": {
+        "0x1001cc30": {
+          "name": "t3dCreateTrack",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "track creation fails with the set-by-context flag: still returns 0, no OR on a null track",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {
+        "0x1001cc30": {
+          "name": "t3dCreateTrack",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flags 1: skip frames set with the definition's skip count (3)",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "flags 2: reverse on, skip and interpolate off",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 2}
+      ]
+    },
+    {
+      "name": "flags 4: interpolate on only",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 4}
+      ]
+    },
+    {
+      "name": "flags 6: reverse and interpolate on, skip off",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 6}
+      ]
+    },
+    {
+      "name": "flags 7: skip, reverse and interpolate all on",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 7}
+      ]
+    },
+    {
+      "name": "flags 0x38: bits 3-5 alone, none of the three optional calls",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 56}
+      ]
+    },
+    {
+      "name": "flags 0x100: only bit 8 set, the skip test reads the low byte alone",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 256}
+      ]
+    },
+    {
+      "name": "flags 0xffffffff with skip count -1: every bit set, the count passes through unchanged",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 4294967295},
+        {"addr": "@trackFile", "offset": "0xc", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "set-by-context flag 1: track flags get OR 0x10",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    },
+    {
+      "name": "set-by-context flag 0x100: any nonzero value counts",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 256}
+      ]
+    },
+    {
+      "name": "negative dictionary offset -0x40: dictionarySize + 0x40 is the position given to the size and create calls",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x0", "u32": 4294967232}
+      ]
+    },
+    {
+      "name": "positive dictionary offset 0x20 is ignored: position 0",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x0", "u32": 32}
+      ]
+    },
+    {
+      "name": "dictionary offset -1 with dictionarySize 0: position 1",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x38", "u32": 0},
+        {"addr": "@trackFile", "offset": "0x0", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "negative pointer offset -0x10: pointer from the dictionary at dictionarySize + 0x10",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x4", "u32": 4294967280}
+      ]
+    },
+    {
+      "name": "pointer offset 0: first pointer table slot",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "pointer offset 15: last slot of the table the fuzz uses",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x4", "u32": 15}
+      ]
+    },
+    {
+      "name": "pointer offset -1 with dictionarySize 0x40: lookup at 0x41",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x38", "u32": 64},
+        {"addr": "@trackFile", "offset": "0x4", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "dictionarySize 0 with pointer offset -8: lookup at 8",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x38", "u32": 0},
+        {"addr": "@trackFile", "offset": "0x4", "u32": 4294967288}
+      ]
+    },
+    {
+      "name": "negative dictionary offset -0x100 and pointer offset -0x100 with flags 5 and set flag 2",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x0", "u32": 4294967040},
+        {"addr": "@trackFile", "offset": "0x4", "u32": 4294967040},
+        {"addr": "@trackFile", "offset": "0x8", "u32": 5},
+        {"addr": "@context", "offset": "0x8064", "u32": 2}
+      ]
+    },
+    {
+      "name": "allocation fails with a negative dictionary offset: returns 0, size call still gets the position",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x0", "u32": 4294967264}
+      ],
+      "callees": {
+        "0x10019a5c": {
+          "name": "s3dAllocateMemoryFromPool",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "size call returns 37: the allocation and the track both get that size",
+      "args": [
+        "@context"
+      ],
+      "callees": {
+        "0x1001cc18": {
+          "name": "s3dCalcTrackAllocSize",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": 37
+        }
+      }
+    },
+    {
+      "name": "flags 1 with skip count -1: the negative count is passed through",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 1},
+        {"addr": "@trackFile", "offset": "0xc", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "flags 3 with set flag 0: skip and reverse on, interpolate off, no OR",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@trackFile", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "size call returns 0 and the allocation fails: returns 0 with the set-by-context flag on",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {
+        "0x1001cc18": {
+          "name": "s3dCalcTrackAllocSize",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": 0
+        },
+        "0x10019a5c": {
+          "name": "s3dAllocateMemoryFromPool",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 146331,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@trackFile", "offset": "0x0", "type": "int", "range": [-48, 48]},
+      {"addr": "@trackFile", "offset": "0x4", "type": "int", "range": [-16, 15]},
+      {"addr": "@trackFile", "offset": "0x8", "type": "u32", "range": [0, 255]},
+      {"addr": "@trackFile", "offset": "0xc", "type": "int", "range": [-8, 64]},
+      {"addr": "@context", "offset": "0x8064", "type": "u32", "range": [0, 2]},
+      {"addr": "@context", "offset": "0x38", "type": "int", "range": [0, 4096]}
+    ]
+  }
+}

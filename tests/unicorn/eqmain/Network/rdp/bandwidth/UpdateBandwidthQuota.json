@@ -1,0 +1,598 @@
+{
+  "function": "UpdateBandwidthQuota_guess",
+  "original": "0x10030c30",
+  "sources": [
+    "src/eqmain/Network/rdp/bandwidth.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "bw",
+      "type": "ptr"
+    },
+    {
+      "name": "bytes",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "bw": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1000
+        },
+        {
+          "offset": "0x4",
+          "u32": 2000
+        },
+        {
+          "offset": "0x8",
+          "u32": 3000
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        2100,
+        2200,
+        2300
+      ]
+    },
+    "0x10036aa0": {
+      "name": "__aulldiv",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__aulldiv": "0x10036aa0"
+  },
+  "cases": [
+    {
+      "name": "drained partly: quotient 300 below bytes 1000",
+      "args": [
+        "@bw",
+        37
+      ]
+    },
+    {
+      "name": "drained to zero: quotient equals bytes (>= boundary)",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 300},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "quotient one above bytes: drained to zero",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 299},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "quotient one below bytes: leaves 1",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 301},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty bucket: no drain, one timeGetTime (first value)",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 0},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty bucket, zero bytes in",
+      "args": [
+        "@bw",
+        0
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 0},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty bucket, max bytes in",
+      "args": [
+        "@bw",
+        4294967295
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 0},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "one byte queued, nothing elapsed: stays 1",
+      "args": [
+        "@bw",
+        0
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1},
+            {"offset": "0x4", "u32": 2100},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "one byte queued, drained (> 0 boundary)",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "rate 0: nothing drains",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 500},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "rate 1, elapsed 999: product rounds to 0",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1000},
+            {"offset": "0x4", "u32": 1101},
+            {"offset": "0x8", "u32": 1}
+          ]
+        }
+      }
+    },
+    {
+      "name": "rate 1, elapsed 1000: quotient 1 >= bytes 1",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1},
+            {"offset": "0x4", "u32": 1100},
+            {"offset": "0x8", "u32": 1}
+          ]
+        }
+      }
+    },
+    {
+      "name": "elapsed 1 ms at 3000/s takes 3 of 4 bytes",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 4},
+            {"offset": "0x4", "u32": 2099},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "time ahead of now: elapsed wraps, 64-bit product high dword set",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1000},
+            {"offset": "0x4", "u32": 3000},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "time ahead of now: wrapped elapsed 4294966396, rate 1, 32-bit subtract",
+      "args": [
+        "@bw",
+        9
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 5000000},
+            {"offset": "0x4", "u32": 3000},
+            {"offset": "0x8", "u32": 1}
+          ]
+        }
+      }
+    },
+    {
+      "name": "product exactly 2^32: truncated 32-bit product drains 0",
+      "args": [
+        "@bw",
+        7
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 5000000},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 65536}
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            65536,
+            65600,
+            65700
+          ]
+        }
+      }
+    },
+    {
+      "name": "quotient 4295032 equals bytes, product 2^32 + 65536 (>= vs >)",
+      "args": [
+        "@bw",
+        3
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 4295032},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 65536}
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            65537,
+            65600,
+            65700
+          ]
+        }
+      }
+    },
+    {
+      "name": "quotient 4295032 just below bytes 4295033: subtracts truncated 65",
+      "args": [
+        "@bw",
+        3
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 4295033},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 65536}
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            65537,
+            65600,
+            65700
+          ]
+        }
+      }
+    },
+    {
+      "name": "64-bit quotient decides against bytes 1000, not the truncated 65",
+      "args": [
+        "@bw",
+        3
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1000},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 65536}
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            65537,
+            65600,
+            65700
+          ]
+        }
+      }
+    },
+    {
+      "name": "quotient above 2^32: high dword set (max rate, max elapsed)",
+      "args": [
+        "@bw",
+        37
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 1000},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 4294967295}
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            4294967295,
+            5,
+            7
+          ]
+        }
+      }
+    },
+    {
+      "name": "quotient exactly 0xFFFFFFFF equals bytes 0xFFFFFFFF",
+      "args": [
+        "@bw",
+        5
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 4294967295},
+            {"offset": "0x4", "u32": 2000},
+            {"offset": "0x8", "u32": 4294967295}
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            3000,
+            3100,
+            3200
+          ]
+        }
+      }
+    },
+    {
+      "name": "bytes wrap on add: 0xFFFFFFFF + 2 = 1",
+      "args": [
+        "@bw",
+        2
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 4294967295},
+            {"offset": "0x4", "u32": 2100},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    },
+    {
+      "name": "drained partly, then max bytes in wraps the sum",
+      "args": [
+        "@bw",
+        4294967295
+      ]
+    },
+    {
+      "name": "nothing elapsed, large bucket, zero bytes in",
+      "args": [
+        "@bw",
+        0
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {"offset": "0x0", "u32": 4000},
+            {"offset": "0x4", "u32": 2100},
+            {"offset": "0x8", "u32": 3000}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 199728,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@bw"
+        ]
+      },
+      {
+        "range": [
+          0,
+          5000
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@bw",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          37,
+          299,
+          300,
+          301,
+          1000,
+          3000,
+          5000,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@bw",
+        "offset": 4,
+        "type": "u32",
+        "choices": [
+          0,
+          1000,
+          1999,
+          2000,
+          2050,
+          2099,
+          2100,
+          2101,
+          3000,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@bw",
+        "offset": 8,
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          999,
+          1000,
+          1001,
+          3000,
+          65536,
+          2147483647,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

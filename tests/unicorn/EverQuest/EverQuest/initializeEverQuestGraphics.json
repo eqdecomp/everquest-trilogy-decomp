@@ -1,0 +1,111 @@
+{
+  "function": "initializeEverQuestGraphics_guess",
+  "original": "0x004e8d16",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "dllmain": {
+      "size": 16
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006ee750",
+      "u32": "@dllmain"
+    },
+    {
+      "addr": "0x006efe34",
+      "u32": "0x10000000"
+    }
+  ],
+  "callees": {
+    "0x004e8cdb": {
+      "name": "LoadEQMainDLL_guess",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 1
+    },
+    "0x004e8d4b": {
+      "name": "UnloadEQMainDLL_guess",
+      "conv": "cdecl",
+      "args": []
+    },
+    "@dllmain": {
+      "name": "dll_main",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "dll_main returns 0 -> 1"
+    },
+    {
+      "name": "dll_main returns -1 -> -1",
+      "callees": {
+        "@dllmain": {"name": "dll_main", "conv": "cdecl", "args": ["u32", "u32"], "ret": 4294967295}
+      }
+    },
+    {
+      "name": "dll_main returns -2 (boundary) -> 1",
+      "callees": {
+        "@dllmain": {"name": "dll_main", "conv": "cdecl", "args": ["u32", "u32"], "ret": 4294967294}
+      }
+    },
+    {
+      "name": "dll_main returns 1 -> 1",
+      "callees": {
+        "@dllmain": {"name": "dll_main", "conv": "cdecl", "args": ["u32", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "dll_main returns 0x7fffffff -> 1",
+      "callees": {
+        "@dllmain": {"name": "dll_main", "conv": "cdecl", "args": ["u32", "u32"], "ret": 2147483647}
+      }
+    },
+    {
+      "name": "no dll_main -> 0, load returned 0",
+      "memory": [
+        {"addr": "0x006ee750", "u32": 0},
+        {"addr": "0x006efe34", "u32": 0}
+      ],
+      "callees": {
+        "0x004e8cdb": {"name": "LoadEQMainDLL_guess", "conv": "cdecl", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "dll_main set but load returned 0 (result ignored) -> -1",
+      "memory": [
+        {"addr": "0x006efe34", "u32": "0x12345678"}
+      ],
+      "callees": {
+        "0x004e8cdb": {"name": "LoadEQMainDLL_guess", "conv": "cdecl", "args": [], "ret": 0},
+        "@dllmain": {"name": "dll_main", "conv": "cdecl", "args": ["u32", "u32"], "ret": 4294967295}
+      }
+    },
+    {
+      "name": "no dll_main, module set -> 0",
+      "memory": [
+        {"addr": "0x006ee750", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5147926,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x006ee750", "type": "u32", "choices": ["@dllmain", 0]},
+      {"addr": "0x006efe34", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

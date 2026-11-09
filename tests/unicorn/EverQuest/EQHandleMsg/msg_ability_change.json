@@ -1,0 +1,55 @@
+{
+  "function": "msg_ability_change",
+  "original": "0x00495808",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "message", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "player": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x80", "u32": 305419896}]},
+    "profile": {"size": "0x1fa4", "fill": "zero"},
+    "message": {"size": "12", "fill": "zero", "init": [{"offset": "0", "u32": 305419896}, {"offset": "4", "u32": 1}, {"offset": "8", "u32": 42}]}
+  },
+  "memory": [
+    {"addr": "0x006e4d8c", "u32": "@player"},
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006efe2c", "u32": "0x60020000"},
+    {"addr": "0x60020000", "size": "0x20", "fill": "zero"}
+  ],
+  "callees": {
+    "0x004d055e": {"name": "dsp_chat_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "matching spawn selector 1 updates AGI byte", "args": ["@message"]},
+    {"name": "matching spawn selector 2 updates CHA byte", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 2}, {"addr": "@message", "offset": "8", "u32": 258}]},
+    {"name": "matching spawn selector 3 updates DEX byte", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 3}, {"addr": "@message", "offset": "8", "u32": 259}]},
+    {"name": "matching spawn selector 4 updates INT byte", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 4}, {"addr": "@message", "offset": "8", "u32": 260}]},
+    {"name": "matching spawn selector 5 updates STA byte", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 5}, {"addr": "@message", "offset": "8", "u32": 261}]},
+    {"name": "matching spawn selector 6 updates STR byte", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 6}, {"addr": "@message", "offset": "8", "u32": 262}]},
+    {"name": "matching spawn selector 7 updates WIS byte", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 7}, {"addr": "@message", "offset": "8", "u32": 263}]},
+    {"name": "matching spawn writes only the low byte of a positive value", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 1}, {"addr": "@message", "offset": "8", "u32": 305419896}]},
+    {"name": "smallest positive local score still applies", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 3}, {"addr": "@message", "offset": "8", "u32": 1}]},
+    {"name": "positive score with bit 23 set remains positive under the full signed test", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 4}, {"addr": "@message", "offset": "8", "u32": 8388608}]},
+    {"name": "matching spawn zero score makes no change", "args": ["@message"], "memory": [{"addr": "@message", "offset": "8", "u32": 0}]},
+    {"name": "matching spawn negative score makes no change", "args": ["@message"], "memory": [{"addr": "@message", "offset": "8", "u32": 4294967295}]},
+    {"name": "matching spawn rejects selector zero", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 0}]},
+    {"name": "matching spawn rejects selector eight", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 8}]},
+    {"name": "matching spawn rejects a high unsigned selector", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 2147483649}]},
+    {"name": "different spawn id with negative score reports failure", "args": ["@message"], "memory": [{"addr": "@message", "offset": "0", "u32": 305419897}, {"addr": "@message", "offset": "8", "u32": 4294967295}]},
+    {"name": "different spawn id with zero score reports success", "args": ["@message"], "memory": [{"addr": "@message", "offset": "0", "u32": 305419897}, {"addr": "@message", "offset": "8", "u32": 0}]},
+    {"name": "different spawn id with positive score reports success", "args": ["@message"], "memory": [{"addr": "@message", "offset": "0", "u32": 305419897}, {"addr": "@message", "offset": "8", "u32": 1}]},
+    {"name": "different spawn id with high-bit negative score reports failure", "args": ["@message"], "memory": [{"addr": "@message", "offset": "0", "u32": 305419897}, {"addr": "@message", "offset": "8", "u32": 2147483648}]},
+    {"name": "profile null is not consulted on a remote result", "args": ["@message"], "memory": [{"addr": "0x006e4da8", "u32": 0}, {"addr": "@message", "offset": "0", "u32": 305419897}]},
+    {"name": "high-bit spawn id matches exactly and is local", "args": ["@message"], "memory": [{"addr": "@player", "offset": "0x80", "u32": 2147483648}, {"addr": "@message", "offset": "0", "u32": 2147483648}, {"addr": "@message", "offset": "4", "u32": 7}, {"addr": "@message", "offset": "8", "u32": 55}]}
+  ],
+  "fuzz": {
+    "seed": 95808,
+    "count": 30,
+    "args": [{"choices": ["@message"]}],
+    "memory": [
+      {"addr": "@message", "offset": "0", "type": "u32", "choices": [305419896, 305419897, 2147483648, 4294967295]},
+      {"addr": "@message", "offset": "4", "type": "u32", "range": [0, 10]},
+      {"addr": "@message", "offset": "8", "type": "int", "range": [-3, 300]}
+    ]
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "function": "EQMain_DrawTextFrameRow_guess",
+  "original": "0x10008800",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "bmpL": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x0", "u32": 8},
+        {"offset": "0x4", "u32": 11}
+      ]
+    },
+    "bmpM": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x0", "u32": 8},
+        {"offset": "0x4", "u32": 13}
+      ]
+    },
+    "bmpR": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x0", "u32": 6},
+        {"offset": "0x4", "u32": 15}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1004ceb8", "u32": 4660}
+  ],
+  "callees": {
+    "0x10007ae0": {
+      "name": "FUN_10007ae0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "ret": ["@bmpL", "@bmpM", "@bmpR"]
+    },
+    "0x10006c20": {
+      "name": "FUN_10006c20",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10007a80": {
+      "name": "FUN_10007a80",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: span 40, tile 8, six tiles",
+      "args": [100, 50, 54]
+    },
+    {
+      "name": "span 0: q = 0, one tile",
+      "args": [100, 50, 14]
+    },
+    {
+      "name": "span -1: q = 0 by truncation, one tile",
+      "args": [100, 50, 13]
+    },
+    {
+      "name": "span -8: q = -1, no tiles",
+      "args": [100, 50, 6]
+    },
+    {
+      "name": "span -9: q = -1 by truncation, no tiles",
+      "args": [100, 50, 5]
+    },
+    {
+      "name": "span -16: q = -2, no tiles",
+      "args": [100, 50, -2]
+    },
+    {
+      "name": "tile -8, span -8: q = 1, two tiles",
+      "args": [100, 50, 6],
+      "memory": [{"addr": "@bmpM", "u32": 4294967288}]
+    },
+    {
+      "name": "tile -8, span 40: q = -5, no tiles",
+      "args": [100, 50, 54],
+      "memory": [{"addr": "@bmpM", "u32": 4294967288}]
+    },
+    {
+      "name": "tile -1, span -3: q = 3, four tiles",
+      "args": [100, 50, 11],
+      "memory": [{"addr": "@bmpM", "u32": 4294967295}]
+    },
+    {
+      "name": "tile 1, span 40: 41 tiles",
+      "args": [100, 50, 54],
+      "memory": [{"addr": "@bmpM", "u32": 1}]
+    },
+    {
+      "name": "zero caps, tile 3, span 10: four tiles",
+      "args": [0, 0, 10],
+      "memory": [
+        {"addr": "@bmpL", "u32": 0},
+        {"addr": "@bmpR", "u32": 0},
+        {"addr": "@bmpM", "u32": 3}
+      ]
+    },
+    {
+      "name": "negative caps -4, tile 5, span 28: six tiles",
+      "args": [7, -3, 20],
+      "memory": [
+        {"addr": "@bmpL", "u32": 4294967292},
+        {"addr": "@bmpR", "u32": 4294967292},
+        {"addr": "@bmpM", "u32": 5}
+      ]
+    },
+    {
+      "name": "x and y = INT_MIN: x - 4 and y - 2 wrap",
+      "args": [-2147483648, -2147483648, 54]
+    },
+    {
+      "name": "x and y = INT_MAX: sums wrap",
+      "args": [2147483647, 2147483647, 54]
+    },
+    {
+      "name": "draw writes the record it draws (tile width re-read per tile)",
+      "args": [100, 50, 54],
+      "callees": {
+        "0x10006c20": {
+          "name": "FUN_10006c20",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "int", "int", "int", "u32"],
+          "ret": 0,
+          "writes": [{"arg": 3, "offset": 0, "hex": "05000000"}]
+        }
+      }
+    },
+    {
+      "name": "all zero: span -14, no tiles",
+      "args": [0, 0, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 34816,
+    "count": 40,
+    "args": [
+      {},
+      {},
+      {
+        "range": [-40, 400]
+      }
+    ],
+    "memory": [
+      {"addr": "@bmpL", "offset": "0x0", "type": "int", "range": [-8, 40]},
+      {"addr": "@bmpL", "offset": "0x4", "type": "int", "range": [-4, 40]},
+      {"addr": "@bmpM", "offset": "0x0", "type": "int", "choices": [-12, -5, -3, -1, 1, 2, 3, 5, 8, 12]},
+      {"addr": "@bmpM", "offset": "0x4", "type": "int", "range": [-4, 40]},
+      {"addr": "@bmpR", "offset": "0x0", "type": "int", "range": [-8, 40]},
+      {"addr": "@bmpR", "offset": "0x4", "type": "int", "range": [-4, 40]},
+      {"addr": "0x1004ceb8", "type": "u32"}
+    ]
+  }
+}

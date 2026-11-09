@@ -1,0 +1,175 @@
+{
+  "function": "HashTable_initializeHashTable_guess",
+  "original": "0x1002e5d0",
+  "sources": [
+    "src/eqmain/Network/rdp/connhash.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "hash",
+      "type": "ptr"
+    },
+    {
+      "name": "bits",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "hash": {
+      "size": "0x8",
+      "fill": "random"
+    },
+    "buf": {
+      "size": "0x20000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    },
+    "0x1002dea0": {
+      "name": "FUN_1002dea0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ]
+    },
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "bits 1: one bucket",
+      "args": [
+        "@hash",
+        1
+      ]
+    },
+    {
+      "name": "bits 2: two buckets",
+      "args": [
+        "@hash",
+        2
+      ]
+    },
+    {
+      "name": "bits 3: four buckets",
+      "args": [
+        "@hash",
+        3
+      ]
+    },
+    {
+      "name": "bits 5: sixteen buckets",
+      "args": [
+        "@hash",
+        5
+      ]
+    },
+    {
+      "name": "bits 12: 2048 buckets, the most the buffer holds",
+      "args": [
+        "@hash",
+        12
+      ]
+    },
+    {
+      "name": "bits 0: shift count 31, 1 << 31 truncates to size 0",
+      "args": [
+        "@hash",
+        0
+      ]
+    },
+    {
+      "name": "bits -1: shift count 30, size 0",
+      "args": [
+        "@hash",
+        -1
+      ]
+    },
+    {
+      "name": "bits 17: 1 << 16 truncates to size 0, malloc(0) returns the buffer",
+      "args": [
+        "@hash",
+        17
+      ]
+    },
+    {
+      "name": "bits 33: shift count masks to 0, size 1",
+      "args": [
+        "@hash",
+        33
+      ]
+    },
+    {
+      "name": "malloc fails, size 0: no memset, no loop, returns 1",
+      "args": [
+        "@hash",
+        17
+      ],
+      "callees": {
+        "0x1003342e": {
+          "name": "_malloc",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "malloc fails, size 1: memset faults on NULL",
+      "args": [
+        "@hash",
+        1
+      ],
+      "callees": {
+        "0x1003342e": {
+          "name": "_malloc",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 189904,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@hash"
+        ]
+      },
+      {
+        "range": [
+          -4,
+          12
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

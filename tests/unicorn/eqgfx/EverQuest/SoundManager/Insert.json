@@ -1,0 +1,237 @@
+{
+  "function": "SoundTreeInsert_guess_Insert_guess",
+  "original": "0x1001a1b6",
+  "rewrite": "SoundTreeInsert_guess_Insert_guess",
+  "sources": [
+    "src/eqgfx/EverQuest/SoundManager.c"
+  ],
+  "conv": "thiscall",
+  "this": "@soundtreeinsert",
+  "args": [
+    {
+      "name": "result",
+      "type": "ptr"
+    },
+    {
+      "name": "relation",
+      "type": "int"
+    },
+    {
+      "name": "parent",
+      "type": "ptr"
+    },
+    {
+      "name": "value",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "soundtreeinsert": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@header"},
+        {"offset": "0xc", "u32": 1}
+      ]
+    },
+    "result": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "header": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@root"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@root"},
+        {"offset": "0x28", "u32": 1}
+      ]
+    },
+    "nil": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"},
+        {"offset": "0x28", "u32": 1}
+      ]
+    },
+    "root": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@header"},
+        {"offset": "0x8", "u32": "@nil"},
+        {"offset": "0x28", "u32": 1}
+      ]
+    },
+    "left_parent": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@nil"},
+        {"offset": "0x28", "u32": 0}
+      ]
+    },
+    "right_parent": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@nil"},
+        {"offset": "0x28", "u32": 0}
+      ]
+    },
+    "uncle": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@nil"},
+        {"offset": "0x28", "u32": 0}
+      ]
+    },
+    "value": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "new_node": {
+      "size": "0x2c",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100aaddc", "u32": "@nil"}
+  ],
+  "callees": {
+    "0x10068c72": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@new_node"
+    },
+    "0x1001a43d": {
+      "name": "t3dSetCurrentLanguage_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10019d71": {
+      "name": "t3dIsAnyKeyComponentLess_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1001a341": {
+      "name": "SoundTree_guess::RotateLeft_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x1001a385": {
+      "name": "SoundTree_guess::RotateRight_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty tree attaches first node and makes it root",
+      "args": ["@result", 1, "@header", "@value"],
+      "memory": [
+        {"addr": "@header", "offset": "0x0", "u32": "@nil"},
+        {"addr": "@header", "offset": "0x4", "u32": "@nil"},
+        {"addr": "@header", "offset": "0x8", "u32": "@nil"},
+        {"addr": "@soundtreeinsert", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "relation selects left child and updates minimum",
+      "args": ["@result", 1, "@root", "@value"]
+    },
+    {
+      "name": "nil relation with equal comparator selects right child and updates maximum",
+      "args": ["@result", "@nil", "@root", "@value"]
+    },
+    {
+      "name": "nil relation with nonzero comparator selects left child",
+      "args": ["@result", "@nil", "@root", "@value"],
+      "callees": {
+        "0x10019d71": {
+          "name": "FUN_10019d71",
+          "conv": "thiscall",
+          "args": ["ptr"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "red uncle recolors parent, uncle, and grandparent",
+      "args": ["@result", 1, "@left_parent", "@value"],
+      "memory": [
+        {"addr": "@root", "offset": "0x0", "u32": "@left_parent"},
+        {"addr": "@root", "offset": "0x8", "u32": "@uncle"},
+        {"addr": "@header", "offset": "0x0", "u32": "@left_parent"},
+        {"addr": "@header", "offset": "0x8", "u32": "@uncle"}
+      ]
+    },
+    {
+      "name": "red uncle recolors the right parent arm",
+      "args": ["@result", 1, "@right_parent", "@value"],
+      "memory": [
+        {"addr": "@root", "offset": "0x0", "u32": "@uncle"},
+        {"addr": "@root", "offset": "0x8", "u32": "@right_parent"},
+        {"addr": "@header", "offset": "0x0", "u32": "@uncle"},
+        {"addr": "@header", "offset": "0x8", "u32": "@right_parent"}
+      ]
+    },
+    {
+      "name": "left line rotates grandparent right",
+      "args": ["@result", 1, "@left_parent", "@value"],
+      "memory": [
+        {"addr": "@root", "offset": "0x0", "u32": "@left_parent"},
+        {"addr": "@root", "offset": "0x8", "u32": "@nil"},
+        {"addr": "@header", "offset": "0x0", "u32": "@left_parent"},
+        {"addr": "@header", "offset": "0x8", "u32": "@root"}
+      ]
+    },
+    {
+      "name": "left triangle rotates parent left then grandparent right",
+      "args": ["@result", "@nil", "@left_parent", "@value"],
+      "memory": [
+        {"addr": "@root", "offset": "0x0", "u32": "@left_parent"},
+        {"addr": "@root", "offset": "0x8", "u32": "@nil"},
+        {"addr": "@header", "offset": "0x0", "u32": "@left_parent"},
+        {"addr": "@header", "offset": "0x8", "u32": "@root"}
+      ]
+    },
+    {
+      "name": "right line rotates grandparent left",
+      "args": ["@result", "@nil", "@right_parent", "@value"]
+    },
+    {
+      "name": "right triangle rotates parent right then grandparent left",
+      "args": ["@result", 1, "@right_parent", "@value"]
+    }
+  ],
+  "fuzz": {
+    "seed": 106934,
+    "count": 30,
+    "args": [
+      {"choices": ["@result"]},
+      {"choices": [1, "@nil"]},
+      {"choices": ["@header", "@root"]},
+      {"choices": ["@value"]}
+    ],
+    "memory": []
+  }
+}

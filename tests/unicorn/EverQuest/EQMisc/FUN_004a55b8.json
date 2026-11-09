@@ -1,0 +1,200 @@
+{
+  "function": "PrintBindLocation_guess",
+  "original": "0x004a55b8",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "profile": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0b18",
+          "cstr": "qeynos"
+        }
+      ]
+    },
+    "zone_context": {
+      "size": 16,
+      "fill": "zero"
+    },
+    "everquest": {
+      "size": 16,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@profile"
+    },
+    {
+      "addr": "0x006e4d54",
+      "u32": "@zone_context"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    }
+  ],
+  "callees": {
+    "0x004bea23": {
+      "name": "GetFullZoneName_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr",
+        "ptr"
+      ],
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "from_image": "0x005698FC",
+          "image_size": 13
+        }
+      ]
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "ordinary Qeynos bound zone",
+      "args": []
+    },
+    {
+      "name": "null profile skips all calls",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4da8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "null zone context skips all calls",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4d54",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "profile gate short circuits context read",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4da8",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4d54",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty bound zone string",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0b18",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "format characters in zone name are data",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0b18",
+          "cstr": "%s%n 100%"
+        }
+      ]
+    },
+    {
+      "name": "twenty-byte bound zone reaches its terminator",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0b18",
+          "hex": "4142434445464748494a4b4c4d4e4f5051525354"
+        }
+      ]
+    },
+    {
+      "name": "null everquest pointer is still passed to print_chat",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006efe2c",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4871608,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x006e4da8",
+        "type": "ptr",
+        "choices": [
+          "@profile",
+          0
+        ]
+      },
+      {
+        "addr": "0x006e4d54",
+        "type": "ptr",
+        "choices": [
+          "@zone_context",
+          0
+        ]
+      },
+      {
+        "addr": "0x006efe2c",
+        "type": "ptr",
+        "choices": [
+          "@everquest",
+          0
+        ]
+      },
+      {
+        "addr": "@profile",
+        "offset": "0x0b18",
+        "size": 20,
+        "p": 0.8
+      }
+    ]
+  }
+}

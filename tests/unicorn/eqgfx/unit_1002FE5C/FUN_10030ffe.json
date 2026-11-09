@@ -1,0 +1,385 @@
+{
+  "function": "initializeTextureMemoryHeaps_guess",
+  "original": "0x10030ffe",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "resource",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "resource": {
+      "size": "0x1e8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1c4",
+          "u32": 1
+        },
+        {
+          "offset": "0x1dc",
+          "u32": "@slots"
+        },
+        {
+          "offset": "0x1e4",
+          "u32": 4
+        }
+      ]
+    },
+    "mapping": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "slots": {
+      "size": "0x280",
+      "fill": "zero"
+    },
+    "min_fn": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "max_fn": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "clamp_fn": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100f3fa0",
+      "u32": "@min_fn"
+    },
+    {
+      "addr": "0x100f3f9c",
+      "u32": "@max_fn"
+    },
+    {
+      "addr": "0x100f3f74",
+      "u32": "@clamp_fn"
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@mapping"
+    },
+    "0x10031411": {
+      "name": "allocateTextureMemorySlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "00000000"
+        }
+      ]
+    },
+    "0x10031157": {
+      "name": "alignBlockAndComputeUsable_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    },
+    "@min_fn": {
+      "conv": "stdcall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "@max_fn": {
+      "conv": "stdcall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "@clamp_fn": {
+      "conv": "stdcall",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure returns the error code",
+      "args": [
+        "@resource"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zero groups still allocate and skip imports",
+      "args": [
+        "@resource"
+      ],
+      "memory": [
+        {
+          "addr": "@resource",
+          "offset": "0x1c4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "single small range",
+      "args": [
+        "@resource"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "exactly two MiB remains in one slot",
+      "args": [
+        "@resource"
+      ],
+      "callees": {
+        "@max_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 2097151
+        }
+      }
+    },
+    {
+      "name": "one above two MiB splits into two slots",
+      "args": [
+        "@resource"
+      ],
+      "callees": {
+        "@max_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 2097152
+        }
+      }
+    },
+    {
+      "name": "range splits into three pieces and keeps the original map entry",
+      "args": [
+        "@resource"
+      ],
+      "callees": {
+        "@max_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 4194305
+        }
+      }
+    },
+    {
+      "name": "nonzero start address and sixteen-byte alignment",
+      "args": [
+        "@resource"
+      ],
+      "memory": [
+        {
+          "addr": "@resource",
+          "offset": "0x1e4",
+          "u32": 16
+        }
+      ],
+      "callees": {
+        "@min_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 257
+        },
+        "@max_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 8448
+        }
+      }
+    },
+    {
+      "name": "unsigned range wraps around the address space",
+      "args": [
+        "@resource"
+      ],
+      "callees": {
+        "@min_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 4294967295
+        },
+        "@max_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "two groups initialize separate mapping pairs in order",
+      "args": [
+        "@resource"
+      ],
+      "memory": [
+        {
+          "addr": "@resource",
+          "offset": "0x1c4",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "@min_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": [
+            0,
+            4096
+          ]
+        },
+        "@max_fn": {
+          "conv": "stdcall",
+          "args": [
+            "int"
+          ],
+          "ret": [
+            2097151,
+            12288
+          ]
+        }
+      }
+    },
+    {
+      "name": "slot allocator returns nonzero slot index",
+      "args": [
+        "@resource"
+      ],
+      "callees": {
+        "0x10031411": {
+          "name": "FUN_10031411",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "03000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero alignment follows the helper arithmetic",
+      "args": [
+        "@resource"
+      ],
+      "memory": [
+        {
+          "addr": "@resource",
+          "offset": "0x1e4",
+          "u32": 0
+        },
+        {
+          "addr": "@resource",
+          "offset": "0x1d8",
+          "u32": 4
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 200702,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@resource"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@resource",
+        "offset": "0x1c4",
+        "type": "u32",
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@resource",
+        "offset": "0x1e4",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          4,
+          8,
+          16
+        ]
+      },
+      {
+        "addr": "@mapping",
+        "size": "0x40"
+      },
+      {
+        "addr": "@slots",
+        "size": "0x280"
+      }
+    ]
+  }
+}

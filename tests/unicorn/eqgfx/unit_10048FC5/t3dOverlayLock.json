@@ -1,0 +1,236 @@
+{
+  "function": "t3dOverlayLock",
+  "original": "0x10049504",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "overlay",
+      "type": "ptr"
+    },
+    {
+      "name": "pixels",
+      "type": "ptr"
+    },
+    {
+      "name": "pitch",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "overlay": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@surface"
+        }
+      ]
+    },
+    "pixels": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "pitch": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "surface": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x68",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x64",
+          "u32": "@lock_fn"
+        }
+      ]
+    },
+    "lock_fn": {
+      "size": "0x8",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@lock_fn": {
+      "name": "surface_lock",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "mem:0x7c", "u32", "ptr"],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 2,
+          "offset": 16,
+          "hex": "bc0a0000"
+        },
+        {
+          "arg": 2,
+          "offset": 36,
+          "hex": "78563412"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "init then lock in mode 1",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 0},
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"},
+        {"addr": "0x100F3DB0", "offset": "0x78", "u32": "0x55AA55AA"},
+        {"addr": "0x100F3E2C", "u32": "0x5A5A5A5A"}
+      ]
+    },
+    {
+      "name": "lock in mode 2 without init",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 1},
+        {"addr": "0x100FB8A8", "u32": 2},
+        {"addr": "0x100F3DB0", "u32": "0x0000DEAD"},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"}
+      ]
+    },
+    {
+      "name": "surface null",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 1},
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "@overlay", "offset": "0xc", "u32": 0},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"}
+      ]
+    },
+    {
+      "name": "mode 0 rejected",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 1},
+        {"addr": "0x100FB8A8", "u32": 0},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"}
+      ]
+    },
+    {
+      "name": "mode 3 rejected",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 1},
+        {"addr": "0x100FB8A8", "u32": 3},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"}
+      ]
+    },
+    {
+      "name": "mode 0xffffffff rejected",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 1},
+        {"addr": "0x100FB8A8", "u32": "0xFFFFFFFF"},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"}
+      ]
+    },
+    {
+      "name": "init only, surface null",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 0},
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "@overlay", "offset": "0xc", "u32": 0},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0x11111111"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0x22222222"},
+        {"addr": "0x100F3DB0", "offset": "0x7B", "u8": "0x77"},
+        {"addr": "0x100F3E2C", "u32": "0x5A5A5A5A"}
+      ]
+    },
+    {
+      "name": "no callee writes, out values come from the descriptor after the call",
+      "args": ["@overlay", "@pixels", "@pitch"],
+      "memory": [
+        {"addr": "0x100F3E6C", "u32": 1},
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "0x100F3DB0", "offset": "0x10", "u32": "0xFACEFEED"},
+        {"addr": "0x100F3DB0", "offset": "0x24", "u32": "0xCAFEBABE"}
+      ],
+      "callees": {
+        "@lock_fn": {
+          "name": "surface_lock",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "mem:0x7c", "u32", "ptr"],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 300292,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@overlay"
+        ]
+      },
+      {
+        "choices": [
+          "@pixels"
+        ]
+      },
+      {
+        "choices": [
+          "@pitch"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@overlay",
+        "offset": "0xc",
+        "type": "ptr",
+        "choices": [
+          "@surface",
+          "0x0"
+        ]
+      },
+      {
+        "addr": "0x100FB8A8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "addr": "0x100F3E6C",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

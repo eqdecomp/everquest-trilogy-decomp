@@ -1,0 +1,203 @@
+{
+  "function": "ClearRequestorState_guess",
+  "original": "0x0048254b",
+  "sources": [
+    "src/EverQuest/EQ_Requestor.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "requestor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "requestor": {
+      "size": "0x180",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0058fba4",
+      "cstr": "fixture"
+    }
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "client_strcpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "clears initialized fields and preserves canaries",
+      "args": [
+        "@requestor"
+      ],
+      "objects": {
+        "requestor": {
+          "size": "0x180",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x10",
+              "u32": 305419896
+            },
+            {
+              "offset": "0xa6",
+              "u8": 90
+            },
+            {
+              "offset": "0xa8",
+              "u16": 4660
+            },
+            {
+              "offset": "0xac",
+              "u32": 3405691582
+            },
+            {
+              "offset": "0xb0",
+              "u8": 127
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero fill and empty source",
+      "args": [
+        "@requestor"
+      ],
+      "objects": {
+        "requestor": {
+          "size": "0x180",
+          "fill": "zero"
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x0058fba4",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "single character source",
+      "args": [
+        "@requestor"
+      ],
+      "memory": [
+        {
+          "addr": "0x0058fba4",
+          "cstr": "Q"
+        }
+      ]
+    },
+    {
+      "name": "bounded long source",
+      "args": [
+        "@requestor"
+      ],
+      "memory": [
+        {
+          "addr": "0x0058fba4",
+          "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-"
+        }
+      ]
+    },
+    {
+      "name": "unaligned requestor pointer",
+      "args": [
+        "@requestor+0x1"
+      ]
+    },
+    {
+      "name": "interior requestor pointer",
+      "args": [
+        "@requestor+0x20"
+      ]
+    },
+    {
+      "name": "source overlaps first cleared dword",
+      "args": [
+        "0x0058fb94"
+      ],
+      "memory": [
+        {
+          "addr": "0x0058fb94",
+          "size": "0xd0",
+          "fill": "zero"
+        },
+        {
+          "addr": "0x0058fba4",
+          "cstr": "order-witness"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4728139,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@requestor",
+          "@requestor+0x1",
+          "@requestor+0x20"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x0058fba4",
+        "type": "u8",
+        "count": 8,
+        "choices": [
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "addr": "0x0058fba4",
+        "offset": "0x8",
+        "type": "u8",
+        "range": [
+          0,
+          0
+        ]
+      }
+    ]
+  }
+}

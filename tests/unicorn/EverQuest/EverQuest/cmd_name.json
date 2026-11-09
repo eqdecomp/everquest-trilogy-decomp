@@ -1,0 +1,319 @@
+{
+  "function": "cmd_name_guess",
+  "original": "0x004a4d37",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "args",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "Alice"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@player"
+    }
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004dbc84": {
+      "name": "CEverQuest::GrabFirstWord2_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:94",
+        "u32",
+        "int"
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005223d0": {
+      "name": "_strlen",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty argument prints the usage line and then the b hint",
+      "args": [
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "blank argument leaves every word empty",
+      "args": [
+        0,
+        " "
+      ]
+    },
+    {
+      "name": "single word leaves the new name empty",
+      "args": [
+        0,
+        "Bob"
+      ]
+    },
+    {
+      "name": "three-character new name is rejected",
+      "args": [
+        0,
+        "Bob Ali"
+      ]
+    },
+    {
+      "name": "four-character new name is accepted without the flag",
+      "args": [
+        0,
+        "Bob Alic"
+      ]
+    },
+    {
+      "name": "b as the third word sets the flag and adds the invalid-list line",
+      "args": [
+        0,
+        "Bob Alice b"
+      ]
+    },
+    {
+      "name": "uppercase B does not set the flag",
+      "args": [
+        0,
+        "Bob Alice B"
+      ]
+    },
+    {
+      "name": "flag reads only the first character of the third word",
+      "args": [
+        0,
+        "Bob Alice bob"
+      ]
+    },
+    {
+      "name": "words after the third are ignored",
+      "args": [
+        0,
+        "Bob Alice x b extra words"
+      ]
+    },
+    {
+      "name": "double space before the flag word",
+      "args": [
+        0,
+        "Bob Alice  b"
+      ]
+    },
+    {
+      "name": "tabs and leading spaces separate the words",
+      "args": [
+        0,
+        "  Bob\tAlice\tb"
+      ]
+    },
+    {
+      "name": "old name of 36 characters overflows into the player name field",
+      "args": [
+        0,
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 Alice"
+      ]
+    },
+    {
+      "name": "new name of exactly 30 characters fills the field up to the flag",
+      "args": [
+        0,
+        "Bob 123456789012345678901234567890"
+      ]
+    },
+    {
+      "name": "new name of 31 characters runs into the flag and zero fields",
+      "args": [
+        0,
+        "Bob 1234567890123456789012345678901 b"
+      ]
+    },
+    {
+      "name": "new name of 33 characters loses its last character to the zero field",
+      "args": [
+        0,
+        "Bob ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"
+      ]
+    },
+    {
+      "name": "empty player name is copied as an empty string",
+      "args": [
+        0,
+        "Bob Alice b"
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x1",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "29-character player name fills its field",
+      "args": [
+        0,
+        "Bob Alice b"
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x1",
+          "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabc"
+        }
+      ]
+    },
+    {
+      "name": "unused argument value does not change the path",
+      "args": [
+        -1,
+        "Bob Alice b"
+      ]
+    },
+    {
+      "name": "unused argument minimum value with a plain rename",
+      "args": [
+        -2147483648,
+        "Bob Alice"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4869431,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2,
+          2147483647
+        ]
+      },
+      {
+        "choices": [
+          "",
+          " ",
+          "Bob",
+          "Bob Ali",
+          "Bob Alic",
+          "Bob Alice",
+          "Bob Alice b",
+          "Bob Alice B",
+          "Bob Alice bob",
+          "Bob Alice x",
+          "Bob Alice  b",
+          "  Bob   Alice   b",
+          "Bob\tAlice\tb",
+          "Bob Alice b extra",
+          "Bob Ali b",
+          "Bob Alic b",
+          "Bob  b",
+          "Q Zed",
+          "Bob Zed b",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefg b",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 Alice",
+          "Bob 123456789012345678901234567890",
+          "Bob 1234567890123456789012345678901 b",
+          "b b b b"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@player",
+        "offset": "0x1",
+        "type": "u8",
+        "count": 8,
+        "choices": [
+          0,
+          65,
+          66,
+          97,
+          98,
+          108,
+          105,
+          99,
+          101
+        ],
+        "p": 0.75
+      }
+    ]
+  }
+}

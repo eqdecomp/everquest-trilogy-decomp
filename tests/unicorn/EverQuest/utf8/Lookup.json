@@ -1,0 +1,117 @@
+{
+  "function": "EQStrLookupOwner_guess::Lookup_guess",
+  "original": "0x00404006",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqstrlookupowner",
+  "args": [
+    {
+      "name": "key",
+      "type": "cstr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "eqstrlookupowner": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x84", "u32": "0x11223344"},
+        {"offset": "0x88", "u32": "0x55667788"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4D00", "u32": "0xAAAA0000"},
+    {"addr": "0x006E4D04", "u32": "0xBBBB0004"},
+    {"addr": "0x006E4D08", "u32": "0xCAFEBABE"},
+    {"addr": "0x006E4D0C", "u32": "0xDDDD000C"}
+  ],
+  "callees": {
+    "0x00404387": {
+      "name": "FindNodeByKey_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 0, "hex": "004d6e00"}, {"arg": 0, "offset": 4, "hex": "00000000"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "found node returns its +8 value",
+      "args": ["abc"]
+    },
+    {
+      "name": "found node with empty key",
+      "args": [""]
+    },
+    {
+      "name": "found node whose +8 is zero still returns node value, not default",
+      "args": ["key"],
+      "memory": [{"addr": "0x006E4D08", "u32": 0}]
+    },
+    {
+      "name": "found node +8 high bit",
+      "args": ["key"],
+      "memory": [{"addr": "0x006E4D08", "u32": "0x80000001"}]
+    },
+    {
+      "name": "not found returns default at +0x84",
+      "args": ["missing"],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}, {"arg": 0, "offset": 4, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "not found with table pointer set and zero default",
+      "args": ["x"],
+      "memory": [{"addr": "@eqstrlookupowner+0x84", "u32": 0}],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}, {"arg": 0, "offset": 4, "hex": "004d6e00"}]
+        }
+      }
+    },
+    {
+      "name": "node in second slot ignored: only iter.node is tested",
+      "args": ["y"],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}, {"arg": 0, "offset": 4, "hex": "044d6e00"}]
+        }
+      }
+    },
+    {
+      "name": "node pointer offset by 4 reads +0xC",
+      "args": ["z"],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ptr", "ptr"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "044d6e00"}, {"arg": 0, "offset": 4, "hex": "00000000"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4210694,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "@eqstrlookupowner+0x84", "type": "u32", "choices": [0, 1, 2147483648, 4294967295, 305419896]},
+      {"addr": "@eqstrlookupowner+0x80", "type": "u32", "choices": [0, 7]},
+      {"addr": "@eqstrlookupowner+0x88", "type": "u32", "choices": [0, 9]},
+      {"addr": "0x006E4D08", "type": "u32", "choices": [0, 1, 2147483648, 4294967295, 2864434397]},
+      {"addr": "0x006E4D04", "type": "u32", "choices": [0, 3]},
+      {"addr": "0x006E4D0C", "type": "u32", "choices": [0, 5]}
+    ]
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "function": "runInitializationCallbackOnce_guess",
+  "original": "0x10051f30",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100a3ad0",
+      "size": 16,
+      "fill": "zero"
+    }
+  ],
+  "callees": {
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "flag clear: no call, no store, return self",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ad0",
+          "size": 16,
+          "fill": "zero"
+        }
+      ]
+    },
+    {
+      "name": "flag set: initialise 0x100fbbd0, clear the flag, return self",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ad0",
+          "size": 16,
+          "fill": "zero"
+        },
+        {
+          "addr": "0x100a3ad8",
+          "from_image": "0x100A3AD8",
+          "image_size": 1
+        }
+      ]
+    },
+    {
+      "name": "flag 0xff boundary: still initialises",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ad0",
+          "size": 16,
+          "fill": "zero"
+        },
+        {
+          "addr": "0x100a3ad8",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "null self, flag set: clears the flag, returns 0",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ad0",
+          "size": 16,
+          "fill": "zero"
+        },
+        {
+          "addr": "0x100a3ad8",
+          "from_image": "0x100A3AD8",
+          "image_size": 1
+        }
+      ]
+    },
+    {
+      "name": "null self, flag clear: no call, returns 0",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ad0",
+          "size": 16,
+          "fill": "zero"
+        }
+      ]
+    },
+    {
+      "name": "ordering: the callee rewrites the flag, the trailing clear still wins",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ad0",
+          "size": 16,
+          "fill": "zero"
+        },
+        {
+          "addr": "0x100a3ad8",
+          "from_image": "0x100A3AD8",
+          "image_size": 1
+        }
+      ],
+      "callees": {
+        "kernel32.dll!InitializeCriticalSection": {
+          "name": "InitializeCriticalSection",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x100a3ad8",
+              "hex": "07"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 335664,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100a3ad8",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,385 @@
+{
+  "function": "_t3dComputeObjectToWorldCoefficients_guess",
+  "original": "0x10035058",
+  "sources": [
+    "src/eqgfx/unit_10033BE5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderState",
+      "type": "ptr"
+    },
+    {
+      "name": "distanceScale",
+      "type": "float"
+    },
+    {
+      "name": "rotationInput",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "renderstate": {
+      "size": "0xec",
+      "fill": "random"
+    },
+    "rotationinput": {
+      "size": "0x18",
+      "fill": "zero"
+    },
+    "lookup": {
+      "size": "0x2000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100f3ff4",
+      "u32": "@lookup"
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1000",
+      "f32": 1.0
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1800",
+      "f32": 0.0
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1004",
+      "f32": 0.8
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1804",
+      "f32": 0.6
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1008",
+      "f32": 0.6
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1808",
+      "f32": -0.8
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x100c",
+      "f32": -1.0
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x180c",
+      "f32": 0.0
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x17f8",
+      "f32": 0.25
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1ff8",
+      "f32": -0.5
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x17fc",
+      "f32": -0.25
+    },
+    {
+      "addr": "@lookup",
+      "offset": "0x1ffc",
+      "f32": 0.75
+    }
+  ],
+  "callees": {
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__ftol": "0x1004ec36"
+  },
+  "cases": [
+    {
+      "name": "zero angles set the marker, clear bit 0x20, and return one",
+      "args": [
+        "@renderstate",
+        2.0,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@renderstate",
+          "offset": "0xf",
+          "u8": 255
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": 0.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": 0.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": 0.0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "distinct indices exercise lookup and matrix multiplication order",
+      "args": [
+        "@renderstate",
+        0.5,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@renderstate",
+          "offset": "0xf",
+          "u8": 32
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": 1.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": 2.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": 3.0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "positive half values use the helper rounding boundary",
+      "args": [
+        "@renderstate",
+        1.25,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": 0.5
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": 1.5
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": 2.5
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "negative half values cover signed rounding and masked indices",
+      "args": [
+        "@renderstate",
+        -1.0,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": -0.5
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": -1.5
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": -2.5
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "indices 512 and negative one wrap through the 0x1ff mask",
+      "args": [
+        "@renderstate",
+        3.0,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": 512.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": -1.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": 514.0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero distance scale preserves division behavior",
+      "args": [
+        "@renderstate",
+        0.0,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": 2.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": 5.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": 7.0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "negative scale uses reciprocal and direct scale in separate matrices",
+      "args": [
+        "@renderstate",
+        -2.0,
+        "@rotationinput"
+      ],
+      "memory": [
+        {
+          "addr": "@rotationinput",
+          "offset": "0xc",
+          "f32": 255.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x10",
+          "f32": 256.0
+        },
+        {
+          "addr": "@rotationinput",
+          "offset": "0x14",
+          "f32": 257.0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 217176,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@renderstate"
+        ]
+      },
+      {
+        "range": [
+          -4,
+          4
+        ]
+      },
+      {
+        "choices": [
+          "@rotationinput"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@renderstate",
+        "offset": "0xf",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@rotationinput",
+        "offset": "0xc",
+        "type": "float",
+        "count": 3,
+        "range": [
+          -2048,
+          2048
+        ]
+      },
+      {
+        "addr": "@lookup",
+        "offset": "0x1000",
+        "type": "float",
+        "count": 512,
+        "range": [
+          -1,
+          1
+        ]
+      },
+      {
+        "addr": "@lookup",
+        "offset": "0x1800",
+        "type": "float",
+        "count": 512,
+        "range": [
+          -1,
+          1
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "function": "wait_message",
+  "original": "0x004e04d1",
+  "sources": [
+    "src/EverQuest/net.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "app": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006ecca8",
+      "u32": "0x00710000"
+    }
+  ],
+  "callees": {
+    "0x004f1600": {
+      "name": "rdp_receive",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004f4cb0": {
+      "name": "msg_arrival_get_sender_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ]
+    },
+    "0x004f23c0": {
+      "name": "connection_app_ptr_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@app"
+    },
+    "0x004f21d0": {
+      "name": "connection_close",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int"
+      ]
+    },
+    "0x004f4c80": {
+      "name": "msg_arrival_get_size_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 2
+    },
+    "0x004f4cc0": {
+      "name": "msg_arrival_has_fin_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004f23b0": {
+      "name": "connection_connected_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "no message returns zero",
+      "args": [],
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "sender zero frees each message before a later empty receive",
+      "args": [],
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "int"],
+          "ret": [101, 102, 0]
+        },
+        "0x004f4cb0": {
+          "name": "msg_arrival_get_sender_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "ret": [0, 0]
+        }
+      }
+    },
+    {
+      "name": "app pointer state zero closes and frees then retries",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 0}],
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "int"],
+          "ret": [201, 0]
+        },
+        "0x004f4cb0": {
+          "name": "msg_arrival_get_sender_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "ret": 9
+        }
+      }
+    },
+    {
+      "name": "app pointer state nonzero keeps message for size validation",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 1}],
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "int"],
+          "ret": 301
+        },
+        "0x004f4cb0": {
+          "name": "msg_arrival_get_sender_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "ret": 11
+        }
+      }
+    },
+    {
+      "name": "size below two frees without checking fin or connection",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 1}],
+      "callees": {
+        "0x004f1600": {"name": "rdp_receive_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 401},
+        "0x004f4cb0": {"name": "msg_arrival_get_sender_guess", "conv": "cdecl", "args": ["int"], "ret": 12},
+        "0x004f4c80": {"name": "msg_arrival_get_size_guess", "conv": "cdecl", "args": ["int"], "ret": 1},
+        "0x004f4cc0": {"name": "msg_arrival_has_fin_guess", "conv": "cdecl", "args": ["int"], "ret": 1},
+        "0x004f23b0": {"name": "connection_connected_guess", "conv": "cdecl", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "unsigned size boundary two proceeds to fin check",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 1}],
+      "callees": {
+        "0x004f1600": {"name": "rdp_receive_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 501},
+        "0x004f4cb0": {"name": "msg_arrival_get_sender_guess", "conv": "cdecl", "args": ["int"], "ret": 13},
+        "0x004f4c80": {"name": "msg_arrival_get_size_guess", "conv": "cdecl", "args": ["int"], "ret": 2},
+        "0x004f4cc0": {"name": "msg_arrival_has_fin_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+        "0x004f23b0": {"name": "connection_connected_guess", "conv": "cdecl", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "large size with fin set frees before connected check",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 1}],
+      "callees": {
+        "0x004f1600": {"name": "rdp_receive_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 601},
+        "0x004f4cb0": {"name": "msg_arrival_get_sender_guess", "conv": "cdecl", "args": ["int"], "ret": 14},
+        "0x004f4c80": {"name": "msg_arrival_get_size_guess", "conv": "cdecl", "args": ["int"], "ret": 3},
+        "0x004f4cc0": {"name": "msg_arrival_has_fin_guess", "conv": "cdecl", "args": ["int"], "ret": 1},
+        "0x004f23b0": {"name": "connection_connected_guess", "conv": "cdecl", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "size two fin clear disconnected connection frees",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 1}],
+      "callees": {
+        "0x004f1600": {"name": "rdp_receive_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 701},
+        "0x004f4cb0": {"name": "msg_arrival_get_sender_guess", "conv": "cdecl", "args": ["int"], "ret": 15},
+        "0x004f4c80": {"name": "msg_arrival_get_size_guess", "conv": "cdecl", "args": ["int"], "ret": 2},
+        "0x004f4cc0": {"name": "msg_arrival_has_fin_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+        "0x004f23b0": {"name": "connection_connected_guess", "conv": "cdecl", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "negative signed-looking size compares unsigned and is accepted",
+      "args": [],
+      "memory": [{"addr": "@app", "u32": 1}],
+      "callees": {
+        "0x004f1600": {"name": "rdp_receive_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 801},
+        "0x004f4cb0": {"name": "msg_arrival_get_sender_guess", "conv": "cdecl", "args": ["int"], "ret": 16},
+        "0x004f4c80": {"name": "msg_arrival_get_size_guess", "conv": "cdecl", "args": ["int"], "ret": "0xffffffff"},
+        "0x004f4cc0": {"name": "msg_arrival_has_fin_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+        "0x004f23b0": {"name": "connection_connected_guess", "conv": "cdecl", "args": ["int"], "ret": 1}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5113041,
+    "count": 30,
+    "args": [],
+    "callees": {
+      "0x004f1600": {"name": "rdp_receive_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": [901, 902, 0]},
+      "0x004f4cb0": {"name": "msg_arrival_get_sender_guess", "conv": "cdecl", "args": ["int"], "ret": [0, 17]},
+      "0x004f23c0": {"name": "connection_app_ptr_guess", "conv": "cdecl", "args": ["int"], "ret": "@app"},
+      "0x004f4c80": {"name": "msg_arrival_get_size_guess", "conv": "cdecl", "args": ["int"], "ret": [0, 1, 2, 3, 4294967295]},
+      "0x004f4cc0": {"name": "msg_arrival_has_fin_guess", "conv": "cdecl", "args": ["int"], "ret": [0, 1]},
+      "0x004f23b0": {"name": "connection_connected_guess", "conv": "cdecl", "args": ["int"], "ret": [0, 1]}
+    },
+    "memory": [
+      {"addr": "@app", "offset": "0x0", "type": "u32"},
+      {"addr": "0x006ecca8", "type": "u32"}
+    ]
+  }
+}

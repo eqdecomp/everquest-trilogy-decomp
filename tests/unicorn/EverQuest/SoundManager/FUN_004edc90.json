@@ -1,0 +1,69 @@
+{
+  "function": "ReleaseHandle_guess",
+  "original": "0x004edc90",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "param_2", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self_default": {"size": "0xb50", "fill": "zero", "init": [
+      {"offset": "0xc", "u32": "@slot_object"},
+      {"offset": "0x10", "u32": "@slot_object"},
+      {"offset": "0xb48", "u32": "@slot_object"},
+      {"offset": "0xb4c", "u32": "@cleanup_object"}
+    ]},
+    "self_no_cleanup": {"size": "0xb50", "fill": "zero", "init": [
+      {"offset": "0xc", "u32": "@slot_object"},
+      {"offset": "0x10", "u32": "@slot_object"},
+      {"offset": "0xb48", "u32": "@slot_object"}
+    ]},
+    "self_missing_slot": {"size": "0xb50", "fill": "zero", "init": [
+      {"offset": "0xb4c", "u32": "@cleanup_object"}
+    ]},
+    "self_cleanup_lowbit": {"size": "0xb54", "fill": "zero", "init": [
+      {"offset": "0xc", "u32": "@slot_object"},
+      {"offset": "0xb4c", "u32": 1}
+    ]},
+    "slot_object": {"size": "0x40", "fill": "zero"},
+    "cleanup_object": {"size": "0x40", "fill": "zero"},
+    "param_2": {"size": "0x4", "fill": "zero"},
+    "sentinel": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x004ee5e4": {"name": "cleanupCollectionResources_guess", "conv": "thiscall", "args": ["ptr"]},
+    "0x004eb96a": {"name": "FUN_004eb96a", "conv": "thiscall", "args": ["mem:4"]}
+  },
+  "cases": [
+    {"name": "slot zero, cleanup then stop with low word", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x0000002a"}]},
+    {"name": "slot zero without cleanup", "args": ["@self_no_cleanup", 11, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x0000ffff"}]},
+    {"name": "null slot pointer skips both callees", "args": ["@self_missing_slot", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x00000001"}]},
+    {"name": "highest valid slot index", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x02cfffff"}]},
+    {"name": "first invalid slot index", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x02d00001"}]},
+    {"name": "large positive high word", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x7fff0001"}]},
+    {"name": "signed high word boundary", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x80000001"}]},
+    {"name": "maximum high word", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0xffff0001"}]},
+    {"name": "slot one low word zero", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x00010000"}]},
+    {"name": "slot one low word maximum", "args": ["@self_default", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x0001ffff"}]},
+    {"name": "saved register cannot replace the input pointer", "args": ["@self_missing_slot", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x00000001"}], "regs": {"esi": "@sentinel"}},
+    {"name": "cleanup pointer low byte distinguishes field boundary", "args": ["@self_cleanup_lowbit", 0, "@param_2"], "memory": [{"addr": "@param_2", "u32": "0x00000005"}]}
+  ],
+  "fuzz": {
+    "seed": 5168272,
+    "count": 40,
+    "args": [
+      {"choices": ["@self_default", "@self_no_cleanup", "@self_missing_slot", "@self_cleanup_lowbit"]},
+      {},
+      {"choices": ["@param_2"]}
+    ],
+    "memory": [
+      {"addr": "@param_2", "type": "u32", "choices": ["0x00000000", "0x0001ffff", "0x00010000", "0x00010001", "0x02cfffff", "0x02d00000", "0x7fff0000", "0x80000000", "0xffff0000"]}
+    ]
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "function": "GetTPCoordsFromIndex",
+  "original": "0x004c1862",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "index", "type": "int" },
+    { "name": "y", "type": "ptr" },
+    { "name": "x", "type": "ptr" },
+    { "name": "z", "type": "ptr" },
+    { "name": "heading", "type": "ptr" },
+    { "name": "zoneId", "type": "ptr" }
+  ],
+  "ret": "int",
+  "objects": {
+    "y": { "size": "0x4", "fill": "random" },
+    "x": { "size": "0x4", "fill": "random" },
+    "z": { "size": "0x4", "fill": "random" },
+    "heading": { "size": "0x4", "fill": "random" },
+    "zoneid": { "size": "0x4", "fill": "random" }
+  },
+  "memory": [
+    { "addr": "0x006e3538", "size": "0x1818", "fill": "random" },
+    { "addr": "0x006e4d50", "u32": 0 }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero count writes defaults and returns minus one",
+      "args": [123456, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [{ "addr": "0x006e4d50", "u32": 0 }]
+    },
+    {
+      "name": "negative count skips the table",
+      "args": [123456, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [{ "addr": "0x006e4d50", "u32": "0xfffffffe" }]
+    },
+    {
+      "name": "positive count with no match",
+      "args": [123456, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 3 },
+        { "addr": "0x006e3538", "u16": 10 },
+        { "addr": "0x006e3550", "u16": 20 },
+        { "addr": "0x006e3568", "u16": 30 }
+      ]
+    },
+    {
+      "name": "match at first entry",
+      "args": [7, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 1 },
+        { "addr": "0x006e3538", "u16": 7 },
+        { "addr": "0x006e353c", "f32": 11.5 },
+        { "addr": "0x006e3540", "f32": -22.25 },
+        { "addr": "0x006e3544", "f32": 33.75 },
+        { "addr": "0x006e3548", "f32": 44.125 },
+        { "addr": "0x006e354c", "u32": 101 }
+      ]
+    },
+    {
+      "name": "match in the middle copies outputs in order",
+      "args": [17, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 3 },
+        { "addr": "0x006e3538", "u16": 5 },
+        { "addr": "0x006e3550", "u16": 17 },
+        { "addr": "0x006e3568", "u16": 9 },
+        { "addr": "0x006e3554", "f32": 12.5 },
+        { "addr": "0x006e3558", "f32": -23.25 },
+        { "addr": "0x006e355c", "f32": 34.75 },
+        { "addr": "0x006e3560", "f32": 45.5 },
+        { "addr": "0x006e3564", "u32": 202 }
+      ]
+    },
+    {
+      "name": "match at count boundary",
+      "args": [30, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 3 },
+        { "addr": "0x006e3538", "u16": 10 },
+        { "addr": "0x006e3550", "u16": 20 },
+        { "addr": "0x006e3568", "u16": 30 },
+        { "addr": "0x006e358c", "f32": -3.5 },
+        { "addr": "0x006e3590", "f32": 4.25 },
+        { "addr": "0x006e3594", "f32": -5.75 },
+        { "addr": "0x006e3598", "f32": 6.125 },
+        { "addr": "0x006e359c", "u32": 303 }
+      ]
+    },
+    {
+      "name": "first duplicate wins",
+      "args": [7, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 3 },
+        { "addr": "0x006e3538", "u16": 7 },
+        { "addr": "0x006e3550", "u16": 7 },
+        { "addr": "0x006e3568", "u16": 12 },
+        { "addr": "0x006e354c", "u32": 111 },
+        { "addr": "0x006e3564", "u32": 222 }
+      ]
+    },
+    {
+      "name": "signed short index matches minus one",
+      "args": [-1, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 1 },
+        { "addr": "0x006e3538", "u16": "0xffff" },
+        { "addr": "0x006e353c", "f32": -1.0 },
+        { "addr": "0x006e3540", "f32": -2.0 },
+        { "addr": "0x006e3544", "f32": -3.0 },
+        { "addr": "0x006e3548", "f32": -4.0 },
+        { "addr": "0x006e354c", "u32": 404 }
+      ]
+    },
+    {
+      "name": "unsigned-looking query does not match signed short minus one",
+      "args": [65535, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 1 },
+        { "addr": "0x006e3538", "u16": "0xffff" }
+      ]
+    },
+    {
+      "name": "entry beyond count is ignored",
+      "args": [99, "@y", "@x", "@z", "@heading", "@zoneid"],
+      "memory": [
+        { "addr": "0x006e4d50", "u32": 1 },
+        { "addr": "0x006e3538", "u16": 7 },
+        { "addr": "0x006e3550", "u16": 99 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4986978,
+    "count": 32,
+    "args": [
+      { "range": [-3, 30] },
+      { "choices": ["@y"] },
+      { "choices": ["@x"] },
+      { "choices": ["@z"] },
+      { "choices": ["@heading"] },
+      { "choices": ["@zoneid"] }
+    ],
+    "memory": [
+      { "addr": "0x006e4d50", "type": "int", "range": [-2, 40] },
+      { "addr": "0x006e3538", "type": "short", "count": 40, "stride": 24, "range": [-3, 30] }
+    ]
+  }
+}

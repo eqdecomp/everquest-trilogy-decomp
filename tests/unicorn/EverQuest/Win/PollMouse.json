@@ -1,0 +1,214 @@
+{
+  "function": "PollMouse_guess",
+  "original": "0x004eb36e",
+  "sources": ["src/EverQuest/Win.cpp"],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "eq": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x4", "u32": 5}]},
+    "dev": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vt"}]},
+    "vt": {"size": "0x30", "fill": "random", "init": [{"offset": "0x28", "u32": "@fn_get"}, {"offset": "0x1C", "u32": "@fn_re"}]},
+    "fn_get": {"size": "0x10", "fill": "zero"},
+    "fn_re": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006EFC7C", "u32": "@dev"},
+    {"addr": "0x006EFE2C", "u32": "@eq"},
+    {"addr": "0x006EFC88", "u32": 0},
+    {"addr": "0x006EFC8C", "u32": 0},
+    {"addr": "0x006EFC80", "u32": 100},
+    {"addr": "0x006EFC84", "u32": 100},
+    {"addr": "0x006B6420", "u32": 1},
+    {"addr": "0x0058FC6C", "u32": 2},
+    {"addr": "0x006B63FC", "u32": 640},
+    {"addr": "0x006B6400", "u32": 480},
+    {"addr": "0x006EE748", "u32": 1},
+    {"addr": "0x006B648A", "u8": 0},
+    {"addr": "0x006B648B", "u8": 0}
+  ],
+  "callees": {
+    "0x004eb2b1": {"name": "FUN_004eb2b1", "conv": "cdecl", "args": ["int"]},
+    "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+      "writes": [{"arg": 2, "offset": 0, "hex": "0000000007000000000000000000000004000000f7ffffff000000000000000008000000f000000000000000000000000c0000008000000000000000000000000d000000800000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "05000000"}]},
+    "@fn_re": {"name": "re", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "full events"},
+    {"name": "get fail, reacquire fail", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": -1},
+      "@fn_re": {"name": "re", "conv": "stdcall", "args": ["ptr"], "ret": -1}}},
+    {"name": "get fail, reacquire ok, get fail", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": [-1, -1]},
+      "@fn_re": {"name": "re", "conv": "stdcall", "args": ["ptr"], "ret": 0}}},
+    {"name": "get fail, reacquire ok, get ok", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": [-1, 0],
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000007000000000000000000000004000000f7ffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "INT_MIN fails, reacquire positive, get INT_MIN", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": [-2147483648, -2147483648]},
+      "@fn_re": {"name": "re", "conv": "stdcall", "args": ["ptr"], "ret": 2147483647}}},
+    {"name": "get fail, reacquire INT_MIN", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": -1},
+      "@fn_re": {"name": "re", "conv": "stdcall", "args": ["ptr"], "ret": -2147483648}}},
+    {"name": "get ok positive, then second ok after fail with INT_MAX", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": [-1, 2147483647],
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "get positive", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 1,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "no events", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 3, "offset": 0, "hex": "00000000"}]}}},
+    {"name": "flags cleared by data without high bit", "memory": [{"addr": "0x006B648A", "u8": 1}, {"addr": "0x006B648B", "u8": 1}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0c0000000000000000000000000000000d0000007f0000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "flag 0xc only", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0c000000800000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "flag 0xd only", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0d000000800000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "flag data 0x01 low bit only", "memory": [{"addr": "0x006B648A", "u8": 1}, {"addr": "0x006B648B", "u8": 1}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0c0000000100000000000000000000000d000000010000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "flag data 0xff", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0c000000ff00000000000000000000000d000000ff0000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "unknown offset only", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "10000000050000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "unknown offsets 1,5,9,0xe", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0100000005000000000000000000000005000000050000000000000000000000090000008000000000000000000000000e0000008000000000000000000000000b000000800000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "05000000"}]}}},
+    {"name": "large negative, clamp to zero", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000018fcffff00000000000000000400000018fcffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "large positive mode 2", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000088130000000000000000000004000000881300000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "large positive mode 1", "memory": [{"addr": "0x0058FC6C", "u32": 1}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000088130000000000000000000004000000881300000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "large positive mode 0", "memory": [{"addr": "0x0058FC6C", "u32": 0}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000088130000000000000000000004000000881300000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "large positive mode 3", "memory": [{"addr": "0x0058FC6C", "u32": 3}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000088130000000000000000000004000000881300000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "x only", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "y only", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "accumulate, call with negative", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "000000000300000000000000000000000000000003000000000000000000000004000000040000000000000000000000040000000400000000000000000000000800000088ffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "05000000"}]}}},
+    {"name": "accumulate, gate global 0", "memory": [{"addr": "0x006EE748", "u32": 0}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "000000000300000000000000000000000000000003000000000000000000000004000000040000000000000000000000040000000400000000000000000000000800000088ffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "05000000"}]}}},
+    {"name": "accumulate, state 4", "objects": {"eq": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x4", "u32": 4}]}}, "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0800000088ffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "accumulate, state 6", "objects": {"eq": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x4", "u32": 6}]}}, "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0800000088ffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "accumulate scale 2", "memory": [{"addr": "0x006B6420", "u32": 2}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000000000000300000000000000000000000400000004000000000000000000000004000000050000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "04000000"}]}}},
+    {"name": "accumulate scale 3 x negative", "memory": [{"addr": "0x006B6420", "u32": 3}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000fdffffff000000000000000004000000050000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "scale 0", "memory": [{"addr": "0x006B6420", "u32": 0}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000003000000000000000000000004000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "scale -3", "memory": [{"addr": "0x006B6420", "u32": "0xfffffffd"}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000003000000000000000000000004000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "scale 1", "memory": [{"addr": "0x006B6420", "u32": 1}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000003000000000000000000000004000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "scale 2 y zero", "memory": [{"addr": "0x006B6420", "u32": 2}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode2 x exactly at limit", "memory": [{"addr": "0x006EFC80", "u32": 636}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode2 x one over limit", "memory": [{"addr": "0x006EFC80", "u32": 637}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode2 y exactly at limit", "memory": [{"addr": "0x006EFC84", "u32": 475}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode2 y one over limit", "memory": [{"addr": "0x006EFC84", "u32": 476}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode1 x exactly at 0x274", "memory": [{"addr": "0x0058FC6C", "u32": 1}, {"addr": "0x006EFC80", "u32": 625}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode1 x one over 0x274", "memory": [{"addr": "0x0058FC6C", "u32": 1}, {"addr": "0x006EFC80", "u32": 626}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000030000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode1 y exactly at 0x1cb", "memory": [{"addr": "0x0058FC6C", "u32": 1}, {"addr": "0x006EFC84", "u32": 455}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "mode1 y one over 0x1cb", "memory": [{"addr": "0x0058FC6C", "u32": 1}, {"addr": "0x006EFC84", "u32": 456}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "x lands at -1", "memory": [{"addr": "0x006EFC80", "u32": 2}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000fdffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "y lands at -1", "memory": [{"addr": "0x006EFC84", "u32": 3}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000fcffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "y large positive with bit 23", "memory": [{"addr": "0x006EFC84", "u32": 8388608}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "y large negative without bit 23", "memory": [{"addr": "0x006EFC84", "u32": "0xff7fffff"}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "04000000040000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "x lands at 0, y at 0", "memory": [{"addr": "0x006EFC80", "u32": 3}, {"addr": "0x006EFC84", "u32": 4}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000fdffffff000000000000000004000000fcffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "x lands at -1 with prior positive", "memory": [{"addr": "0x006EFC80", "u32": 2}, {"addr": "0x006EFC84", "u32": 7}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000fdffffff000000000000000004000000020000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "02000000"}]}}},
+    {"name": "count limits events (3 of 5)", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000007000000000000000000000004000000f7ffffff000000000000000008000000f000000000000000000000000c0000008000000000000000000000000d000000800000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "03000000"}]}}},
+    {"name": "count limits events (4 of 5)", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000007000000000000000000000004000000f7ffffff000000000000000008000000f000000000000000000000000c0000008000000000000000000000000d000000800000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "04000000"}]}}},
+    {"name": "one event, last", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "0000000007000000000000000000000004000000f7ffffff0000000000000000"}, {"arg": 3, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "state0/1 preseeded then cleared", "memory": [{"addr": "0x006EFC88", "u32": 55}, {"addr": "0x006EFC8C", "u32": 66}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 3, "offset": 0, "hex": "00000000"}]}}},
+    {"name": "state0/1 preseeded, get fail", "memory": [{"addr": "0x006EFC88", "u32": 55}, {"addr": "0x006EFC8C", "u32": 66}], "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": -1},
+      "@fn_re": {"name": "re", "conv": "stdcall", "args": ["ptr"], "ret": -1}}},
+    {"name": "count zero, stale event data ignored", "callees": {
+      "@fn_get": {"name": "get", "conv": "stdcall", "args": ["ptr", "u32", "ignore", "mem:4", "u32"], "ret": 0,
+        "writes": [{"arg": 2, "offset": 0, "hex": "00000000100000000000000000000000"}, {"arg": 3, "offset": 0, "hex": "00000000"}]}}}
+  ],
+  "fuzz": {
+    "seed": 5157742,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x006B6420", "type": "int", "range": [-2, 5]},
+      {"addr": "0x006EFC80", "type": "int", "range": [-50, 1000]},
+      {"addr": "0x006EFC84", "type": "int", "range": [-50, 800]},
+      {"addr": "0x0058FC6C", "type": "int", "choices": [1, 2, 3]},
+      {"addr": "0x006B63FC", "type": "int", "range": [1, 800]},
+      {"addr": "0x006B6400", "type": "int", "range": [1, 600]},
+      {"addr": "0x006EE748", "type": "int", "choices": [0, 1]},
+      {"addr": "@eq", "offset": "0x4", "type": "int", "choices": [5, 4, 0]},
+      {"addr": "0x006B648A", "type": "u8", "choices": [0, 1]},
+      {"addr": "0x006B648B", "type": "u8", "choices": [0, 1]},
+      {"addr": "0x006EFC88", "type": "int", "range": [-5, 5]},
+      {"addr": "0x006EFC8C", "type": "int", "range": [-5, 5]}
+    ]
+  }
+}

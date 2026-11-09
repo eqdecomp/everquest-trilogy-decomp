@@ -1,0 +1,279 @@
+{
+  "function": "printf_guess",
+  "original": "0x004C17BC",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "width",
+      "type": "int"
+    },
+    {
+      "name": "text",
+      "type": "cstr"
+    },
+    {
+      "name": "tail",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "eq": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "longMessage": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0",
+          "cstr": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      ]
+    },
+    "observedCount": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006EFE2C",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006E4E94",
+      "u32": "0xA55A0000"
+    }
+  ],
+  "callees": {
+    "0x005232D0": {
+      "name": "__alloca_probe",
+      "conv": "cdecl",
+      "args": []
+    },
+    "0x00524174": {
+      "name": "vsprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x005224FB": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004D05B7": {
+      "name": "print_chat",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!InitializeCriticalSection": {
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "__chkstk": "0x005232D0",
+    "_vsprintf": "0x00524174",
+    "_sprintf": "0x005224FB"
+  },
+  "cases": [
+    {
+      "name": "null receiver still increments low counter and preserves adjacent word",
+      "args": [
+        "no conversion",
+        7,
+        "unused",
+        8
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": 0
+        },
+        {
+          "addr": "0x006E4E94",
+          "u32": "0xCAFEFFFF"
+        }
+      ]
+    },
+    {
+      "name": "number string and live chat receiver",
+      "args": [
+        "n=%05u:%s",
+        1234,
+        "oak",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": "@eq"
+        },
+        {
+          "addr": "0x006E4E94",
+          "u32": "0xBEAF000C"
+        }
+      ]
+    },
+    {
+      "name": "counter boundary below wrap",
+      "args": [
+        "%u:%s:%d",
+        42,
+        "hello",
+        -7
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": "@eq"
+        },
+        {
+          "addr": "0x006E4E94",
+          "u32": "0x1234FFFE"
+        }
+      ]
+    },
+    {
+      "name": "counter wrap prints old value and wraps only low word",
+      "args": [
+        "literal%% %u",
+        8,
+        "unused",
+        9
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": "@eq"
+        },
+        {
+          "addr": "0x006E4E94",
+          "u32": "0x7654FFFF"
+        }
+      ]
+    },
+    {
+      "name": "exact fit: prefix plus 2041-byte formatted message",
+      "args": [
+        "%*s%n",
+        2041,
+        "@longMessage",
+        "@observedCount"
+      ],
+      "expect": {
+        "ret": 0
+      },
+      "callees": {
+        "0x005232D0": {
+          "name": "__alloca_probe",
+          "conv": "cdecl",
+          "args": [],
+          "passthrough": true
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": "@eq"
+        },
+        {
+          "addr": "0x006E4E94",
+          "u32": "0xAAAAFFFF"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 317884,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "%u:%s:%d",
+          "literal%% %u",
+          "n=%05u:%s"
+        ],
+        "type": "cstr"
+      },
+      {
+        "range": [
+          -20,
+          65540
+        ],
+        "type": "int"
+      },
+      {
+        "choices": [
+          "oak",
+          "stone",
+          ""
+        ],
+        "type": "cstr"
+      },
+      {
+        "range": [
+          -20,
+          20
+        ],
+        "type": "int"
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006E4E94",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          65534,
+          65535,
+          305463295
+        ]
+      },
+      {
+        "addr": "0x006EFE2C",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@eq"
+        ]
+      }
+    ]
+  }
+}

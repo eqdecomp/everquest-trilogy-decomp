@@ -1,0 +1,135 @@
+{
+  "function": "list3_unlink_free_guess",
+  "original": "0x10028430",
+  "sources": [
+    "src/eqmain/unit_10028340.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "list",
+      "type": "ptr"
+    },
+    {
+      "name": "node",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@prev"},
+        {"offset": "0x4", "u32": "@next"},
+        {"offset": "0x8", "u32": 3}
+      ]
+    },
+    "node": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@prev"},
+        {"offset": "0x4", "u32": "0x1234abcd"},
+        {"offset": "0x8", "u32": "@next"}
+      ]
+    },
+    "prev": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@node"}
+      ]
+    },
+    "next": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@node"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "middle node: prev and next both set",
+      "args": ["@list", "@node"]
+    },
+    {
+      "name": "head node: prev null, next set (list head moves to next)",
+      "args": ["@list", "@node"],
+      "memory": [{"addr": "@node", "offset": "0x0", "u32": 0}]
+    },
+    {
+      "name": "tail node: prev set, next null (list tail moves to prev)",
+      "args": ["@list", "@node"],
+      "memory": [{"addr": "@node", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "only node: prev and next null, count 1 to 0",
+      "args": ["@list", "@node"],
+      "memory": [
+        {"addr": "@node", "offset": "0x0", "u32": 0},
+        {"addr": "@node", "offset": "0x8", "u32": 0},
+        {"addr": "@list", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "only node, count 0 wraps to -1",
+      "args": ["@list", "@node"],
+      "memory": [
+        {"addr": "@node", "offset": "0x0", "u32": 0},
+        {"addr": "@node", "offset": "0x8", "u32": 0},
+        {"addr": "@list", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "count 0x80000000 becomes 0x7fffffff",
+      "args": ["@list", "@node"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": "0x80000000"}]
+    },
+    {
+      "name": "data 0 is returned (not the prev/next links)",
+      "args": ["@list", "@node"],
+      "memory": [{"addr": "@node", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "data 0xffffffff, prev null: head moves, data still read first",
+      "args": ["@list", "@node"],
+      "memory": [
+        {"addr": "@node", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@node", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "prev is the next node (self-looking links, no check)",
+      "args": ["@list", "@node"],
+      "memory": [{"addr": "@node", "offset": "0x0", "u32": "@next"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 164912,
+    "count": 40,
+    "args": [
+      {"choices": ["@list"]},
+      {"choices": ["@node"]}
+    ],
+    "memory": [
+      {"addr": "@node", "offset": "0x0", "type": "ptr", "choices": [0, "@prev"]},
+      {"addr": "@node", "offset": "0x4", "type": "u32"},
+      {"addr": "@node", "offset": "0x8", "type": "ptr", "choices": [0, "@next"]},
+      {"addr": "@prev", "offset": "0x8", "type": "ptr", "choices": ["@node", 0]},
+      {"addr": "@next", "offset": "0x0", "type": "ptr", "choices": ["@node", 0]},
+      {"addr": "@list", "offset": "0x8", "type": "u32", "choices": [0, 1, 2, 3, 2147483647, 2147483648, 4294967295]}
+    ]
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "function": "_t3dCreateBMInfoSurface_guess",
+  "original": "0x1000c001",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "bitmapInfoArg", "type": "u32"},
+    {"name": "textureType", "type": "int"},
+    {"name": "allowMipMaps", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "bitmapInfo": {"size": "0x80", "fill": "zero", "init": [
+      {"offset": "0x1c", "u32": 8},
+      {"offset": "0x20", "u32": 8},
+      {"offset": "0x30", "u32": "@bitmapName"}
+    ]},
+    "bitmapName": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "cstr": "tex01"}
+    ]},
+    "ddraw": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@ddrawVtable"}
+    ]},
+    "ddrawVtable": {"size": "0x40", "fill": "zero", "init": [
+      {"offset": "0x18", "u32": "@createSurface"}
+    ]},
+    "createSurface": {"size": "0x10", "fill": "zero"},
+    "renderDevice": {"size": "0x10", "fill": "zero"},
+    "logFile": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x100fb8a8", "u32": 0},
+    {"addr": "0x100fba2c", "u32": "@ddraw"},
+    {"addr": "0x100fba6c", "u32": "@renderDevice"},
+    {"addr": "0x100fba38", "u32": 16},
+    {"addr": "0x100fba3c", "u32": 0}
+  ],
+  "callees": {
+    "0x1005a080": {"name": "createTextureSurface_guess", "conv": "stdcall", "args": ["ptr", "mem:4", "mem:4", "mem:4", "mem:4", "int", "ptr", "ptr"], "ret": 0},
+    "0x1005ae37": {"name": "D3DXGetErrorString_guess", "conv": "stdcall", "args": ["int", "u32", "ignore"], "writes": [{"arg": 2, "offset": 0, "hex": "4444455200"}]},
+    "0x100683a5": {"name": "_fprintf", "conv": "cdecl", "args": ["ptr", "cstr"], "varargs": "printf", "ret": 0},
+    "0x10068328": {"name": "_fclose", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": "@logFile"},
+    "0x100682d0": {"name": "_memset", "conv": "cdecl", "args": ["ignore", "int", "int"], "passthrough": true},
+    "@createSurface": {"name": "IDirectDraw7::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "plain_555_created", "args": ["@bitmapInfo", 0, 1], "expect": {"ret": 0}},
+    {"name": "plain_565_created", "args": ["@bitmapInfo", 0, 1], "memory": [{"addr": "0x100fba3c", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "plain_32bit_created", "args": ["@bitmapInfo", 0, 0], "memory": [{"addr": "0x100fba38", "u32": 32}], "expect": {"ret": 0}},
+    {"name": "plain_create_failed_logged", "args": ["@bitmapInfo", 0, 0],
+     "callees": {"@createSurface": {"name": "IDirectDraw7::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "int"], "ret": "0x887601c2"}},
+     "expect": {"ret": "0xffff3d3e"}},
+    {"name": "plain_create_failed_no_log", "args": ["@bitmapInfo", 0, 0],
+     "callees": {"@createSurface": {"name": "IDirectDraw7::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "int"], "ret": "0x887601c2"},
+                 "0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}},
+     "expect": {"ret": "0xffff3d3e"}},
+    {"name": "texture_mip_4x4_gets_type_0x12", "args": ["@bitmapInfo", 1, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@bitmapInfo", "offset": "0x1c", "u32": 4}, {"addr": "@bitmapInfo", "offset": "0x20", "u32": 4}],
+     "expect": {"ret": 0}},
+    {"name": "texture_mip_8x8_type_0x12", "args": ["@bitmapInfo", 1, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "texture_mip_width_3_keeps_8", "args": ["@bitmapInfo", 1, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@bitmapInfo", "offset": "0x1c", "u32": 3}], "expect": {"ret": 0}},
+    {"name": "texture_mip_height_3_keeps_8", "args": ["@bitmapInfo", 1, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@bitmapInfo", "offset": "0x20", "u32": 3}], "expect": {"ret": 0}},
+    {"name": "texture_mip_flag_off_keeps_8", "args": ["@bitmapInfo", 1, 0],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "texture_width_unsigned_high_gets_0x12", "args": ["@bitmapInfo", 1, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@bitmapInfo", "offset": "0x1c", "u32": 4294967280}], "expect": {"ret": 0}},
+    {"name": "texture_flags_external_bit_set", "args": ["@bitmapInfo", 1, 0],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "@bitmapInfo", "offset": "0xc", "u32": 2147483648}], "expect": {"ret": 0}},
+    {"name": "texture_failed_logged", "args": ["@bitmapInfo", 2, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}],
+     "callees": {"0x1005a080": {"name": "FUN_1005a080", "conv": "stdcall", "args": ["ptr", "mem:4", "mem:4", "mem:4", "mem:4", "int", "ptr", "ptr"], "ret": "0x80004005"}},
+     "expect": {"ret": "0xffff3d3e"}},
+    {"name": "texture_failed_no_log", "args": ["@bitmapInfo", 2, 1],
+     "memory": [{"addr": "0x100fb8a8", "u32": 1}],
+     "callees": {"0x1005a080": {"name": "FUN_1005a080", "conv": "stdcall", "args": ["ptr", "mem:4", "mem:4", "mem:4", "mem:4", "int", "ptr", "ptr"], "ret": "0x80004005"},
+                 "0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}},
+     "expect": {"ret": "0xffff3d3e"}},
+    {"name": "surface_c_ok_mip_count_from_index", "args": ["@bitmapInfo", 1, 0],
+     "memory": [{"addr": "@bitmapInfo", "offset": "0x24", "u32": 5}], "expect": {"ret": 0}},
+    {"name": "surface_c_ok_single_level", "args": ["@bitmapInfo", 1, 1],
+     "memory": [{"addr": "@bitmapInfo", "offset": "0x24", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "surface_c_failed_logged", "args": ["@bitmapInfo", 1, 0],
+     "callees": {"@createSurface": {"name": "IDirectDraw7::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "int"], "ret": "0x887601c2"}},
+     "expect": {"ret": "0xffff3d3e"}},
+    {"name": "surface_c_failed_no_log", "args": ["@bitmapInfo", 1, 0],
+     "callees": {"@createSurface": {"name": "IDirectDraw7::CreateSurface", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "int"], "ret": "0x887601c2"},
+                 "0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}},
+     "expect": {"ret": "0xffff3d3e"}}
+  ],
+  "fuzz": {
+    "seed": 49153,
+    "count": 40,
+    "args": [
+      {"choices": ["@bitmapInfo"]},
+      {"range": [-1, 3]},
+      {"range": [0, 2]}
+    ],
+    "memory": [
+      {"addr": "@bitmapInfo", "offset": "0xc", "type": "u32", "choices": [0, 1, 32, 256, 2147483648, 4294967295]},
+      {"addr": "@bitmapInfo", "offset": "0x1c", "type": "u32", "choices": [0, 1, 3, 4, 8, 64, 4294967292]},
+      {"addr": "@bitmapInfo", "offset": "0x20", "type": "u32", "choices": [0, 1, 3, 4, 8, 64]},
+      {"addr": "@bitmapInfo", "offset": "0x24", "type": "u32", "range": [0, 9]},
+      {"addr": "0x100fb8a8", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "0x100fba38", "type": "u32", "choices": [16, 32]},
+      {"addr": "0x100fba3c", "type": "u32", "choices": [0, 1, 2]}
+    ]
+  }
+}

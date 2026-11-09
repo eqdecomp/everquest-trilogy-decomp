@@ -1,0 +1,109 @@
+{
+  "function": "SendIndexedNameIfDifferent_guess",
+  "original": "0x10021b00",
+  "sources": [
+    "src/eqmain/unit_10021730.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "names": {
+      "size": "0x4c00",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "Neg"},
+        {"offset": "0x80", "cstr": "Alpha"},
+        {"offset": "0xc0", "cstr": "Beta"},
+        {"offset": "0x100", "cstr": "Gamma"},
+        {"offset": "0x3730", "u16": 3}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x101258a4", "u32": "@names+0x80"},
+    {"addr": "0x101255f8", "cstr": "Alpha"},
+    {"addr": "0x1012b918", "u32": 2},
+    {"addr": "0x10125848", "u32": 4660}
+  ],
+  "callees": {
+    "0x10024f90": {"name": "FUN_10024f90", "conv": "cdecl", "args": ["short"], "passthrough": true},
+    "0x10024fb0": {"name": "FUN_10024fb0", "conv": "cdecl", "args": ["u8"], "passthrough": true},
+    "0x100211b0": {"name": "FUN_100211b0", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x10024ff0": {"name": "FUN_10024ff0", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x10033730": {"name": "__strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": -1},
+    "0x1002c010": {"name": "connection_send_guess", "conv": "cdecl", "args": ["int", "mem:80", "u32", "u32", "u32"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "index below zero",
+      "args": [-1]
+    },
+    {
+      "name": "zero count",
+      "args": [0],
+      "memory": [{"addr": "@names", "offset": "0x3730", "u16": 0}]
+    },
+    {
+      "name": "index equal to count",
+      "args": [3]
+    },
+    {
+      "name": "last valid index",
+      "args": [2]
+    },
+    {
+      "name": "name equal to reference (strcmpi 0)",
+      "args": [0],
+      "callees": {"0x10033730": {"ret": 0}}
+    },
+    {
+      "name": "name differs, negative compare",
+      "args": [0]
+    },
+    {
+      "name": "name differs, positive compare",
+      "args": [1],
+      "callees": {"0x10033730": {"ret": 1}}
+    },
+    {
+      "name": "message length zero (byte lands on the type word)",
+      "args": [1],
+      "memory": [{"addr": "0x1012b918", "u32": 0}]
+    },
+    {
+      "name": "empty slot",
+      "args": [5],
+      "memory": [{"addr": "@names", "offset": "0x3730", "u16": 6}]
+    },
+    {
+      "name": "count high byte is read",
+      "args": [257],
+      "memory": [{"addr": "@names", "offset": "0x3730", "u16": 258}]
+    },
+    {
+      "name": "index with high bit set is a negative short",
+      "args": [65534],
+      "memory": [{"addr": "@names", "offset": "0x3730", "u16": 65535}]
+    }
+  ],
+  "fuzz": {
+    "seed": 137984,
+    "count": 40,
+    "args": [
+      {"range": [-4, 300]}
+    ],
+    "memory": [
+      {"addr": "@names", "offset": "0x80", "size": 19200},
+      {"addr": "@names", "offset": "0x3730", "type": "u16", "range": [0, 300]},
+      {"addr": "@names", "offset": "0xbf", "type": "u8", "count": 300, "stride": 64, "range": [0, 0]},
+      {"addr": "0x1012b918", "type": "u32", "range": [0, 64]},
+      {"addr": "0x10125848", "type": "u32", "range": [0, 1000]}
+    ]
+  }
+}

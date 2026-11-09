@@ -1,0 +1,199 @@
+{
+  "function": "scan_tree_guess",
+  "original": "0x1000d600",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "state", "type": "ptr"},
+    {"name": "tree", "type": "ptr"},
+    {"name": "max_code", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "state": {"size": "0x1000", "fill": "random"},
+    "tree": {"size": "0x800", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "max_code 0, one zero length: zero run of 1 is a literal into freq[0]",
+      "args": ["@state", "@tree", 0]
+    },
+    {
+      "name": "max_code -1: only the guard runs, writing 0xffff over tree[0].len",
+      "args": ["@state", "@tree", -1],
+      "memory": [{"addr": "@tree", "offset": "0x2", "u16": 5}]
+    },
+    {
+      "name": "max_code 0, one length 9: literal into freq[9]",
+      "args": ["@state", "@tree", 0],
+      "memory": [{"addr": "@tree", "offset": "0x2", "u16": 9}]
+    },
+    {
+      "name": "nonzero run of 3 (below min 4): its count is added as literals",
+      "args": ["@state", "@tree", 2],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 5},
+        {"addr": "@tree", "offset": "0x6", "u16": 5},
+        {"addr": "@tree", "offset": "0xa", "u16": 5}
+      ]
+    },
+    {
+      "name": "nonzero run of 4: one literal and one repeat code (+0xab4)",
+      "args": ["@state", "@tree", 3],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 5},
+        {"addr": "@tree", "offset": "0x6", "u16": 5},
+        {"addr": "@tree", "offset": "0xa", "u16": 5},
+        {"addr": "@tree", "offset": "0xe", "u16": 5}
+      ]
+    },
+    {
+      "name": "nonzero run of 7 ends at the cap of 7, then a new length 6",
+      "args": ["@state", "@tree", 7],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 5},
+        {"addr": "@tree", "offset": "0x6", "u16": 5},
+        {"addr": "@tree", "offset": "0xa", "u16": 5},
+        {"addr": "@tree", "offset": "0xe", "u16": 5},
+        {"addr": "@tree", "offset": "0x12", "u16": 5},
+        {"addr": "@tree", "offset": "0x16", "u16": 5},
+        {"addr": "@tree", "offset": "0x1a", "u16": 5},
+        {"addr": "@tree", "offset": "0x1e", "u16": 6}
+      ]
+    },
+    {
+      "name": "nonzero run of 14: cap 7, then repeats capped at 6 (second flush adds to +0xab4 only)",
+      "args": ["@state", "@tree", 13],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 5},
+        {"addr": "@tree", "offset": "0x6", "u16": 5},
+        {"addr": "@tree", "offset": "0xa", "u16": 5},
+        {"addr": "@tree", "offset": "0xe", "u16": 5},
+        {"addr": "@tree", "offset": "0x12", "u16": 5},
+        {"addr": "@tree", "offset": "0x16", "u16": 5},
+        {"addr": "@tree", "offset": "0x1a", "u16": 5},
+        {"addr": "@tree", "offset": "0x1e", "u16": 5},
+        {"addr": "@tree", "offset": "0x22", "u16": 5},
+        {"addr": "@tree", "offset": "0x26", "u16": 5},
+        {"addr": "@tree", "offset": "0x2a", "u16": 5},
+        {"addr": "@tree", "offset": "0x2e", "u16": 5},
+        {"addr": "@tree", "offset": "0x32", "u16": 5},
+        {"addr": "@tree", "offset": "0x36", "u16": 5}
+      ]
+    },
+    {
+      "name": "10 equal lengths then a 6: after the cap a run of 3 is a repeat code (min 3)",
+      "args": ["@state", "@tree", 10],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 5},
+        {"addr": "@tree", "offset": "0x6", "u16": 5},
+        {"addr": "@tree", "offset": "0xa", "u16": 5},
+        {"addr": "@tree", "offset": "0xe", "u16": 5},
+        {"addr": "@tree", "offset": "0x12", "u16": 5},
+        {"addr": "@tree", "offset": "0x16", "u16": 5},
+        {"addr": "@tree", "offset": "0x1a", "u16": 5},
+        {"addr": "@tree", "offset": "0x1e", "u16": 5},
+        {"addr": "@tree", "offset": "0x22", "u16": 5},
+        {"addr": "@tree", "offset": "0x26", "u16": 5},
+        {"addr": "@tree", "offset": "0x2a", "u16": 6}
+      ]
+    },
+    {
+      "name": "zero run of 3 is a zero code (min 3), not literals",
+      "args": ["@state", "@tree", 2]
+    },
+    {
+      "name": "zero run of 10 counts into +0xab8",
+      "args": ["@state", "@tree", 9]
+    },
+    {
+      "name": "zero run of 11 counts into +0xabc",
+      "args": ["@state", "@tree", 10]
+    },
+    {
+      "name": "zero run of 2 is a literal (freq[0] += 2)",
+      "args": ["@state", "@tree", 1]
+    },
+    {
+      "name": "zero run of 139: capped at 138, then the last zero is a literal",
+      "args": ["@state", "@tree", 138]
+    },
+    {
+      "name": "first length 0 keeps the 138 cap: 8 zeros stay one run",
+      "args": ["@state", "@tree", 7]
+    },
+    {
+      "name": "last real length 0xffff equals the sentinel: the final run is not flushed",
+      "args": ["@state", "@tree", 0],
+      "memory": [{"addr": "@tree", "offset": "0x2", "u16": 65535}]
+    },
+    {
+      "name": "first run of length 1: prevlen starts as -1, so its literal is counted",
+      "args": ["@state", "@tree", 3],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 1},
+        {"addr": "@tree", "offset": "0x6", "u16": 1},
+        {"addr": "@tree", "offset": "0xa", "u16": 1},
+        {"addr": "@tree", "offset": "0xe", "u16": 1}
+      ]
+    },
+    {
+      "name": "length 16 aliases the repeat counter at +0xab4 (both writes apply)",
+      "args": ["@state", "@tree", 3],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 16},
+        {"addr": "@tree", "offset": "0x6", "u16": 16},
+        {"addr": "@tree", "offset": "0xa", "u16": 16},
+        {"addr": "@tree", "offset": "0xe", "u16": 16}
+      ]
+    },
+    {
+      "name": "length 31 indexes past the table (+0xaf0)",
+      "args": ["@state", "@tree", 0],
+      "memory": [{"addr": "@tree", "offset": "0x2", "u16": 31}]
+    },
+    {
+      "name": "4, zeros, 4: a zero run of 5 between two literals",
+      "args": ["@state", "@tree", 6],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 4},
+        {"addr": "@tree", "offset": "0x1a", "u16": 4}
+      ]
+    },
+    {
+      "name": "5 x4 then 6 x4: prevlen changes at each flush",
+      "args": ["@state", "@tree", 7],
+      "memory": [
+        {"addr": "@tree", "offset": "0x2", "u16": 5},
+        {"addr": "@tree", "offset": "0x6", "u16": 5},
+        {"addr": "@tree", "offset": "0xa", "u16": 5},
+        {"addr": "@tree", "offset": "0xe", "u16": 5},
+        {"addr": "@tree", "offset": "0x12", "u16": 6},
+        {"addr": "@tree", "offset": "0x16", "u16": 6},
+        {"addr": "@tree", "offset": "0x1a", "u16": 6},
+        {"addr": "@tree", "offset": "0x1e", "u16": 6}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1000600,
+    "count": 48,
+    "args": [
+      {"choices": ["@state"]},
+      {"choices": ["@tree"]},
+      {"range": [-1, 40]}
+    ],
+    "memory": [
+      {"addr": "@state", "offset": "0xa74", "type": "short", "count": 19, "stride": 4,
+       "choices": [0, 1, 2, 5, 100, -1, 32766, 32767, -32768]},
+      {"addr": "@tree", "offset": "0x2", "type": "u16", "count": 48, "stride": 4,
+       "choices": [0, 1, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 18, 19, 31]},
+      {"addr": "@tree", "offset": "0x2", "type": "u16", "count": 48, "stride": 4, "p": 0.5,
+       "choices": [0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 3, 3, 7, 7, 1, 16]}
+    ]
+  }
+}

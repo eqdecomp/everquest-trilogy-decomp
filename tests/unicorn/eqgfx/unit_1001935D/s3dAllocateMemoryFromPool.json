@@ -1,0 +1,543 @@
+{
+  "function": "s3dAllocateMemoryFromPool",
+  "original": "0x10019a5c",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "poolManager",
+      "type": "int"
+    },
+    {
+      "name": "size",
+      "type": "u32"
+    },
+    {
+      "name": "mode",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "pool": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "offset": "0x1c",
+          "u32": "0x1000"
+        },
+        {
+          "offset": "0x20",
+          "u32": "@pool_data"
+        }
+      ]
+    },
+    "pool_data": {
+      "size": "0x2000",
+      "fill": "random"
+    },
+    "new_pool": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "offset": "0x1c",
+          "u32": "0x1000"
+        },
+        {
+          "offset": "0x20",
+          "u32": "@new_pool_data"
+        }
+      ]
+    },
+    "new_pool_data": {
+      "size": "0x2000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10019aba": {
+      "name": "s3dFindFreeAllocationPoolBlock_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "u32",
+        "int"
+      ],
+      "ret": "@pool"
+    },
+    "0x1001996c": {
+      "name": "s3dCreateAllocationPool",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "u32",
+        "int"
+      ],
+      "ret": "@new_pool"
+    },
+    "0x10019b12": {
+      "name": "s3dUnlinkAllocationPoolBlock_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: pool with room, 0x100 bytes already used, result is data+0x100",
+      "args": [
+        7,
+        "0x20",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0x100"
+        }
+      ]
+    },
+    {
+      "name": "empty pool: first allocation returns the data start",
+      "args": [
+        7,
+        "0x20",
+        0
+      ]
+    },
+    {
+      "name": "used + size == scaled: unlink (the compare is <=, not <)",
+      "args": [
+        7,
+        "0x800",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0x800"
+        }
+      ]
+    },
+    {
+      "name": "one byte short of scaled: no unlink",
+      "args": [
+        7,
+        "0x7ff",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0x800"
+        }
+      ]
+    },
+    {
+      "name": "size past scaled on an empty pool: unlink",
+      "args": [
+        7,
+        "0x2000",
+        0
+      ]
+    },
+    {
+      "name": "size 0 on an exhausted pool (used == scaled) still unlinks",
+      "args": [
+        7,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0x1000"
+        }
+      ]
+    },
+    {
+      "name": "size 0 on an empty pool with room: no unlink",
+      "args": [
+        7,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "scaled 0 on an empty pool: 0 <= 0 unlinks at once",
+      "args": [
+        7,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "scaled 0xffffffff (-1 as int): unsigned compare never unlinks (a signed compare would)",
+      "args": [
+        7,
+        "0x10",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x1c",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "scaled 0x80000000: unsigned compare, 0x10 bytes never reach it",
+      "args": [
+        7,
+        "0x10",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x1c",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "used + size wraps past 32 bits: the new used is small, no unlink",
+      "args": [
+        7,
+        "0x20",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0xfffffff0"
+        }
+      ]
+    },
+    {
+      "name": "null data pointer: result is just the used offset",
+      "args": [
+        7,
+        "0x20",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0x40"
+        },
+        {
+          "addr": "@pool",
+          "offset": "0x20",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0x40"
+      }
+    },
+    {
+      "name": "find returns 0: new pool gets the 0xffff minimum, result is its data start",
+      "args": [
+        7,
+        "0x20",
+        0
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "find 0, size 0xfffe: still the 0xffff minimum",
+      "args": [
+        7,
+        "0xfffe",
+        0
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "find 0, size 0xffff: equal to the minimum, pool size is the size",
+      "args": [
+        7,
+        "0xffff",
+        0
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "find 0, size 0x10000: the request sets the pool size",
+      "args": [
+        7,
+        "0x10000",
+        0
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "find 0, size 0xffffffff: the largest request",
+      "args": [
+        7,
+        "0xffffffff",
+        0
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "find 0 and create 0: returns 0, pool untouched, no unlink",
+      "args": [
+        7,
+        "0x20",
+        0
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        },
+        "0x1001996c": {
+          "name": "s3dCreateAllocationPool",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new pool already full after the allocation: unlinked before returning",
+      "args": [
+        7,
+        "0x20",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@new_pool",
+          "offset": "0x18",
+          "u32": "0xfe0"
+        }
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "mode 1 with find 0: create gets mode 1",
+      "args": [
+        7,
+        "0x20",
+        1
+      ],
+      "callees": {
+        "0x10019aba": {
+          "name": "FUN_10019aba",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "mode 1 with a pool found: find gets mode 1",
+      "args": [
+        7,
+        "0x20",
+        1
+      ]
+    },
+    {
+      "name": "negative poolManager and mode reach the full-pool unlink unchanged",
+      "args": [
+        -5,
+        "0x20",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@pool",
+          "offset": "0x18",
+          "u32": "0xfe0"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 105052,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -4,
+          30
+        ]
+      },
+      {
+        "range": [
+          0,
+          73728
+        ]
+      },
+      {
+        "range": [
+          -1,
+          3
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@pool",
+        "offset": "0x18",
+        "type": "u32",
+        "range": [
+          0,
+          6144
+        ]
+      },
+      {
+        "addr": "@pool",
+        "offset": "0x1c",
+        "type": "int",
+        "range": [
+          -256,
+          8192
+        ]
+      },
+      {
+        "addr": "@pool",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          "@pool_data",
+          0
+        ]
+      },
+      {
+        "addr": "@new_pool",
+        "offset": "0x18",
+        "type": "u32",
+        "range": [
+          0,
+          6144
+        ]
+      },
+      {
+        "addr": "@new_pool",
+        "offset": "0x1c",
+        "type": "int",
+        "range": [
+          -256,
+          8192
+        ]
+      }
+    ]
+  }
+}

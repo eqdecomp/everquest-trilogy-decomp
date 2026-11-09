@@ -1,0 +1,320 @@
+{
+  "function": "SendStringPairPacket_guess",
+  "original": "0x10023a80",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "enc_a": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "ENC_A"
+        }
+      ]
+    },
+    "enc_b": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "ENC_B"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10104c2c",
+      "size": 256,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x10125914",
+      "size": 256,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x100f4b4c",
+      "u32": 0
+    },
+    {
+      "addr": "0x1012b918",
+      "u32": 0
+    },
+    {
+      "addr": "0x10125848",
+      "u32": 305419896
+    }
+  ],
+  "callees": {
+    "0x10024f90": {
+      "name": "FUN_10024f90",
+      "conv": "cdecl",
+      "args": [
+        "short"
+      ]
+    },
+    "0x100211b0": {
+      "name": "FUN_100211b0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": [
+        "@enc_a",
+        "@enc_b"
+      ]
+    },
+    "0x10024ff0": {
+      "name": "FUN_10024ff0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x10024fb0": {
+      "name": "FUN_10024fb0",
+      "conv": "cdecl",
+      "args": [
+        "char"
+      ]
+    },
+    "0x1002c010": {
+      "name": "connection_send_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "mem:64",
+        "u32",
+        "u32",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty strings (copy of 1 byte: the NUL)",
+      "args": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "copy of 2 bytes",
+      "args": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "name": "copy of 3 bytes",
+      "args": [
+        "ab",
+        "cd"
+      ]
+    },
+    {
+      "name": "copy of 4 bytes (typical)",
+      "args": [
+        "abc",
+        "abc"
+      ]
+    },
+    {
+      "name": "copy of 5 bytes (one dword and a byte)",
+      "args": [
+        "abcd",
+        "ef"
+      ]
+    },
+    {
+      "name": "copy of 7 bytes (one dword and three bytes)",
+      "args": [
+        "abcdef",
+        "g"
+      ]
+    },
+    {
+      "name": "copy of 8 bytes (two dwords)",
+      "args": [
+        "abcdefg",
+        "hijklmn"
+      ]
+    },
+    {
+      "name": "longer strings",
+      "args": [
+        "a long user name with spaces",
+        "p4ss w0rd!"
+      ]
+    },
+    {
+      "name": "flag byte 0xff (char -1)",
+      "args": [
+        "user",
+        "pw"
+      ],
+      "memory": [
+        {
+          "addr": "0x100f4b4c",
+          "u32": 255
+        }
+      ]
+    },
+    {
+      "name": "flag byte 0x80",
+      "args": [
+        "user",
+        "pw"
+      ],
+      "memory": [
+        {
+          "addr": "0x100f4b4c",
+          "u32": 128
+        }
+      ]
+    },
+    {
+      "name": "flag byte 1 with garbage above it",
+      "args": [
+        "user",
+        "pw"
+      ],
+      "memory": [
+        {
+          "addr": "0x100f4b4c",
+          "u32": 305419777
+        }
+      ]
+    },
+    {
+      "name": "buffer length 64, connection 0",
+      "args": [
+        "user",
+        "pw"
+      ],
+      "memory": [
+        {
+          "addr": "0x1012b918",
+          "u32": 64
+        },
+        {
+          "addr": "0x10125848",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "lookups return ENC_A then ENC_B swapped (second lookup gives ENC_A)",
+      "args": [
+        "user",
+        "pw"
+      ],
+      "callees": {
+        "0x100211b0": {
+          "name": "FUN_100211b0",
+          "conv": "cdecl",
+          "args": [
+            "cstr"
+          ],
+          "ret": [
+            "@enc_b",
+            "@enc_a"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 146048,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "",
+          "a",
+          "ab",
+          "abc",
+          "abcd",
+          "abcdef",
+          "abcdefg",
+          "user",
+          "password1",
+          "hello world",
+          "x y z",
+          "a longer string with several words in it",
+          "Z"
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "a",
+          "ab",
+          "abc",
+          "abcd",
+          "abcdef",
+          "abcdefg",
+          "user",
+          "password1",
+          "hello world",
+          "x y z",
+          "a longer string with several words in it",
+          "Z"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100f4b4c",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "0x1012b918",
+        "type": "u32",
+        "range": [
+          0,
+          80
+        ]
+      },
+      {
+        "addr": "0x10125848",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          305419896,
+          4294967295
+        ]
+      },
+      {
+        "addr": "0x10104c2c",
+        "size": 64
+      },
+      {
+        "addr": "0x10125914",
+        "size": 64
+      }
+    ]
+  }
+}

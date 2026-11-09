@@ -1,0 +1,324 @@
+{
+  "function": "t3dDestroyZone",
+  "original": "0x100205ae",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "zone",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "zone": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x08", "u32": "0x0a000100"},
+        {"offset": "0x0c", "u8": 0},
+        {"offset": "0x14", "u32": 0},
+        {"offset": "0x1c", "u32": "@regionList"},
+        {"offset": "0x20", "u32": "0x0a000200"}
+      ]
+    },
+    "regionList": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@region0"},
+        {"offset": "0x04", "u32": "@region1"},
+        {"offset": "0x08", "u32": "@region2"},
+        {"offset": "0x0c", "u32": "@region3"}
+      ]
+    },
+    "region0": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [{"offset": "0x2c", "u32": "@set0"}]
+    },
+    "region1": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [{"offset": "0x2c", "u32": "@set1"}]
+    },
+    "region2": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [{"offset": "0x2c", "u32": "@set2"}]
+    },
+    "region3": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [{"offset": "0x2c", "u32": "@set3"}]
+    },
+    "set0": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x00", "u32": "0x27"}]
+    },
+    "set1": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x00", "u32": "0x27"}]
+    },
+    "set2": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x00", "u32": "0x27"}]
+    },
+    "set3": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [{"offset": "0x00", "u32": "0x27"}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ignore"
+      ],
+      "ret": 1,
+      "writes": [
+        {"arg": 2, "offset": 0, "hex": "02000000"}
+      ]
+    },
+    "0x10019179": {
+      "name": "t3dRemoveElementFromReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 74565
+    },
+    "0x100191bd": {
+      "name": "t3dFreeReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "no regions (regionCount 0; every region would be a tag 0x27 hit): only FUN_10015d81, the list and the frees",
+      "args": ["@context", "@zone"],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "no regions, flags bit 0: the dictionary entry goes before FUN_10015d81",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x0c", "u8": 1}],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "no regions, flags 0xfe (bit 0 clear): no dictionary removal",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x0c", "u8": 254}],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "no regions, flags 2, no dictionary key or extra block: the list and the zone only",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x0c", "u8": 2},
+        {"addr": "@zone", "offset": "0x08", "u32": 0},
+        {"addr": "@zone", "offset": "0x20", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "no regions, flags 1 and a null dictionary key: the removal is still called with NULL",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x0c", "u8": 1},
+        {"addr": "@zone", "offset": "0x08", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "no regions, null dictionary key: only the extra block and the zone are freed",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x08", "u32": 0}],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, tag 0x27, lookup hits, removal succeeds",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x14", "u32": 1}],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, tag 0x29, lookup hits, removal succeeds",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 1},
+        {"addr": "@set0", "u32": "0x29"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, tag 0x26 (below 0x27): no lookup",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 1},
+        {"addr": "@set0", "u32": "0x26"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, tag 0x28 (between the two kinds): no lookup",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 1},
+        {"addr": "@set0", "u32": "0x28"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, tag 0x2a (above 0x29): no lookup",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 1},
+        {"addr": "@set0", "u32": "0x2a"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, lookup finds nothing (0): no removal",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x14", "u32": 1}],
+      "callees": {
+        "0x100190b6": {"name": "t3dFindReferenceInSortedList", "conv": "cdecl", "args": ["ptr", "ptr", "ignore"], "ret": 0}
+      },
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, lookup returns 2 (only 1 is a hit): no removal",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x14", "u32": 1}],
+      "callees": {
+        "0x100190b6": {"name": "t3dFindReferenceInSortedList", "conv": "cdecl", "args": ["ptr", "ptr", "ignore"], "ret": 2}
+      },
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, lookup hits at index 5: index 5 is the one removed",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x14", "u32": 1}],
+      "callees": {
+        "0x100190b6": {"name": "t3dFindReferenceInSortedList", "conv": "cdecl", "args": ["ptr", "ptr", "ignore"], "ret": 1, "writes": [{"arg": 2, "offset": 0, "hex": "05000000"}]}
+      },
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "one region, flags 1, removal fails: 0xffff3d3e at once, the dictionary entry and the frees are skipped",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 1},
+        {"addr": "@zone", "offset": "0x0c", "u8": 1}
+      ],
+      "callees": {
+        "0x10019179": {"name": "t3dRemoveElementFromReferenceList", "conv": "cdecl", "args": ["int", "ptr"], "ret": 1}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "two regions, the second removal fails: the first removal already happened",
+      "args": ["@context", "@zone"],
+      "memory": [{"addr": "@zone", "offset": "0x14", "u32": 2}],
+      "callees": {
+        "0x10019179": {"name": "t3dRemoveElementFromReferenceList", "conv": "cdecl", "args": ["int", "ptr"], "ret": [0, 1]}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "three regions (tags 0x27, 0x28, 0x29): the fourth region (tag 0x27) is past the count",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 3},
+        {"addr": "@set1", "u32": "0x28"},
+        {"addr": "@set2", "u32": "0x29"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "four regions with alternating tags, flags 1: removals run before the dictionary entry goes",
+      "args": ["@context", "@zone"],
+      "memory": [
+        {"addr": "@zone", "offset": "0x14", "u32": 4},
+        {"addr": "@zone", "offset": "0x0c", "u8": 1},
+        {"addr": "@set1", "u32": "0x29"},
+        {"addr": "@set3", "u32": "0x29"}
+      ],
+      "expect": {"ret": 74565}
+    }
+  ],
+  "fuzz": {
+    "seed": 20260,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@zone"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@zone", "offset": "0x14", "type": "u32", "range": [0, 4]},
+      {"addr": "@zone", "offset": "0x0c", "type": "u8", "choices": [0, 1, 2, 3, 254, 255]},
+      {"addr": "@zone", "offset": "0x08", "type": "u32", "choices": [0, 167772416]},
+      {"addr": "@zone", "offset": "0x20", "type": "u32", "choices": [0, 167772672]},
+      {"addr": "@regionList", "type": "u32", "count": 4, "choices": ["@region0", "@region1", "@region2", "@region3"]},
+      {"addr": "@set0", "type": "u32", "choices": [0, 38, 39, 40, 41, 42]},
+      {"addr": "@set1", "type": "u32", "choices": [0, 38, 39, 40, 41, 42]},
+      {"addr": "@set2", "type": "u32", "choices": [0, 38, 39, 40, 41, 42]},
+      {"addr": "@set3", "type": "u32", "choices": [0, 38, 39, 40, 41, 42]}
+    ]
+  }
+}

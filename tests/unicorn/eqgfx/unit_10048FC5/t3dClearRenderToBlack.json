@@ -1,0 +1,213 @@
+{
+  "function": "t3dClearRenderToBlack",
+  "original": "0x1004A448",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderRegion",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "renderregion": {
+      "size": "0x5c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x48", "u32": 128},
+        {"offset": "0x4c", "u32": 96},
+        {"offset": "0x54", "f32": 12.5},
+        {"offset": "0x58", "f32": -3.25}
+      ]
+    },
+    "device": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@device_vtbl"}
+      ]
+    },
+    "device_vtbl": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x28", "u32": "@RenderRegion"},
+        {"offset": "0x34", "u32": "@SetViewport"},
+        {"offset": "0x3c", "u32": "@GetViewport"}
+      ]
+    },
+    "surface": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@surface_vtbl"}
+      ]
+    },
+    "surface_vtbl": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": "@Blt"}
+      ]
+    },
+    "helper": {"size": "0x10", "fill": "zero"},
+    "GetViewport": {"size": "0x10", "fill": "zero"},
+    "SetViewport": {"size": "0x10", "fill": "zero"},
+    "RenderRegion": {"size": "0x10", "fill": "zero"},
+    "Blt": {"size": "0x10", "fill": "zero"},
+    "grBufferClear": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x100fb8a8", "u32": 0},
+    {"addr": "0x100fba6c", "u32": "@device"},
+    {"addr": "0x100fba70", "hex": "010000000200000080020000e0010000000000000000803f"},
+    {"addr": "0x100fba74", "u32": "0x12345678"},
+    {"addr": "0x100f3e8c", "u32": "@grBufferClear"},
+    {"addr": "0x100f3fe4", "u32": "@helper"},
+    {"addr": "0x100fba8c", "u32": "@surface"}
+  ],
+  "callees": {
+    "0x10045db0": {
+      "name": "clear_helper",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": 0
+    },
+    "0x1004ec36": {
+      "name": "round_render_coordinate",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    },
+    "0x100682d0": {
+      "name": "memset",
+      "conv": "cdecl",
+      "args": ["ignore", "int", "int"],
+      "passthrough": true
+    },
+    "@GetViewport": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:24"],
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "785634120000000080020000e0010000000000000000803f"}
+      ],
+      "ret": 0
+    },
+    "@SetViewport": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:24"],
+      "ret": 0
+    },
+    "@RenderRegion": {
+      "conv": "stdcall",
+      "args": ["ptr", "int", "mem:16", "int", "int", "float", "int"],
+      "ret": 0
+    },
+    "@Blt": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:16", "ptr", "ptr", "int", "mem:100"],
+      "ret": 0
+    },
+    "@grBufferClear": {
+      "conv": "stdcall",
+      "args": ["int", "int", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "mode zero leaves everything alone",
+      "args": [0],
+      "memory": [{"addr": "0x100fb8a8", "u32": 0}]
+    },
+    {
+      "name": "mode one null region clears after saving and restoring viewport",
+      "args": [0],
+      "memory": [{"addr": "0x100fb8a8", "u32": 1}]
+    },
+    {
+      "name": "mode one null region retries on the exact lost surface result",
+      "args": [0],
+      "memory": [{"addr": "0x100fb8a8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "clear_helper", "conv": "cdecl", "args": ["ptr", "int"], "ret": ["0x88760816", 0]}
+      }
+    },
+    {
+      "name": "mode one null region does not retry one below threshold",
+      "args": [0],
+      "memory": [{"addr": "0x100fb8a8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "clear_helper", "conv": "cdecl", "args": ["ptr", "int"], "ret": "0x88760815"}
+      }
+    },
+    {
+      "name": "mode one null region does not retry one above threshold",
+      "args": [0],
+      "memory": [{"addr": "0x100fb8a8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "clear_helper", "conv": "cdecl", "args": ["ptr", "int"], "ret": "0x88760817"}
+      }
+    },
+    {
+      "name": "mode one nonnull region rounds position and blits black",
+      "args": ["@renderregion"],
+      "memory": [{"addr": "0x100fb8a8", "u32": 1}]
+    },
+    {
+      "name": "mode one nonnull region uses signed negative extents",
+      "args": ["@renderregion"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 1},
+        {"addr": "@renderregion", "offset": "0x48", "u32": "0xffffffec"},
+        {"addr": "@renderregion", "offset": "0x4c", "u32": "0xfffffff1"},
+        {"addr": "@renderregion", "offset": "0x54", "f32": -8.75},
+        {"addr": "@renderregion", "offset": "0x58", "f32": 6.25}
+      ]
+    },
+    {
+      "name": "mode two clears depth independent of region argument",
+      "args": ["@renderregion"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba74", "u32": "0xfedcba98"}
+      ]
+    },
+    {
+      "name": "mode two accepts null region and passes zero depth",
+      "args": [0],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba74", "u32": 0}
+      ]
+    },
+    {
+      "name": "mode three does nothing",
+      "args": [0],
+      "memory": [{"addr": "0x100fb8a8", "u32": 3}]
+    },
+    {
+      "name": "negative mode does nothing",
+      "args": ["@renderregion"],
+      "memory": [{"addr": "0x100fb8a8", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 304200,
+    "count": 40,
+    "args": [
+      {"choices": [0, "@renderregion"]}
+    ],
+    "memory": [
+      {"addr": "0x100fb8a8", "type": "int", "choices": [-1, 0, 1, 2, 3, 4]},
+      {"addr": "0x100fba74", "type": "u32"},
+      {"addr": "@renderregion", "offset": "0x48", "type": "int", "range": [-500, 500]},
+      {"addr": "@renderregion", "offset": "0x4c", "type": "int", "range": [-500, 500]},
+      {"addr": "@renderregion", "offset": "0x54", "type": "float", "range": [-100, 100]},
+      {"addr": "@renderregion", "offset": "0x58", "type": "float", "range": [-100, 100]}
+    ]
+  }
+}

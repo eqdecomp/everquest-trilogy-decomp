@@ -1,0 +1,544 @@
+{
+  "function": "t3dBindParticleCloudGravity",
+  "original": "0x100401A6",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "instance",
+      "type": "ptr"
+    },
+    {
+      "name": "reference",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "instance": {
+      "size": "0x54",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x15",
+          "u8": 0
+        },
+        {
+          "offset": "0x28",
+          "u32": 0
+        },
+        {
+          "offset": "0x50",
+          "u32": 0
+        }
+      ]
+    },
+    "reference": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "offset": "0x10",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    "oldReference": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "offset": "0x10",
+          "u32": "0x87654321"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10013d10": {
+      "name": "t3dRemoveObjectFromHSpriteRefSet",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ]
+    },
+    "0x1000a4ed": {
+      "name": "t3dRemoveObjectFromActorRefSet",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10013c91": {
+      "name": "t3dAddObjectToHSpriteRefSet",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000a453": {
+      "name": "t3dAddObjectToActorRefSet",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "binding flag clear skips old and new references",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 0
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": "@oldReference"
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x0",
+          "u32": 24
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 59
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unrelated flag bits do not enable gravity binding",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 16
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 24
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "enabled with null new reference and no old binding",
+      "args": [
+        "@instance",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "remove old actor reference",
+      "args": [
+        "@instance",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": "@oldReference"
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x0",
+          "u32": 24
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "remove old HSprite reference using key at offset 0x10",
+      "args": [
+        "@instance",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": "@oldReference"
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x0",
+          "u32": 59
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x10",
+          "u32": "0x10203040"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unknown old reference type is left alone",
+      "args": [
+        "@instance",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": "@oldReference"
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x0",
+          "u32": 119
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "add actor reference and store it at offset 0x50",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": 0
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 24
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "actor add failure returns the binding error",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 24
+        }
+      ],
+      "callees": {
+        "0x1000a453": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "add HSprite reference using its key and store at offset 0x28",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 59
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x10",
+          "u32": "0x31415926"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "HSprite add failure returns the binding error",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 59
+      }
+      ],
+      "callees": {
+        "0x10013c91": {
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "old actor removal precedes failed HSprite add",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": "@oldReference"
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x0",
+          "u32": 24
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 59
+        }
+      ],
+      "callees": {
+        "0x10013c91": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "invalid new type returns after old actor removal",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 8
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x28",
+          "u32": "@oldReference"
+        },
+        {
+          "addr": "@oldReference",
+          "offset": "0x0",
+          "u32": 59
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 119
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag byte bit 0x80 plus enable bit still binds",
+      "args": [
+        "@instance",
+        "@reference"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x15",
+          "u8": 136
+        },
+        {
+          "addr": "@reference",
+          "offset": "0x0",
+          "u32": 24
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 262566,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@instance"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "@reference"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@instance",
+        "offset": "0x15",
+        "type": "u8",
+        "choices": [
+          0,
+          8,
+          16,
+          255
+        ]
+      },
+      {
+        "addr": "@instance",
+        "offset": "0x28",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@oldReference"
+        ]
+      },
+      {
+        "addr": "@oldReference",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          24,
+          59,
+          119
+        ]
+      },
+      {
+        "addr": "@oldReference",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          -100,
+          100
+        ]
+      },
+      {
+        "addr": "@reference",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          24,
+          59,
+          119
+        ]
+      },
+      {
+        "addr": "@reference",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          -100,
+          100
+        ]
+      }
+    ]
+  }
+}

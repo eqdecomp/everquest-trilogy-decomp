@@ -1,0 +1,363 @@
+{
+  "function": "FatalErrorExit_guess",
+  "original": "0x100278a0",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "prefix": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Fatal: "
+        }
+      ]
+    },
+    "caption": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "from_image": "0x10047FC4",
+          "image_size": 10
+        }
+      ]
+    },
+    "msgbox": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055A14",
+      "u32": "@prefix"
+    },
+    {
+      "addr": "0x10055A2C",
+      "u32": "@caption"
+    },
+    {
+      "addr": "0x100401F4",
+      "u32": "@msgbox"
+    },
+    {
+      "addr": "0x1004CE40",
+      "cstr": "0123456789ABCDE"
+    },
+    {
+      "addr": "0x100D5B54",
+      "size": 32,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x10035E98",
+      "hex": "0F0B"
+    }
+  ],
+  "callees": {
+    "0x1001b280": {
+      "name": "FUN_1001b280",
+      "conv": "cdecl",
+      "args": [
+        "char"
+      ],
+      "ret": 0
+    },
+    "0x10034436": {
+      "name": "_vsprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "@msgbox": {
+      "name": "MessageBoxA",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "cstr",
+        "cstr",
+        "u32"
+      ],
+      "ret": 1
+    },
+    "0x10035e98": {
+      "name": "_exit",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "fault_ok": "_exit(0) never returns: its first instruction is patched to UD2 (memory) and the call passes through to it, so every case ends in the same fault on both sides",
+  "cases": [
+    {
+      "name": "format, prefix not shown",
+      "args": [
+        "abc",
+        1
+      ]
+    },
+    {
+      "name": "empty format",
+      "args": [
+        "",
+        0
+      ]
+    },
+    {
+      "name": "null format, prefix copied",
+      "args": [
+        "0x0",
+        0
+      ]
+    },
+    {
+      "name": "null format, empty prefix",
+      "args": [
+        "0x0",
+        0
+      ],
+      "objects": {
+        "prefix": {
+          "size": "0x100",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "null format, one-char prefix",
+      "args": [
+        "0x0",
+        0
+      ],
+      "objects": {
+        "prefix": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "A"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "null format, long prefix",
+      "args": [
+        "0x0",
+        0
+      ],
+      "objects": {
+        "prefix": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "format with %d replaces the copy",
+      "args": [
+        "Level %d",
+        7
+      ],
+      "objects": {
+        "prefix": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "Fatal: not shown"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "percent escape",
+      "args": [
+        "100%%",
+        0
+      ]
+    },
+    {
+      "name": "source empty (copy of the terminator only)",
+      "args": [
+        "0x0",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CE40",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "source 1 char",
+      "args": [
+        "0x0",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CE40",
+          "cstr": "A"
+        }
+      ]
+    },
+    {
+      "name": "source 3 chars",
+      "args": [
+        "0x0",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CE40",
+          "cstr": "ABC"
+        }
+      ]
+    },
+    {
+      "name": "source 4 chars",
+      "args": [
+        "0x0",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CE40",
+          "cstr": "ABCD"
+        }
+      ]
+    },
+    {
+      "name": "source 7 chars runs into DAT_100d5b58",
+      "args": [
+        "0x0",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CE40",
+          "cstr": "ABCDEFG"
+        }
+      ]
+    },
+    {
+      "name": "other caption",
+      "args": [
+        "abc",
+        0
+      ],
+      "objects": {
+        "caption": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "cstr": "Crash"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty caption",
+      "args": [
+        "abc",
+        0
+      ],
+      "objects": {
+        "caption": {
+          "size": "0x40",
+          "fill": "zero"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 161952,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "0x0",
+          "",
+          "abc",
+          "Level %d",
+          "%u / %x",
+          "100%%",
+          "Pct %d%%",
+          "plain text"
+        ]
+      },
+      {
+        "range": [
+          -8,
+          64
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@prefix",
+        "type": "u8",
+        "range": [
+          0,
+          90
+        ],
+        "count": 20
+      },
+      {
+        "addr": "@caption",
+        "type": "u8",
+        "range": [
+          65,
+          90
+        ],
+        "count": 8
+      },
+      {
+        "addr": "0x1004CE40",
+        "type": "u8",
+        "range": [
+          0,
+          90
+        ],
+        "count": 15
+      }
+    ]
+  }
+}

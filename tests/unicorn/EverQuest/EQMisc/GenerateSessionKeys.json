@@ -1,0 +1,222 @@
+{
+  "function": "GenerateSessionKeys_guess",
+  "original": "0x004a055e",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "packet",
+      "type": "ptr"
+    },
+    {
+      "name": "connection",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "pkt": {"size": "0x220", "fill": "random"},
+    "conn": {"size": "0x100", "fill": "random"},
+    "pkm": {"size": "0x10", "fill": "zero"},
+    "pke": {"size": "0x10", "fill": "zero"},
+    "mb0": {"size": "0x100", "fill": "zero"},
+    "mb1": {"size": "0x100", "fill": "zero"},
+    "h0": {"size": "0x100", "fill": "zero"},
+    "h1": {"size": "0x100", "fill": "zero"},
+    "h2": {"size": "0x100", "fill": "zero"},
+    "h3": {"size": "0x100", "fill": "zero"},
+    "h4": {"size": "0x100", "fill": "zero"},
+    "h5": {"size": "0x100", "fill": "zero"},
+    "h6": {"size": "0x100", "fill": "zero"},
+    "h7": {"size": "0x100", "fill": "zero"},
+    "h8": {"size": "0x100", "fill": "zero"},
+    "h9": {"size": "0x100", "fill": "zero"},
+    "h10": {"size": "0x100", "fill": "zero"},
+    "h11": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x005fe758", "u32": "@pkm"},
+    {"addr": "0x005fe75c", "u32": 0},
+    {"addr": "0x005fe760", "u32": "@pke"},
+    {"addr": "0x005fe764", "u32": 0},
+    {"addr": "0x005fe78c", "u32": 0},
+    {"addr": "0x005fe900", "u32": "0x005fe910"},
+    {"addr": "0x005fe904", "u32": 128},
+    {"addr": "0x005fe908", "u32": 64},
+    {"addr": "0x005fe90c", "u32": 0},
+    {"addr": "0x005fe910", "size": 256, "fill": "random"}
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004e65e1": {
+      "name": "vlong_guess::vlong_guess",
+      "passthrough": true
+    },
+    "0x004e6687": {
+      "name": "vlong_guess::~vlong_guess",
+      "passthrough": true
+    },
+    "0x004e6628": {
+      "name": "vlong_guess::assign_guess",
+      "passthrough": true
+    },
+    "0x004a46f6": {
+      "name": "random_range_guess",
+      "conv": "cdecl",
+      "args": ["int", "int"],
+      "ret": [17, 34, 51, 68]
+    },
+    "0x00522fa3": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@mb0", "@mb1"]
+    },
+    "0x005230dd": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x0041543b": {
+      "name": "vlong_public_key_guess::encrypt_guess",
+      "conv": "thiscall",
+      "args": ["ignore", "ignore"],
+      "writes": [
+        {"arg": 0, "offset": 0, "hex": "00e95f00"},
+        {"arg": 0, "offset": 4, "hex": "01000000"}
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["mem:4", "u32", "mem:272", "u32", "int"]
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": ["@h0", "@h1", "@h2", "@h3", "@h4", "@h5", "@h6", "@h7", "@h8", "@h9", "@h10", "@h11"]
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??0vlong_guess@@QAE@I@Z": "0x004e65e1",
+    "_malloc": "0x00522fa3",
+    "_free": "0x005230dd"
+  },
+  "cases": [
+    {
+      "name": "typical: 3 modulus digits, 2 exponent digits",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 3},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 2}
+      ]
+    },
+    {
+      "name": "no digits (both loops skipped)",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 0},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 0}
+      ]
+    },
+    {
+      "name": "negative counts (signed compare)",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": "0xffffffff"},
+        {"addr": "@pkt", "offset": "0x21c", "u32": "0xfffffffb"}
+      ]
+    },
+    {
+      "name": "full blocks (64 digits each)",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 64},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 64}
+      ]
+    },
+    {
+      "name": "one digit each",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 1},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 1}
+      ]
+    },
+    {
+      "name": "exponent only",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 0},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 4}
+      ]
+    },
+    {
+      "name": "modulus only",
+      "args": ["@pkt", "@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 4},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 0}
+      ]
+    },
+    {
+      "name": "key bytes all zero",
+      "args": ["@pkt", "@conn"],
+      "callees": {
+        "0x004a46f6": {"name": "random_range_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [0, 0, 0, 0]}
+      },
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 2},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 2}
+      ]
+    },
+    {
+      "name": "key top byte set (sign bit)",
+      "args": ["@pkt", "@conn"],
+      "callees": {
+        "0x004a46f6": {"name": "random_range_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [1, 2, 4, 128]}
+      },
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 2},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 2}
+      ]
+    },
+    {
+      "name": "key all bytes 255",
+      "args": ["@pkt", "@conn"],
+      "callees": {
+        "0x004a46f6": {"name": "random_range_guess", "conv": "cdecl", "args": ["int", "int"], "ret": [255, 255, 255, 255]}
+      },
+      "memory": [
+        {"addr": "@pkt", "offset": "0x10c", "u32": 2},
+        {"addr": "@pkt", "offset": "0x21c", "u32": 2}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4851038,
+    "count": 40,
+    "args": [
+      {"choices": ["@pkt"]},
+      {"choices": ["@conn"]}
+    ],
+    "memory": [
+      {"addr": "@pkt", "size": 268},
+      {"addr": "@pkt", "offset": "0x10c", "type": "int", "range": [-1, 64]},
+      {"addr": "@pkt", "offset": "0x110", "size": 268},
+      {"addr": "@pkt", "offset": "0x21c", "type": "int", "range": [-1, 64]}
+    ]
+  }
+}

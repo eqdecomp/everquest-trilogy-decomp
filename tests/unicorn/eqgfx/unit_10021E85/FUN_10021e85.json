@@ -1,0 +1,477 @@
+{
+  "function": "t3dLoadBinaryWorldFromQueuedFile_guess",
+  "original": "0x10021e85",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "fileName", "type": "cstr" },
+    { "name": "worldState", "type": "ptr" },
+    { "name": "fastFileContext", "type": "ptr" },
+    { "name": "result", "type": "int" },
+    { "name": "progressCallback", "type": "ptr" },
+    { "name": "callbackData", "type": "ptr" }
+  ],
+  "ret": "int",
+  "objects": {
+    "worldstate": {
+      "size": "0x358",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": 0 },
+        { "offset": "0x24", "u32": "@currenttable" },
+        { "offset": "0x354", "u32": 0 }
+      ]
+    },
+    "fastfilecontext": { "size": "0x100", "fill": "zero" },
+    "callbackdata": { "size": "0x100", "fill": "zero" },
+    "currenttable": { "size": "0x4", "fill": "zero" },
+    "resourcearray": { "size": "0x100", "fill": "zero" },
+    "secondarybuffer": { "size": "0x100", "fill": "zero" },
+    "resourcetable": { "size": "0x200", "fill": "zero" },
+    "indexarray": { "size": "0x100", "fill": "zero" },
+    "additionalallocation": { "size": "0x100", "fill": "zero" },
+    "resourcecontext": { "size": "0x20", "fill": "zero" },
+    "progress": { "size": "0x10", "fill": "zero" }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x10069080": {
+      "name": "__beginthread",
+      "conv": "cdecl",
+      "args": ["u32", "u32", "mem:60"],
+      "ret": 0,
+      "writes": [{ "arg": 2, "offset": 48, "hex": "01000000" }]
+    },
+    "0x100222e7": {
+      "name": "t3dReadBinaryResourceHeader_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [
+        { "arg": 0, "offset": 32828, "hex": "00000000" },
+        { "arg": 0, "offset": 32840, "hex": "02000000" },
+        { "arg": 0, "offset": 32848, "hex": "00000000" },
+        { "arg": 0, "offset": 32852, "hex": "78563412" }
+      ]
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@resourcearray"
+    },
+    "0x1002253b": {
+      "name": "t3dParseBinaryRecord_guess",
+      "conv": "cdecl",
+      "args": ["mem:32856"],
+      "ret": ["0x11110000", "0x22220000"]
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002607f": {
+      "name": "freeObjectDataAndHandle_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!Sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 0,
+      "writes": [{ "addr": "0x7f0e7fbc", "hex": "01000000" }]
+    },
+    "kernel32.dll!DeleteCriticalSection": {
+      "name": "DeleteCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@progress": {
+      "name": "progressCallback",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "u32", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "read all resources",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"]
+    },
+    {
+      "name": "progress callback ordering",
+      "args": ["world.eff", "@worldstate", "@fastfilecontext", 7, "@progress", "@callbackdata"]
+    },
+    {
+      "name": "parser returns status",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 7,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+        { "arg": 0, "offset": 32840, "hex": "02000000" },
+            { "arg": 0, "offset": 32848, "hex": "00000000" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "thread creation failure",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x10069080": {
+          "name": "__beginthread",
+          "conv": "cdecl",
+          "args": ["u32", "u32", "mem:60"],
+          "ret": "0xffffffff",
+          "writes": [{ "arg": 2, "offset": 48, "hex": "01000000" }]
+        }
+      }
+    },
+    {
+      "name": "thread completion poll",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x10069080": {
+          "name": "__beginthread",
+          "conv": "cdecl",
+          "args": ["u32", "u32", "mem:60"],
+          "ret": 0
+        }
+      },
+      "memory": [{ "addr": "0x7f0e7fbc", "u32": 1 }]
+    },
+    {
+      "name": "pointer array allocation failure",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "secondary allocation failure",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "10000000" },
+            { "arg": 0, "offset": 32840, "hex": "02000000" },
+            { "arg": 0, "offset": 32848, "hex": "00000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", 0]
+        }
+      }
+    },
+    {
+      "name": "secondary allocation released",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "10000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "00000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", "@secondarybuffer"]
+        }
+      }
+    },
+    {
+      "name": "resource read returns null",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x1002253b": {
+          "name": "FUN_1002253b",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "resource read stops part way",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x1002253b": {
+          "name": "FUN_1002253b",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": ["0x11110000", 0]
+        }
+      }
+    },
+    {
+      "name": "new table and index array",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "01000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", "@resourcetable", "@indexarray"]
+        }
+      }
+    },
+    {
+      "name": "allocation pointer equals one",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "01000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", 1, "@indexarray"]
+        }
+      }
+    },
+    {
+      "name": "three pointer records",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "03000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", "@resourcetable", "@indexarray"]
+        }
+      }
+    },
+    {
+      "name": "retain table already installed",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "objects": {
+        "worldstate": {
+          "size": "0x358",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x18", "u32": 0 },
+            { "offset": "0x24", "u32": "@currenttable" },
+            { "offset": "0x354", "u32": 0 }
+          ]
+        },
+        "currenttable": {
+          "size": "0x4",
+          "fill": "zero",
+          "init": [{ "offset": "0", "u32": "@resourcetable" }]
+        }
+      },
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "01000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", "@resourcetable", "@indexarray"]
+        }
+      }
+    },
+    {
+      "name": "existing table prevents allocation",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "objects": {
+        "worldstate": {
+          "size": "0x358",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x18", "u32": 1 },
+            { "offset": "0x24", "u32": "@currenttable" },
+            { "offset": "0x354", "u32": 0 }
+          ]
+        }
+      },
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "01000000" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "index array allocation failure",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "01000000" }
+          ]
+        },
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@resourcearray", "@resourcetable", 0]
+        }
+      }
+    },
+    {
+      "name": "release temporary parse resources",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 56, "hex": "44332211" },
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "01000000" },
+            { "arg": 0, "offset": 32848, "hex": "00000000" },
+            { "arg": 0, "offset": 32864, "hex": "00000030" }
+          ]
+        }
+      },
+      "memory": [{ "addr": "0x30000000", "size": "0x20", "fill": "zero" }]
+    },
+    {
+      "name": "resource context retained",
+      "args": ["world.eff", "@worldstate", 0, 1, 0, "@callbackdata"],
+      "objects": {
+        "resourcecontext": {
+          "size": "0x20",
+          "fill": "zero",
+          "init": [{ "offset": "0x8", "u32": 1 }]
+        }
+      },
+      "callees": {
+        "0x100222e7": {
+          "name": "FUN_100222e7",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": 0,
+          "writes": [
+            { "arg": 0, "offset": 32828, "hex": "00000000" },
+            { "arg": 0, "offset": 32840, "hex": "00000000" },
+            { "arg": 0, "offset": 32848, "hex": "00000000" },
+            { "arg": 0, "offset": 32864, "hex": "00000030" }
+          ]
+        }
+      },
+      "memory": [
+        { "addr": "0x30000000", "size": "0x20", "fill": "zero" },
+        { "addr": "0x30000000", "offset": "0x8", "u32": 1 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 138885,
+    "count": 30,
+    "args": [
+      {},
+      { "choices": ["@worldstate"] },
+      { "choices": [0, "@fastfilecontext"] },
+      { "range": [-8, 64] },
+      { "choices": [0, "@progress"] },
+      { "choices": ["@callbackdata"] }
+    ],
+    "memory": []
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "function": "copyTokenText_guess",
+  "original": "0x1002878a",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "parser": {
+      "size": "0x3444",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "@ctx"},
+        {"offset": "0x2028", "cstr": "parser.txt"},
+        {"offset": "0x2050", "u8": 0}
+      ]
+    },
+    "ctx": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "buf": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    },
+    "0x10068160": {
+      "name": "strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical name is copied into the allocated buffer",
+      "args": [
+        "@parser"
+      ]
+    },
+    {
+      "name": "empty name allocates one byte",
+      "args": [
+        "@parser"
+      ],
+      "memory": [
+        {"addr": "@parser", "offset": "0x2028", "cstr": ""}
+      ]
+    },
+    {
+      "name": "one-character name",
+      "args": [
+        "@parser"
+      ],
+      "memory": [
+        {"addr": "@parser", "offset": "0x2028", "cstr": "x"}
+      ]
+    },
+    {
+      "name": "40-character name, the NUL at +0x2050 ends it",
+      "args": [
+        "@parser"
+      ],
+      "memory": [
+        {"addr": "@parser", "offset": "0x2028", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"}
+      ]
+    },
+    {
+      "name": "high-bit bytes are copied as they are",
+      "args": [
+        "@parser"
+      ],
+      "memory": [
+        {"addr": "@parser", "offset": "0x2028", "hex": "c1c2ff00"}
+      ]
+    },
+    {
+      "name": "allocation failure logs out of memory and returns 0",
+      "args": [
+        "@parser"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation failure with a null parser context",
+      "args": [
+        "@parser"
+      ],
+      "memory": [
+        {"addr": "@parser", "offset": "0x18", "u32": 0}
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation failure with an empty name",
+      "args": [
+        "@parser"
+      ],
+      "memory": [
+        {"addr": "@parser", "offset": "0x2028", "cstr": ""}
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1002878,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@parser"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@parser", "offset": "0x18", "type": "ptr", "choices": ["@ctx", 0]},
+      {"addr": "@parser", "offset": "0x2028", "type": "u8", "count": 40,
+       "choices": [48, 57, 65, 90, 97, 122, 32, 46, 95, 0, 128, 255]}
+    ]
+  }
+}

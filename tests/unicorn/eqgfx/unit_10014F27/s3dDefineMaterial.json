@@ -1,0 +1,501 @@
+{
+  "function": "s3dDefineMaterial",
+  "original": "0x10016cf2",
+  "sources": [
+    "src/eqgfx/unit_10014F27.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "providedMaterial",
+      "type": "ptr"
+    },
+    {
+      "name": "materialName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "providedmaterial": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "allocated": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10016cda": {
+      "name": "s3dCalcMaterialDefAllocSize",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocated"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:64"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:64"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:64"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10068160": {
+      "name": "_strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "new material, name abc: registered and returned",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ]
+    },
+    {
+      "name": "new material, no name: registered without a dictionary entry",
+      "args": [
+        "@context",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "new material, empty name: only the terminator is copied",
+      "args": [
+        "@context",
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "new material, long name",
+      "args": [
+        "@context",
+        0,
+        "materialdefinition-with-a-longer-name-to-exercise-the-copy-path"
+      ]
+    },
+    {
+      "name": "allocation fails with a name: nothing else runs",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails, no name",
+      "args": [
+        "@context",
+        0,
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new material, registration returns 1: freed, no dictionary call",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new material, registration returns -1, no name: freed",
+      "args": [
+        "@context",
+        0,
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new material, registration returns 0x80000000: freed",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": "0x80000000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new material, dictionary returns -1: entry removed, then freed",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new material, dictionary returns 0x80000000: failure path",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": "0x80000000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new material, dictionary returns 1: success",
+      "args": [
+        "@context",
+        0,
+        "abc"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "provided material: flags 0xffffffff, use count 5, sprite set; zeroed, flag 0x20 only",
+      "args": [
+        "@context",
+        "@providedmaterial",
+        "abc"
+      ],
+      "objects": {
+        "providedmaterial": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0xc",
+              "u32": "0xffffffff"
+            },
+            {
+              "offset": "0x10",
+              "u32": 5
+            },
+            {
+              "offset": "0x24",
+              "u32": "0x12345678"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "provided material, no name: returned with flag 0x20",
+      "args": [
+        "@context",
+        "@providedmaterial",
+        0
+      ],
+      "objects": {
+        "providedmaterial": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0xc",
+              "u32": "0xffffffff"
+            },
+            {
+              "offset": "0x10",
+              "u32": 5
+            },
+            {
+              "offset": "0x24",
+              "u32": "0x12345678"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "provided material, long name, flags 0",
+      "args": [
+        "@context",
+        "@providedmaterial",
+        "materialdefinition-with-a-longer-name-to-exercise-the-copy-path"
+      ],
+      "objects": {
+        "providedmaterial": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0xc",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "provided material, registration returns 1: not freed",
+      "args": [
+        "@context",
+        "@providedmaterial",
+        "abc"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "provided material, registration returns -1, no name: not freed",
+      "args": [
+        "@context",
+        "@providedmaterial",
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "provided material, dictionary returns -1: entry removed, not freed",
+      "args": [
+        "@context",
+        "@providedmaterial",
+        "abc"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:64"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1016,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@providedmaterial",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "abc",
+          "",
+          "materialdefinition-with-a-longer-name-to-exercise-the-copy-path",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@providedmaterial",
+        "offset": "0xc",
+        "type": "u32",
+        "p": 0.7
+      },
+      {
+        "addr": "@providedmaterial",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@providedmaterial",
+        "offset": "0xd",
+        "size": 3
+      }
+    ]
+  }
+}

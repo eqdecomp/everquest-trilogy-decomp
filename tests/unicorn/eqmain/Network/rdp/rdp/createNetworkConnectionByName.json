@@ -1,0 +1,657 @@
+{
+  "function": "createNetworkConnectionByName_guess",
+  "original": "0x1002ac80",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "port",
+      "type": "int"
+    },
+    {
+      "name": "flags",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rdp": {
+      "size": "0x1d8",
+      "fill": "random"
+    },
+    "out": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "stats": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "existing": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@rdp"
+        }
+      ]
+    },
+    "hostent": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@addrlist"
+        }
+      ]
+    },
+    "addrlist": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@addrbytes"
+        }
+      ]
+    },
+    "addrbytes": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "_stack_slot": "0x7f0efff8 and 0x7f0efffc = addr+0x8 and addr+0xc (addr = the rewrite's RdpAddr at the frame base) in the harness stack below the entry ESP (0x7f0f0000: a probe showed the out-arg slot at 0x7f0f0010). They are the bytes the zeroing stores at rdp.c lines 1442 and 1444 cover. The original zeroes them too; a real caller can leave stale data there, so every case plants it. If the harness moves its stack these entries are inert and those mutants survive again.",
+  "memory": [
+    {
+      "addr": "0x100498b4",
+      "u32": "@stats"
+    },
+    {
+      "addr": "0x10100000",
+      "size": 2048,
+      "fill": "random"
+    },
+    {
+      "addr": "0x10100000",
+      "offset": 12,
+      "u32": "@rdp"
+    },
+    {
+      "addr": "0x7f0efff8",
+      "u32": 3405691582
+    },
+    {
+      "addr": "0x7f0efffc",
+      "u32": 3735928559
+    }
+  ],
+  "callees": {
+    "0x100322ae": {
+      "name": "htons",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": 13330
+    },
+    "0x10032308": {
+      "name": "inet_addr",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 16777343
+    },
+    "0x10032302": {
+      "name": "gethostbyname",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1002e6e0": {
+      "name": "FUN_1002e6e0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:16"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1002e800": {
+      "name": "FUN_1002e800",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1002e310": {
+      "name": "removeHeapElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1002d210": {
+      "name": "NetworkConnection_CleanupNetworkConnectionResources_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1002aad0": {
+      "name": "FUN_1002aad0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ignore",
+        "mem:16",
+        "u32"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "00001010"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "dotted address, new connection",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ]
+    },
+    {
+      "name": "dotted address, flags 1, new connection",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        1
+      ]
+    },
+    {
+      "name": "port -1 (htons sees the low 16 bits)",
+      "args": [
+        "@rdp",
+        "@out",
+        "10.0.0.1",
+        -1,
+        0
+      ]
+    },
+    {
+      "name": "create refused (0xd): out untouched",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "callees": {
+        "0x1002aad0": {
+          "name": "FUN_1002aad0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ignore",
+            "mem:16",
+            "u32"
+          ],
+          "ret": 13
+        }
+      }
+    },
+    {
+      "name": "create refused (2): out untouched",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "callees": {
+        "0x1002aad0": {
+          "name": "FUN_1002aad0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ignore",
+            "mem:16",
+            "u32"
+          ],
+          "ret": 2
+        }
+      }
+    },
+    {
+      "name": "created, then taken out of the hash (freed)",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "callees": {
+        "0x1002e800": {
+          "name": "FUN_1002e800",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 269484032
+        }
+      }
+    },
+    {
+      "name": "existing connection, not in the hash",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "callees": {
+        "0x1002e6e0": {
+          "name": "FUN_1002e6e0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:16"
+          ],
+          "ret": "@existing"
+        }
+      }
+    },
+    {
+      "name": "existing connection, taken out and freed",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "callees": {
+        "0x1002e6e0": {
+          "name": "FUN_1002e6e0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:16"
+          ],
+          "ret": "@existing"
+        },
+        "0x1002e800": {
+          "name": "FUN_1002e800",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@existing"
+        }
+      }
+    },
+    {
+      "name": "host name does not resolve: 0xc, no lookup",
+      "args": [
+        "@rdp",
+        "@out",
+        "no.such.host",
+        80,
+        0
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x10032302": {
+          "name": "gethostbyname",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "empty name, port 0, unresolved",
+      "args": [
+        "@rdp",
+        "@out",
+        "",
+        0,
+        0
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x10032302": {
+          "name": "gethostbyname",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "host name resolves, new connection",
+      "args": [
+        "@rdp",
+        "@out",
+        "example.test",
+        80,
+        0
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x10032302": {
+          "name": "gethostbyname",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@hostent"
+        }
+      }
+    },
+    {
+      "name": "host name resolves, creation refused",
+      "args": [
+        "@rdp",
+        "@out",
+        "example.test",
+        80,
+        0
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x10032302": {
+          "name": "gethostbyname",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@hostent"
+        },
+        "0x1002aad0": {
+          "name": "FUN_1002aad0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ignore",
+            "mem:16",
+            "u32"
+          ],
+          "ret": 13
+        }
+      }
+    },
+    {
+      "name": "host name resolves to an existing connection, taken out",
+      "args": [
+        "@rdp",
+        "@out",
+        "example.test",
+        80,
+        1
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": -1
+        },
+        "0x10032302": {
+          "name": "gethostbyname",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@hostent"
+        },
+        "0x1002e6e0": {
+          "name": "FUN_1002e6e0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:16"
+          ],
+          "ret": "@existing"
+        },
+        "0x1002e800": {
+          "name": "FUN_1002e800",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@existing"
+        }
+      }
+    },
+    {
+      "name": "inet_addr 0 is an address (0.0.0.0), not an error",
+      "args": [
+        "@rdp",
+        "@out",
+        "0.0.0.0",
+        80,
+        0
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "inet_addr 0xfffffffe is an address (255.255.255.254), not an error",
+      "args": [
+        "@rdp",
+        "@out",
+        "255.255.255.254",
+        80,
+        0
+      ],
+      "callees": {
+        "0x10032308": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": -2
+        }
+      }
+    },
+    {
+      "name": "stats counter carries into the high dword",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x150",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x154",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "stats counter wraps from 2^64-1 to 0",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        80,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x150",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x154",
+          "u32": 4294967295
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 175232,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rdp"
+        ]
+      },
+      {
+        "choices": [
+          "@out"
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@stats",
+        "offset": "0x150",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2147483647,
+          2147483648,
+          4294967294,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x154",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "0x7f0efff8",
+        "size": 4
+      },
+      {
+        "addr": "0x7f0efffc",
+        "size": 4
+      }
+    ]
+  }
+}

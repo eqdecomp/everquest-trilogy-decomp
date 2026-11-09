@@ -1,0 +1,131 @@
+{
+  "function": "RemoveAllOwnedRecords_guess",
+  "original": "0x10005d80",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x40"
+    },
+    "n0": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x4", "u32": "0x2001"},
+        {"offset": "0x8", "u32": "@n1"}
+      ]
+    },
+    "n1": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x4", "u32": "0x2002"},
+        {"offset": "0x8", "u32": "@n2"}
+      ]
+    },
+    "n2": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x4", "u32": "0x2003"},
+        {"offset": "0x8", "u32": 0}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10005db0": {
+      "name": "FUN_10005db0",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty list",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": 0}
+      ]
+    },
+    {
+      "name": "one node",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": "@n2"}
+      ]
+    },
+    {
+      "name": "two nodes",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}
+      ]
+    },
+    {
+      "name": "three nodes",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": "@n0"}
+      ]
+    },
+    {
+      "name": "callee unlinks the current node: next is read before the call",
+      "args": [
+        "@owner"
+      ],
+      "callees": {
+        "0x10005db0": {
+          "name": "FUN_10005db0",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "writes": [
+            {"addr": "@n0+0x8", "hex": "00000000"}
+          ]
+        }
+      },
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": "@n0"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 23936,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@owner"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@owner", "offset": "0x1c", "type": "ptr", "choices": ["@n0", "@n1", "@n2", 0]},
+      {"addr": "@n0", "offset": "0x8", "type": "ptr", "choices": ["@n1", 0]},
+      {"addr": "@n1", "offset": "0x8", "type": "ptr", "choices": ["@n2", 0]},
+      {"addr": "@n0", "offset": "0x4", "type": "u32", "range": [0, 65535]},
+      {"addr": "@n1", "offset": "0x4", "type": "u32", "range": [0, 65535]},
+      {"addr": "@n2", "offset": "0x4", "type": "u32", "range": [0, 65535]}
+    ]
+  }
+}

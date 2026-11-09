@@ -1,0 +1,93 @@
+{
+  "function": "EQ_Image_guess::draw_guess",
+  "original": "0x004384B2",
+  "sources": ["src/EverQuest/EQ_Image.cpp"],
+  "rewrite": "?draw_guess@EQ_Image_guess@@QAEXKK@Z",
+  "conv": "thiscall",
+  "this": "@img",
+  "args": [
+    {"name": "arg1", "type": "u32"},
+    {"name": "arg2", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "img": {"size": "0x40", "fill": "zero"},
+    "dispA": {"size": "0x10", "fill": "random"},
+    "dispB": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006E4DE0", "u32": "@dispA"}
+  ],
+  "callees": {
+    "0x0040B492": {
+      "name": "CDisplay::DrawOverlay_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": ["ptr", "mem:16", "u32", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "distinct arguments and rectangle words",
+      "args": [287454020, 1432778632],
+      "memory": [
+        {"addr": "0x006E4DE0", "u32": "@dispA"},
+        {"addr": "@img", "hex": "ddccbbaa0403020188776655ffeeddcc3c2d1e0f"}
+      ]
+    },
+    {
+      "name": "signed boundaries preserve all argument bits",
+      "args": [2147483647, 2147483648],
+      "memory": [
+        {"addr": "0x006E4DE0", "u32": "@dispB"},
+        {"addr": "@img", "hex": "0000008000000080ffffffff0000000078563412"}
+      ]
+    },
+    {
+      "name": "zero and all ones remain distinct",
+      "args": [0, 4294967295],
+      "memory": [
+        {"addr": "0x006E4DE0", "u32": "@dispA"},
+        {"addr": "@img", "hex": "ffffffffffffffff01000080000000ffefbeadde"}
+      ]
+    },
+    {
+      "name": "shifted this uses handle and RECT at its own offsets",
+      "this": "@img+1",
+      "args": [305419896, 2271560481],
+      "memory": [
+        {"addr": "0x006E4DE0", "u32": "@dispB"},
+        {"addr": "@img", "offset": "0x1", "hex": "efbeadde0000008001000000feffffff00000000"}
+      ]
+    },
+    {
+      "name": "display pointer overlaps the image RECT",
+      "args": [286331153, 572662306],
+      "memory": [
+        {"addr": "0x006E4DE0", "u32": "@img+0x8"},
+        {"addr": "@img", "hex": "4433221101000000020000000300000004000000"}
+      ]
+    },
+    {
+      "name": "display pointer equals the passed RECT pointer",
+      "args": [3735928559, 195948557],
+      "memory": [
+        {"addr": "0x006E4DE0", "u32": "@img+0x4"},
+        {"addr": "@img", "hex": "8877665505000000060000000700000008000000"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 278898,
+    "count": 30,
+    "args": [
+      {"range": [0, 4294967295]},
+      {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@img", "offset": "0x0", "type": "u32"},
+      {"addr": "@img", "offset": "0x4", "type": "u32", "count": 4}
+    ]
+  }
+}

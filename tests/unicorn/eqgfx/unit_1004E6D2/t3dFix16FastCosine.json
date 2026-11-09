@@ -1,0 +1,116 @@
+{
+  "function": "t3dFix16FastCosine",
+  "original": "0x1004e6ec",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "angle",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "startupBlock": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x000", "u32": 286331153},
+        {"offset": "0x004", "u32": 572662306},
+        {"offset": "0x008", "u32": 858993459},
+        {"offset": "0x3fc", "u32": 1431655765},
+        {"offset": "0x400", "u32": 1145324612},
+        {"offset": "0x7fc", "u32": 305419896}
+      ]
+    },
+    "altBlock": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 195948557}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100F3FF4", "u32": "@startupBlock"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero angle reads entry 0",
+      "args": [0],
+      "expect": {"ret": 286331153}
+    },
+    {
+      "name": "bit 16 selects entry 1",
+      "args": [65536],
+      "expect": {"ret": 572662306}
+    },
+    {
+      "name": "bits 0..15 ignored",
+      "args": [65535],
+      "expect": {"ret": 286331153}
+    },
+    {
+      "name": "bit 15 ignored",
+      "args": [32768],
+      "expect": {"ret": 286331153}
+    },
+    {
+      "name": "bits 16..17 give entry 2",
+      "args": [131072],
+      "expect": {"ret": 858993459}
+    },
+    {
+      "name": "index 0x1ff from bits 16..24",
+      "args": [33488896],
+      "expect": {"ret": 305419896}
+    },
+    {
+      "name": "bit 25 masked out",
+      "args": [33554432],
+      "expect": {"ret": 286331153}
+    },
+    {
+      "name": "negative angle 0xffff0000 gives index 0x1ff",
+      "args": [-65536],
+      "expect": {"ret": 305419896}
+    },
+    {
+      "name": "negative angle 0x80000000 gives index 0",
+      "args": [-2147483648],
+      "expect": {"ret": 286331153}
+    },
+    {
+      "name": "bit 24 alone gives index 0x100",
+      "args": [16777216],
+      "expect": {"ret": 1145324612}
+    },
+    {
+      "name": "bits 16..23 set gives index 0xff",
+      "args": [16711680],
+      "expect": {"ret": 1431655765}
+    },
+    {
+      "name": "base read from the global each call",
+      "args": [0],
+      "memory": [
+        {"addr": "0x100F3FF4", "u32": "@altBlock"}
+      ],
+      "expect": {"ret": 195948557}
+    }
+  ],
+  "fuzz": {
+    "seed": 321260,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "@startupBlock", "size": 2048},
+      {"addr": "0x100F3FF4", "type": "ptr", "choices": ["@startupBlock", "@altBlock"], "p": 0.2}
+    ]
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "function": "msgStartInotes",
+  "original": "0x00494d6b",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "item", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x4", "u32": 0}]},
+    "item": {"size": "0xd0", "fill": "zero", "init": [
+      {"offset": "0x82", "u16": 100},
+      {"offset": "0x84", "u16": 1},
+      {"offset": "0x86", "u16": 0}
+    ]},
+    "profile": {"size": "0x1000", "fill": "zero"},
+    "everquest": {"size": "0x20", "fill": "zero"},
+    "ui": {"size": "0x100", "fill": "zero"},
+    "connection": {"size": "0x20", "fill": "zero"},
+    "copy": {"size": "0xd0", "fill": "zero"},
+    "invbag": {"size": "0xdc", "fill": "zero", "init": [{"offset": "0x81", "u8": 1}]},
+    "bankbag": {"size": "0xdc", "fill": "zero", "init": [{"offset": "0x81", "u8": 1}]},
+    "notbag": {"size": "0xdc", "fill": "zero"},
+    "occupied": {"size": "0xd0", "fill": "zero"},
+    "fn1": {"size": "0x4", "fill": "zero"},
+    "fn2": {"size": "0x4", "fill": "zero"},
+    "vtable1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x8", "u32": "@fn1"}]},
+    "vtable2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x8", "u32": "@fn2"}]},
+    "window1": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtable1"},
+      {"offset": "0x10", "u32": 1}
+    ]},
+    "window2": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtable2"},
+      {"offset": "0x10", "u32": 1}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x006B64E8", "u32": 0},
+    {"addr": "0x006B70E0", "u32": 0},
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006B32B4", "size": "0x1000", "fill": "zero"},
+    {"addr": "0x006018C0", "u32": 0},
+    {"addr": "0x00604984", "u32": 0},
+    {"addr": "0x006E4DA8", "u32": "@profile"},
+    {"addr": "0x006E4DE0", "u32": "@ui"},
+    {"addr": "0x006B3194", "u32": "@connection"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": "@copy"},
+    "0x0044ff75": {"name": "EQ_Note::EQ_Note_guess", "conv": "thiscall", "args": [], "ret": "@copy"},
+    "@fn1": {"conv": "thiscall", "args": [], "ret": 0},
+    "@fn2": {"conv": "thiscall", "args": [], "ret": 0},
+    "0x005224fb": {"name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x004d055e": {"name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"]},
+    "0x0040101d": {"name": "resize_window__resetwindows_guess", "conv": "thiscall", "args": []},
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x004a2816": {"name": "CheckDupLoreItems", "conv": "cdecl", "args": ["ptr"]},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:12", "u32", "int"]}
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {"name": "inventory first slot", "args": ["@self", 0, "@item"]},
+    {"name": "bogus item number", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x82", "u16": 0}]},
+    {"name": "bad icon reset", "args": ["@self", 0, "@item"], "memory": [{"addr": "@self", "offset": "0x4", "u32": 5}, {"addr": "@item", "offset": "0x84", "u16": 7}, {"addr": "@item", "offset": "0x86", "u16": 1}]},
+    {"name": "valid icon", "args": ["@self", 0, "@item"], "memory": [{"addr": "@self", "offset": "0x4", "u32": 5}, {"addr": "@item", "offset": "0x84", "u16": 7}, {"addr": "@item", "offset": "0x86", "u16": 2}, {"addr": "0x006B32B4", "offset": "0x1c", "u32": 1}]},
+    {"name": "both active windows", "args": ["@self", 0, "@item"], "memory": [{"addr": "0x006018C0", "u32": "@window1"}, {"addr": "0x00604984", "u32": "@window2"}]},
+    {"name": "inventory last slot", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 29}]},
+    {"name": "inventory bag slot 0", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 30}, {"addr": "@profile", "offset": "0xe0", "u32": "@invbag"}]},
+    {"name": "inventory bag slot 9", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 39}, {"addr": "@profile", "offset": "0xe0", "u32": "@invbag"}]},
+    {"name": "inventory bag missing", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 30}]},
+    {"name": "inventory parent is not a bag", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 30}, {"addr": "@profile", "offset": "0xe0", "u32": "@notbag"}]},
+    {"name": "inventory bag occupied", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 30}, {"addr": "@profile", "offset": "0xe0", "u32": "@invbag"}, {"addr": "@invbag", "offset": "0xac", "u32": "@occupied"}]},
+    {"name": "inventory quotient 30 wraps to zero", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 330}, {"addr": "@profile", "offset": "0xe0", "u32": "@invbag"}]},
+    {"name": "inventory quotient 31", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 340}, {"addr": "@profile", "offset": "0x15c", "u32": "@invbag"}]},
+    {"name": "first invalid slot after inventory", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 341}]},
+    {"name": "invalid before bank", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 1999}]},
+    {"name": "bank slot 0", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2000}]},
+    {"name": "bank last direct slot", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2008}]},
+    {"name": "first invalid after bank", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2009}]},
+    {"name": "last invalid before bank bag", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2029}]},
+    {"name": "bank bag slot 0", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2030}, {"addr": "@profile", "offset": "0xf44", "u32": "@bankbag"}]},
+    {"name": "bank bag slot 9", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2039}, {"addr": "@profile", "offset": "0xf44", "u32": "@bankbag"}]},
+    {"name": "bank bag missing", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2030}]},
+    {"name": "bank parent is not a bag", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2030}, {"addr": "@profile", "offset": "0xf44", "u32": "@notbag"}]},
+    {"name": "bank bag occupied", "args": ["@self", 0, "@item"], "memory": [{"addr": "@item", "offset": "0x86", "u16": 2030}, {"addr": "@profile", "offset": "0xf44", "u32": "@bankbag"}, {"addr": "@bankbag", "offset": "0xac", "u32": "@occupied"}]},
+    {"name": "global block 1000", "args": ["@self", 0, "@item"], "memory": [{"addr": "0x006B70E0", "u32": 1}]},
+    {"name": "global block 2000", "args": ["@self", 0, "@item"], "memory": [{"addr": "0x006B64E8", "u32": 1}]},
+    {"name": "both gates preserve 2000 priority", "args": ["@self", 0, "@item"], "memory": [{"addr": "0x006B70E0", "u32": 1}, {"addr": "0x006B64E8", "u32": -1}]}
+  ],
+  "fuzz": {
+    "seed": 4803947,
+    "count": 32,
+    "args": [
+      {"choices": ["@self"]},
+      {"choices": [0, 5]},
+      {"choices": ["@item"]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x4", "type": "int", "choices": [0, 5]},
+      {"addr": "@item", "offset": "0x82", "type": "short", "range": [-1, 2]},
+      {"addr": "@item", "offset": "0x84", "type": "short", "choices": [0, 1, 7]},
+      {"addr": "@item", "offset": "0x86", "type": "short", "choices": [-1, 0, 29, 30, 31, 39, 40, 329, 330, 339, 340, 341, 1999, 2000, 2008, 2009, 2029, 2030, 2039, 2040]},
+      {"addr": "0x006B64E8", "type": "int", "choices": [0, 0, 1, -1]},
+      {"addr": "0x006B70E0", "type": "int", "choices": [0, 0, 1]},
+      {"addr": "0x006B32B4", "offset": "0x0", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x006B32B4", "offset": "0x4", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x006B32B4", "offset": "0x1c", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

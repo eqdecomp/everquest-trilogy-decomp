@@ -1,0 +1,90 @@
+{
+  "function": "EQMoneyList_guess",
+  "original": "0x004ad938",
+  "sources": [
+    "src/EverQuest/EQMoneyList.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "oldHead": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [{"addr": "0x006E4D60", "u32": 0}],
+  "callees": {
+    "0x005219C0": {"name": "strcpy", "conv": "cdecl", "args": ["ptr", "cstr"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "empty list preserves neighboring bytes", "args": ["@self"]},
+    {
+      "name": "ordinary head insertion",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "0x006E4D60", "u32": "@oldHead"},
+        {"addr": "@oldHead", "u32": 286331153}
+      ]
+    },
+    {
+      "name": "head points to this",
+      "args": ["@self"],
+      "memory": [{"addr": "0x006E4D60", "u32": "@self"}]
+    },
+    {
+      "name": "head points to this+4 (prev slot)",
+      "args": ["@self"],
+      "memory": [{"addr": "0x006E4D60", "u32": "@self+4"}]
+    },
+    {
+      "name": "global head aliases its own storage and reloads after the write",
+      "args": ["@self"],
+      "memory": [{"addr": "0x006E4D60", "u32": "0x006E4D60"}]
+    },
+    {
+      "name": "head points into the zeroed fields at +0x8",
+      "args": ["@self"],
+      "memory": [{"addr": "0x006E4D60", "u32": "@self+8"}]
+    },
+    {
+      "name": "empty head with nonzero neighbor global at 0x006E4D64",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "0x006E4D60", "u32": 0},
+        {"addr": "0x006E4D64", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "unaligned this",
+      "args": ["@self+1"],
+      "memory": [{"addr": "0x006E4D60", "u32": "@oldHead"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4905272,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self",
+          "@self+1",
+          "@self+0x10"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x006E4D60", "type": "ptr", "choices": [0, "@oldHead", "@self", "@self+4", "@self+0x14", "0x006E4D60"]},
+      {"addr": "@self", "size": 128}
+    ]
+  }
+}

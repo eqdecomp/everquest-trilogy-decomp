@@ -1,0 +1,110 @@
+{
+  "function": "setFogEnableState_guess",
+  "original": "0x1004a23b",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "state",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX evidence: 0/13 call sites read EAX, and the two paths leave different values (the device call's result vs the caller's own EAX), so the function has no defined return value",
+  "objects": {
+    "device": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"}
+      ]
+    },
+    "vtable": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x50", "u32": "@fn"}
+      ]
+    },
+    "fn": {
+      "size": "0x10"
+    }
+  },
+  "memory": [
+    {"addr": "0x100fba6c", "u32": "@device"},
+    {"addr": "0x100f3e34", "u32": 0}
+  ],
+  "callees": {
+    "@fn": {
+      "name": "render_device_set_state_guess",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int"],
+      "ret": 0,
+      "writes": [
+        {"arg": 0, "offset": 16, "hex": "efbeadde"},
+        {"addr": "0x100f3e34", "hex": "efbeadde"}
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "equal: cached 0, state 0 - no call, no store",
+      "args": [0]
+    },
+    {
+      "name": "differs: cached 0, state 5 - call (device, 0x1c, 5), cache 5 (store after the call)",
+      "args": [5]
+    },
+    {
+      "name": "differs: cached 5, state 0 - call, cache back to 0",
+      "args": [0],
+      "memory": [{"addr": "0x100f3e34", "u32": 5}]
+    },
+    {
+      "name": "differs: cached 1, state -1",
+      "args": [-1],
+      "memory": [{"addr": "0x100f3e34", "u32": 1}]
+    },
+    {
+      "name": "differs: cached -1, state 0x7fffffff",
+      "args": [2147483647],
+      "memory": [{"addr": "0x100f3e34", "u32": 4294967295}]
+    },
+    {
+      "name": "differs: cached 0x7fffffff, state 0x80000000",
+      "args": [-2147483648],
+      "memory": [{"addr": "0x100f3e34", "u32": 2147483647}]
+    },
+    {
+      "name": "equal: cached 0xdeadbeef, state 0xdeadbeef - no call",
+      "args": [-559038737],
+      "memory": [{"addr": "0x100f3e34", "u32": 3735928559}]
+    },
+    {
+      "name": "equal: cached 0x1c, state 0x1c (the state id itself) - no call",
+      "args": [28],
+      "memory": [{"addr": "0x100f3e34", "u32": 28}]
+    },
+    {
+      "name": "differs: cached 0xdeadbeef, state 0xdeadbeef+1",
+      "args": [-559038736],
+      "memory": [{"addr": "0x100f3e34", "u32": 3735928559}]
+    }
+  ],
+  "fuzz": {
+    "seed": 303675,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x100f3e34",
+        "type": "int",
+        "choices": [0, 1, 2, 3, 28, -1, 5]
+      }
+    ]
+  }
+}

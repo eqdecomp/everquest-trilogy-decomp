@@ -1,0 +1,222 @@
+{
+  "function": "eqmainBuildDialog_guess",
+  "original": "0x10003000",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eqobj": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "bmp": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 640},
+        {"offset": "0x4", "u32": 480}
+      ]
+    },
+    "widget": {
+      "size": "0x44",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004CEB8", "u32": "@eqobj"},
+    {"addr": "0x1004CEC8", "u32": "0x1234"},
+    {"addr": "0x1004CDF0", "u32": "0x5a5a5a5a"}
+  ],
+  "callees": {
+    "0x10001b60": {
+      "name": "FUN_10001b60",
+      "conv": "stdcall",
+      "args": []
+    },
+    "0x10007cf0": {
+      "name": "FUN_10007cf0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10007ae0": {
+      "name": "FUN_10007ae0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "ret": "@bmp"
+    },
+    "0x10006c20": {
+      "name": "FUN_10006c20",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10007a80": {
+      "name": "FUN_10007a80",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10008c10": {
+      "name": "FUN_10008c10",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": "@widget"
+    },
+    "0x10009370": {
+      "name": "FUN_10009370",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 640x480 descriptor, control at (0xDC, 100) 200x134, text reaches 0x10009370",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "empty text: the pointer to the empty string still goes to 0x10009370",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "descriptor size 0x0: zeros reach 0x10006C20 as the size",
+      "args": [
+        "abc"
+      ],
+      "objects": {
+        "bmp": {"size": "0x10", "fill": "zero"}
+      }
+    },
+    {
+      "name": "descriptor dwords are not swapped or truncated: 0x12345678, 0x9ABCDEF0",
+      "args": [
+        "Dialog"
+      ],
+      "objects": {
+        "bmp": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x12345678"}, {"offset": "0x4", "u32": "0x9abcdef0"}]}
+      }
+    },
+    {
+      "name": "descriptor dwords -1 and 0x80000000",
+      "args": [
+        "abc"
+      ],
+      "objects": {
+        "bmp": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xffffffff"}, {"offset": "0x4", "u32": "0x80000000"}]}
+      }
+    },
+    {
+      "name": "control allocation returns 0: 0 is stored in DAT_1004CDF0 and passed on",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x10008c10": {
+          "name": "FUN_10008c10",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "int", "int", "int", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "control allocation returns another pointer: stored and passed on",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x10008c10": {
+          "name": "FUN_10008c10",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "int", "int", "int", "int"],
+          "ret": "0x12340000"
+        }
+      }
+    },
+    {
+      "name": "DAT_1004CEC8 = -1 is the 8th argument of the control allocation",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x1004CEC8", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "DAT_1004CEB8 = 0x12345678 reaches the three callees that take it",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x1004CEB8", "u32": "0x12345678"}
+      ]
+    },
+    {
+      "name": "DAT_1004CEB8 = 0: the object argument is 0 everywhere",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {"addr": "0x1004CEB8", "u32": 0}
+      ]
+    },
+    {
+      "name": "long text",
+      "args": [
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 12288,
+    "count": 30,
+    "args": [
+      {"choices": ["", "A", "abc", "Dialog text", "0123456789abcdef0123456789abcdef"]}
+    ],
+    "memory": [
+      {"addr": "@bmp", "type": "u32", "count": 2},
+      {"addr": "0x1004CEB8", "type": "ptr", "choices": ["@eqobj", "0x12345678", "0x0"]},
+      {"addr": "0x1004CEC8", "type": "u32", "choices": ["0x0", "0xffffffff", "0x21a3c", "0x80000000", "0x1234"]}
+    ]
+  }
+}

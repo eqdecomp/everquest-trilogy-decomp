@@ -1,0 +1,147 @@
+{
+  "function": "findFileOnSearchPath_guess",
+  "original": "0x10028ef8",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "searchContext",
+      "type": "ptr"
+    },
+    {
+      "name": "fileName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "cstr",
+  "objects": {
+    "searchpath": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "searchcontext": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@searchpath"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100ABE24",
+      "cstr": "C:\\EQGFX\\resolved.s3d"
+    },
+    {
+      "addr": "@searchpath",
+      "cstr": "C:\\EverQuest\\Resources"
+    }
+  ],
+  "callees": {
+    "kernel32.dll!SearchPathA": {
+      "name": "SearchPathA",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "cstr",
+        "cstr",
+        "u32",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null search directory skips SearchPathA",
+      "args": [
+        "@searchcontext",
+        "missing.s3d"
+      ],
+      "objects": {
+        "searchcontext": {
+          "size": "0x14",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x10",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "SearchPathA returns zero",
+      "args": [
+        "@searchcontext",
+        "missing.s3d"
+      ]
+    },
+    {
+      "name": "SearchPathA success returns shared buffer",
+      "args": [
+        "@searchcontext",
+        "resolved.s3d"
+      ],
+      "callees": {
+        "kernel32.dll!SearchPathA": {
+          "name": "SearchPathA",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "cstr",
+            "cstr",
+            "u32",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "empty file name is passed through",
+      "args": [
+        "@searchcontext",
+        ""
+      ]
+    },
+    {
+      "name": "null file name is passed through",
+      "args": [
+        "@searchcontext",
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 167672,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@searchcontext"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@searchcontext",
+        "offset": "0x10",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@searchpath"
+        ]
+      }
+    ]
+  }
+}

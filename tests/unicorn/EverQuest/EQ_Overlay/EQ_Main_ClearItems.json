@@ -1,0 +1,156 @@
+{
+  "function": "EQ_Main_ClearItems_guess",
+  "original": "0x00464ab6",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0xa4",
+      "fill": "random",
+      "init": [
+        { "offset": "0x8c", "u32": 0 },
+        { "offset": "0xa0", "u32": "0xdeadbeef" }
+      ]
+    },
+    "state": {
+      "size": "0x84",
+      "fill": "random",
+      "init": [
+        { "offset": "0x80", "u32": "0x11223344" }
+      ]
+    },
+    "player": {
+      "size": "0x84",
+      "fill": "random",
+      "init": [
+        { "offset": "0x80", "u32": "0x55667788" }
+      ]
+    }
+  },
+  "memory": [
+    { "addr": "0x006e4db8", "u32": "@state" },
+    { "addr": "0x006e4d8c", "u32": "@player" },
+    { "addr": "0x006b3194", "u32": "0x12345678" }
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:8",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null-state-clears-items-without-sending",
+      "args": [ "@self", 1 ],
+      "memory": [
+        { "addr": "0x006e4db8", "u32": 0 },
+        { "addr": "0x006e4d8c", "u32": 0 }
+      ]
+    },
+    {
+      "name": "pending-state-skips-player-read",
+      "args": [ "@self", -1 ],
+      "memory": [
+        { "addr": "0x006e4db8", "u32": "@state" },
+        { "addr": "0x006e4d8c", "u32": 0 }
+      ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x8c", "u32": 1 } ] }
+      }
+    },
+    {
+      "name": "sends-state-and-player-ids",
+      "args": [ "@self", 0 ],
+      "memory": [
+        { "addr": "0x006e4db8", "u32": "@state" },
+        { "addr": "0x006e4d8c", "u32": "@player" }
+      ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x8c", "u32": 0 } ] },
+        "state": { "init": [ { "offset": "0x80", "u32": "0xa1b2c3d4" } ] },
+        "player": { "init": [ { "offset": "0x80", "u32": "0x10293847" } ] }
+      }
+    },
+    {
+      "name": "sends-zero-payload-values",
+      "args": [ "@self", 99 ],
+      "memory": [
+        { "addr": "0x006e4db8", "u32": "@state" },
+        { "addr": "0x006e4d8c", "u32": "@player" }
+      ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x8c", "u32": 0 } ] },
+        "state": { "init": [ { "offset": "0x80", "u32": 0 } ] },
+        "player": { "init": [ { "offset": "0x80", "u32": 0 } ] }
+      }
+    },
+    {
+      "name": "flag-prevents-send-even-with-state",
+      "args": [ "@self", 0 ],
+      "memory": [
+        { "addr": "0x006e4db8", "u32": "@state" },
+        { "addr": "0x006e4d8c", "u32": 0 }
+      ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x8c", "u32": "0xffffffff" } ] }
+      }
+    },
+    {
+      "name": "null-state-prevents-send-even-when-flag-clear",
+      "args": [ "@self", 0 ],
+      "memory": [
+        { "addr": "0x006e4db8", "u32": 0 },
+        { "addr": "0x006e4d8c", "u32": 0 }
+      ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x8c", "u32": 0 } ] }
+      }
+    },
+    {
+      "name": "adjacent-global-address-boundary",
+      "args": [ "@self", 0 ],
+      "memory": [
+        { "addr": "0x006e4db7", "hex": "0100000000" }
+      ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x8c", "u32": 0 } ] }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4606646,
+    "count": 32,
+    "args": [
+      { "choices": [ "@self" ] },
+      { "range": [ -2147483648, 2147483647 ] }
+    ],
+    "memory": [
+      { "addr": "@self", "offset": "0x8c", "type": "u32", "choices": [ 0, 0, 1, 2, "0xffffffff" ] },
+      { "addr": "@self", "offset": "0xa0", "type": "u32", "range": [ 0, 4294967295 ] },
+      { "addr": "0x006e4db8", "type": "ptr", "choices": [ 0, "@state" ] },
+      { "addr": "@state", "offset": "0x80", "type": "u32", "range": [ 0, 4294967295 ] },
+      { "addr": "0x006e4d8c", "type": "ptr", "choices": [ "@player" ] },
+      { "addr": "@player", "offset": "0x80", "type": "u32", "range": [ 0, 4294967295 ] }
+    ]
+  }
+}

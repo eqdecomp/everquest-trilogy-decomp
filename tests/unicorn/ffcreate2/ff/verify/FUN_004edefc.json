@@ -1,0 +1,250 @@
+{
+  "function": "FFCreate2Lookup_guess::InvokeIndexedEntryMethodWithDescriptor_guess",
+  "original": "0x004edefc",
+  "sources": [
+    "src/ffcreate2/ff/verify.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@ffcreate2lookup",
+  "args": [
+    {
+      "name": "descriptor",
+      "type": "ptr"
+    },
+    {
+      "name": "context",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "ffcreate2lookup": {
+      "size": "0xb50",
+      "fill": "zero"
+    },
+    "descriptor": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "entry": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004ec77d": {
+      "name": "FUN_004ec77d",
+      "conv": "thiscall",
+      "args": [
+        "u32",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "index zero, empty slot",
+      "args": [
+        "@descriptor",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x00000000"
+        }
+      ]
+    },
+    {
+      "name": "index zero, present slot",
+      "args": [
+        "@descriptor",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x00001234"
+        },
+        {
+          "addr": "@ffcreate2lookup",
+          "offset": "0x0c",
+          "u32": "@entry"
+        }
+      ]
+    },
+    {
+      "name": "low word is zero extended",
+      "args": [
+        "@descriptor",
+        2147483647
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x00008001"
+        },
+        {
+          "addr": "@ffcreate2lookup",
+          "offset": "0x0c",
+          "u32": "@entry"
+        }
+      ]
+    },
+    {
+      "name": "last valid index",
+      "args": [
+        "@descriptor",
+        -2147483648
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x02cfabcd"
+        },
+        {
+          "addr": "@ffcreate2lookup",
+          "offset": "0xb48",
+          "u32": "@entry"
+        }
+      ]
+    },
+    {
+      "name": "last valid index, empty slot",
+      "args": [
+        "@descriptor",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x02cfffff"
+        }
+      ]
+    },
+    {
+      "name": "first out of range slot contains value",
+      "args": [
+        "@descriptor",
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x02d00031"
+        },
+        {
+          "addr": "@ffcreate2lookup",
+          "offset": "0xb4c",
+          "u32": "@entry"
+        }
+      ]
+    },
+    {
+      "name": "first invalid index",
+      "args": [
+        "@descriptor",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x02d00031"
+        }
+      ]
+    },
+    {
+      "name": "index above upper boundary",
+      "args": [
+        "@descriptor",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x02d10000"
+        }
+      ]
+    },
+    {
+      "name": "high word with bit 15 set",
+      "args": [
+        "@descriptor",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0x80000077"
+        }
+      ]
+    },
+    {
+      "name": "maximum high word",
+      "args": [
+        "@descriptor",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@descriptor",
+          "u32": "0xffff0001"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5168892,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@descriptor"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@descriptor",
+        "type": "u32",
+        "choices": [
+          "0x00000000",
+          "0x00008001",
+          "0x0000ffff",
+          "0x00010002",
+          "0x02cf1234",
+          "0x02d00000",
+          "0x02d1ffff",
+          "0x80000000",
+          "0xffff0000"
+        ]
+      },
+      {
+        "addr": "@ffcreate2lookup",
+        "offset": "0x0c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@entry"
+        ]
+      },
+      {
+        "addr": "@ffcreate2lookup",
+        "offset": "0xb48",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@entry"
+        ]
+      }
+    ]
+  }
+}

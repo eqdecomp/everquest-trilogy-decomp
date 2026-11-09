@@ -1,0 +1,318 @@
+{
+  "function": "guildwar_guess",
+  "original": "0x004a560f",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "rest": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "@rest",
+      "cstr": "7"
+    },
+    {
+      "addr": "@target",
+      "offset": "0x1",
+      "cstr": "Fallback"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    }
+  ],
+  "callees": {
+    "0x004dbc84": {
+      "name": "CEverQuest::GrabFirstWord2_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "ignore"
+      ],
+      "ret": "@rest",
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "5800"
+        }
+      ]
+    },
+    "0x00522781": {
+      "name": "atoi",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x004cb10b": {
+      "name": "CEverQuest::GuildWar_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "negative clamps to 14",
+      "args": [
+        0,
+        "war -9"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "-9"
+        }
+      ]
+    },
+    {
+      "name": "zero clamps to 14",
+      "args": [
+        0,
+        "war 0"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "0"
+        }
+      ]
+    },
+    {
+      "name": "lower valid boundary",
+      "args": [
+        0,
+        "war 1"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "1"
+        }
+      ]
+    },
+    {
+      "name": "interior value",
+      "args": [
+        0,
+        "war 13"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "13"
+        }
+      ]
+    },
+    {
+      "name": "upper valid boundary",
+      "args": [
+        0,
+        "war 14"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "14"
+        }
+      ]
+    },
+    {
+      "name": "above upper boundary clamps to 14",
+      "args": [
+        0,
+        "war 15"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "15"
+        }
+      ]
+    },
+    {
+      "name": "non-numeric atoi result clamps to 14",
+      "args": [
+        0,
+        "war abc"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "abc"
+        }
+      ]
+    },
+    {
+      "name": "empty first word and no target",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "1"
+        },
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004dbc84": {
+          "name": "CEverQuest::GrabFirstWord2_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": "@rest",
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "null target with nonzero following global byte",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "1"
+        },
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4db0",
+          "u8": 1
+        }
+      ],
+      "callees": {
+        "0x004dbc84": {
+          "name": "CEverQuest::GrabFirstWord2_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": "@rest",
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty first word falls back to target name",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "5"
+        }
+      ],
+      "callees": {
+        "0x004dbc84": {
+          "name": "CEverQuest::GrabFirstWord2_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": "@rest",
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "non-empty first word wins over target",
+      "args": [
+        0,
+        "Warrior 8"
+      ],
+      "memory": [
+        {
+          "addr": "@rest",
+          "cstr": "8"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4871695,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          0
+        ]
+      },
+      {}
+    ]
+  }
+}

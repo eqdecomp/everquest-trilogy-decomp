@@ -1,0 +1,304 @@
+{
+  "function": "pet_command_guess",
+  "original": "0x004a82e7",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "command",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "local": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1", "cstr": "Me"},
+        {"offset": "0x80", "u32": 4096}
+      ]
+    },
+    "pet": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1", "cstr": "Pet"},
+        {"offset": "0x80", "u32": 8192},
+        {"offset": "0x84", "u32": 4096}
+      ]
+    },
+    "other": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1", "cstr": "Other"},
+        {"offset": "0x80", "u32": 12288}
+      ]
+    },
+    "mob": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1", "cstr": "Orc"},
+        {"offset": "0x80", "u32": 16384}
+      ]
+    },
+    "wnd": {
+      "size": "0xec0",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006e4d8c", "u32": "@local"},
+    {"addr": "0x006e4d58", "u32": "@pet"},
+    {"addr": "0x006e4dac", "u32": 0},
+    {"addr": "0x006e4e44", "u32": 0}
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004cf180": {
+      "name": "CEverQuest::send_tell_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "cstr"
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x00524240": {
+      "name": "__strcmpi",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty spawn list has no pet",
+      "args": [0, "sit"],
+      "memory": [{"addr": "0x006e4d58", "u32": 0}]
+    },
+    {
+      "name": "no spawn is owned by the local player",
+      "args": [0, "sit"],
+      "memory": [{"addr": "0x006e4d58", "u32": "@other"}]
+    },
+    {
+      "name": "local spawn id zero matches an unowned spawn",
+      "args": [0, "sit"],
+      "memory": [
+        {"addr": "@local", "offset": "0x80", "u32": 0},
+        {"addr": "0x006e4d58", "u32": "@other"}
+      ]
+    },
+    {
+      "name": "pet found behind a non-pet spawn",
+      "args": [0, "sit"],
+      "memory": [
+        {"addr": "0x006e4d58", "u32": "@other"},
+        {"addr": "@other", "offset": "0x68", "u32": "@pet"}
+      ]
+    },
+    {
+      "name": "no pet even with an attack word and a target",
+      "args": [0, "attack"],
+      "memory": [
+        {"addr": "0x006e4d58", "u32": 0},
+        {"addr": "0x006e4dac", "u32": "@mob"}
+      ]
+    },
+    {
+      "name": "target targets the pet and marks the window",
+      "args": [0, "target"],
+      "memory": [{"addr": "0x006e4e44", "u32": "@wnd"}]
+    },
+    {
+      "name": "target without a window object",
+      "args": [0, "target"],
+      "memory": [{"addr": "0x006e4e44", "u32": 0}]
+    },
+    {
+      "name": "TARGET in capitals",
+      "args": [0, "TARGET"],
+      "memory": [{"addr": "0x006e4e44", "u32": "@wnd"}]
+    },
+    {
+      "name": "target replaces an existing target",
+      "args": [0, "target"],
+      "memory": [
+        {"addr": "0x006e4dac", "u32": "@mob"},
+        {"addr": "0x006e4e44", "u32": "@wnd"}
+      ]
+    },
+    {
+      "name": "target stores the pet found behind a non-pet spawn",
+      "args": [0, "target"],
+      "memory": [
+        {"addr": "0x006e4d58", "u32": "@other"},
+        {"addr": "@other", "offset": "0x68", "u32": "@pet"},
+        {"addr": "0x006e4e44", "u32": "@wnd"}
+      ]
+    },
+    {
+      "name": "targets is not target",
+      "args": [0, "targets"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "attack with a target",
+      "args": [0, "attack"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "attack with no target sends the text",
+      "args": [0, "attack"],
+      "memory": [{"addr": "0x006e4dac", "u32": 0}]
+    },
+    {
+      "name": "attack with the local player as target sends the text",
+      "args": [0, "attack"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@local"}]
+    },
+    {
+      "name": "kill with a target",
+      "args": [0, "kill"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "kick with a target",
+      "args": [0, "kick"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "maim with a target",
+      "args": [0, "maim"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "slay with a target",
+      "args": [0, "slay"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "murder with a target",
+      "args": [0, "murder"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "execute with a target",
+      "args": [0, "execute"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "sack with a target",
+      "args": [0, "sack"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "destroy with a target",
+      "args": [0, "destroy"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "whack with a target",
+      "args": [0, "whack"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "Attack in mixed case",
+      "args": [0, "Attack"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "attack word with a prefix is not an attack",
+      "args": [0, "xattack"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "attack word with a suffix is not an attack",
+      "args": [0, "attacks"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "empty command with a target",
+      "args": [0, ""],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "non attack word with a target",
+      "args": [0, "sit"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@mob"}]
+    },
+    {
+      "name": "attack word with no target sends the text",
+      "args": [0, "whack"],
+      "memory": [{"addr": "0x006e4dac", "u32": 0}]
+    },
+    {
+      "name": "attack word with the local player as target sends the text",
+      "args": [0, "slay"],
+      "memory": [{"addr": "0x006e4dac", "u32": "@local"}]
+    },
+    {
+      "name": "command of 511 characters fills the message buffer exactly",
+      "args": [0, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+    }
+  ],
+  "fuzz": {
+    "seed": 4883175,
+    "count": 40,
+    "args": [
+      {"choices": [0, 1, -1, 7]},
+      {"choices": ["attack", "kill", "kick", "maim", "slay", "murder", "execute", "sack", "destroy", "whack", "target", "Attack", "TARGET", "sit", "targets", "attac", "", "killer", "x"]}
+    ],
+    "memory": [
+      {"addr": "0x006e4d58", "type": "ptr", "choices": ["@pet", "@other", "@mob", 0], "p": 0.8},
+      {"addr": "0x006e4dac", "type": "ptr", "choices": ["@mob", "@local", "@pet", "@other", 0], "p": 0.8},
+      {"addr": "0x006e4e44", "type": "ptr", "choices": ["@wnd", 0]},
+      {"addr": "@local", "offset": "0x80", "type": "u32", "choices": [4096, 0, 12288]},
+      {"addr": "@pet", "offset": "0x84", "type": "u32", "choices": [4096, 0, 12288]},
+      {"addr": "@other", "offset": "0x84", "type": "u32", "choices": [0, 4096, 12288]},
+      {"addr": "@pet", "offset": "0x68", "type": "ptr", "choices": ["@mob", 0]},
+      {"addr": "@other", "offset": "0x68", "type": "ptr", "choices": ["@pet", "@mob", 0]}
+    ]
+  }
+}

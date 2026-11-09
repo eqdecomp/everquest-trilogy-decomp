@@ -1,0 +1,94 @@
+{
+  "function": "loadUserDefinedColors_guess",
+  "original": "0x0040bcbb",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {"profile": {"size": "0x10", "fill": "zero"}},
+  "memory": [
+    {"addr": "0x0053418c", "u32": "@profile"},
+    {"addr": "0x0053e170", "u32": "0x0053e154"}
+  ],
+  "callees": {
+    "@profile": {
+      "name": "GetPrivateProfileStringA",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"],
+      "ret": 3,
+      "writes": [{"arg": 3, "offset": 0, "hex": "32353500"}]
+    },
+    "0x0040bb6c": {
+      "name": "GetDefaultUserDefinedColor",
+      "conv": "cdecl",
+      "args": ["int", "ptr", "ptr", "ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "12000000"},
+        {"arg": 2, "offset": 0, "hex": "34000000"},
+        {"arg": 3, "offset": 0, "hex": "56000000"}
+      ]
+    },
+    "0x0040bc8c": {
+      "name": "CDisplay::SetUserDefinedColor",
+      "conv": "cdecl",
+      "args": ["int", "u8", "u8", "u8"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "all three channels parse 255", "args": []},
+    {
+      "name": "initialized loop index ignores prior stack bytes",
+      "args": [],
+      "memory": [
+        {"addr": "0x7f0efff4", "u32": 1},
+        {"addr": "0x7f0efff8", "u32": 1},
+        {"addr": "0x7f0efffc", "u32": 1}
+      ]
+    },
+    {
+      "name": "zero boundary",
+      "args": [],
+      "callees": {
+        "@profile": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"], "ret": 1, "writes": [{"arg": 3, "offset": 0, "hex": "3000"}]}
+      }
+    },
+    {
+      "name": "negative channel values convert to bytes",
+      "args": [],
+      "callees": {
+        "@profile": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"], "ret": 2, "writes": [{"arg": 3, "offset": 0, "hex": "2d3100"}]}
+      }
+    },
+    {
+      "name": "nonnumeric channel values convert to zero",
+      "args": [],
+      "callees": {
+        "@profile": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"], "ret": 0, "writes": [{"arg": 3, "offset": 0, "hex": "7800"}]}
+      }
+    },
+    {
+      "name": "leading asterisk selects defaults",
+      "args": [],
+      "callees": {
+        "@profile": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"], "ret": 0, "writes": [{"arg": 3, "offset": 0, "hex": "2a00"}]}
+      }
+    },
+    {
+      "name": "asterisk after the first character is not a default",
+      "args": [],
+      "callees": {
+        "@profile": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"], "ret": 2, "writes": [{"arg": 3, "offset": 0, "hex": "352a00"}]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4242619,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x0053e170", "type": "u32", "choices": ["0x0053e154", "0x0053e158", "0x0053e150"]}
+    ]
+  }
+}

@@ -1,0 +1,505 @@
+{
+  "function": "s3dCreateStringSprite",
+  "original": "0x1001aafb",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "key",
+      "type": "cstr"
+    },
+    {
+      "name": "font",
+      "type": "ptr"
+    },
+    {
+      "name": "text",
+      "type": "cstr"
+    },
+    {
+      "name": "value20",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "font": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x4c",
+      "fill": "random"
+    },
+    "textcopy": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "keycopy": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10086db0",
+      "u32": "0x3f800000"
+    }
+  ],
+  "callees": {
+    "0x1001a9ec": {
+      "name": "s3dCheckFontTextureCharRange",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@sprite",
+        "@textcopy",
+        "@keycopy"
+      ]
+    },
+    "0x1001ac3a": {
+      "name": "s3dCalcStringSpriteHalfDiagonal_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1001aa2a": {
+      "name": "s3dCalcStringSpriteWidth_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10068160": {
+      "name": "_strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: key and text, every step succeeds",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ]
+    },
+    {
+      "name": "no key: success without the dictionary add",
+      "args": [
+        "@dictionary",
+        0,
+        "@font",
+        "abc",
+        1
+      ]
+    },
+    {
+      "name": "text null: returns 0 before any call",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        0,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "font check fails: returns 0 before allocating",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1001a9ec": {
+          "name": "s3dCheckFontTextureCharRange",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "sprite allocation fails",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "text copy allocation fails: only the sprite is freed",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@sprite",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "FUN_1001ac3a fails: text and sprite freed",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1001ac3a": {
+          "name": "FUN_1001ac3a",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "FUN_1001aa2a fails: text and sprite freed",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1001aa2a": {
+          "name": "FUN_1001aa2a",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "key allocation fails: goto cleanup, key pointer stays null",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@sprite",
+            "@textcopy",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "FUN_1001564b fails with a key: key, text and sprite freed",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "FUN_1001564b fails without a key",
+      "args": [
+        "@dictionary",
+        0,
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dictionary add fails (negative): FUN_10015d81 then cleanup",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dictionary add returns 1: positive is success",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        1
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "empty key and empty text: zero-length copies",
+      "args": [
+        "@dictionary",
+        "",
+        "@font",
+        "",
+        0
+      ]
+    },
+    {
+      "name": "null dictionary and font: passed through, not dereferenced",
+      "args": [
+        0,
+        "abc",
+        0,
+        "abc",
+        1
+      ]
+    },
+    {
+      "name": "value20 = -1 is stored at +0x20",
+      "args": [
+        "@dictionary",
+        "abc",
+        "@font",
+        "abc",
+        -1
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 11001,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "abc",
+          "",
+          "Key 2",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@font",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "abc",
+          "",
+          "Hello world",
+          0
+        ]
+      },
+      {
+        "range": [
+          -4,
+          30
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x10086db0",
+        "type": "u32"
+      }
+    ]
+  }
+}

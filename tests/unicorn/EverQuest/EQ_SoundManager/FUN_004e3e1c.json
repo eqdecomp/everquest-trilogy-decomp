@@ -1,0 +1,122 @@
+{
+  "function": "ResetSoundManagerState_guess",
+  "original": "0x004e3e1c",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x104a",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": 287454020 },
+        { "offset": "0x8", "u32": 1432778632 },
+        { "offset": "0xc", "u32": 2578103244 },
+        { "offset": "0x1049", "u8": 0 }
+      ]
+    },
+    "reader": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "0x006e4dd8", "u32": "@reader" },
+    { "addr": "0x00577abc", "u32": 3 },
+    { "addr": "0x006eccf0", "u32": 720 }
+  ],
+  "callees": {
+    "0x004e3833": {
+      "name": "TextFileReader::TextFileReader_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "inactive_flag_leaves_state_untouched",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "0x00577abc", "u32": 2 },
+        { "addr": "0x006eccf0", "u32": 718 }
+      ]
+    },
+    {
+      "name": "null_reader_leaves_state_untouched",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "@self", "offset": "0x1049", "u8": 1 },
+        { "addr": "0x006e4dd8", "u32": 0 },
+        { "addr": "0x00577abc", "u32": 3 },
+        { "addr": "0x006eccf0", "u32": 718 }
+      ]
+    },
+    {
+      "name": "lower_bound_skips_reader_loop_and_start_at_limit",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "@self", "offset": "0x1049", "u8": 1 },
+        { "addr": "0x00577abc", "u32": 0 },
+        { "addr": "0x006eccf0", "u32": 720 }
+      ]
+    },
+    {
+      "name": "one_reader_then_last_valid_index",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "@self", "offset": "0x1049", "u8": 1 },
+        { "addr": "0x00577abc", "u32": 1 },
+        { "addr": "0x006eccf0", "u32": 719 }
+      ]
+    },
+    {
+      "name": "three_readers_then_two_final_indices_in_order",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "@self", "offset": "0x1049", "u8": 1 },
+        { "addr": "0x00577abc", "u32": 3 },
+        { "addr": "0x006eccf0", "u32": 718 }
+      ]
+    },
+    {
+      "name": "upper_reader_bound_negative_and_start_beyond_limit",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "@self", "offset": "0x1049", "u8": 1 },
+        { "addr": "0x00577abc", "u32": 4294967295 },
+        { "addr": "0x006eccf0", "u32": 721 }
+      ]
+    },
+    {
+      "name": "negative_start_runs_to_last_valid_index",
+      "args": ["@self"],
+      "memory": [
+        { "addr": "@self", "offset": "0x1049", "u8": 1 },
+        { "addr": "0x00577abc", "u32": 0 },
+        { "addr": "0x006eccf0", "u32": 4294967295 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5127708,
+    "count": 40,
+    "args": [
+      { "choices": ["@self"] }
+    ],
+    "memory": [
+      { "addr": "@self", "offset": "0x1049", "type": "u8", "choices": [0, 1] },
+      { "addr": "0x006e4dd8", "type": "ptr", "choices": ["@reader", "0x0"] },
+      { "addr": "0x00577abc", "type": "int", "range": [-2, 4] },
+      { "addr": "0x006eccf0", "type": "int", "choices": [717, 718, 719, 720, 721] }
+    ]
+  }
+}

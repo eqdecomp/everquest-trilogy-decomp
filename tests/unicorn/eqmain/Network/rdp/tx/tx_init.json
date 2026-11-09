@@ -1,0 +1,456 @@
+{
+  "function": "tx_init_guess",
+  "original": "0x1002b000",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    },
+    {
+      "name": "param_3",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x800",
+      "fill": "random"
+    },
+    "param_2": {
+      "size": "0x48",
+      "fill": "random"
+    },
+    "param_3": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        1000,
+        2000,
+        3000
+      ]
+    },
+    "0x100360b2": {
+      "name": "FUN_100360b2",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ]
+    },
+    "0x100322ba": {
+      "name": "ntohs",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": "0x3412"
+    },
+    "0x100322ae": {
+      "name": "htons",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": "0x12b4"
+    },
+    "0x100360bf": {
+      "name": "_rand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 32767
+    },
+    "0x10030d50": {
+      "name": "bitarray_clear_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1002dea0": {
+      "name": "FUN_1002dea0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "u32"
+      ]
+    },
+    "0x10030c10": {
+      "name": "bandwidth_init_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10030a10": {
+      "name": "initializePacketRateController_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "family 2: port byte-swapped, bit 15 set through htons",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "02001234c0a801020000000000000000"
+        },
+        {
+          "addr": "@param_2",
+          "offset": "0x4",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@param_2",
+          "offset": "0xc",
+          "u32": "0xabcdef01"
+        },
+        {
+          "addr": "@param_2",
+          "offset": "0x10",
+          "u32": "0x76543210"
+        },
+        {
+          "addr": "@param_2",
+          "offset": "0x44",
+          "u32": "0xdeadbeef"
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x702",
+          "u16": "0x5678"
+        }
+      ]
+    },
+    {
+      "name": "family 2 with the port high bit already set, rand 0",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "020092340102030405060708090a0b0c"
+        }
+      ],
+      "callees": {
+        "0x100360bf": {
+          "name": "_rand",
+          "conv": "cdecl",
+          "args": [],
+          "ret": 0
+        },
+        "0x100322ba": {
+          "name": "ntohs",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": "0x9234"
+        },
+        "0x100322ae": {
+          "name": "htons",
+          "conv": "stdcall",
+          "args": [
+            "u16"
+          ],
+          "ret": "0x3492"
+        }
+      }
+    },
+    {
+      "name": "family 2 with rand 0x12345 (truncates to short)",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "02000000000000000000000000000000"
+        }
+      ],
+      "callees": {
+        "0x100360bf": {
+          "name": "_rand",
+          "conv": "cdecl",
+          "args": [],
+          "ret": 74565
+        }
+      }
+    },
+    {
+      "name": "family 6 takes param_2+0x10",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "0600aabbccddeeff0011223344556677"
+        }
+      ]
+    },
+    {
+      "name": "family 0x45 stores -1",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "4500123456789abcdef00123456789ab"
+        }
+      ]
+    },
+    {
+      "name": "family 0x44 (just under 0x45) takes no branch",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "44001122334455667788aabbccddeeff"
+        }
+      ]
+    },
+    {
+      "name": "family 0x46 (just over 0x45) takes no branch",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "46001122334455667788aabbccddeeff"
+        }
+      ]
+    },
+    {
+      "name": "family 0x0102 (low byte 2, high byte set) takes no branch",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "from_image": "0x10040FA0",
+          "image_size": 16
+        }
+      ]
+    },
+    {
+      "name": "family 0x8006 (low byte 6, high bit set) takes no branch",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "06800000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "family 1 takes no branch",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "0100ffffffffffffffffffffffffffff"
+        }
+      ]
+    },
+    {
+      "name": "family 0xffff takes no branch",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "ffff0000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "zeros: family 0, rand -1",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "00000000000000000000000000000000"
+        }
+      ],
+      "callees": {
+        "0x100360bf": {
+          "name": "_rand",
+          "conv": "cdecl",
+          "args": [],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "rand 0x8000 wraps to -32768",
+      "args": [
+        "@param_1",
+        "@param_2",
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@param_3",
+          "hex": "06000000000000000000000000000000"
+        }
+      ],
+      "callees": {
+        "0x100360bf": {
+          "name": "_rand",
+          "conv": "cdecl",
+          "args": [],
+          "ret": 32768
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 176128,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "choices": [
+          "@param_2"
+        ]
+      },
+      {
+        "choices": [
+          "@param_3"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_3",
+        "type": "short",
+        "choices": [
+          2,
+          6,
+          69,
+          68,
+          70,
+          -1,
+          0,
+          1,
+          3,
+          258,
+          32770,
+          32767
+        ]
+      },
+      {
+        "addr": "@param_3",
+        "offset": "0x2",
+        "type": "u16"
+      },
+      {
+        "addr": "@param_3",
+        "offset": "0x4",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_3",
+        "offset": "0x8",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_3",
+        "offset": "0xc",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_2",
+        "offset": "0x4",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_2",
+        "offset": "0xc",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_2",
+        "offset": "0x10",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_2",
+        "offset": "0x44",
+        "type": "u32"
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x702",
+        "type": "u16"
+      }
+    ]
+  }
+}

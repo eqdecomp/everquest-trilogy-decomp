@@ -1,0 +1,377 @@
+{
+  "function": "AutoInventory_guess",
+  "original": "0x004a2351",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "int"}
+  ],
+  "ret": "void",
+  "void_ok": "the original returns nothing; callers never read EAX",
+  "objects": {
+    "disp": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x3c", "u8": 170}]},
+    "snd": {"size": "0x40", "fill": "zero"},
+    "eq": {"size": "0x40", "fill": "zero"},
+    "player": {"size": "0x200", "fill": "zero", "init": [{"offset": "0xa0", "u32": "@actor"}]},
+    "actor": {"size": "0x40", "fill": "zero"},
+    "cursor": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "@item"}]},
+    "item": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x82", "u16": 5}, {"offset": "0x88", "u32": 4660}]},
+    "stack": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x82", "u16": 5}]}
+  },
+  "memory": [
+    {"addr": "0x006e4de0", "u32": "@disp"},
+    {"addr": "0x006e4dd8", "u32": "@snd"},
+    {"addr": "0x006efe2c", "u32": "@eq"},
+    {"addr": "0x006b3194", "u32": "0x00620000"},
+    {"addr": "0x0053d860", "cstr": ""}
+  ],
+  "callees": {
+    "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+    "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"],
+      "ret": [1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]},
+    "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"],
+      "ret": [1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]},
+    "0x004a1c7c": {"name": "SwapCombine_guess", "conv": "cdecl", "args": ["mem:4", "ptr", "int", "int"], "ret": 0},
+    "0x004e34fa": {"name": "EqSoundManager::WavePlay_guess", "conv": "thiscall", "args": ["int", "int"]},
+    "0x004a1e2a": {"name": "CDisplay::HandleMaterial_guess", "conv": "cdecl", "args": ["int", "int", "int", "int"]},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:12", "u32", "int"]},
+    "0x004a1dce": {"name": "GetTextureSlot", "conv": "cdecl", "args": ["int"], "ret": 3},
+    "0x0040b6e0": {"name": "CDisplay::UpdateItemSlot_guess", "conv": "thiscall", "args": ["ptr", "int", "ptr"]},
+    "0x004a204d": {"name": "UpdateLight_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x004a2a0f": {"name": "FUN_004a2a0f", "conv": "cdecl", "args": ["int", "mem:4", "int", "int"]},
+    "0x004c535d": {"name": "MarkInventoryWindowsDirty_guess", "conv": "thiscall", "args": []},
+    "0x004c53c2": {"name": "SaveToUIIniFile_guess", "conv": "thiscall", "args": ["int"]}
+  },
+  "cases": [
+    {
+      "name": "gate flag set returns at once",
+      "args": ["@player", "@cursor", 1],
+      "memory": [{"addr": "@disp", "offset": "0x3d", "u8": 1}]
+    },
+    {
+      "name": "null player returns without writing",
+      "args": [0, "@cursor", 1]
+    },
+    {
+      "name": "empty cursor marks windows dirty, slot 0 empty clears the flag",
+      "args": ["@player", "@cursor", 1],
+      "memory": [{"addr": "@cursor", "u32": 0}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "empty cursor with slot 0 filled sets the flag",
+      "args": ["@player", "@cursor", 1],
+      "memory": [{"addr": "@cursor", "u32": 0}, {"addr": "@player", "offset": "0xe0", "u32": "@stack"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "combine on, slots empty: loop 1 does nothing, loop 2 places in slot 21",
+      "args": ["@player", "@cursor", 1],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "combine merges into slot 21 and the swap empties the cursor",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x134", "u32": "@stack"}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1c7c": {"name": "SwapCombine_guess", "conv": "cdecl", "args": ["mem:4", "ptr", "int", "int"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "combine swap leaves the item: slot 21 taken, goes to slot 20",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x134", "u32": "@stack"}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "combine: item id differs, no swap",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x134", "u32": "@stack"}, {"addr": "@stack", "offset": "0x82", "u16": 6}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "combine: item id differs in the high byte only",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x134", "u32": "@stack"}, {"addr": "@stack", "offset": "0x82", "u16": 261}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "combine: equip check fails everywhere, leftover goes to the helper",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x134", "u32": "@stack"}, {"addr": "@player", "offset": "0xe4", "u32": "@stack"}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "combine: use check fails in loop 1, slot 1 matches only with use ok",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xe4", "u32": "@stack"}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"],
+          "ret": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]}
+      }
+    },
+    {
+      "name": "combine: merge into slot 1 then swap empties the cursor",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xe4", "u32": "@stack"}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1c7c": {"name": "SwapCombine_guess", "conv": "cdecl", "args": ["mem:4", "ptr", "int", "int"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "combine: slot 0 content is not visited by loop 1",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xe0", "u32": "@stack"}],
+      "callees": {
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1c7c": {"name": "SwapCombine_guess", "conv": "cdecl", "args": ["mem:4", "ptr", "int", "int"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "item type nonzero skips loop 2 and hands the item to the helper",
+      "args": ["@player", "@cursor", 3],
+      "memory": [{"addr": "@item", "offset": "0x81", "u8": 1}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "item type 255 skips loop 2",
+      "args": ["@player", "@cursor", 3],
+      "memory": [{"addr": "@item", "offset": "0x81", "u8": 255}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "slot 13 with actor, empty slot 14: both name updates",
+      "args": ["@player", "@cursor", 7],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1dce": {"name": "GetTextureSlot_guess", "conv": "cdecl", "args": ["int"], "ret": [7, 8]}
+      }
+    },
+    {
+      "name": "slot 13 with actor, slot 14 filled",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x118", "u32": "@stack"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1dce": {"name": "GetTextureSlot_guess", "conv": "cdecl", "args": ["int"], "ret": [7, 8]}
+      }
+    },
+    {
+      "name": "slot 13 without actor, slot 14 empty",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xa0", "u32": 0}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 13 without actor, slot 14 filled",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xa0", "u32": 0}, {"addr": "@player", "offset": "0x118", "u32": "@stack"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 14 with actor, slot 13 empty",
+      "args": ["@player", "@cursor", 7],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1dce": {"name": "GetTextureSlot_guess", "conv": "cdecl", "args": ["int"], "ret": [8, 7]}
+      }
+    },
+    {
+      "name": "slot 14 with actor, slot 13 filled",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x114", "u32": "@stack"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1},
+        "0x004a1dce": {"name": "GetTextureSlot_guess", "conv": "cdecl", "args": ["int"], "ret": [8, 7]}
+      }
+    },
+    {
+      "name": "slot 14 with actor, slot 13 holds only a high-byte value",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x114", "u32": "0x01000000"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 14 with actor, byte below slot 13 set but slot 13 empty",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0x113", "u8": 1}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 14 without actor, slot 13 empty",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xa0", "u32": 0}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 14 without actor, slot 13 filled",
+      "args": ["@player", "@cursor", 7],
+      "memory": [{"addr": "@player", "offset": "0xa0", "u32": 0}, {"addr": "@player", "offset": "0x114", "u32": "@stack"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 5, sound manager present, negative short in param_3",
+      "args": ["@player", "@cursor", "0x12348005"],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 5, no sound manager, slot 21 and 13 occupied",
+      "args": ["@player", "@cursor", 65535],
+      "memory": [{"addr": "0x006e4dd8", "u32": 0}, {"addr": "@player", "offset": "0x134", "u32": "@stack"}, {"addr": "@player", "offset": "0x114", "u32": "@stack"}],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 1 is reached by the loop",
+      "args": ["@player", "@cursor", 2],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "slot 0 is never tried: equip only passes on the 22nd call",
+      "args": ["@player", "@cursor", 2],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "equip ok but use fails everywhere in loop 2",
+      "args": ["@player", "@cursor", 2],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "use fails until slot 3",
+      "args": ["@player", "@cursor", 2],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]}
+      }
+    },
+    {
+      "name": "every slot occupied, flag set from slot 0",
+      "args": ["@player", "@cursor", 2],
+      "memory": [
+        {"addr": "@player", "offset": "0xe0", "u32": "@stack"}, {"addr": "@player", "offset": "0xe4", "u32": "@stack"},
+        {"addr": "@player", "offset": "0xe8", "u32": "@stack"}, {"addr": "@player", "offset": "0xec", "u32": "@stack"},
+        {"addr": "@player", "offset": "0xf0", "u32": "@stack"}, {"addr": "@player", "offset": "0xf4", "u32": "@stack"},
+        {"addr": "@player", "offset": "0xf8", "u32": "@stack"}, {"addr": "@player", "offset": "0xfc", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x100", "u32": "@stack"}, {"addr": "@player", "offset": "0x104", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x108", "u32": "@stack"}, {"addr": "@player", "offset": "0x10c", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x110", "u32": "@stack"}, {"addr": "@player", "offset": "0x114", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x118", "u32": "@stack"}, {"addr": "@player", "offset": "0x11c", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x120", "u32": "@stack"}, {"addr": "@player", "offset": "0x124", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x128", "u32": "@stack"}, {"addr": "@player", "offset": "0x12c", "u32": "@stack"},
+        {"addr": "@player", "offset": "0x130", "u32": "@stack"}, {"addr": "@player", "offset": "0x134", "u32": "@stack"}
+      ],
+      "callees": {
+        "0x004a1d83": {"name": "Combine_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+        "0x004a2180": {"name": "CanItemEquipInSlot_guess", "conv": "cdecl", "args": ["int", "u32", "int", "int"], "ret": 1},
+        "0x0041ba72": {"name": "can_use_item_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4858705,
+    "count": 50,
+    "args": [
+      {"choices": ["@player"]},
+      {"choices": ["@cursor"]},
+      {"choices": [0, 1, 7, 255, 32767, 32768, 65535, 305431553, -5]}
+    ],
+    "memory": [
+      {"addr": "@disp", "offset": "0x3d", "type": "u8", "choices": [0, 0, 0, 0, 1]},
+      {"addr": "@cursor", "type": "ptr", "choices": [0, "@item", "@item", "@item"]},
+      {"addr": "@item", "offset": "0x81", "type": "u8", "choices": [0, 0, 0, 1]},
+      {"addr": "@item", "offset": "0x82", "type": "u16", "choices": [5, 6]},
+      {"addr": "@item", "offset": "0x88", "type": "u32"},
+      {"addr": "@stack", "offset": "0x82", "type": "u16", "choices": [5, 5, 6]},
+      {"addr": "@player", "offset": "0xa0", "type": "ptr", "choices": [0, "@actor", "@actor"]},
+      {"addr": "@player", "offset": "0xe0", "type": "ptr", "count": 22, "stride": 4, "choices": [0, 0, 0, "@stack"]},
+      {"addr": "0x006e4dd8", "type": "ptr", "choices": [0, "@snd"]}
+    ]
+  }
+}

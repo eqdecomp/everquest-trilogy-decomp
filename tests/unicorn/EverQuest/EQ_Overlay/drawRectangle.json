@@ -1,0 +1,54 @@
+{
+  "function": "EQ_Main::drawRectangle",
+  "original": "0x0046AF87",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [{"name": "rect", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x20", "fill": "zero"},
+    "rect": {"size": "0x10", "fill": "zero"},
+    "renderer": {"size": "0x100", "fill": "zero"},
+    "nextRenderer": {"size": "0x1", "fill": "zero"},
+    "out": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e51b8", "u32": "@renderer"},
+    {"addr": "@renderer", "hex": "535657e8000000005a83ea088bb2900000008b8a80000000c1e10401ceff828000000083ba8000000001750b8b8294000000a3b8516e008bba980000008b5424108b0289068b42048946048b420c8946088b421089460c830764834704648347086483470c645f5e5bc3"},
+    {"addr": "@renderer", "offset": "0x90", "u32": "@out"},
+    {"addr": "@renderer", "offset": "0x94", "u32": "@nextRenderer"},
+    {"addr": "@renderer", "offset": "0x98", "u32": "@rect"},
+    {"addr": "@nextRenderer", "hex": "c3"},
+    {"addr": "@rect", "hex": "0a000000140000001e00000028000000"}
+  ],
+  "callees": {
+    "@renderer": {"name": "ObserveInitializedXY", "conv": "cdecl", "args": ["ignore", "u32"], "passthrough": true},
+    "@nextRenderer": {"name": "UnexpectedReloadedRenderer", "conv": "cdecl", "args": ["ignore", "u32"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "callback mutates rect and renderer but cached renderer reads live rect for later lines", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000140000001e00000028000000"}]},
+    {"name": "equal top and bottom skips renderer", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000140000001e00000014000000"}]},
+    {"name": "equal left and right skips renderer", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000140000000a00000028000000"}]},
+    {"name": "negative top skips renderer", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000ffffffff1e00000028000000"}]},
+    {"name": "negative left skips renderer", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "ffffffff140000001e00000028000000"}]},
+    {"name": "negative bottom skips renderer", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000140000001e000000ffffffff"}]},
+    {"name": "negative right skips renderer", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a00000014000000ffffffff28000000"}]},
+    {"name": "zero top is accepted", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000000000001e00000028000000"}]},
+    {"name": "zero left is accepted", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "00000000140000001e00000028000000"}]},
+    {"name": "zero bottom is accepted", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000140000001e00000000000000"}]},
+    {"name": "zero right is accepted", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "0a000000140000000000000028000000"}]},
+    {"name": "large integers round to float at the renderer boundary", "args": ["@rect"], "memory": [{"addr": "@rect", "hex": "01000001020000010300000104000001"}]}
+  ],
+  "fuzz": {
+    "seed": 468487,
+    "count": 30,
+    "args": [{"choices": ["@rect"]}],
+    "memory": [
+      {"addr": "@rect", "offset": "0x0", "type": "int", "range": [-3, 16777220]},
+      {"addr": "@rect", "offset": "0x4", "type": "int", "range": [-3, 16777220]},
+      {"addr": "@rect", "offset": "0x8", "type": "int", "range": [-3, 16777220]},
+      {"addr": "@rect", "offset": "0xc", "type": "int", "range": [-3, 16777220]}
+    ]
+  }
+}

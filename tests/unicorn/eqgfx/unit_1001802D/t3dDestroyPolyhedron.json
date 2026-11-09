@@ -1,0 +1,291 @@
+{
+  "function": "t3dDestroyPolyhedron",
+  "original": "0x10018da3",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "polyhedron",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "polyhedron": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "offset": "0x18",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "key": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: flag bit 0 set, key present, count 5",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ]
+    },
+    {
+      "name": "flag bit 0 clear, key present",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "flag bit 1 only (0x02): no remove",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0xc",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "flags 0xfe: bit 0 clear, other bits set",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0xc",
+          "u8": 254
+        }
+      ]
+    },
+    {
+      "name": "flags 0xff: bit 0 set",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0xc",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "flag set, key null: remove still called with null, no key free",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "flag clear, key null",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@polyhedron",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@polyhedron",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "owner count 0: decrements to -1",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "owner count INT_MIN: wraps",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 2147483648
+        }
+      ]
+    },
+    {
+      "name": "callee returns -1",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "callee returns 0",
+      "args": [
+        "@context",
+        "@polyhedron"
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null context: passed through to both callees",
+      "args": [
+        0,
+        "@polyhedron"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 101795,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@polyhedron"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@polyhedron",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@key",
+          0
+        ]
+      },
+      {
+        "addr": "@polyhedron",
+        "offset": "0xc",
+        "type": "u8"
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "int"
+      }
+    ]
+  }
+}

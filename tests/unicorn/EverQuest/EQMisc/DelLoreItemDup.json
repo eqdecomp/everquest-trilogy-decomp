@@ -1,0 +1,292 @@
+{
+  "function": "DelLoreItemDup",
+  "original": "0x004a26aa",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "profile",
+      "type": "ptr"
+    },
+    {
+      "name": "inventory_slot",
+      "type": "int"
+    },
+    {
+      "name": "container_slot",
+      "type": "int"
+    },
+    {
+      "name": "item_number",
+      "type": "short"
+    },
+    {
+      "name": "lore_item",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "profile": {
+      "size": "0xf68",
+      "fill": "zero"
+    },
+    "lore": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x23",
+          "u8": 42
+        }
+      ]
+    },
+    "plain0": {
+      "size": "0xd9",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 0
+        },
+        {
+          "offset": "0x82",
+          "u16": 42
+        }
+      ]
+    },
+    "plain1": {
+      "size": "0xd9",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 0
+        },
+        {
+          "offset": "0x82",
+          "u16": 7
+        }
+      ]
+    },
+    "bag0": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 1
+        },
+        {
+          "offset": "0x82",
+          "u16": 99
+        },
+        {
+          "offset": "0xd5",
+          "u8": 0
+        }
+      ]
+    },
+    "bag1": {
+      "size": "0xdc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 1
+        },
+        {
+          "offset": "0x82",
+          "u16": 42
+        },
+        {
+          "offset": "0xd5",
+          "u8": 0
+        }
+      ]
+    },
+    "child0": {
+      "size": "0xd9",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 0
+        },
+        {
+          "offset": "0x82",
+          "u16": 42
+        }
+      ]
+    },
+    "child1": {
+      "size": "0xd9",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x81",
+          "u8": 0
+        },
+        {
+          "offset": "0x82",
+          "u16": 7
+        }
+      ]
+    }
+  },
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x0043405a": {
+      "name": "EQ_Container::~EQ_Container_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "non lore marker returns immediately",
+      "args": ["@profile", 0, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@lore", "offset": "0x23", "u8": 0},
+        {"addr": "@profile", "offset": "0xe0", "u32": "@plain0"}
+      ]
+    },
+    {
+      "name": "no matching item",
+      "args": ["@profile", 0, 0, 100, "@lore"]
+    },
+    {
+      "name": "delete plain inventory duplicate",
+      "args": ["@profile", 0, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe4", "u32": "@plain0"}
+      ]
+    },
+    {
+      "name": "preserve excluded inventory slot",
+      "args": ["@profile", 0, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe0", "u32": "@plain0"}
+      ]
+    },
+    {
+      "name": "skip one matching child in excluded container",
+      "args": ["@profile", 2, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe8", "u32": "@bag0"},
+        {"addr": "@bag0", "offset": "0xd5", "u8": 2},
+        {"addr": "@bag0", "offset": "0xac", "u32": "@child0"},
+        {"addr": "@bag0", "offset": "0xb0", "u32": "@child1"},
+        {"addr": "@child1", "offset": "0x82", "u16": 42}
+      ]
+    },
+    {
+      "name": "delete duplicate bag and matching children",
+      "args": ["@profile", 9, 8, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe0", "u32": "@bag0"},
+        {"addr": "@bag0", "offset": "0x82", "u16": 42},
+        {"addr": "@bag0", "offset": "0xd5", "u8": 2},
+        {"addr": "@bag0", "offset": "0xac", "u32": "@child0"},
+        {"addr": "@bag0", "offset": "0xb0", "u32": "@child1"},
+        {"addr": "@child1", "offset": "0x82", "u16": 42}
+      ]
+    },
+    {
+      "name": "preserve duplicate bag but inspect its children",
+      "args": ["@profile", 2, 1, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe8", "u32": "@bag1"},
+        {"addr": "@bag1", "offset": "0xd5", "u8": 2},
+        {"addr": "@bag1", "offset": "0xac", "u32": "@child0"},
+        {"addr": "@bag1", "offset": "0xb0", "u32": "@child1"},
+        {"addr": "@child1", "offset": "0x82", "u16": 42}
+      ]
+    },
+    {
+      "name": "zero container slots skips children",
+      "args": ["@profile", 9, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe0", "u32": "@bag0"},
+        {"addr": "@bag0", "offset": "0xac", "u32": "@child0"}
+      ]
+    },
+    {
+      "name": "delete matching plain bank slot",
+      "args": ["@profile", 0, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xf48", "u32": "@plain0"}
+      ]
+    },
+    {
+      "name": "delete matching bank bag after child scan",
+      "args": ["@profile", 4, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xf44", "u32": "@bag1"},
+        {"addr": "@bag1", "offset": "0xd5", "u8": 2},
+        {"addr": "@bag1", "offset": "0xac", "u32": "@child0"},
+        {"addr": "@bag1", "offset": "0xb0", "u32": "@child1"},
+        {"addr": "@child1", "offset": "0x82", "u16": 42}
+      ]
+    },
+    {
+      "name": "scan eighth bank slot",
+      "args": ["@profile", 0, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xf60", "u32": "@plain0"}
+      ]
+    },
+    {
+      "name": "do not scan pointer after eighth bank slot",
+      "args": ["@profile", 0, 0, 42, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xf64", "u32": "@plain0"}
+      ]
+    },
+    {
+      "name": "signed item number boundary",
+      "args": ["@profile", 7, 0, -1, "@lore"],
+      "memory": [
+        {"addr": "@profile", "offset": "0xe0", "u32": "@plain0"},
+        {"addr": "@plain0", "offset": "0x82", "u16": 65535}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4859562,
+    "count": 32,
+    "args": [
+      {"choices": ["@profile"]},
+      {"range": [-2, 32]},
+      {"range": [-2, 12]},
+      {"choices": [-32768, -1, 0, 7, 42, 99, 32767]},
+      {"choices": ["@lore"]}
+    ],
+    "memory": [
+      {"addr": "@profile", "offset": "0xe0", "type": "ptr", "count": 30, "choices": [0, "@plain0", "@bag0", "@bag1"]},
+      {"addr": "@profile", "offset": "0xf44", "type": "ptr", "count": 8, "choices": [0, "@plain1", "@bag0", "@bag1"]},
+      {"addr": "@plain0", "offset": "0x81", "type": "u8", "choices": [0, 1]},
+      {"addr": "@plain0", "offset": "0x82", "type": "u16", "choices": [0, 7, 42, 99, 65535]},
+      {"addr": "@plain1", "offset": "0x81", "type": "u8", "choices": [0, 1]},
+      {"addr": "@plain1", "offset": "0x82", "type": "u16", "choices": [0, 7, 42, 99, 65535]},
+      {"addr": "@bag0", "offset": "0x81", "type": "u8", "choices": [0, 1]},
+      {"addr": "@bag0", "offset": "0x82", "type": "u16", "choices": [0, 7, 42, 99, 65535]},
+      {"addr": "@bag0", "offset": "0xd5", "type": "u8", "choices": [0, 1, 3, 10]},
+      {"addr": "@bag1", "offset": "0x81", "type": "u8", "choices": [0, 1]},
+      {"addr": "@bag1", "offset": "0x82", "type": "u16", "choices": [0, 7, 42, 99, 65535]},
+      {"addr": "@bag1", "offset": "0xd5", "type": "u8", "choices": [0, 1, 3, 10]},
+      {"addr": "@bag0", "offset": "0xac", "type": "ptr", "count": 10, "choices": [0, "@child0", "@child1"]},
+      {"addr": "@bag1", "offset": "0xac", "type": "ptr", "count": 10, "choices": [0, "@child0", "@child1"]},
+      {"addr": "@child0", "offset": "0x82", "type": "u16", "choices": [0, 7, 42, 99, 65535]},
+      {"addr": "@child1", "offset": "0x82", "type": "u16", "choices": [0, 7, 42, 99, 65535]}
+    ]
+  }
+}

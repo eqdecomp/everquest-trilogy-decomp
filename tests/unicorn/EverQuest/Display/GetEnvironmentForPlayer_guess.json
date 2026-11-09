@@ -1,0 +1,236 @@
+{
+  "function": "CDisplay::GetEnvironmentForPlayer_guess",
+  "original": "0x00414619",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [{"name": "player", "type": "ptr"}],
+  "ret": "int",
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "random"},
+    "player": {"size": "0x100", "fill": "random"},
+    "world": {"size": 16},
+    "zones": {"size": 32, "fill": "zero"},
+    "zoneTags": {"size": 16, "fill": "zero"},
+    "zone": {"size": 16, "fill": "zero"},
+    "userdata": {"size": 16, "fill": "zero"},
+    "cosine": {"size": 16},
+    "sine": {"size": 16},
+    "region": {"size": 16},
+    "getZones": {"size": 16},
+    "getUserData": {"size": 16},
+    "getObjectTag": {"size": 16}
+  },
+  "memory": [
+    {"addr": "@display", "offset": 4, "u32": "@world"},
+    {"addr": "@display", "offset": "0x2cb8", "u32": "@zones"},
+    {"addr": "@zones", "offset": 4, "u32": 1},
+    {"addr": "@zones", "offset": "0xc", "u32": "@zoneTags"},
+    {"addr": "@zoneTags", "u32": "@zone"},
+    {"addr": "@player", "offset": "0x40", "f32": 0.25},
+    {"addr": "@player", "offset": "0x7c", "f32": 0.30000001192092896},
+    {"addr": "@player", "offset": "0x34", "f32": 0.0},
+    {"addr": "@player", "offset": "0x38", "f32": 0.0},
+    {"addr": "@player", "offset": "0x3c", "f32": 2.0},
+    {"addr": "@userdata", "cstr": "WT"},
+    {"addr": "0x006E524C", "u32": "@cosine"},
+    {"addr": "0x006E5250", "u32": "@sine"},
+    {"addr": "0x006E52E8", "u32": "@region"},
+    {"addr": "0x006E5310", "u32": "@getZones"},
+    {"addr": "0x006E5314", "u32": "@getUserData"},
+    {"addr": "0x006E52DC", "u32": "@getObjectTag"}
+  ],
+  "callees": {
+    "@cosine": {
+      "name": "t3dFloatFastCosine",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 0.10000000149011612
+    },
+    "@sine": {
+      "name": "t3dFloatFastSine",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 0.10000000149011612
+    },
+    "@region": {
+      "name": "t3dGetRegionFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:12", "float"],
+      "ret": 0
+    },
+    "@getZones": {
+      "name": "t3dGetZonesContainingWorldXYZPosition",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:12", "ptr"],
+      "ret": 0
+    },
+    "@getUserData": {
+      "name": "t3dGetZoneUserData",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": "@userdata"
+    },
+    "@getObjectTag": {
+      "name": "t3dGetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "585800545000"}]
+    },
+    "0x004147BB": {
+      "name": "CDisplay_GetEnvironment_guess",
+      "conv": "thiscall",
+      "args": ["u32", "u32", "u32", "ptr"],
+      "ret": 5
+    }
+  },
+  "cases": [
+    {
+      "name": "region miss returns one",
+      "args": ["@player"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "cosine product spills before coordinate addition",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0x34", "hex": "90c2f5bc"},
+        {"addr": "@player", "offset": "0x38", "f32": 0.0}
+      ],
+      "callees": {
+        "@cosine": {
+          "name": "t3dFloatFastCosine",
+          "conv": "cdecl",
+          "args": ["float"],
+          "ret_float": 0.10000000149011612
+        },
+        "@sine": {
+          "name": "t3dFloatFastSine",
+          "conv": "cdecl",
+          "args": ["float"],
+          "ret_float": 0.0
+        }
+      }
+    },
+    {
+      "name": "sine product stays extended through coordinate addition",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0x34", "f32": 0.0},
+        {"addr": "@player", "offset": "0x38", "hex": "90c2f5bc"}
+      ],
+      "callees": {
+        "@cosine": {
+          "name": "t3dFloatFastCosine",
+          "conv": "cdecl",
+          "args": ["float"],
+          "ret_float": 0.0
+        },
+        "@sine": {
+          "name": "t3dFloatFastSine",
+          "conv": "cdecl",
+          "args": ["float"],
+          "ret_float": 0.10000000149011612
+        }
+      }
+    },
+    {
+      "name": "helpers mutate live player fields before vector stores",
+      "args": ["@player"],
+      "callees": {
+        "@cosine": {
+          "name": "t3dFloatFastCosine",
+          "conv": "cdecl",
+          "args": ["float"],
+          "ret_float": 0.10000000149011612,
+          "writes": [
+            {"addr": "0x60002e40", "hex": "0000003f"},
+            {"addr": "0x60002e7c", "hex": "9a99993e"}
+          ]
+        },
+        "@sine": {
+          "name": "t3dFloatFastSine",
+          "conv": "cdecl",
+          "args": ["float"],
+          "ret_float": 0.10000000149011612,
+          "writes": [
+            {"addr": "0x60002e34", "hex": "90c2f5bc"},
+            {"addr": "0x60002e38", "hex": "90c2f5bc"},
+            {"addr": "0x60002e3c", "hex": "0000e040"},
+            {"addr": "0x60002e7c", "hex": "9a99993e"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "region output is reloaded and int 256 still enters core",
+      "args": ["@player"],
+      "callees": {
+        "@region": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": ["ptr", "mem:12", "float"],
+          "ret": 256,
+          "writes": [{"arg": 1, "offset": 0, "hex": "0000803f0000004000004040"}]
+        },
+        "0x004147BB": {
+          "name": "CDisplay_GetEnvironment_guess",
+          "conv": "thiscall",
+          "args": ["u32", "u32", "u32", "ptr"],
+          "ret": 256
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "core call tests only the low return byte",
+      "args": ["@player"],
+      "callees": {
+        "@region": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": ["ptr", "mem:12", "float"],
+          "ret": 257
+        },
+        "0x004147BB": {
+          "name": "CDisplay_GetEnvironment_guess",
+          "conv": "thiscall",
+          "args": ["u32", "u32", "u32", "ptr"],
+          "ret": 257
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "successful zone class returns zero",
+      "args": ["@player"],
+      "callees": {
+        "@region": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": ["ptr", "mem:12", "float"],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "signaling NaN heading is passed through x87 argument stack",
+      "args": ["@player"],
+      "memory": [{"addr": "@player", "offset": "0x40", "hex": "0100807f"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 14619,
+    "count": 30,
+    "args": [{"choices": ["@player"]}],
+    "memory": [
+      {"addr": "@player", "offset": "0x40", "type": "u32", "choices": [0, "0x80000000", "0x3f800000", "0x7f800000", "0x7f800001", "0x7fc12345"]},
+      {"addr": "@player", "offset": "0x7c", "type": "u32", "choices": [0, "0x3f800000", "0x3e99999a", "0x7f800000", "0x7f800001"]},
+      {"addr": "@player", "offset": "0x34", "type": "u32", "choices": [0, "0x3f800000", "0xbf800000", "0x7f800000", "0x7f800001"]},
+      {"addr": "@player", "offset": "0x38", "type": "u32", "choices": [0, "0x3f800000", "0xbf800000", "0x7f800000", "0x7f800001"]},
+      {"addr": "@player", "offset": "0x3c", "type": "u32", "choices": [0, "0x3f800000", "0xbf800000", "0x7f800000", "0x7f800001"]}
+    ]
+  }
+}

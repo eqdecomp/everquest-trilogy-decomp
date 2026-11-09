@@ -1,0 +1,290 @@
+{
+  "function": "EQMain_SetCachedEntry_guess",
+  "original": "0x10008910",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "entry",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ent": {
+      "size": "0x60",
+      "fill": "random"
+    },
+    "old": {
+      "size": "0x60",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10004ec0": {
+      "name": "FUN_10004ec0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "winmm.dll!timeGetTime": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        100,
+        200
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null entry, cache holds another",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        }
+      ]
+    },
+    {
+      "name": "null entry, cache empty",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty cache takes the entry (flag 0)",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": 0
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "empty cache ignores flag 0x2",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": 0
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "entry already cached",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@ent"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "swap, flag 0",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "swap, flag 0x1",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "swap, flag 0x4",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 4
+        }
+      ]
+    },
+    {
+      "name": "swap, flag 0xfd (every bit but 0x2)",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 253
+        }
+      ]
+    },
+    {
+      "name": "no swap, flag 0x2",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "no swap, flag 0x3",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 3
+        }
+      ]
+    },
+    {
+      "name": "no swap, flag 0x12 (bit 0x2 among high bits)",
+      "args": [
+        "@ent"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004cec4",
+          "u32": "@old"
+        },
+        {
+          "addr": "@ent",
+          "offset": "0x4c",
+          "u8": 18
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 35088,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          "@ent",
+          "@old",
+          "@ent"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1004cec4",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@ent",
+          "@old",
+          "@old"
+        ]
+      },
+      {
+        "addr": "@ent",
+        "offset": "0x4c",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          18,
+          253
+        ]
+      },
+      {
+        "addr": "@old",
+        "offset": "0x4c",
+        "type": "u8",
+        "choices": [
+          0,
+          2,
+          253
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "function": "EQHSprite::~EQHSprite",
+  "original": "0x004a015f",
+  "sources": [
+    "src/EverQuest/EQHSprite.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqhsprite",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eqhsprite": {"size": "0x160", "fill": "random"},
+    "n1": {"size": "0x10", "fill": "random"},
+    "n2": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006E4D68", "u32": 3735928559}
+  ],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "both linked, all blocks set", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@n1"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n2"}]},
+    {"name": "prev null, next set: next becomes head", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n2"}]},
+    {"name": "next null, prev set: prev loses next", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@n1"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": 0}]},
+    {"name": "both null clears head", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": 0}]},
+    {"name": "both alias this", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@eqhsprite"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@eqhsprite"}]},
+    {"name": "prev is this, next node", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@eqhsprite"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n2"}]},
+    {"name": "prev node, next is this", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@n1"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@eqhsprite"}]},
+    {"name": "prev null, next is this+4 (reload after store)", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@eqhsprite+4"}]},
+    {"name": "prev is this+4, next node (reload after store)", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@eqhsprite"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@eqhsprite+4"}]},
+    {"name": "prev points into this at +0x10", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@eqhsprite+0x10"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n2"}]},
+    {"name": "prev and next same node", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@n1"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n1"}]},
+    {"name": "first and last blocks null, others set", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": "@n1"},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n2"},
+      {"addr": "@eqhsprite", "offset": "0x30", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x154", "u32": 0}]},
+    {"name": "boundary slots: 0x2C and 0x158 untouched, 0x34 and 0x150 null", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x2C", "u32": 287454020},
+      {"addr": "@eqhsprite", "offset": "0x34", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x150", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x158", "u32": 1432778632}]},
+    {"name": "only one block set", "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x4", "u32": "@n2"},
+      {"addr": "@eqhsprite", "offset": "0x30", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x34", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x38", "u32": 0},
+      {"addr": "@eqhsprite", "offset": "0x3C", "u32": 1}]}
+  ],
+  "fuzz": {
+    "seed": 4850015,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@eqhsprite", "offset": "0x0", "type": "ptr", "choices": [0, "@n1", "@n2", "@eqhsprite", "@eqhsprite+4"]},
+      {"addr": "@eqhsprite", "offset": "0x4", "type": "ptr", "choices": [0, "@n1", "@n2", "@eqhsprite", "@eqhsprite+4"]},
+      {"addr": "@eqhsprite", "offset": "0x30", "type": "u32", "choices": [0, 1, 4294967295]},
+      {"addr": "@eqhsprite", "offset": "0x90", "type": "u32", "choices": [0, 305419896]},
+      {"addr": "@eqhsprite", "offset": "0x154", "type": "u32", "choices": [0, 2864434397]},
+      {"addr": "0x006E4D68", "type": "u32", "choices": [0, "@n1", 3735928559]}
+    ]
+  }
+}

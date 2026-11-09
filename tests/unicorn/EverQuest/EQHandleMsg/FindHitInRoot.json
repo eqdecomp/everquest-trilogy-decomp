@@ -1,0 +1,67 @@
+{
+  "function": "EQHitRoot_guess::FindHitInRoot_guess",
+  "original": "0x00402c6e",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@holder",
+  "args": [
+    {
+      "name": "arg",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "holder": {"size": "0x20", "fill": "random", "init": [{"offset": "0x14", "u32": "@root"}]},
+    "root": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x00404115": {
+      "name": "EQHitNode_guess::FindHit_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": "0x12345678"
+    }
+  },
+  "cases": [
+    {"name": "root set: forwards arg, returns callee result", "args": [1]},
+    {"name": "root set, zero arg", "args": [0]},
+    {"name": "root set, negative arg", "args": [-1]},
+    {"name": "root set, high bit", "args": ["0x80000000"]},
+    {"name": "root set, distinct pattern", "args": ["0x12345678"]},
+    {
+      "name": "root set, callee returns 0",
+      "args": [5],
+      "callees": {
+        "0x00404115": {"name": "FindHit_guess", "conv": "thiscall", "args": ["int"], "ret": 0}
+      }
+    },
+    {
+      "name": "root null: returns 0, no call",
+      "args": [7],
+      "memory": [
+        {"addr": "@holder+0x14", "u32": 0}
+      ]
+    },
+    {
+      "name": "root null, zero arg",
+      "args": [0],
+      "memory": [
+        {"addr": "@holder+0x14", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4205678,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "@holder+0x14", "type": "ptr", "choices": ["@root", "@root+0x4", 0]}
+    ]
+  }
+}

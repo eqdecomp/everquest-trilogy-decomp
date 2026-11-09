@@ -1,0 +1,243 @@
+{
+  "function": "DeferQuadOptionalTexture_guess",
+  "original": "0x00402c98",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "rewrite": "DeferQuadOptionalTexture_guess",
+  "conv": "thiscall",
+  "this": "@owner",
+  "args": [
+    {
+      "name": "block_guess",
+      "type": "ptr"
+    },
+    {
+      "name": "pRender_guess",
+      "type": "ptr"
+    },
+    {
+      "name": "pTexture_guess",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x1900",
+      "fill": "random"
+    },
+    "block": {
+      "size": "0x30",
+      "fill": "random"
+    },
+    "prender": {
+      "size": 4,
+      "init": [
+        {
+          "offset": 0,
+          "u32": "0x89abcdef"
+        }
+      ]
+    },
+    "texture": {
+      "size": "0x74",
+      "fill": "random",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "0x1234abcd"
+        }
+      ]
+    },
+    "deferquad": {
+      "size": 16
+    },
+    "deferquadtex": {
+      "size": 16
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0053449c",
+      "from_image": "0x0053449C",
+      "image_size": 4
+    },
+    {
+      "addr": "0x005344a0",
+      "from_image": "0x005344A0",
+      "image_size": 4
+    },
+    {
+      "addr": "0x006e51c0",
+      "u32": "@deferquad"
+    },
+    {
+      "addr": "0x006e51c4",
+      "u32": "@deferquadtex"
+    }
+  ],
+  "callees": {
+    "0x00403738": {
+      "name": "EQBlock48_guess::Set_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "@deferquad": {
+      "name": "t3dDeferQuad_guess",
+      "conv": "cdecl",
+      "args": [
+        "mem:48",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "@deferquadtex": {
+      "name": "t3dDeferQuadTex_guess",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "mem:48",
+        "mem:16",
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "no-texture branch forwards render and block",
+      "args": [
+        "@block",
+        "@prender",
+        0
+      ]
+    },
+    {
+      "name": "textured branch copies before callback",
+      "args": [
+        "@block",
+        "@prender",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@block",
+          "offset": "0x8",
+          "f32": 1000.0
+        }
+      ]
+    },
+    {
+      "name": "zero width input",
+      "args": [
+        "@block",
+        "@prender",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@block",
+          "offset": "0x8",
+          "f32": 0.0
+        }
+      ]
+    },
+    {
+      "name": "negative zero input",
+      "args": [
+        "@block",
+        "@prender",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@block",
+          "offset": "0x8",
+          "hex": "00000080"
+        }
+      ]
+    },
+    {
+      "name": "negative input",
+      "args": [
+        "@block",
+        "@prender",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@block",
+          "offset": "0x8",
+          "f32": -32768.0
+        }
+      ]
+    },
+    {
+      "name": "large finite input",
+      "args": [
+        "@block",
+        "@prender",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@block",
+          "offset": "0x8",
+          "f32": 3e+38
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4205720,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@block"
+        ]
+      },
+      {
+        "choices": [
+          "@prender"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "@texture"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@block",
+        "offset": "0x8",
+        "type": "float",
+        "choices": [
+          -1e+20,
+          -1.0,
+          -0.001,
+          0.0,
+          0.001,
+          1.0,
+          1000.0,
+          1e+20
+        ]
+      },
+      {
+        "addr": "@texture",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0x1234abcd",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

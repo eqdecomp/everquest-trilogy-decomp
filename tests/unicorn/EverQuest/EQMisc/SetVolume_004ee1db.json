@@ -1,0 +1,136 @@
+{
+  "function": "EqSoundSlotsVolume_guess::SetVolume_guess",
+  "original": "0x004ee1db",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqsoundslotsvolume",
+  "args": [
+    {
+      "name": "value",
+      "type": "float"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "the original returns nothing the callers use (no direct callers; vtable slot)",
+  "objects": {
+    "eqsoundslotsvolume": {
+      "size": "0xC00",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xbd0", "f32": 0.25}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004ecc30": {
+      "name": "LinearToDsVolume_guess",
+      "conv": "thiscall",
+      "args": ["double"],
+      "ret": [-1234, -77, 0, -10000]
+    },
+    "0x004ec6ab": {
+      "name": "SetMasterVolume_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "below zero stores 0, no slots",
+      "args": [-0.5]
+    },
+    {
+      "name": "in range keeps the old volume, no slots",
+      "args": [0.5]
+    },
+    {
+      "name": "above one stores 1.0, no slots",
+      "args": [1.5]
+    },
+    {
+      "name": "exactly zero keeps the volume",
+      "args": [0.0]
+    },
+    {
+      "name": "exactly one keeps the volume",
+      "args": [1.0]
+    },
+    {
+      "name": "just above one",
+      "args": [1.0000001]
+    },
+    {
+      "name": "tiny negative",
+      "args": [-1e-30]
+    },
+    {
+      "name": "first slot only",
+      "args": [0.5],
+      "memory": [
+        {"addr": "@eqsoundslotsvolume", "offset": "0xc", "u32": "0x1111"}
+      ]
+    },
+    {
+      "name": "last slot only (0xB48)",
+      "args": [0.75],
+      "memory": [
+        {"addr": "@eqsoundslotsvolume", "offset": "0xb48", "u32": "0x2222"}
+      ]
+    },
+    {
+      "name": "slot just past the table (0xB4C) is not visited",
+      "args": [0.75],
+      "memory": [
+        {"addr": "@eqsoundslotsvolume", "offset": "0xb4c", "u32": "0x3333"}
+      ]
+    },
+    {
+      "name": "slot before the table (+8) is not visited",
+      "args": [0.75],
+      "memory": [
+        {"addr": "@eqsoundslotsvolume", "offset": "0x8", "u32": "0x4444"}
+      ]
+    },
+    {
+      "name": "several slots, clamped high",
+      "args": [3.0],
+      "memory": [
+        {"addr": "@eqsoundslotsvolume", "offset": "0x10", "u32": "0x5555"},
+        {"addr": "@eqsoundslotsvolume", "offset": "0x400", "u32": "0x6666"},
+        {"addr": "@eqsoundslotsvolume", "offset": "0xb00", "u32": "0x7777"}
+      ]
+    },
+    {
+      "name": "several slots, clamped low",
+      "args": [-3.0],
+      "memory": [
+        {"addr": "@eqsoundslotsvolume", "offset": "0x14", "u32": "0x8888"},
+        {"addr": "@eqsoundslotsvolume", "offset": "0x404", "u32": "0x9999"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5169627,
+    "count": 40,
+    "args": [
+      {"choices": [-2.0, -0.5, -0.0, 0.0, 1e-6, 0.3, 0.999, 1.0, 1.001, 2.0, 100.0]}
+    ],
+    "memory": [
+      {"addr": "@eqsoundslotsvolume", "offset": "0xc", "type": "u32", "choices": [0, 0, 4096, 8192, 12288], "count": 720, "p": 0.7},
+      {"addr": "@eqsoundslotsvolume", "offset": "0xbd0", "type": "float", "choices": [0.0, 0.25, 0.5, 1.0]}
+    ]
+  }
+}

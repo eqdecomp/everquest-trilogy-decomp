@@ -1,0 +1,163 @@
+{
+  "function": "send_message_guess",
+  "original": "0x004e1c45",
+  "sources": [
+    "src/EverQuest/Socket.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "connection", "type": "ptr" },
+    { "name": "opcode", "type": "u32" },
+    { "name": "data", "type": "ptr" },
+    { "name": "size", "type": "u32" },
+    { "name": "reliable", "type": "int" }
+  ],
+  "ret": "void",
+  "objects": {
+    "connection": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [ { "offset": "0", "u32": "@socket" } ]
+    },
+    "socket": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "data": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [ { "offset": "0", "hex": "102030405060708090a0b0c0d0e0f001" } ]
+    },
+    "sockaddr": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x2", "u16": "0x1234" },
+        { "offset": "0x4", "u32": "0x7f000001" }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x00521b10": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": [ "ignore", "ignore", "u32" ],
+      "passthrough": true
+    },
+    "0x004f3530": {
+      "name": "connection_send",
+      "conv": "cdecl",
+      "args": [ "ptr", "mem:2", "u32", "int", "u32" ],
+      "ret": 0
+    },
+    "0x004f23d0": {
+      "name": "connection_get_remote_addr_guess",
+      "conv": "cdecl",
+      "args": [ "ptr" ],
+      "ret": "@sockaddr"
+    },
+    "0x00500386": {
+      "name": "inet_ntoa",
+      "conv": "stdcall",
+      "args": [ "u32" ],
+      "ret": 0
+    },
+    "0x00500380": {
+      "name": "ntohs",
+      "conv": "stdcall",
+      "args": [ "u16" ],
+      "ret": 0
+    },
+    "0x004f21d0": {
+      "name": "connection_close",
+      "conv": "cdecl",
+      "args": [ "ptr", "int", "int", "int" ]
+    }
+  },
+  "cases": [
+    {
+      "name": "best effort success",
+      "args": [ "@connection", 1, "@data", 1, 0 ]
+    },
+    {
+      "name": "reliable success",
+      "args": [ "@connection", 1, "@data", 4, -1 ]
+    },
+    {
+      "name": "zero length and zero opcode",
+      "args": [ "@connection", 0, "@data", 0, 0 ]
+    },
+    {
+      "name": "payload and opcode bytes",
+      "args": [ "@connection", "0x12345678", "@data", 8, 0 ],
+      "callees": {
+        "0x004f3530": {
+          "name": "connection_send_guess",
+          "conv": "cdecl",
+          "args": [ "ptr", "mem:10", "u32", "int", "u32" ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "connection slot is empty",
+      "args": [ "@connection", 1, "@data", 2, 1 ],
+      "memory": [ { "addr": "@connection", "u32": 0 } ]
+    },
+    {
+      "name": "reliable send error closes",
+      "args": [ "@connection", 1, "@data", 2, 1 ],
+      "callees": { "0x004f3530": { "ret": 1 } }
+    },
+    {
+      "name": "special opcode suppresses reliable close",
+      "args": [ "@connection", "0x20f3", "@data", 2, 1 ],
+      "callees": { "0x004f3530": { "ret": 1 } }
+    },
+    {
+      "name": "error 13 closes unreliable send",
+      "args": [ "@connection", 1, "@data", 2, 0 ],
+      "callees": { "0x004f3530": { "ret": 13 } }
+    },
+    {
+      "name": "error 16 closes unreliable send",
+      "args": [ "@connection", 1, "@data", 2, 0 ],
+      "callees": { "0x004f3530": { "ret": 16 } }
+    },
+    {
+      "name": "error 6 closes unreliable send",
+      "args": [ "@connection", 1, "@data", 2, 0 ],
+      "callees": { "0x004f3530": { "ret": 6 } }
+    },
+    {
+      "name": "error 17 closes unreliable send",
+      "args": [ "@connection", 1, "@data", 2, 0 ],
+      "callees": { "0x004f3530": { "ret": 17 } }
+    },
+    {
+      "name": "other unreliable error leaves connection open",
+      "args": [ "@connection", 1, "@data", 2, 0 ],
+      "callees": { "0x004f3530": { "ret": 2 } }
+    },
+    {
+      "name": "send result zero never closes",
+      "args": [ "@connection", 1, "@data", 2, 1 ],
+      "callees": { "0x004f3530": { "ret": 0 } }
+    }
+  ],
+  "fuzz": {
+    "seed": 5119045,
+    "count": 40,
+    "args": [
+      { "choices": [ "@connection" ] },
+      { "choices": [ 0, 1, "0x20f3", "0xffffffff", "0x1234" ] },
+      { "choices": [ "@data" ] },
+      { "range": [ 0, 64 ] },
+      { "range": [ -1, 1 ] }
+    ],
+    "memory": [
+      { "addr": "@connection", "type": "ptr", "choices": [ "@socket", 0 ] }
+    ]
+  }
+}

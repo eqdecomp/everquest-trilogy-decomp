@@ -1,0 +1,135 @@
+{
+  "function": "t3dSetTrackDefaultToFrame",
+  "original": "0x1001d132",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "track",
+      "type": "ptr"
+    },
+    {
+      "name": "frame",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "track": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@instance_list"},
+        {"offset": "0x18", "u32": "@fallback_list"}
+      ]
+    },
+    "instance_list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 5}
+      ]
+    },
+    "fallback_list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 9}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: frame below the instance count",
+      "args": ["@track", 1]
+    },
+    {
+      "name": "zero frame",
+      "args": ["@track", 0]
+    },
+    {
+      "name": "last valid frame (count - 1)",
+      "args": ["@track", 4]
+    },
+    {
+      "name": "frame equal to the instance count is rejected",
+      "args": ["@track", 5]
+    },
+    {
+      "name": "frame above the instance count, below the fallback count: instance list wins",
+      "args": ["@track", 7]
+    },
+    {
+      "name": "null instance list: fallback count accepts",
+      "args": ["@track", 7],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}]
+    },
+    {
+      "name": "null instance list: frame equal to the fallback count is rejected",
+      "args": ["@track", 9],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}]
+    },
+    {
+      "name": "null instance list and zero fallback count rejects frame 0",
+      "args": ["@track", 0],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback_list", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero instance count rejects frame 0",
+      "args": ["@track", 0],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": 0}]
+    },
+    {
+      "name": "frame 0xffffffff rejected",
+      "args": ["@track", "0xffffffff"]
+    },
+    {
+      "name": "unsigned compare: count 0x80000000 accepts frame 0x7fffffff",
+      "args": ["@track", "0x7fffffff"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": "0x80000000"}]
+    },
+    {
+      "name": "unsigned compare: frame 0x80000000 rejected by count 0x7fffffff",
+      "args": ["@track", "0x80000000"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": "0x7fffffff"}]
+    },
+    {
+      "name": "stored word keeps the low 16 bits and nothing beside it",
+      "args": ["@track", "0x12345"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": "0x20000"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 119090,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@track"
+        ]
+      },
+      {
+        "range": [-4, 12]
+      }
+    ],
+    "memory": [
+      {"addr": "@instance_list", "offset": "0x0", "type": "u32", "range": [0, 12]},
+      {"addr": "@fallback_list", "offset": "0x0", "type": "u32", "range": [0, 12]},
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": ["@instance_list", 0]}
+    ]
+  }
+}

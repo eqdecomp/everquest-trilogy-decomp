@@ -1,0 +1,350 @@
+{
+  "function": "t3dDagFadeToNewTrack",
+  "original": "0x100138f5",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "track",
+      "type": "ptr"
+    },
+    {
+      "name": "fade",
+      "type": "ptr"
+    },
+    {
+      "name": "fadeRate",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x180",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@fade"
+        },
+        {
+          "offset": "0x18",
+          "u32": "0x20002000"
+        }
+      ]
+    },
+    "track": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "fade": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10013bbc": {
+      "name": "t3dDagStartTrackTransition_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: pending track moves to the current slot with its block",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        7
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no pending track: current slot and its block are left alone",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "current track null: fails with 0xffff3d3e",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "current track null and no pending track: still fails",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "track null: fails and the sprite is not touched",
+      "args": [
+        "@sprite",
+        0,
+        "@fade",
+        7
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "track and sprite null: the track test comes first",
+      "args": [
+        0,
+        0,
+        "@fade",
+        7
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "fadeRate INT_MIN with fade limit 0xffffffff",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        -2147483648
+      ],
+      "memory": [
+        {
+          "addr": "@fade",
+          "offset": "0x8",
+          "u32": 4294967295
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "fade limit 0 with fadeRate -1",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@fade",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee's EAX is ignored: the result stays 0",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        7
+      ],
+      "callees": {
+        "0x10013bbc": {
+          "name": "FUN_10013bbc",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 12345
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "track is the sprite's +0x100 block: its block is read after the first copy",
+      "args": [
+        "@sprite",
+        "@sprite+0x100",
+        "@fade",
+        7
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "track at sprite+0x110: its block is the pending block itself",
+      "args": [
+        "@sprite",
+        "@sprite+0x110",
+        "@fade",
+        7
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "fade at sprite+0x120: its limit is the pending block's first dword, read after the copy",
+      "args": [
+        "@sprite",
+        "@track",
+        "@sprite+0x120",
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "pending track is the new track",
+      "args": [
+        "@sprite",
+        "@track",
+        "@fade",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "@track"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 80117,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@track",
+          "@track",
+          0,
+          "@sprite+0x100",
+          "@sprite+0x110"
+        ]
+      },
+      {
+        "choices": [
+          "@fade",
+          "@fade",
+          "@sprite+0x120"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@track",
+          "@fade",
+          "0x10001000"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x18",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@track",
+          "@fade",
+          "0x20002000"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x100",
+        "size": 32
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x128",
+        "size": 32
+      },
+      {
+        "addr": "@track",
+        "offset": "0x18",
+        "size": 32
+      },
+      {
+        "addr": "@fade",
+        "offset": "0x8",
+        "type": "u32"
+      }
+    ]
+  }
+}

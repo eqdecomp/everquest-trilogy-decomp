@@ -1,0 +1,112 @@
+{
+  "function": "ReleaseGlobalObject_guess",
+  "original": "0x100253b0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "fn_destroy": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "fn_other": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "vt": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@fn_destroy" }
+      ]
+    },
+    "obj": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@vt" }
+      ]
+    },
+    "obj2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@vt" }
+      ]
+    },
+    "vt2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@fn_other" }
+      ]
+    },
+    "obj3": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@vt2" }
+      ]
+    }
+  },
+  "memory": [
+    { "addr": "0x1012c774", "u32": "@obj" }
+  ],
+  "callees": {
+    "@fn_destroy": {
+      "name": "vtable slot 0 of vt (deleting destructor, flag 1)",
+      "conv": "thiscall",
+      "args": ["int"]
+    },
+    "@fn_other": {
+      "name": "vtable slot 0 of vt2",
+      "conv": "thiscall",
+      "args": ["int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "global holds an object: slot 0 called with 1, then global cleared",
+      "args": []
+    },
+    {
+      "name": "global null: nothing called, global stays 0",
+      "args": [],
+      "memory": [
+        { "addr": "0x1012c774", "u32": 0 }
+      ]
+    },
+    {
+      "name": "global holds an object of another vtable: that vtable's slot 0 called",
+      "args": [],
+      "memory": [
+        { "addr": "0x1012c774", "u32": "@obj3" }
+      ]
+    },
+    {
+      "name": "callee stores into the global during the call: the clear still runs after it",
+      "args": [],
+      "callees": {
+        "@fn_destroy": {
+          "name": "vtable slot 0 of vt, rewrites the global",
+          "conv": "thiscall",
+          "args": ["int"],
+          "writes": [
+            { "addr": "0x1012c774", "hex": "efbeadde" }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 152496,
+    "count": 40,
+    "args": [],
+    "memory": [
+      { "addr": "0x1012c774", "type": "ptr", "choices": [0, "@obj", "@obj2", "@obj3"] }
+    ]
+  }
+}

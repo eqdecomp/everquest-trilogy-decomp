@@ -1,0 +1,348 @@
+{
+  "function": "t3dDuplicateDirectionalLight",
+  "original": "0x10014ba4",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {
+      "size": "0x28",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "context": {
+      "size": "0x180",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "copy": {
+      "size": "0x30",
+      "fill": "zero"
+    },
+    "ownedBlock": {
+      "size": "0xc",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@copy",
+        "@ownedBlock"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: copy and block allocate, link returns 0",
+      "args": [
+        "@context",
+        "@source"
+      ]
+    },
+    {
+      "name": "owner count -1 wraps to 0 on link",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "owner count INT_MAX wraps to INT_MIN on link",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "owner count 0 goes to 1 on link",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "source key, flags, use count, block set: copy resets them, keeps kind and normal",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x0",
+          "u32": "0x77"
+        },
+        {
+          "addr": "@source",
+          "offset": "0x8",
+          "u32": "0x30001000"
+        },
+        {
+          "addr": "@source",
+          "offset": "0xc",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@source",
+          "offset": "0x10",
+          "u32": 5
+        },
+        {
+          "addr": "@source",
+          "offset": "0x18",
+          "f32": 0.5
+        },
+        {
+          "addr": "@source",
+          "offset": "0x1c",
+          "f32": -1.5
+        },
+        {
+          "addr": "@source",
+          "offset": "0x20",
+          "f32": 2.25
+        },
+        {
+          "addr": "@source",
+          "offset": "0x24",
+          "u32": "0x11111111"
+        },
+        {
+          "addr": "@source",
+          "offset": "0x28",
+          "u32": "0x22222222"
+        },
+        {
+          "addr": "@source",
+          "offset": "0x2c",
+          "u32": "0x30002000"
+        }
+      ]
+    },
+    {
+      "name": "zeros: source fields zero except the owner pointer",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x0",
+          "size": 20,
+          "fill": "zero"
+        }
+      ]
+    },
+    {
+      "name": "null context: passed to FUN_1001564b as it is",
+      "args": [
+        0,
+        "@source"
+      ]
+    },
+    {
+      "name": "copy allocation fails: null, nothing linked or freed",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "block allocation fails: copy freed, not linked",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@copy",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "link returns 1: block then copy freed, owner count kept",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "link returns -1: same failure path",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "link returns INT_MIN: nonzero, same failure path",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -2147483648
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 84900,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -4,
+          30
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "function": "CDisplay_HandleMaterial_guess",
+  "original": "0x004a1e2a",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "short"
+    },
+    {
+      "name": "param_3",
+      "type": "ptr"
+    },
+    {
+      "name": "param_4",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ch": {
+      "size": "0xa50",
+      "fill": "random",
+      "init": [
+        {"offset": "0xa0", "u32": "@pl"},
+        {"offset": "0xa47", "u8": 255}
+      ]
+    },
+    "pl": {
+      "size": "0x130",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x80", "u32": 4660},
+        {"offset": "0x98", "u8": 1},
+        {"offset": "0xa5", "u8": 17},
+        {"offset": "0xa6", "u8": 34},
+        {"offset": "0xa7", "u8": 51},
+        {"offset": "0xa8", "u8": 68},
+        {"offset": "0xa9", "u8": 85},
+        {"offset": "0xaa", "u8": 102},
+        {"offset": "0x12c", "u8": 9}
+      ]
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "newm": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x5f", "cstr": "AB"},
+        {"offset": "0xc5", "u8": 3},
+        {"offset": "0xc8", "u32": 5}
+      ]
+    },
+    "oldm": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x5f", "cstr": "AB"},
+        {"offset": "0xc5", "u8": 4},
+        {"offset": "0xc8", "u32": 5}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4de0", "u32": "@display"}
+  ],
+  "callees": {
+    "0x00407334": {
+      "name": "CDisplay::SwapHead_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "int", "int", "int", "int"]
+    },
+    "0x0040798e": {
+      "name": "CDisplay::SwapMaterial",
+      "conv": "thiscall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 0
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:16", "u32", "int"]
+    }
+  },
+  "cases": [
+    {"name": "slot 2 -> 0 (SwapHead), material 3 vs 4", "args": ["@ch", 2, "@newm", "@oldm"]},
+    {"name": "slot 7 -> 2 (SwapMaterial)", "args": ["@ch", 7, "@newm", "@oldm"]},
+    {"name": "slot 9 -> 3 (lower bound of 9..10)", "args": ["@ch", 9, "@newm", "@oldm"]},
+    {"name": "slot 10 -> 3 (upper bound of 9..10)", "args": ["@ch", 10, "@newm", "@oldm"]},
+    {"name": "slot 12 -> 4", "args": ["@ch", 12, "@newm", "@oldm"]},
+    {"name": "slot 17 -> 1", "args": ["@ch", 17, "@newm", "@oldm"]},
+    {"name": "slot 18 -> 5", "args": ["@ch", 18, "@newm", "@oldm"]},
+    {"name": "slot 19 -> 6", "args": ["@ch", 19, "@newm", "@oldm"]},
+    {"name": "slot 0 unmapped: return", "args": ["@ch", 0, "@newm", "@oldm"]},
+    {"name": "slot 1 unmapped: return", "args": ["@ch", 1, "@newm", "@oldm"]},
+    {"name": "slot 3 unmapped: return", "args": ["@ch", 3, "@newm", "@oldm"]},
+    {"name": "slot 8 unmapped (<= 8 boundary): return", "args": ["@ch", 8, "@newm", "@oldm"]},
+    {"name": "slot 11 unmapped (> 10 boundary): return", "args": ["@ch", 11, "@newm", "@oldm"]},
+    {"name": "slot 13 unmapped: return", "args": ["@ch", 13, "@newm", "@oldm"]},
+    {"name": "slot 16 unmapped (below 17): return", "args": ["@ch", 16, "@newm", "@oldm"]},
+    {"name": "slot 20 unmapped: return", "args": ["@ch", 20, "@newm", "@oldm"]},
+    {"name": "slot 21 unmapped (below 22): return", "args": ["@ch", 21, "@newm", "@oldm"]},
+    {"name": "slot 22 fails the first check", "args": ["@ch", 22, "@newm", "@oldm"]},
+    {"name": "slot 22 with an unmapped param_1: the first check must not read it", "args": [305419896, 22, "@newm", "@oldm"]},
+    {"name": "slot -1 negative (signed compare): return", "args": ["@ch", -1, "@newm", "@oldm"]},
+    {"name": "param_1 null", "args": [0, 7, "@newm", "@oldm"]},
+    {"name": "player at +0xA0 null", "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@ch", "offset": "0xa0", "u32": 0}]},
+    {"name": "p3 null (slot 7)", "args": ["@ch", 7, 0, "@oldm"]},
+    {"name": "p4 null (slot 7)", "args": ["@ch", 7, "@newm", 0]},
+    {"name": "both null: equal, return", "args": ["@ch", 7, 0, 0]},
+    {"name": "same object: equal, return", "args": ["@ch", 7, "@newm", "@newm"]},
+    {"name": "same material, p4 colour differs",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@oldm", "offset": "0xc5", "u8": 3}, {"addr": "@oldm", "offset": "0xc8", "u32": 6}]},
+    {"name": "same material, p3 colour differs",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@oldm", "offset": "0xc5", "u8": 3}, {"addr": "@newm", "offset": "0xc8", "u32": 9}]},
+    {"name": "flag 0 and byte +0x98 zero: flag and +0xD4 set, swap",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@ch", "offset": "0xa47", "u8": 0}, {"addr": "@pl", "offset": "0x98", "u8": 0}]},
+    {"name": "flag 0 and byte +0x98 set: return",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@ch", "offset": "0xa47", "u8": 0}]},
+    {"name": "flag 0xFE and byte +0x98 set: return (not -1)",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@ch", "offset": "0xa47", "u8": 254}]},
+    {"name": "flag 0xFE and byte +0x98 zero: flag set, swap",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@ch", "offset": "0xa47", "u8": 254}, {"addr": "@pl", "offset": "0x98", "u8": 0}]},
+    {"name": "flag -1 and byte +0x98 zero: no write to +0xD4",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@pl", "offset": "0x98", "u8": 0}]},
+    {"name": "slot 0: name AB240 gives 240 (set, boundary)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB240"}]},
+    {"name": "slot 0: name AB239 gives 239 (not set, boundary)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB239"}]},
+    {"name": "slot 0: name AB1000 (set)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB1000"}]},
+    {"name": "slot 0: name AB-5 (signed, not set)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB-5"}]},
+    {"name": "slot 0: name ABC (strlen 3, atoi 0)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "ABC"}]},
+    {"name": "slot 0: name A240 (digits start at index 2: 40, not set)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "A240"}]},
+    {"name": "slot 0: p4 name AB240 (set for p4)",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@oldm", "offset": "0x5f", "cstr": "AB240"}]},
+    {"name": "slot 0: both names AB240: equal, return",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB240"}, {"addr": "@oldm", "offset": "0x5f", "cstr": "AB240"}]},
+    {"name": "slot 0: p3 AB65776 is (short) 48 = p4 48: equal, return",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB65776"}, {"addr": "@oldm", "offset": "0xc5", "u8": 48}]},
+    {"name": "slot 0: p3 AB65809 (0x10051): swap gets & 0xFFFF",
+     "args": ["@ch", 2, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB65809"}, {"addr": "@oldm", "offset": "0xc5", "u8": 48}]},
+    {"name": "slot 7: names ignored (atoi only for slot 0)",
+     "args": ["@ch", 7, "@newm", "@oldm"],
+     "memory": [{"addr": "@newm", "offset": "0x5f", "cstr": "AB240"}]},
+    {"name": "slot 0: p3 null, p4 name AB240",
+     "args": ["@ch", 2, 0, "@oldm"],
+      "memory": [{"addr": "@oldm", "offset": "0x5f", "cstr": "AB240"}]}
+  ],
+  "fuzz": {
+    "seed": 4857386,
+    "count": 40,
+    "args": [
+      {"choices": ["@ch", "@ch", "@ch", 0]},
+      {"range": [-4, 24]},
+      {"choices": ["@newm", "@newm", "@oldm", 0]},
+      {"choices": ["@oldm", "@newm", "@oldm", 0]}
+    ],
+    "memory": [
+      {"addr": "@ch", "offset": "0xa0", "type": "u32", "choices": ["@pl", "@pl", "@pl", 0]},
+      {"addr": "@ch", "offset": "0xa47", "type": "u8", "choices": [255, 255, 0, 254, 1]},
+      {"addr": "@pl", "offset": "0x98", "type": "u8", "choices": [0, 0, 1, 2]},
+      {"addr": "@pl", "offset": "0xa5", "type": "u8", "count": 6},
+      {"addr": "@pl", "offset": "0x12c", "type": "u8", "range": [0, 255]},
+      {"addr": "@newm", "offset": "0xc5", "type": "u8", "range": [0, 6]},
+      {"addr": "@oldm", "offset": "0xc5", "type": "u8", "range": [0, 6]},
+      {"addr": "@newm", "offset": "0xc8", "type": "u32", "choices": [4, 5, 6, 0]},
+      {"addr": "@oldm", "offset": "0xc8", "type": "u32", "choices": [4, 5, 6, 0]},
+      {"addr": "@newm", "offset": "0x5f", "type": "u8", "count": 8, "choices": [0, 65, 66, 48, 49, 50, 52, 53, 57, 45]},
+      {"addr": "@oldm", "offset": "0x5f", "type": "u8", "count": 8, "choices": [0, 65, 66, 48, 49, 50, 52, 53, 57, 45]}
+    ]
+  }
+}

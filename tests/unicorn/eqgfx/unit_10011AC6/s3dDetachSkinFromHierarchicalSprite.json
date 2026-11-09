@@ -1,0 +1,87 @@
+{
+  "function": "s3dDetachSkinFromHierarchicalSprite",
+  "original": "0x100134ff",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "dictionary", "type": "ptr"},
+    {"name": "skinIndex", "type": "u32"},
+    {"name": "sprite", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {"size": "0x10", "fill": "zero"},
+    "sprite": {
+      "size": "0x128",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x40", "u32": 4},
+        {"offset": "0x44", "u32": 8},
+        {"offset": "0x48", "u32": "@skins"},
+        {"offset": "0x4c", "u32": "@dagIndexes"}
+      ]
+    },
+    "skins": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@skinA"},
+        {"offset": "0x4", "u32": "@skinB"},
+        {"offset": "0x8", "u32": "@skinC"},
+        {"offset": "0xc", "u32": "@skinD"}
+      ]
+    },
+    "skinA": {"size": "0x10", "fill": "zero"},
+    "skinB": {"size": "0x10", "fill": "zero"},
+    "skinC": {"size": "0x10", "fill": "zero"},
+    "skinD": {"size": "0x10", "fill": "zero"},
+    "dagIndexes": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 100},
+        {"offset": "0x4", "u32": 101},
+        {"offset": "0x8", "u32": 102},
+        {"offset": "0xc", "u32": 103}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!OutputDebugStringA": {"name": "OutputDebugStringA", "conv": "stdcall", "args": ["cstr"], "ret": 0},
+    "0x10017dad": {"name": "t3dUnshareObject", "conv": "cdecl", "args": ["ptr"]},
+    "0x10010575": {"name": "s3dDestroyDMSprite", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x10067d30": {"name": "memcpy", "conv": "cdecl", "args": ["ptr", "ptr", "u32"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "middle index 1 of four: skinB unshared before the shift, both lists shift", "args": ["@dictionary", 1, "@sprite"], "expect": {"ret": 0}},
+    {"name": "first index of four: shifts three entries", "args": ["@dictionary", 0, "@sprite"], "expect": {"ret": 0}},
+    {"name": "second to last of four: shifts one entry", "args": ["@dictionary", 2, "@sprite"], "expect": {"ret": 0}},
+    {"name": "last index of four: no shift", "args": ["@dictionary", 3, "@sprite"], "expect": {"ret": 0}},
+    {"name": "index at the count reports and returns 0xffff3d3e", "args": ["@dictionary", 4, "@sprite"], "expect": {"ret": -49858}},
+    {"name": "index past the count reports", "args": ["@dictionary", 5, "@sprite"], "expect": {"ret": -49858}},
+    {"name": "index 0x80000000 is past the count (unsigned compare)", "args": ["@dictionary", 2147483648, "@sprite"], "expect": {"ret": -49858}},
+    {"name": "index 0xffffffff is past the count", "args": ["@dictionary", 4294967295, "@sprite"], "expect": {"ret": -49858}},
+    {"name": "one skin: index 0 is the last, no shift", "args": ["@dictionary", 0, "@sprite"], "memory": [{"addr": "@sprite", "offset": "0x40", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "no skins: index 0 reports", "args": ["@dictionary", 0, "@sprite"], "memory": [{"addr": "@sprite", "offset": "0x40", "u32": 0}], "expect": {"ret": -49858}},
+    {"name": "two skins: index 0 shifts one entry", "args": ["@dictionary", 0, "@sprite"], "memory": [{"addr": "@sprite", "offset": "0x40", "u32": 2}], "expect": {"ret": 0}},
+    {"name": "null skin slot is unshared and destroyed as is", "args": ["@dictionary", 1, "@sprite"], "memory": [{"addr": "@skins", "offset": "0x4", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "null dictionary passes through to destroy", "args": [0, 1, "@sprite"], "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 4501,
+    "count": 40,
+    "args": [
+      {"choices": ["@dictionary", 0]},
+      {"choices": [0, 1, 2, 3, 4, 5, 6, 7, 2147483648, 4294967295]},
+      {"choices": ["@sprite"]}
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x40", "type": "u32", "range": [0, 6]},
+      {"addr": "@skins", "type": "ptr", "count": 8, "choices": ["@skinA", "@skinB", "@skinC", "@skinD", 0]},
+      {"addr": "@dagIndexes", "type": "u32", "count": 8, "range": [0, 1000]}
+    ]
+  }
+}

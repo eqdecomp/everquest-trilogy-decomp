@@ -1,0 +1,102 @@
+{
+  "function": "EQStrHashMap_guess::FindNodeByKey_guess",
+  "original": "0x00404387",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@map",
+  "args": [
+    {"name": "out", "type": "ptr"},
+    {"name": "key", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "map": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "@buckets"}, {"offset": "0x8", "u32": "@buckets+0x10"}
+    ]},
+    "buckets": {"size": "0x40", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@n1"}, {"offset": "0x4", "u32": 0},
+      {"offset": "0x8", "u32": "@n4"}, {"offset": "0xC", "u32": "@n5"}
+    ]},
+    "n1": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@n2"}, {"offset": "0x4", "u32": "@sAlpha"}]},
+    "n2": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@n3"}, {"offset": "0x4", "u32": "@sbeta"}]},
+    "n3": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "@sBETA"}]},
+    "n4": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "@sGamma"}]},
+    "n5": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@n4"}, {"offset": "0x4", "u32": "@sdelta"}]},
+    "sAlpha": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "Alpha"}]},
+    "sbeta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "beta"}]},
+    "sBETA": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "BETA"}]},
+    "sGamma": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "Gamma"}]},
+    "sdelta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "delta"}]},
+    "kalpha": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "ALPHA"}]},
+    "kbeta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "Beta"}]},
+    "kgamma": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "gamma"}]},
+    "kdelta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "DELTA"}]},
+    "kzeta": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "zeta"}]},
+    "kalph": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "Alph"}]},
+    "kempty": {"size": "0x10", "fill": "zero"},
+    "out": {"size": "0x10", "fill": "random"},
+    "key": {"size": "0x8", "fill": "random", "init": [{"offset": "0x0", "u32": "@kalpha"}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "bucket 0, first node matches case-insensitively", "args": ["@out", "@key"]},
+    {"name": "bucket 0, second node; duplicate returns the first", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kbeta"}]},
+    {"name": "bucket 0, no match walks to the end -> node 0", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kzeta"}]},
+    {"name": "prefix does not match", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kalph"}]},
+    {"name": "empty key matches nothing", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kempty"}]},
+    {"name": "hash 1 -> empty bucket", "args": ["@out", "@key"],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 1}}},
+    {"name": "hash 2 -> bucket 2, single node matches", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kgamma"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 2}}},
+    {"name": "hash 7 mod 4 -> bucket 3, second node matches", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kgamma"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 7}}},
+    {"name": "hash 3 -> bucket 3, first node matches", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kdelta"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 3}}},
+    {"name": "hash 6 mod 4 -> bucket 2, no match", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kdelta"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 6}}},
+    {"name": "hash 0xFFFFFFFF is unsigned: mod 4 -> bucket 3", "args": ["@out", "@key"],
+     "memory": [{"addr": "@key", "u32": "@kdelta"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": "0xFFFFFFFF"}}},
+    {"name": "hash 0x80000002 unsigned mod 3 -> bucket 0", "args": ["@out", "@key"],
+     "memory": [{"addr": "@map", "offset": "0x8", "u32": "@buckets+0xC"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": "0x80000002"}}},
+    {"name": "3 buckets: hash 5 mod 3 -> bucket 2", "args": ["@out", "@key"],
+     "memory": [{"addr": "@map", "offset": "0x8", "u32": "@buckets+0xC"}, {"addr": "@key", "u32": "@kgamma"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 5}}},
+    {"name": "1 bucket: any hash -> bucket 0", "args": ["@out", "@key"],
+     "memory": [{"addr": "@map", "offset": "0x8", "u32": "@buckets+0x4"}, {"addr": "@key", "u32": "@kbeta"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": "0x1235"}}},
+    {"name": "table starting at bucket 2, 2 buckets, hash 1 -> bucket 3", "args": ["@out", "@key"],
+     "memory": [{"addr": "@map", "offset": "0x4", "u32": "@buckets+0x8"}, {"addr": "@key", "u32": "@kdelta"}],
+     "callees": {"0x004037d4": {"name": "CTAFrameDraw::Draw_guess", "conv": "stdcall", "args": ["ptr"], "ret": 1}}},
+    {"name": "out at an offset inside a buffer", "args": ["@out+0x4", "@key"]}
+  ],
+  "fuzz": {
+    "seed": 4211591,
+    "count": 40,
+    "args": [
+      {"choices": ["@out", "@out+0x8"]},
+      {"choices": ["@key"]}
+    ],
+    "memory": [
+      {"addr": "@key", "offset": 0, "type": "u32", "choices": ["@kalpha", "@kbeta", "@kgamma", "@kdelta", "@kzeta", "@kalph", "@kempty"]},
+      {"addr": "@map", "offset": "0x4", "type": "u32", "choices": ["@buckets", "@buckets+0x4", "@buckets+0x8"]},
+      {"addr": "@map", "offset": "0x8", "type": "u32", "choices": ["@buckets+0xC", "@buckets+0x10"]},
+      {"addr": "@n1", "offset": "0x0", "type": "u32", "choices": ["@n2", "@n3", 0]},
+      {"addr": "@n5", "offset": "0x0", "type": "u32", "choices": ["@n4", "@n1", 0]}
+    ]
+  }
+}

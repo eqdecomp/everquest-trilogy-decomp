@@ -1,0 +1,393 @@
+{
+  "function": "ParseIntAtCursor_guess",
+  "original": "0x100252a0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "cursor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "cursor": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@text"
+        }
+      ]
+    },
+    "text": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033861": {
+      "name": "_isdigit",
+      "args": [
+        "int"
+      ],
+      "passthrough": true
+    },
+    "0x1003507e": {
+      "name": "_atoi",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "digits only",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "123"
+        }
+      ],
+      "expect": {
+        "ret": 123
+      }
+    },
+    {
+      "name": "digits then a space",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "42 hi"
+        }
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "letters before the digits are skipped",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "abc42xyz"
+        }
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "minus sign is dropped",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "-7"
+        }
+      ],
+      "expect": {
+        "ret": 7
+      }
+    },
+    {
+      "name": "digit last before the NUL",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "xy9"
+        }
+      ],
+      "expect": {
+        "ret": 9
+      }
+    },
+    {
+      "name": "copy stops at the first non-digit",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "5a6"
+        }
+      ],
+      "expect": {
+        "ret": 5
+      }
+    },
+    {
+      "name": "single zero",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "0"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "leading zeros",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "007"
+        }
+      ],
+      "expect": {
+        "ret": 7
+      }
+    },
+    {
+      "name": "seven digits fill the buffer",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "1234567"
+        }
+      ],
+      "expect": {
+        "ret": 1234567
+      }
+    },
+    {
+      "name": "eight digits: the NUL store lands on the return address",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "12345678"
+        }
+      ],
+      "expect": {
+        "ret": 12345678
+      }
+    },
+    {
+      "name": "NUL before the digits is skipped",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "hex": "003500"
+        }
+      ],
+      "expect": {
+        "ret": 5
+      }
+    },
+    {
+      "name": "copy stops at a NUL inside the text",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "hex": "34320039"
+        }
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "high-bit byte before the digits (sign-extended to -23)",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "hex": "e93500"
+        }
+      ],
+      "expect": {
+        "ret": 5
+      }
+    },
+    {
+      "name": "cursor starts mid-text",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "12ab34"
+        },
+        {
+          "addr": "@cursor",
+          "u32": "@text+0x2"
+        }
+      ],
+      "expect": {
+        "ret": 34
+      }
+    },
+    {
+      "name": "second run of digits is not read",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "12 34"
+        }
+      ],
+      "expect": {
+        "ret": 12
+      }
+    },
+    {
+      "name": "tab and colon before the digits",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "\t:=12"
+        }
+      ],
+      "expect": {
+        "ret": 12
+      }
+    },
+    {
+      "name": "long skip then one digit",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "abcdefgh9"
+        }
+      ],
+      "expect": {
+        "ret": 9
+      }
+    },
+    {
+      "name": "slash and colon are not digits",
+      "args": [
+        "@cursor"
+      ],
+      "memory": [
+        {
+          "addr": "@text",
+          "cstr": "/9:"
+        }
+      ],
+      "expect": {
+        "ret": 9
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 152224,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@cursor"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@cursor",
+        "type": "u32",
+        "choices": [
+          "@text",
+          "@text+0x4",
+          "@text+0x10",
+          "@text+0x20",
+          "@text+0x2f"
+        ]
+      },
+      {
+        "addr": "@text",
+        "type": "u8",
+        "count": 48,
+        "choices": [
+          32,
+          45,
+          46,
+          58,
+          9,
+          97,
+          98,
+          120,
+          121,
+          81,
+          49,
+          55,
+          57
+        ]
+      },
+      {
+        "addr": "@text",
+        "offset": "0x30",
+        "type": "u8",
+        "choices": [
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57
+        ]
+      },
+      {
+        "addr": "@text",
+        "offset": "0x31",
+        "type": "u8",
+        "choices": [
+          0
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "function": "s3dSetMaterialPaletteEntry",
+  "original": "0x100171cd",
+  "sources": [
+    "src/eqgfx/unit_10014F27.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "material",
+      "type": "ptr"
+    },
+    {
+      "name": "paletteIndex",
+      "type": "int"
+    },
+    {
+      "name": "newEntry",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "material": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@palette"
+        },
+        {
+          "offset": "0x20",
+          "u32": 0
+        }
+      ]
+    },
+    "palette": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@oldObj"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@oldObj"
+        },
+        {
+          "offset": "0x8",
+          "u32": 305419896
+        },
+        {
+          "offset": "0xc",
+          "u32": "@oldObj"
+        },
+        {
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "offset": "0x14",
+          "u32": "@oldObj"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@oldObj"
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@oldObj"
+        }
+      ]
+    },
+    "oldObj": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 70
+        },
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "newObj": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 70
+        },
+        {
+          "offset": "0x10",
+          "u32": 7
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical index1 old to new",
+      "args": [
+        0,
+        "@material",
+        1,
+        "@newObj"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index0 boundary",
+      "args": [
+        0,
+        "@material",
+        0,
+        "@newObj"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "last index boundary",
+      "args": [
+        0,
+        "@material",
+        7,
+        "@newObj"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unused ignored nonzero",
+      "args": [
+        12345,
+        "@material",
+        2,
+        "@newObj"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "same old new aliasing",
+      "args": [
+        0,
+        "@material",
+        1,
+        "@oldObj"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero new entry",
+      "args": [
+        0,
+        "@material",
+        4,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag already set",
+      "args": [
+        0,
+        "@material",
+        3,
+        "@newObj"
+      ],
+      "memory": [
+        {
+          "addr": "@material",
+          "offset": "0x20",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ordering witness int entry",
+      "args": [
+        99,
+        "@material",
+        2,
+        287454020
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 94669,
+    "count": 30,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@material"
+        ]
+      },
+      {
+        "range": [
+          0,
+          7
+        ]
+      },
+      {
+        "choices": [
+          "@newObj",
+          "@oldObj",
+          0,
+          1,
+          305419896
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@material",
+        "offset": "0x20",
+        "type": "u32",
+        "range": [
+          0,
+          5
+        ]
+      },
+      {
+        "addr": "@palette",
+        "offset": "0x0",
+        "type": "u32",
+        "count": 8,
+        "stride": 4,
+        "choices": [
+          "@oldObj",
+          "@newObj",
+          0,
+          305419896
+        ],
+        "p": 0.5
+      }
+    ]
+  }
+}

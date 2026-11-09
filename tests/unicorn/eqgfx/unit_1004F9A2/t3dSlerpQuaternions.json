@@ -1,0 +1,823 @@
+{
+  "function": "t3dSlerpQuaternions",
+  "original": "0x100500a4",
+  "sources": [
+    "src/eqgfx/unit_1004F9A2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "start",
+      "type": "ptr"
+    },
+    {
+      "name": "end",
+      "type": "ptr"
+    },
+    {
+      "name": "blend",
+      "type": "float"
+    },
+    {
+      "name": "result",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX evidence: no direct caller reads EAX; the original returns without a fresh EAX result.",
+  "objects": {
+    "start": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "end": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "result": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076280",
+      "from_image": "0x10076280",
+      "image_size": 4
+    },
+    {
+      "addr": "0x1007628C",
+      "from_image": "0x1007628C",
+      "image_size": 4
+    },
+    {
+      "addr": "0x100762F8",
+      "from_image": "0x100762F8",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x10050240": {
+      "name": "t3dAdjustQuaternionHemisphere_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x1004EF68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 0.5
+    },
+    "0x1004ECF9": {
+      "name": "t3dAngleArcTangentFloat",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "float",
+        "ptr"
+      ],
+      "ret_float": 1.0
+    },
+    "0x1004EE37": {
+      "name": "t3dFloatSine",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 0.5
+    }
+  },
+  "cases": [
+    {
+      "name": "exact equality copies all four components despite blend",
+      "args": [
+        "@start",
+        "@end",
+        1.75,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": -2.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": -4.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": -2.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": -4.0
+        }
+      ]
+    },
+    {
+      "name": "equal negative zeros retain their sign bits",
+      "args": [
+        "@start",
+        "@end",
+        0.0,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": -0.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": -0.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": -0.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": -0.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": -0.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": -0.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": -0.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": -0.0
+        }
+      ]
+    },
+    {
+      "name": "fourth component difference takes interpolation path",
+      "args": [
+        "@start",
+        "@end",
+        0.5,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": 4.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "near aligned dot uses linear weights",
+      "args": [
+        "@start",
+        "@end",
+        0.25,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 0.99995
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 0.01
+        }
+      ]
+    },
+    {
+      "name": "dot just outside linear threshold uses arc weights",
+      "args": [
+        "@start",
+        "@end",
+        0.25,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 0.9998
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 0.02
+        }
+      ]
+    },
+    {
+      "name": "regular spherical interpolation",
+      "args": [
+        "@start",
+        "@end",
+        0.3,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 0.5
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 0.8660254
+        }
+      ]
+    },
+    {
+      "name": "orthogonal quaternions use spherical weights",
+      "args": [
+        "@start",
+        "@end",
+        0.6,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 1.0
+        }
+      ]
+    },
+    {
+      "name": "orthogonal dot with a different component ordering",
+      "args": [
+        "@start",
+        "@end",
+        0.2,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 0.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": 0.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 1.0
+        }
+      ]
+    },
+    {
+      "name": "opposite hemisphere endpoint is adjusted by helper",
+      "args": [
+        "@start",
+        "@end",
+        0.4,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": -0.5
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 0.8660254
+        }
+      ]
+    },
+    {
+      "name": "dot above one selects linear branch without square root",
+      "args": [
+        "@start",
+        "@end",
+        0.75,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 1.5
+        }
+      ]
+    },
+    {
+      "name": "zero blend regular branch",
+      "args": [
+        "@start",
+        "@end",
+        0.0,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 1.0
+        }
+      ]
+    },
+    {
+      "name": "unit blend regular branch",
+      "args": [
+        "@start",
+        "@end",
+        1.0,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 1.0
+        }
+      ]
+    },
+    {
+      "name": "negative infinite dot takes antipodal branch",
+      "args": [
+        "@start",
+        "@end",
+        0.25,
+        "@result"
+      ],
+      "callees": {
+        "0x1004EE37": {
+          "name": "t3dFloatSine",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": [
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": 4.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "hex": "000080ff"
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": 4.0
+        }
+      ]
+    },
+    {
+      "name": "antipodal branch at a second blend weight",
+      "args": [
+        "@start",
+        "@end",
+        0.375,
+        "@result"
+      ],
+      "callees": {
+        "0x1004EE37": {
+          "name": "t3dFloatSine",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": [
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": -2.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": 5.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "hex": "000080ff"
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": -2.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "antipodal branch at full blend",
+      "args": [
+        "@start",
+        "@end",
+        1.0,
+        "@result"
+      ],
+      "callees": {
+        "0x1004EE37": {
+          "name": "t3dFloatSine",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": [
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": -2.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": 5.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "hex": "000080ff"
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": -2.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "overflowed hemisphere sums retain a negative finite-scale dot",
+      "args": [
+        "@start",
+        "@end",
+        0.5,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 1e+20
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": 1e+20
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 3e+20
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": 4e+20
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": -1e+20
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 5e+19
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": 0.0
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": 0.0
+        }
+      ]
+    },
+    {
+      "name": "component arithmetic order uses distinct values",
+      "args": [
+        "@start",
+        "@end",
+        0.37,
+        "@result"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0x0",
+          "f32": 0.2
+        },
+        {
+          "addr": "@start",
+          "offset": "0x4",
+          "f32": -0.4
+        },
+        {
+          "addr": "@start",
+          "offset": "0x8",
+          "f32": 0.7
+        },
+        {
+          "addr": "@start",
+          "offset": "0xC",
+          "f32": -0.3
+        },
+        {
+          "addr": "@end",
+          "offset": "0x0",
+          "f32": 0.5
+        },
+        {
+          "addr": "@end",
+          "offset": "0x4",
+          "f32": 0.1
+        },
+        {
+          "addr": "@end",
+          "offset": "0x8",
+          "f32": -0.6
+        },
+        {
+          "addr": "@end",
+          "offset": "0xC",
+          "f32": 0.8
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 327844,
+    "count": 20,
+    "args": [
+      {
+        "choices": [
+          "@start"
+        ]
+      },
+      {
+        "choices": [
+          "@end"
+        ]
+      },
+      {
+        "choices": [
+          -0.5,
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.5
+        ]
+      },
+      {
+        "choices": [
+          "@result"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@start",
+        "type": "float",
+        "count": 4,
+        "choices": [
+          -0.4,
+          -0.2,
+          0.0,
+          0.2,
+          0.4
+        ]
+      },
+      {
+        "addr": "@end",
+        "type": "float",
+        "count": 4,
+        "choices": [
+          -0.4,
+          -0.2,
+          0.0,
+          0.2,
+          0.4
+        ]
+      }
+    ]
+  }
+}

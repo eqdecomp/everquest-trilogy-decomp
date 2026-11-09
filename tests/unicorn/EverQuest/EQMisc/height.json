@@ -1,0 +1,109 @@
+{
+  "function": "height_guess",
+  "original": "0x004a5375",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "height_text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "target": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Bob"},
+      {"offset": "0x80", "u32": 4660},
+      {"offset": "0xD8", "f32": 1.5}
+    ]},
+    "local": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Me"},
+      {"offset": "0x80", "u32": 119},
+      {"offset": "0xD8", "f32": 1.0}
+    ]},
+    "everquest": {"size": "0x100", "fill": "zero"},
+    "world": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E4DAC", "u32": "@target"},
+    {"addr": "0x006E4D8C", "u32": "@local"},
+    {"addr": "0x006B63F8", "u8": 0},
+    {"addr": "0x006B6494", "u32": 0},
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006B3194", "u32": "@world"}
+  ],
+  "callees": {
+    "0x00521ab0": {"name": "_atof", "conv": "cdecl", "args": ["cstr"], "passthrough": true},
+    "0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "this": "mem:0xE0", "args": ["cstr"], "ret": 0},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:12", "u32", "int"], "ret": 0},
+    "0x004b4836": {"name": "SetHeight_guess", "conv": "thiscall", "this": "mem:0x134", "args": ["float"], "ret": 0},
+    "0x004ef0cf": {"name": "__ftol", "conv": "cdecl", "args": [], "passthrough": true},
+    "0x005224fb": {"name": "_sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "ret": 0,
+      "writes": [{"arg": 0, "hex": "7800"}]}
+  },
+  "rewrite_aliases": {
+    "__ftol": "0x004ef0cf"
+  },
+  "cases": [
+    {"name": "request branch: positive height, flags clear, target set", "args": [0, "1.5"]},
+    {"name": "zero height is not positive: no output, no calls", "args": [0, "0"]},
+    {"name": "negative height is not positive", "args": [0, "-2.5"]},
+    {"name": "negative zero is not positive", "args": [0, "-0"]},
+    {"name": "tiny positive height passes the strict compare", "args": [0, "0.0001"]},
+    {"name": "text that is not a number reads as zero", "args": [0, "abc"]},
+    {"name": "empty text reads as zero", "args": [0, ""]},
+    {"name": "null target falls back to the local player", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ]},
+    {"name": "byte flag nonzero with dword flag clear takes the applied branch", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006B63F8", "u8": 1}
+    ]},
+    {"name": "byte flag 0x80 takes the applied branch", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006B63F8", "u8": 128}
+    ]},
+    {"name": "dword flag nonzero with byte flag clear takes the applied branch", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006B6494", "u32": 1}
+    ]},
+    {"name": "dword flag 0x100 has a zero low byte and still takes the applied branch", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006B6494", "u32": 256}
+    ]},
+    {"name": "dword flag with only high bytes set takes the applied branch", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006B6494", "u32": 16777216}
+    ]},
+    {"name": "byte flag compares one byte: the byte after it does not matter", "args": [0, "1.5"], "memory": [
+      {"addr": "0x006B63F9", "u8": 1}
+    ]},
+    {"name": "height is truncated to an int for the server message", "args": [0, "3.7"]},
+    {"name": "height above the int range keeps the low dword of __ftol", "args": [0, "10000000000"]},
+    {"name": "applied branch passes the float height to the player", "args": [0, "2.25"], "memory": [
+      {"addr": "0x006B6494", "u32": 1}
+    ]},
+    {"name": "applied branch with a null target and a nonzero flag byte", "args": [0, "0.5"], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "0x006B63F8", "u8": 2}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4871029,
+    "count": 40,
+    "args": [
+      {"range": [-4, 30]},
+      {"choices": ["1.5", "0", "-1", "0.25", "3.7", "abc", "", "2e3", "1e10", "0.0001", "12.75", " 4", "-0", "9.99", "1000", "7", "0.5", "-0.5"]}
+    ],
+    "memory": [
+      {"addr": "0x006E4DAC", "type": "ptr", "choices": [0, "@target"]},
+      {"addr": "0x006B63F8", "type": "u8", "choices": [0, 0, 0, 1, 128], "p": 0.6},
+      {"addr": "0x006B6494", "type": "u32", "choices": [0, 0, 1, 256, 16777216], "p": 0.6},
+      {"addr": "@target", "offset": "0x80", "type": "u32", "range": [0, 100000]},
+      {"addr": "@target", "offset": "0xD8", "type": "float", "range": [-2, 6]},
+      {"addr": "@local", "offset": "0x80", "type": "u32", "range": [0, 100000]},
+      {"addr": "@local", "offset": "0xD8", "type": "float", "range": [1, 3]}
+    ]
+  }
+}

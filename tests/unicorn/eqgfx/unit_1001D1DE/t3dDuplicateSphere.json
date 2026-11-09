@@ -1,0 +1,150 @@
+{
+  "function": "t3dDuplicateSphere",
+  "original": "0x1001d39a",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sphere",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "sphere": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "duplicate": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@duplicate"
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation copies the three words and clears the definition pointer",
+      "args": [
+        "@sphere"
+      ],
+      "memory": [
+        {"addr": "@sphere", "offset": "0x0", "u32": "0x11223344"},
+        {"addr": "@sphere", "offset": "0x4", "u32": "0x55667788"},
+        {"addr": "@sphere", "offset": "0x8", "u32": "0x99aabbcc"},
+        {"addr": "@duplicate", "offset": "0x0", "u32": "0xdeadbeef"},
+        {"addr": "@duplicate", "offset": "0x4", "u32": "0xdeadbeef"},
+        {"addr": "@duplicate", "offset": "0x8", "u32": "0xdeadbeef"}
+      ]
+    },
+    {
+      "name": "zero source words replace a nonzero destination",
+      "args": [
+        "@sphere"
+      ],
+      "memory": [
+        {"addr": "@sphere", "offset": "0x0", "u32": 0},
+        {"addr": "@sphere", "offset": "0x4", "u32": 0},
+        {"addr": "@sphere", "offset": "0x8", "u32": 0},
+        {"addr": "@duplicate", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@duplicate", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@duplicate", "offset": "0x8", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "allocation failure skips all source reads and destination writes",
+      "args": [
+        "@sphere"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {"addr": "@sphere", "offset": "0x0", "u32": "0x01020304"},
+        {"addr": "@sphere", "offset": "0x4", "u32": "0x05060708"},
+        {"addr": "@sphere", "offset": "0x8", "u32": "0x090a0b0c"},
+        {"addr": "@duplicate", "offset": "0x0", "u32": "0xdeadbeef"},
+        {"addr": "@duplicate", "offset": "0x4", "u32": "0xcafebabe"},
+        {"addr": "@duplicate", "offset": "0x8", "u32": "0x76543210"}
+      ]
+    },
+    {
+      "name": "arbitrary float bit patterns are copied without conversion",
+      "args": ["@sphere"],
+      "memory": [
+        {"addr": "@sphere", "offset": "0x0", "u32": "0x7fc00001"},
+        {"addr": "@sphere", "offset": "0x4", "u32": "0x80000000"},
+        {"addr": "@sphere", "offset": "0x8", "u32": "0x00000001"},
+        {"addr": "@duplicate", "offset": "0x0", "u32": "0x12345678"},
+        {"addr": "@duplicate", "offset": "0x4", "u32": "0x12345678"},
+        {"addr": "@duplicate", "offset": "0x8", "u32": "0x12345678"}
+      ]
+    },
+    {
+      "name": "allocation aliases the input and only its definition pointer is cleared",
+      "args": ["@sphere"],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@sphere"
+        }
+      },
+      "memory": [
+        {"addr": "@sphere", "offset": "0x0", "u32": "0xabcdef01"},
+        {"addr": "@sphere", "offset": "0x4", "u32": "0x23456789"},
+        {"addr": "@sphere", "offset": "0x8", "u32": "0x3456789a"}
+      ]
+    },
+    {
+      "name": "overlapping destination exposes forward copy order",
+      "args": ["@sphere"],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@sphere+0x4"
+        }
+      },
+      "memory": [
+        {"addr": "@sphere", "offset": "0x0", "u32": "0x11111111"},
+        {"addr": "@sphere", "offset": "0x4", "u32": "0x22222222"},
+        {"addr": "@sphere", "offset": "0x8", "u32": "0x33333333"},
+        {"addr": "@sphere", "offset": "0xc", "u32": "0x44444444"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 119706,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sphere"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@sphere", "type": "u32", "count": 3},
+      {"addr": "@duplicate", "type": "u32", "count": 3}
+    ]
+  }
+}

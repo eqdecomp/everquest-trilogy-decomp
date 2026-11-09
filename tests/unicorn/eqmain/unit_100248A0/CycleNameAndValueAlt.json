@@ -1,0 +1,161 @@
+{
+  "function": "CycleNameAndValueAlt_guess",
+  "original": "0x10024f10",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "reset",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x240",
+      "fill": "random",
+      "init": [
+        { "offset": "0x8", "u32": 0 },
+        { "offset": "0x10", "u32": 0 },
+        { "offset": "0x18", "u32": 3 },
+        { "offset": "0x11c", "u32": "@name_alpha" },
+        { "offset": "0x120", "u32": "@name_beta" },
+        { "offset": "0x124", "u32": "@name_gam" },
+        { "offset": "0x128", "u32": "@name_ab" },
+        { "offset": "0x19c", "u32": 100 },
+        { "offset": "0x1a0", "u32": 200 },
+        { "offset": "0x1a4", "u32": 300 },
+        { "offset": "0x1a8", "u32": "0x80000001" }
+      ]
+    },
+    "name_alpha": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x0", "cstr": "alpha" }] },
+    "name_beta": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x0", "cstr": "beta" }] },
+    "name_gam": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x0", "cstr": "gam" }] },
+    "name_ab": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x0", "cstr": "ab" }] },
+    "name_x": { "size": "0x10", "fill": "zero", "init": [{ "offset": "0x0", "cstr": "x" }] },
+    "name_empty": { "size": "0x10", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x10125850", "size": 80, "fill": "random" }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero argument, index equals reset: returns 1, changes nothing",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 2 }, { "addr": "@self", "offset": "0x10", "u32": 2 }],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "zero argument, index differs from reset: copies slot 0, advances to 1",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 2 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "zero argument, index below the last slot advances without wrap",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 1 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "zero argument, last slot wraps to zero",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 2 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "nonzero argument resets index to reset slot, ignoring the old index",
+      "args": ["@self", 0, 1],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 2 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "nonzero argument with index equal to reset still copies",
+      "args": ["@self", 0, 1],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 1 }, { "addr": "@self", "offset": "0x10", "u32": 1 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "nonzero argument, reset slot at the count wraps",
+      "args": ["@self", 0, 1],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 2 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "nonzero argument, reset slot 3 with count 5 advances to 4",
+      "args": ["@self", 0, 1],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 3 }, { "addr": "@self", "offset": "0x18", "u32": 5 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "index past the count still reads its slot, then wraps",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 4 }, { "addr": "@self", "offset": "0x12c", "u32": "@name_x" }, { "addr": "@self", "offset": "0x1ac", "u32": "0xdeadbeef" }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "slot 3 past count 3 copies its high-bit value and wraps",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 3 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "count 1: every call wraps to zero",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 2 }, { "addr": "@self", "offset": "0x18", "u32": 1 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "negative count: signed compare wraps",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 1 }, { "addr": "@self", "offset": "0x18", "u32": -1 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "empty name copies only the terminator",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 1 }, { "addr": "@self", "offset": "0x11c", "u32": "@name_empty" }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "one-character name copies its terminator",
+      "args": ["@self", 0, 0],
+      "memory": [{ "addr": "@self", "offset": "0x8", "u32": 0 }, { "addr": "@self", "offset": "0x10", "u32": 1 }, { "addr": "@self", "offset": "0x11c", "u32": "@name_x" }],
+      "expect": { "ret": 0 }
+    }
+  ],
+  "fuzz": {
+    "seed": 7310024,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "range": [-2, 2]
+      }
+    ],
+    "memory": [
+      { "addr": "@self", "offset": "0x8", "type": "int", "range": [0, 31] },
+      { "addr": "@self", "offset": "0x10", "type": "int", "range": [0, 31] },
+      { "addr": "@self", "offset": "0x18", "type": "int", "range": [-2, 32] },
+      { "addr": "@self", "offset": "0x11c", "type": "ptr", "count": 32,
+        "choices": ["@name_alpha", "@name_beta", "@name_gam", "@name_ab", "@name_x", "@name_empty"] },
+      { "addr": "@self", "offset": "0x19c", "type": "u32", "count": 32 }
+    ]
+  }
+}

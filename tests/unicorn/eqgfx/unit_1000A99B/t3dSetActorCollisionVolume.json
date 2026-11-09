@@ -1,0 +1,247 @@
+{
+  "function": "t3dSetActorCollisionVolume",
+  "original": "0x1000a9a9",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceVolume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "actor": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@oldVolume"
+        }
+      ]
+    },
+    "oldVolume": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "sourceVolume": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "duplicate": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 4
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@duplicate"
+    },
+    "0x1001d5a1": {
+      "name": "t3dDestroyVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: type-4 duplicate replaces the old volume and gets the actor as owner",
+      "args": [
+        "@context",
+        "@actor",
+        "@sourceVolume"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no old collision volume: destroy is still called, with null",
+      "args": [
+        "@context",
+        "@actor",
+        "@sourceVolume"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x2c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type 3 duplicate: stored, but its owner dword at +0x10 is left alone",
+      "args": [
+        "@context",
+        "@actor",
+        "@sourceVolume"
+      ],
+      "memory": [
+        {
+          "addr": "@duplicate",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "type 5 duplicate (one past 4): owner not set",
+      "args": [
+        "@context",
+        "@actor",
+        "@sourceVolume"
+      ],
+      "memory": [
+        {
+          "addr": "@duplicate",
+          "u32": 5
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "duplicate fails: 0xFFFF3D41, old volume kept, destroy not called",
+      "args": [
+        "@context",
+        "@actor",
+        "@sourceVolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    },
+    {
+      "name": "duplicate fails with a null actor: the actor is never read",
+      "args": [
+        "@context",
+        0,
+        "@sourceVolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    },
+    {
+      "name": "null source volume is passed to the duplicate as the second argument",
+      "args": [
+        "@context",
+        "@actor",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null context is passed on unchecked",
+      "args": [
+        0,
+        "@actor",
+        "@sourceVolume"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 43433,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@sourceVolume",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@duplicate",
+        "type": "u32",
+        "range": [0, 8]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x2c",
+        "type": "ptr",
+        "choices": [
+          "@oldVolume",
+          0
+        ]
+      }
+    ]
+  }
+}

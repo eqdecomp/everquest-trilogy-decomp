@@ -1,0 +1,86 @@
+{
+  "function": "NetworkConnection_Disconnect_guess",
+  "original": "0x004f3ac0",
+  "sources": ["src/Network/rdp/tx.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {"size": "0x800", "fill": "zero", "init": [
+      {"offset": "0x60c", "u32": 100},
+      {"offset": "0x5f4", "u32": 200},
+      {"offset": "0x5dc", "u32": 300},
+      {"offset": "0x174", "u8": 0},
+      {"offset": "0x175", "u8": 0},
+      {"offset": "0x178", "u32": 0},
+      {"offset": "0x17c", "u32": 0},
+      {"offset": "0x768", "u32": 0},
+      {"offset": "0x788", "u32": 9},
+      {"offset": "0x7a0", "u32": "@event"},
+      {"offset": "0x7a4", "u32": "@flag"}
+    ]},
+    "stats": {"size": "0x300", "fill": "zero"},
+    "event": {"size": 4, "fill": "zero"},
+    "flag": {"size": 4, "fill": "zero"},
+    "item0": {"size": 48, "fill": "zero", "init": [{"offset": "0x28", "u32": 7}]},
+    "item1": {"size": 48, "fill": "zero", "init": [{"offset": "0x28", "u32": 11}]},
+    "item2": {"size": 48, "fill": "zero", "init": [{"offset": "0x28", "u32": 13}]},
+    "item3": {"size": 48, "fill": "zero", "init": [{"offset": "0x28", "u32": 17}]}
+  },
+  "memory": [{"addr": "0x0057f698", "u32": "@stats"}],
+  "callees": {
+    "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": [0]},
+    "0x004f4ac0": {"name": "fast_free_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x004f5940": {"name": "cleanup_connection_queues_guess", "conv": "cdecl", "args": ["int"]},
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 50000},
+    "0x004f78b0": {"name": "uevent_signal_guess", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {"name": "empty unknown reason", "args": ["@conn", 0]},
+    {"name": "drain queues in order", "args": ["@conn", 0], "callees": {
+      "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@item0", "@item1", 0, "@item2", 0, "@item3", 0]}
+    }},
+    {"name": "reason 60000", "args": ["@conn", "0x60000"]},
+    {"name": "reason 50000", "args": ["@conn", "0x50000"]},
+    {"name": "reason 40000", "args": ["@conn", "0x40000"]},
+    {"name": "reason 10000", "args": ["@conn", "0x10000"]},
+    {"name": "reason 30000 subtype 3 low boundary", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 3}, {"addr": "@conn", "offset": "0x175", "u8": 0}]},
+    {"name": "reason 30000 subtype 3 upper valid", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 3}, {"addr": "@conn", "offset": "0x175", "u8": 15}]},
+    {"name": "reason 30000 subtype 3 upper invalid", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 3}, {"addr": "@conn", "offset": "0x175", "u8": 16}]},
+    {"name": "reason 30000 subtype 4", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 4}]},
+    {"name": "reason 30000 subtype 11 index 1", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 11}, {"addr": "@conn", "offset": "0x175", "u8": 1}]},
+    {"name": "reason 30000 subtype 11 index 2 fallback", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 11}, {"addr": "@conn", "offset": "0x175", "u8": 2}]},
+    {"name": "reason 30000 subtype 12 index 0", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 12}, {"addr": "@conn", "offset": "0x175", "u8": 0}]},
+    {"name": "reason 30000 subtype 12 index 1", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 12}, {"addr": "@conn", "offset": "0x175", "u8": 1}]},
+    {"name": "reason 30000 subtype 12 fallback", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 12}, {"addr": "@conn", "offset": "0x175", "u8": 2}]},
+    {"name": "reason 30000 default subtype", "args": ["@conn", "0x30000"], "memory": [{"addr": "@conn", "offset": "0x174", "u8": 5}]},
+    {"name": "reason above known range", "args": ["@conn", "0x70000"]},
+    {"name": "recent timestamp forces stored reason", "args": ["@conn", "0x40000"], "memory": [{"addr": "@conn", "offset": "0x17c", "u32": 1}, {"addr": "@conn", "offset": "0x178", "u32": 20000}], "callees": {"0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 29999}}},
+    {"name": "exact timeout boundary", "args": ["@conn", "0x40000"], "memory": [{"addr": "@conn", "offset": "0x17c", "u32": 1}, {"addr": "@conn", "offset": "0x178", "u32": 20000}], "callees": {"0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 30000}}},
+    {"name": "unsigned timer wrap", "args": ["@conn", "0x50000"], "memory": [{"addr": "@conn", "offset": "0x17c", "u32": 1}, {"addr": "@conn", "offset": "0x178", "u32": "0xfffffffe"}], "callees": {"0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 0}}},
+    {"name": "signed timer delta", "args": ["@conn", "0x50000"], "memory": [{"addr": "@conn", "offset": "0x17c", "u32": 1}, {"addr": "@conn", "offset": "0x178", "u32": "0xffffffff"}], "callees": {"0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": "0x7fffffff"}}},
+    {"name": "connection already counted", "args": ["@conn", "0x60000"], "memory": [{"addr": "@conn", "offset": "0x768", "u32": 1}]},
+    {"name": "low counter carry", "args": ["@conn", "0x60000"], "memory": [{"addr": "@stats", "offset": "0x188", "u32": "0xffffffff"}, {"addr": "@stats", "offset": "0x18c", "u32": 5}, {"addr": "@stats", "offset": "0x1a8", "u32": "0xffffffff"}, {"addr": "@stats", "offset": "0x1ac", "u32": 9}]}
+  ],
+  "fuzz": {
+    "seed": 5192384,
+    "count": 40,
+    "args": [
+      {"choices": ["@conn"]},
+      {"choices": [0, "0x10000", "0x30000", "0x30001", "0x40000", "0x40001", "0x50000", "0x60000", "0xffffffff"]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x768", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x17c", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x178", "type": "u32", "choices": [0, 20000, 30000, "0xffffffff"]},
+      {"addr": "@conn", "offset": "0x174", "type": "u8", "choices": [3, 4, 5, 11, 12, 255]},
+      {"addr": "@conn", "offset": "0x175", "type": "u8", "choices": [0, 1, 2, 15, 16, 255]},
+      {"addr": "@conn", "offset": "0x7a0", "type": "ptr", "choices": ["@event", 0]},
+      {"addr": "@conn", "offset": "0x7a4", "type": "ptr", "choices": ["@flag", 0]},
+      {"addr": "@stats", "offset": "0x188", "type": "u32", "count": 60, "stride": 4, "choices": [0, 1, "0x7fffffff", "0xfffffffe", "0xffffffff"]}
+    ]
+  }
+}

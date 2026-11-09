@@ -1,0 +1,356 @@
+{
+  "function": "EqSoundManagerPlayback_guess::PlayPositionedSound_guess",
+  "original": "0x004e22df",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqsoundmanagerplayback",
+  "args": [
+    { "name": "x", "type": "float" },
+    { "name": "y", "type": "float" },
+    { "name": "z", "type": "float" },
+    { "name": "soundId", "type": "int" },
+    { "name": "kind", "type": "int" },
+    { "name": "player", "type": "ptr" },
+    { "name": "flags", "type": "int" },
+    { "name": "resourceId", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "eqsoundmanagerplayback": {
+      "size": "0xb38",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x134", "u32": 4294967295 }
+      ]
+    },
+    "player": {
+      "size": "0x74",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x70", "u32": "@playerstate" }
+      ]
+    },
+    "playerstate": {
+      "size": "0x22c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x1a0", "f32": 45.5 },
+        { "offset": "0x228", "u32": 7 }
+      ]
+    },
+    "control": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@vtable" }
+      ]
+    },
+    "vtable": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": "@acquire" },
+        { "offset": "0x1c", "u32": "@release" }
+      ]
+    },
+    "acquire": { "size": "0x10", "fill": "zero" },
+    "release": { "size": "0x10", "fill": "zero" },
+    "resources": {
+      "size": "0x1000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "0x006e4dd8", "u32": "@eqsoundmanagerplayback" },
+    { "addr": "0x006e4dd0", "u32": "@control" },
+    { "addr": "0x00577b44", "u32": "@resources" }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004e2280": {
+      "name": "EqSoundManager_guess::FindFreeSlot_guess",
+      "conv": "thiscall",
+      "args": [ "int" ],
+      "ret": 0
+    },
+    "0x004e3768": {
+      "name": "LoadNamedWave_guess",
+      "conv": "thiscall",
+      "args": [ "u32", "int" ],
+      "ret": 0
+    },
+    "0x004ecbfa": {
+      "name": "EQSoundBuffer_guess::SetMinDistance_guess",
+      "conv": "thiscall",
+      "args": [ "float" ],
+      "ret": 0
+    },
+    "0x004ecba1": {
+      "name": "EQSoundBuffer_guess::SetVolume_guess",
+      "conv": "thiscall",
+      "args": [ "int" ],
+      "ret": 0
+    },
+    "0x004ecbc2": {
+      "name": "EQSoundBuffer_guess::SetMode_guess",
+      "conv": "thiscall",
+      "args": [ "u8" ]
+    },
+    "0x004e3624": {
+      "name": "SoundControl_guess::Command_guess",
+      "conv": "thiscall",
+      "args": [ "int", "mem:84" ],
+      "ret": 0
+    },
+    "@acquire": {
+      "name": "AcquireSoundHandle_guess",
+      "conv": "thiscall",
+      "args": [ "u32" ],
+      "ret": 123
+    },
+    "@release": {
+      "name": "ReleaseSoundHandle_guess",
+      "conv": "thiscall",
+      "args": [ "ptr" ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "sound manager unavailable",
+      "args": [ 1.25, -2.5, 3.75, 15, 0, 0, 0, 91 ],
+      "memory": [ { "addr": "0x006e4dd8", "u32": 0 } ]
+    },
+    {
+      "name": "no free slot",
+      "args": [ 1.25, -2.5, 3.75, 15, 0, 0, 0, 91 ],
+      "callees": {
+        "0x004e2280": {
+          "name": "EqSoundManager_guess::FindFreeSlot_guess",
+          "conv": "thiscall",
+          "args": [ "int" ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "nonzero slot index updates selected slot",
+      "args": [ 1.25, 2.5, 3.75, 12, 0, 0, 0, 91 ],
+      "memory": [
+        { "addr": "@eqsoundmanagerplayback", "offset": "0x18c", "u32": 4294967295 }
+      ],
+      "callees": {
+        "0x004e2280": {
+          "name": "EqSoundManager_guess::FindFreeSlot_guess",
+          "conv": "thiscall",
+          "args": [ "int" ],
+          "ret": 2
+        },
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": 123
+        },
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:84" ],
+          "ret": 4660
+        }
+      }
+    },
+    {
+      "name": "sound id lower boundary with no player",
+      "args": [ 1.0, 2.0, 3.0, 0, 0, 0, 0, 91 ],
+      "callees": {
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": 88
+        },
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:84" ],
+          "ret": 4660
+        }
+      }
+    },
+    {
+      "name": "sound id upper accepted boundary",
+      "args": [ -4.0, 8.0, 16.0, 719, 1, 0, 0, 91 ],
+      "callees": {
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": 89
+        },
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:84" ],
+          "ret": 9029
+        }
+      }
+    },
+    {
+      "name": "sound id upper rejected boundary",
+      "args": [ 1.0, 2.0, 3.0, 720, 1, 0, 0, 91 ]
+    },
+    {
+      "name": "negative sound id reaches acquisition",
+      "args": [ 1.0, 2.0, 3.0, -1, 1, 0, 0, 91 ],
+      "callees": {
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": 90
+        }
+      }
+    },
+    {
+      "name": "no player acquisition failure",
+      "args": [ 1.0, 2.0, 3.0, 12, 0, 0, 0, 91 ],
+      "callees": {
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "nonzero flag skips no player acquisition and fills position",
+      "args": [ 1.25, 2.5, 5.0, 12, 1, 0, 1, 91 ],
+      "callees": {
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:84" ],
+          "ret": 176
+        }
+      }
+    },
+    {
+      "name": "changed flag is visible to the command buffer",
+      "args": [ 1.25, 2.5, 5.0, 12, 1, 0, 1, 91 ],
+      "callees": {
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:88" ],
+          "ret": 176
+        }
+      }
+    },
+    {
+      "name": "player validation rejects",
+      "args": [ 4.0, 5.0, 6.0, 7, 1, "@player", 0, 91 ]
+    },
+    {
+      "name": "player validation accepts but acquisition fails",
+      "args": [ 4.0, 5.0, 6.0, 7, 1, "@player", 0, 91 ],
+      "callees": {
+        "0x004e3768": {
+          "name": "FUN_004e3768",
+          "conv": "thiscall",
+          "args": [ "u32", "int" ],
+          "ret": 1
+        },
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "player validation and mode match",
+      "args": [ 4.25, -5.5, 6.75, 37, 1, "@player", 0, 91 ],
+      "memory": [ { "addr": "@playerstate", "offset": "0x228", "u32": 37 } ],
+      "callees": {
+        "0x004e3768": {
+          "name": "FUN_004e3768",
+          "conv": "thiscall",
+          "args": [ "u32", "int" ],
+          "ret": 1
+        },
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": 91
+        },
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:84" ],
+          "ret": 9320
+        }
+      }
+    },
+    {
+      "name": "player validation existing handle release then mode mismatch",
+      "args": [ 7.0, 8.0, 9.0, 38, 2, "@player", 0, 91 ],
+      "memory": [
+        { "addr": "@eqsoundmanagerplayback", "offset": "0x134", "u32": 55 },
+        { "addr": "@playerstate", "offset": "0x228", "u32": 37 }
+      ],
+      "callees": {
+        "0x004e3768": {
+          "name": "FUN_004e3768",
+          "conv": "thiscall",
+          "args": [ "u32", "int" ],
+          "ret": 1
+        },
+        "@acquire": {
+          "name": "AcquireSoundHandle_guess",
+          "conv": "thiscall",
+          "args": [ "u32" ],
+          "ret": 92
+        },
+        "0x004e3624": {
+          "name": "SoundControl_guess::Command_guess",
+          "conv": "thiscall",
+          "args": [ "int", "mem:84" ],
+          "ret": 119
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5120735,
+    "count": 32,
+    "args": [
+      { "range": [ -100, 100 ] },
+      { "range": [ -100, 100 ] },
+      { "range": [ -100, 100 ] },
+      { "range": [ -10, 740 ] },
+      { "range": [ -3, 3 ] },
+      { "choices": [ 0, "@player" ] },
+      { "choices": [ 0, 1, 2 ] },
+      { "range": [ 0, 200 ] }
+    ],
+    "memory": [
+      { "addr": "@eqsoundmanagerplayback", "offset": "0x104", "type": "int", "range": [ -5, 5 ] },
+      { "addr": "@eqsoundmanagerplayback", "offset": "0x134", "type": "u32", "choices": [ 0, 1, 4294967295 ] },
+      { "addr": "@playerstate", "offset": "0x1a0", "type": "float", "range": [ 1, 1000 ] },
+      { "addr": "@playerstate", "offset": "0x228", "type": "u32", "range": [ 0, 740 ] }
+    ]
+  }
+}

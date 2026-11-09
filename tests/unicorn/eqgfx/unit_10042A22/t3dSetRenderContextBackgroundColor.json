@@ -1,0 +1,140 @@
+{
+  "function": "t3dSetRenderContextBackgroundColor",
+  "original": "0x100430fc",
+  "sources": [
+    "src/eqgfx/unit_10042A22.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "backgroundColor",
+      "type": "u8"
+    },
+    {
+      "name": "colorValue",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x518",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x21c",
+          "hex": "1122334455667788"
+        }
+      ]
+    },
+    "colorvalue": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x89abcdef"
+        },
+        {
+          "offset": "0x4",
+          "u32": "0x76543210"
+        },
+        {
+          "offset": "0x8",
+          "u32": "0xfedcba98"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+      {
+        "name": "nonnull color copy",
+      "args": [
+        "@rendercontext",
+          122,
+        "@colorvalue"
+      ]
+    },
+    {
+        "name": "null color preserves value",
+      "args": [
+        "@rendercontext",
+        0,
+          0
+      ]
+    },
+    {
+        "name": "high byte and unaligned source",
+      "args": [
+          "@rendercontext",
+          255,
+          "@colorvalue+0x1"
+        ]
+      },
+      {
+        "name": "overlap observes byte write",
+        "args": [
+          "@rendercontext",
+          165,
+          "@rendercontext+0x21c"
+        ]
+      },
+      {
+        "name": "overlap starts at value field",
+        "args": [
+          "@rendercontext",
+          109,
+          "@rendercontext+0x21d"
+        ]
+      },
+      {
+        "name": "overlap at final byte",
+        "args": [
+          "@rendercontext",
+          128,
+          "@rendercontext+0x220"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 274684,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          0,
+          "@colorvalue",
+          "@colorvalue+0x1",
+          "@rendercontext+0x21c",
+          "@rendercontext+0x21d",
+          "@rendercontext+0x21e",
+          "@rendercontext+0x21f",
+          "@rendercontext+0x220"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rendercontext",
+        "offset": "0x21c",
+        "size": 8
+      },
+      {
+        "addr": "@colorvalue",
+        "size": 12
+      }
+    ]
+  }
+}

@@ -1,0 +1,419 @@
+{
+  "function": "CDisplay::GetCeilingHeight",
+  "original": "0x00414468",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {
+      "name": "yBits",
+      "type": "u32"
+    },
+    {
+      "name": "xBits",
+      "type": "u32"
+    },
+    {
+      "name": "zBits",
+      "type": "u32"
+    },
+    {
+      "name": "radiusMultiplier",
+      "type": "float"
+    }
+  ],
+  "ret": "float",
+  "memory": [
+    {
+      "addr": "@display",
+      "offset": "0x0",
+      "u32": "@render"
+    },
+    {
+      "addr": "@display",
+      "offset": "0x4",
+      "u32": "@world"
+    },
+    {
+      "addr": "@display",
+      "offset": "0x2c94",
+      "u32": 1
+    },
+    {
+      "addr": "@display",
+      "offset": "0x2cac",
+      "u32": "@ray"
+    },
+    {
+      "addr": "@ray",
+      "offset": "0x8",
+      "f32": 2.0
+    },
+    {
+      "addr": "0x005351F4",
+      "from_image": "0x005351F4",
+      "image_size": 4
+    },
+    {
+      "addr": "0x006E52E8",
+      "u32": "@region"
+    },
+    {
+      "addr": "0x006E50C8",
+      "u32": "@collide"
+    }
+  ],
+  "objects": {
+    "display": {
+      "size": "0x2e00",
+      "fill": "random"
+    },
+    "world": {
+      "size": 16
+    },
+    "render": {
+      "size": 16
+    },
+    "ray": {
+      "size": 16
+    },
+    "ray2": {
+      "size": 16
+    },
+    "region": {
+      "size": 16
+    },
+    "collide": {
+      "size": 16
+    },
+    "alternate_collide": {
+      "size": 16
+    }
+  },
+  "callees": {
+    "@region": {
+      "name": "t3dGetRegionFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:24"
+      ],
+      "ret": 1
+    },
+    "@collide": {
+      "name": "s3dCollideSphereWithWorld",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "mem:24",
+        "mem:12",
+        "float",
+        "ptr",
+        "ptr",
+        "int",
+        "ignore",
+        "ignore",
+        "mem:4",
+        "int"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 8,
+          "offset": 0,
+          "hex": "00000000000000000000c842"
+        },
+        {
+          "arg": 9,
+          "offset": 0,
+          "hex": "000000000000000000409a44"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "3D disabled returns zero without helper calls",
+      "args": [
+        10,
+        20,
+        30,
+        0.5
+      ],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0x2c94",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0.0
+      }
+    },
+    {
+      "name": "region miss returns sentinel with seeded early-return stack",
+      "args": [
+        10,
+        20,
+        30,
+        0.5
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0efe00",
+          "size": "0x200",
+          "fill": "random"
+        }
+      ],
+      "callees": {
+        "@region": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:24"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "collision failure returns sentinel",
+      "args": [
+        10,
+        20,
+        30,
+        0.5
+      ],
+      "callees": {
+        "@collide": {
+          "name": "s3dCollideSphereWithWorld",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:24",
+            "mem:12",
+            "float",
+            "ptr",
+            "ptr",
+            "int",
+            "ignore",
+            "ignore",
+            "mem:4",
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "success returns arg8 z plus rounded live radius",
+      "args": [
+        10,
+        20,
+        30,
+        0.5
+      ]
+    },
+    {
+      "name": "raw coordinate words pass through and endpoint is positive 32767",
+      "args": [
+        "0x7f800001",
+        "0x80000000",
+        "0x7fc12345",
+        0.5
+      ]
+    },
+    {
+      "name": "output pointer observer records both callback destinations",
+      "args": [
+        10,
+        20,
+        30,
+        0.5
+      ],
+      "callees": {
+        "@collide": {
+          "name": "outputPointerObserver",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:24",
+            "mem:12",
+            "float",
+            "ptr",
+            "ptr",
+            "int",
+            "ptr",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 8,
+              "offset": 0,
+              "hex": "00000000000000000000c842"
+            },
+            {
+              "arg": 9,
+              "offset": 0,
+              "hex": "000000000000000000409a44"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "region helper changes live radius field before multiplication",
+      "args": [
+        10,
+        20,
+        30,
+        0.5
+      ],
+      "callees": {
+        "@region": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:24"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "addr": "@ray+0x8",
+              "hex": "00004040"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "infinite multiplier remains IEEE infinity",
+      "args": [
+        10,
+        20,
+        30,
+        1e+30
+      ],
+      "memory": [
+        {
+          "addr": "@ray",
+          "offset": "0x8",
+          "f32": 1.0
+        }
+      ]
+    },
+    {
+      "name": "zero multiplier returns the callback height",
+      "args": [
+        10,
+        20,
+        30,
+        0.0
+      ]
+    },
+    {
+      "name": "negative radius multiplier is preserved",
+      "args": [
+        10,
+        20,
+        30,
+        -1.25
+      ]
+    },
+    {
+      "name": "zero times infinite live radius preserves unordered arithmetic",
+      "args": [
+        10,
+        20,
+        30,
+        0.0
+      ],
+      "memory": [
+        {
+          "addr": "@ray",
+          "offset": "0x8",
+          "hex": "0000807f"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 87521,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          0,
+          10,
+          1065353216,
+          "0x80000000",
+          "0x7f800000",
+          "0x7f800001",
+          "0x7fc12345",
+          4294967295
+        ]
+      },
+      {
+        "choices": [
+          0,
+          20,
+          1073741824,
+          "0x80000000",
+          "0x7f800000",
+          "0x7f800001",
+          "0x7fc12345",
+          4294967295
+        ]
+      },
+      {
+        "choices": [
+          0,
+          30,
+          1082130432,
+          "0x80000000",
+          "0x7f800000",
+          "0x7f800001",
+          "0x7fc12345",
+          4294967295
+        ]
+      },
+      {
+        "range": [
+          -100,
+          100
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@display",
+        "offset": "0x2c94",
+        "type": "int",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@ray",
+        "offset": "0x8",
+        "type": "float",
+        "range": [
+          -20,
+          20
+        ]
+      }
+    ]
+  }
+}

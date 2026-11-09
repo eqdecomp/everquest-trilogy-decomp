@@ -1,0 +1,178 @@
+{
+  "function": "NetworkConnection_getConnectionStatus_guess",
+  "original": "0x004f18b0",
+  "sources": ["src/Network/rdp/connection.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "conn", "type": "ptr"},
+    {"name": "status", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {"size": "0x7e4", "fill": "zero"},
+    "status": {"size": 8, "fill": "zero"}
+  },
+  "callees": {
+    "0x004f39c0": {
+      "name": "NetworkConnection_UpdateConnectionTimeout_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"]
+    }
+  },
+  "cases": [
+    {"name": "disconnected", "args": ["@conn", "@status"]},
+    {"name": "connected update leaves status up", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x77c", "u32": 1}
+    ]},
+    {"name": "update reports down, no second deadline", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x4c0", "u32": 1000}
+    ], "callees": {"0x004f39c0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [
+      {"arg": 1, "offset": 0, "hex": "00000000"},
+      {"arg": 1, "offset": 4, "hex": "28230000"}
+    ]}}},
+    {"name": "disconnect deadline replaces later helper deadline", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 1},
+      {"addr": "@conn", "offset": "0x764", "u32": 1},
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x4c0", "u32": 1000}
+    ], "callees": {"0x004f39c0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [
+      {"arg": 1, "offset": 0, "hex": "00000000"},
+      {"arg": 1, "offset": 4, "hex": "e02e0000"}
+    ]}}},
+    {"name": "disconnect uses up-status shortcut", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 1},
+      {"addr": "@conn", "offset": "0x764", "u32": 1},
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x4c0", "u32": 1000}
+    ]},
+    {"name": "delayed ack", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x780", "u32": 1},
+      {"addr": "@conn", "offset": "0x794", "u32": 1},
+      {"addr": "@conn", "offset": "0x798", "u32": 10000}
+    ]},
+    {"name": "connected without delayed ack", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x780", "u32": 1}
+    ]},
+    {"name": "delayed ack replaced by earlier ttl", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x780", "u32": 1},
+      {"addr": "@conn", "offset": "0x794", "u32": 1},
+      {"addr": "@conn", "offset": "0x798", "u32": 10000},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 5000},
+      {"addr": "@conn", "offset": "0x7dc", "u32": 2}
+    ]},
+    {"name": "ttl flag off", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 2000}
+    ]},
+    {"name": "ttl queue count two boundary", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7dc", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 2000}
+    ]},
+    {"name": "ttl queue count three boundary", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7dc", "u32": 3},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 2000}
+    ]},
+    {"name": "ttl minimum sample sum", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000},
+      {"addr": "@conn", "offset": "0x746", "u16": 0},
+      {"addr": "@conn", "offset": "0x748", "u16": 0}
+    ]},
+    {"name": "ttl lower clamp boundary 50", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000},
+      {"addr": "@conn", "offset": "0x746", "u16": 50},
+      {"addr": "@conn", "offset": "0x748", "u16": 0}
+    ]},
+    {"name": "ttl lower clamp boundary 51", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000},
+      {"addr": "@conn", "offset": "0x746", "u16": 51},
+      {"addr": "@conn", "offset": "0x748", "u16": 0}
+    ]},
+    {"name": "ttl upper clamp boundary 65534", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000},
+      {"addr": "@conn", "offset": "0x746", "u16": 65534},
+      {"addr": "@conn", "offset": "0x748", "u16": 0}
+    ]},
+    {"name": "ttl upper clamp boundary 65535", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000},
+      {"addr": "@conn", "offset": "0x746", "u16": 65535},
+      {"addr": "@conn", "offset": "0x748", "u16": 0}
+    ]},
+    {"name": "ttl sum above upper clamp", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x7c4", "u32": 1},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000},
+      {"addr": "@conn", "offset": "0x746", "u16": 65535},
+      {"addr": "@conn", "offset": "0x748", "u16": 65535}
+    ]},
+    {"name": "timeout overrides ttl deadline", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x54", "u32": 1},
+      {"addr": "@conn", "offset": "0x58", "u32": 900},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000}
+    ]},
+    {"name": "timeout does not replace earlier ttl deadline", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x54", "u32": 1},
+      {"addr": "@conn", "offset": "0x58", "u32": 5000},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000}
+    ]},
+    {"name": "equal deadlines keep prior state", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 2},
+      {"addr": "@conn", "offset": "0x54", "u32": 1},
+      {"addr": "@conn", "offset": "0x58", "u32": 1050},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 1000}
+    ]},
+    {"name": "helper and equal disconnect deadline", "args": ["@conn", "@status"], "memory": [
+      {"addr": "@conn", "offset": "0x64", "u32": 3},
+      {"addr": "@conn", "offset": "0x764", "u32": 1},
+      {"addr": "@conn", "offset": "0x77c", "u32": 1},
+      {"addr": "@conn", "offset": "0x4c0", "u32": 1000},
+      {"addr": "@conn", "offset": "0x7c8", "u32": 11000}
+    ], "callees": {"0x004f39c0": {"name": "update", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [
+      {"arg": 1, "offset": 0, "hex": "00000000"},
+      {"arg": 1, "offset": 4, "hex": "f82a0000"}
+    ]}}}
+  ],
+  "fuzz": {
+    "seed": 5183664,
+    "count": 40,
+    "args": [
+      {"choices": ["@conn"]},
+      {"choices": ["@status"]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x54", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x58", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@conn", "offset": "0x64", "type": "u8", "range": [0, 3]},
+      {"addr": "@conn", "offset": "0x4c0", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@conn", "offset": "0x764", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x770", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x77c", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x780", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x794", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x798", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@conn", "offset": "0x746", "type": "u16", "range": [0, 65535]},
+      {"addr": "@conn", "offset": "0x748", "type": "u16", "range": [0, 65535]},
+      {"addr": "@conn", "offset": "0x7c4", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x7c8", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@conn", "offset": "0x7dc", "type": "u32", "choices": [0, 1, 2, 3, 4]}
+    ]
+  }
+}

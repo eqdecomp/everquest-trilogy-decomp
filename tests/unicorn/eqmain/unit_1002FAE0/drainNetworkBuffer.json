@@ -1,0 +1,292 @@
+{
+  "function": "drainNetworkBuffer_guess",
+  "original": "0x1002fb30",
+  "sources": [
+    "src/eqmain/unit_1002FAE0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": "0x0000aaaa"},
+        {"offset": "0x50", "u32": 1000},
+        {"offset": "0x78", "u32": 16},
+        {"offset": "0x7c", "u32": 32},
+        {"offset": "0x84", "u32": 48}
+      ]
+    },
+    "ring": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "e1": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "0x11111111"},
+        {"offset": "0x1c", "u32": 100}
+      ]
+    },
+    "e2": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "0x22222222"},
+        {"offset": "0x1c", "u32": 112}
+      ]
+    },
+    "e3": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "0x33333333"},
+        {"offset": "0x1c", "u32": 48}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!DeleteCriticalSection": {
+      "name": "DeleteCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!GetOverlappedResult": {
+      "name": "GetOverlappedResult",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "ignore", "int"],
+      "ret": [1],
+      "writes": [{"arg": 2, "hex": "64000000"}]
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [5]
+    },
+    "kernel32.dll!CloseHandle": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": 1
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 74565
+    },
+    "0x100310b0": {
+      "name": "allocate_memory_buffer_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": "@ring"
+    },
+    "0x1002e120": {
+      "name": "FUN_1002e120",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@e1", 0]
+    },
+    "0x1002e130": {
+      "name": "FUN_1002e130",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@e1"]
+    },
+    "0x10028a90": {
+      "name": "FUN_10028a90",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x1002e240": {
+      "name": "freeRingBufferMemory_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10027940": {
+      "name": "FUN_10027940",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: one entry whose transfer equals its size (+0x7c), popped, closed, freed",
+      "args": ["@param_1", 4660]
+    },
+    {
+      "name": "alloc fails: returns 0, section initialized and never entered",
+      "args": ["@param_1", 7],
+      "callees": {
+        "0x100310b0": {"name": "allocate_memory_buffer_guess", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty queue: no drain, buffer returned",
+      "args": ["@param_1", 7],
+      "callees": {
+        "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": [0]}
+      }
+    },
+    {
+      "name": "transfer differs from the size (+0x78); the tag equals the size, so the written count must be the one compared",
+      "args": ["@param_1", 100],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"],
+          "ret": [1], "writes": [{"arg": 2, "hex": "65000000"}]
+        }
+      }
+    },
+    {
+      "name": "ERROR_IO_INCOMPLETE (0x3e4) breaks: entry stays queued, nothing popped, closed or freed",
+      "args": ["@param_1", 7],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [0]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": [996]}
+      }
+    },
+    {
+      "name": "other error (5): +0x84, entry popped, closed, freed; queue then empty",
+      "args": ["@param_1", 7],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [0]}
+      }
+    },
+    {
+      "name": "error 0x3e3 (one below ERROR_IO_INCOMPLETE) is an ordinary failure",
+      "args": ["@param_1", 7],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [0]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": [995]}
+      }
+    },
+    {
+      "name": "error 0x3e5 (one above ERROR_IO_INCOMPLETE) is an ordinary failure",
+      "args": ["@param_1", 7],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [0]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": [997]}
+      }
+    },
+    {
+      "name": "two entries, both complete: +0x7c for the 100-byte one, +0x78 for the 112-byte one",
+      "args": ["@param_1", 4660],
+      "callees": {
+        "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", 0]},
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2"]}
+      }
+    },
+    {
+      "name": "two entries: first completes, second is ERROR_IO_INCOMPLETE and stays queued",
+      "args": ["@param_1", 4660],
+      "callees": {
+        "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", 0]},
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [1, 0], "writes": [{"arg": 2, "hex": "64000000"}]},
+        "kernel32.dll!GetLastError": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": [996]}
+      }
+    },
+    {
+      "name": "three entries: match, short, other failure; each popped in order",
+      "args": ["@param_1", 4660],
+      "callees": {
+        "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", "@e3", 0]},
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@e1", "@e2", "@e3"]},
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [1, 1, 0], "writes": [{"arg": 2, "hex": "64000000"}]}
+      }
+    },
+    {
+      "name": "pending count takes the popped entry's size (e2); handle and free come from the peeked entry (e1)",
+      "args": ["@param_1", 4660],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@e2"]}
+      }
+    },
+    {
+      "name": "zero-size entry with zero transfer: +0x7c, nothing subtracted",
+      "args": ["@param_1", 4660],
+      "memory": [{"addr": "@e1", "offset": "0x1c", "u32": 0}],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [1], "writes": [{"arg": 2, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "pending count wraps below zero (10 - 100)",
+      "args": ["@param_1", 4660],
+      "memory": [{"addr": "@param_1", "offset": "0x50", "u32": 10}]
+    },
+    {
+      "name": "+0x84 wraps from 0xffffffff to 0 on an ordinary failure",
+      "args": ["@param_1", 4660],
+      "memory": [{"addr": "@param_1", "offset": "0x84", "u32": 4294967295}],
+      "callees": {
+        "kernel32.dll!GetOverlappedResult": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": [0]}
+      }
+    },
+    {
+      "name": "only the low word of the DWORD is stored at +0x20",
+      "args": ["@param_1", "0xabcd1234"]
+    },
+    {
+      "name": "the tick value from timeGetTime is the one stamped",
+      "args": ["@param_1", 4660],
+      "callees": {
+        "0x1002f9f0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 195948557}
+      }
+    },
+    {
+      "name": "zero tag, one entry, match",
+      "args": ["@param_1", 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5917301,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1"]},
+      {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x50", "type": "int", "range": [-500, 5000]},
+      {"addr": "@param_1", "offset": "0x78", "type": "u32", "choices": [0, 1, 4294967295, 7]},
+      {"addr": "@param_1", "offset": "0x7c", "type": "u32", "choices": [0, 1, 4294967295, 7]},
+      {"addr": "@param_1", "offset": "0x84", "type": "u32", "choices": [0, 1, 4294967295, 7]},
+      {"addr": "@e1", "offset": "0x1c", "type": "u32", "range": [0, 200]}
+    ]
+  }
+}

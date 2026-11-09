@@ -1,0 +1,181 @@
+{
+  "function": "t3dGetActorCurrentAction",
+  "original": "0x1002f47d",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical action 5",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x3c",
+          "u32": 5
+        }
+      ],
+      "expect": {
+        "ret": 5
+      }
+    },
+    {
+      "name": "zero action",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x3c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "high bit set",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x3c",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": -2147483648
+      }
+    },
+    {
+      "name": "all ones",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x3c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "init-written action 0x12345",
+      "args": [
+        "@actor"
+      ],
+      "objects": {
+        "actor": {
+          "size": "0x80",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x3c",
+              "u32": "0x00012345"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 74565
+      }
+    },
+    {
+      "name": "dwords around +0x3c ignored",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x38",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x3c",
+          "u32": 7
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x40",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 7
+      }
+    },
+    {
+      "name": "byte at +0x3b not glued in",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x3b",
+          "u8": 255
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x3c",
+          "u32": 127
+        }
+      ],
+      "expect": {
+        "ret": 127
+      }
+    },
+    {
+      "name": "null pointers",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 193661,
+    "count": 100,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x3c",
+        "type": "u32"
+      }
+    ]
+  }
+}

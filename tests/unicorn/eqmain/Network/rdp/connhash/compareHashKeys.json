@@ -1,0 +1,280 @@
+{
+  "function": "compareHashKeys_guess",
+  "original": "0x1002e570",
+  "sources": [
+    "src/eqmain/Network/rdp/connhash.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "a",
+      "type": "ptr"
+    },
+    {
+      "name": "b",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "a": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "b": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "family 2 vs 1: b's key lower",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "family 1 vs 2: b's key higher",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 1},
+        {"addr": "@b", "u16": 2}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "keys compare unsigned: a 0x8000, b 0x7fff",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 32768},
+        {"addr": "@b", "u16": 32767}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "keys compare unsigned: a 0x7fff, b 0x8000",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 32767},
+        {"addr": "@b", "u16": 32768}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "family 0x45 vs 2: b's key lower",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 69},
+        {"addr": "@b", "u16": 2}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "keys differ: a family 2, b family 70",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 70}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "family 2, identical 8 bytes",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "family 2, port byte differs (a higher)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 2},
+        {"addr": "@a", "offset": "0x2", "u8": 5},
+        {"addr": "@b", "offset": "0x2", "u8": 3}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "family 2, byte 4 differs (8-byte compare sees it)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 2},
+        {"addr": "@a", "offset": "0x4", "u8": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "family 2, byte 7 differs (a lower)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 2},
+        {"addr": "@a", "offset": "0x7", "u8": 1},
+        {"addr": "@b", "offset": "0x7", "u8": 2}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "family 2, byte 7 differs (a higher)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 2},
+        {"addr": "@a", "offset": "0x7", "u8": 2},
+        {"addr": "@b", "offset": "0x7", "u8": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "family 0x45, identical 4 bytes, byte 5 differs (not compared)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 69},
+        {"addr": "@b", "u16": 69},
+        {"addr": "@a", "offset": "0x5", "u8": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "family 0x45, byte 3 differs (a lower)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 69},
+        {"addr": "@b", "u16": 69},
+        {"addr": "@a", "offset": "0x3", "u8": 1},
+        {"addr": "@b", "offset": "0x3", "u8": 2}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "family 0x45, byte 3 differs (a higher)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 69},
+        {"addr": "@b", "u16": 69},
+        {"addr": "@a", "offset": "0x3", "u8": 2},
+        {"addr": "@b", "offset": "0x3", "u8": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "family 2, byte 8 differs (past the 8-byte compare)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 2},
+        {"addr": "@b", "u16": 2},
+        {"addr": "@a", "offset": "0x8", "u8": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "family 0x45, byte 4 differs (past the 4-byte compare)",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 69},
+        {"addr": "@b", "u16": 69},
+        {"addr": "@a", "offset": "0x4", "u8": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "other family 0, equal, zero bytes: returns a",
+      "args": [
+        "@a",
+        "@b"
+      ]
+    },
+    {
+      "name": "other family 0x46, equal, bytes differ: returns a",
+      "args": [
+        "@a",
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@a", "u16": 70},
+        {"addr": "@b", "u16": 70},
+        {"addr": "@a", "offset": "0x7", "u8": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 189808,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@a"
+        ]
+      },
+      {
+        "choices": [
+          "@b"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@a", "type": "u16", "choices": [2, 2, 2, 69, 69, 0, 70, 1, 65535, 32768]},
+      {"addr": "@b", "type": "u16", "choices": [2, 2, 2, 69, 69, 0, 70, 1, 65535, 32768]},
+      {"addr": "@a", "offset": "0x2", "type": "u8", "range": [0, 2], "count": 14},
+      {"addr": "@b", "offset": "0x2", "type": "u8", "range": [0, 2], "count": 14}
+    ]
+  }
+}

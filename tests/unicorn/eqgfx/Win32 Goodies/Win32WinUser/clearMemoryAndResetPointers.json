@@ -1,0 +1,222 @@
+{
+  "function": "clearMemoryAndResetPointers_guess",
+  "original": "0x10019c6a",
+  "sources": [
+    "src/eqgfx/Win32 Goodies/Win32WinUser.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "tree",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "tree": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@header"
+        },
+        {
+          "offset": "0xc",
+          "u32": 5
+        }
+      ]
+    },
+    "header": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@leaf"
+        }
+      ]
+    },
+    "leaf": {
+      "size": "0x2c",
+      "fill": "random"
+    },
+    "nil": {
+      "size": "0x2c",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100aade0",
+      "u32": 2
+    },
+    {
+      "addr": "0x100aaddc",
+      "u32": "@nil"
+    }
+  ],
+  "callees": {
+    "0x10019dbe": {
+      "name": "Tree_guess::EraseRange_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10075a66": {
+      "name": "std::_Lockit::_Lockit",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    },
+    "0x10075b02": {
+      "name": "conditionalReleaseCriticalSection_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "shared-count-stays-positive",
+      "args": [
+        "@tree"
+      ]
+    },
+    {
+      "name": "last-tree-releases-nil",
+      "args": [
+        "@tree"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aade0",
+          "u32": 1
+        },
+        {
+          "addr": "0x100aaddc",
+          "u32": "@nil"
+        }
+      ]
+    },
+    {
+      "name": "last-tree-with-null-nil",
+      "args": [
+        "@tree"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aade0",
+          "u32": 1
+        },
+        {
+          "addr": "0x100aaddc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "count-underflow-no-release",
+      "args": [
+        "@tree"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aade0",
+          "u32": 0
+        },
+        {
+          "addr": "0x100aaddc",
+          "u32": "@nil"
+        }
+      ]
+    },
+    {
+      "name": "empty-tree-header-self-linked",
+      "args": [
+        "@tree"
+      ],
+      "objects": {
+        "header": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "@header"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x100aade0",
+          "u32": 1
+        },
+        {
+          "addr": "0x100aaddc",
+          "u32": "@nil"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 105578,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@tree"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100aade0",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4294967295
+        ]
+      },
+      {
+        "addr": "0x100aaddc",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@nil"
+        ]
+      },
+      {
+        "addr": "@header",
+        "type": "ptr",
+        "choices": [
+          "@header",
+          "@leaf"
+        ]
+      },
+      {
+        "addr": "@tree",
+        "offset": "0xc",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      }
+    ]
+  }
+}

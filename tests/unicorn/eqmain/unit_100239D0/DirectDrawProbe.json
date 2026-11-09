@@ -1,0 +1,221 @@
+{
+  "function": "DirectDrawProbe_guess",
+  "original": "0x100247e0",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    },
+    {
+      "name": "param_3",
+      "type": "cstr"
+    },
+    {
+      "name": "param_4",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "release": {
+      "size": "0x10"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1012b8f0",
+      "u32": "0x1012b900"
+    },
+    {
+      "addr": "0x1012b908",
+      "u32": "@release"
+    }
+  ],
+  "callees": {
+    "0x10024ff0": {
+      "name": "FUN_10024ff0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x10032314": {
+      "name": "DirectDrawCreate",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ignore",
+        "ptr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "f0b81210"
+        }
+      ]
+    },
+    "0x10024fd0": {
+      "name": "FUN_10024fd0",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "@release": {
+      "name": "IUnknown::Release",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "success_object_released",
+      "args": [1, "alpha", "beta", 1],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "zeros_success_object",
+      "args": [0, "", "", 0],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "success_no_object",
+      "args": [0, "", "", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "failure_object_released",
+      "args": [0, "x", "y", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": -2147467259,
+          "writes": [{"arg": 1, "offset": 0, "hex": "f0b81210"}]
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "failure_no_object",
+      "args": [0, "x", "y", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": -2147467259
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ret_minus_one_no_object",
+      "args": [0, "x", "y", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": -1
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ret_one_object_released",
+      "args": [0, "x", "y", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": 1,
+          "writes": [{"arg": 1, "offset": 0, "hex": "f0b81210"}]
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ret_int_max_object_released",
+      "args": [0, "x", "y", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": 2147483647,
+          "writes": [{"arg": 1, "offset": 0, "hex": "f0b81210"}]
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ret_int_min_no_object",
+      "args": [0, "x", "y", 0],
+      "callees": {
+        "0x10032314": {
+          "name": "DirectDrawCreate",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": -2147483648
+        }
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "param_order_witness",
+      "args": [7, "first", "second", 9],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "same_string_twice",
+      "args": ["0x7fffffff", "dup", "dup", "0xffffffff"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "long_string_and_high_dwords",
+      "args": [-1, "DirectDraw probe, a longer string with spaces and punctuation: 1, 2, 3.", "", "0x80000000"],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 1002470,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": ["", "a", "DDRAW", "two words", "0123456789", "x y z"]
+      },
+      {
+        "choices": ["", "a", "DDRAW", "two words", "0123456789", "x y z"]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

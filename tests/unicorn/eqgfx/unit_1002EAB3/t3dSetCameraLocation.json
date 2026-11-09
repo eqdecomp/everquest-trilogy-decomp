@@ -1,0 +1,310 @@
+{
+  "function": "t3dSetCameraLocation",
+  "original": "0x1002f5be",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "scene",
+      "type": "ptr"
+    },
+    {
+      "name": "camera",
+      "type": "ptr"
+    },
+    {
+      "name": "location",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "scene": {
+      "size": "0x180",
+      "fill": "random"
+    },
+    "camera": {
+      "size": "0x90",
+      "fill": "random"
+    },
+    "location": {
+      "size": "0x1c",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100192c4": {
+      "name": "t3dGetRegionNumberFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:12"
+      ],
+      "ret": 3
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@scene",
+        "@camera",
+        "@location"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@scene",
+        "@camera",
+        "@location"
+      ],
+      "memory": [
+        {
+          "addr": "@location",
+          "fill": "zero",
+          "size": 28
+        },
+        {
+          "addr": "@camera",
+          "fill": "zero",
+          "size": 144
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "camera null",
+      "args": [
+        "@scene",
+        0,
+        "@location"
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "null pointers",
+      "args": [
+        0,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "location null",
+      "args": [
+        "@scene",
+        "@camera",
+        0
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "location and scene null",
+      "args": [
+        0,
+        "@camera",
+        0
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "scene null",
+      "args": [
+        0,
+        "@camera",
+        "@location"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "region -1 is the lookup failure",
+      "args": [
+        "@scene",
+        "@camera",
+        "@location"
+      ],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:12"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -3
+      }
+    },
+    {
+      "name": "region -2 is stored",
+      "args": [
+        "@scene",
+        "@camera",
+        "@location"
+      ],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:12"
+          ],
+          "ret": -2
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "region 0",
+      "args": [
+        "@scene",
+        "@camera",
+        "@location"
+      ],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:12"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "region INT_MAX",
+      "args": [
+        "@scene",
+        "@camera",
+        "@location"
+      ],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:12"
+          ],
+          "ret": 2147483647
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "location is the camera's region int (region stored before the copy)",
+      "args": [
+        "@scene",
+        "@camera",
+        "@camera+0x4"
+      ],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:12"
+          ],
+          "ret": 9
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "location overlaps the copy (copy before the three floats)",
+      "args": [
+        "@scene",
+        "@camera",
+        "@camera+0xc"
+      ],
+      "callees": {
+        "0x100192c4": {
+          "name": "t3dGetRegionNumberFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:12"
+          ],
+          "ret": 9
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 193982,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@scene",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@camera",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@location",
+          "@location",
+          "@camera+0x4",
+          "@camera+0x8",
+          "@camera+0xc",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@location",
+        "size": 28
+      },
+      {
+        "addr": "@camera",
+        "size": 144
+      }
+    ]
+  }
+}

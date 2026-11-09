@@ -1,0 +1,191 @@
+{
+  "function": "ResetWideBuffer_guess",
+  "original": "0x00404e80",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "blk": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@blk"
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "typical: old buffer 0x12345678 freed, capacity 0x20 -> new 0x40 block, +0xc cleared",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 32},
+        {"addr": "@param_1", "offset": "0xc", "u32": 4660}
+      ]
+    },
+    {
+      "name": "zero capacity: new(0) still gets the 0x41-byte clear",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "boundary: capacity 0x40000000 doubles to 0x80000000 passed to new as unsigned",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 1073741824}
+      ]
+    },
+    {
+      "name": "boundary: capacity -1 doubles to 0xFFFFFFFE passed to new as unsigned",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "old buffer null: delete(0) is still called before new",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 0},
+        {"addr": "@param_1", "offset": "0x8", "u32": 32}
+      ]
+    },
+    {
+      "name": "order: new returns the object itself, so the memset clears the +4/+8/+0xc stores",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 32},
+        {"addr": "@param_1", "offset": "0xc", "u32": 4660}
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@param_1"
+        }
+      }
+    },
+    {
+      "name": "aliasing: new returns obj+4, so the memset clears the buffer pointer and +0xc",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 32},
+        {"addr": "@param_1", "offset": "0xc", "u32": 4660}
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@param_1+0x4"
+        }
+      }
+    },
+    {
+      "name": "aliasing: new returns obj+0x80, a block inside the object",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": 305419896},
+        {"addr": "@param_1", "offset": "0x8", "u32": 32},
+        {"addr": "@param_1", "offset": "0xc", "u32": 4660}
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@param_1+0x80"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4214400,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x4", "type": "ptr", "choices": ["@blk", 0, "@param_1+0x80"]},
+      {"addr": "@param_1", "offset": "0x8", "type": "int", "range": [-8, 1073741824]},
+      {"addr": "@param_1", "offset": "0xc", "type": "u32"}
+    ]
+  }
+}

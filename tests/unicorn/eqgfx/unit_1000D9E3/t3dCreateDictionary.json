@@ -1,0 +1,119 @@
+{
+  "function": "t3dCreateDictionary",
+  "original": "0x1000dab8",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x384",
+      "fill": "random",
+      "init": [
+        {"offset": "0x30", "u32": 0}
+      ]
+    },
+    "dict": {
+      "size": "0x34",
+      "fill": "random"
+    },
+    "blocks": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "page": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "buckets": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@dict", "@blocks", "@page", "@buckets"]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical (all four allocations succeed)",
+      "args": ["@world"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary exists",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@world", "offset": "0x30", "u32": "@dict"}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "dictionary field is a non-null value that is not an object",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@world", "offset": "0x30", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "header allocation fails",
+      "args": ["@world"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": [0]}
+      },
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "block array allocation fails (header freed)",
+      "args": ["@world"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@dict", 0]}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "block allocation fails (array and header freed)",
+      "args": ["@world"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@dict", "@blocks", 0]}
+      },
+      "expect": {"ret": -4}
+    },
+    {
+      "name": "bucket allocation fails (block, array and header freed)",
+      "args": ["@world"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@dict", "@blocks", "@page", 0]}
+      },
+      "expect": {"ret": -5}
+    }
+  ],
+  "fuzz": {
+    "seed": 55992,
+    "count": 40,
+    "args": [
+      {"choices": ["@world"]}
+    ],
+    "memory": [
+      {"addr": "@world", "offset": "0x30", "type": "ptr", "choices": [0, "@dict"]}
+    ]
+  }
+}

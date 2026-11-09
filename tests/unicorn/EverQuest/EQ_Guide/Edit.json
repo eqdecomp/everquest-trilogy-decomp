@@ -1,0 +1,79 @@
+{
+  "function": "EQ_Guide::Edit",
+  "original": "0x004383BD",
+  "sources": ["src/EverQuest/EQ_Guide.cpp"],
+  "rewrite": "EQ_Guide::Edit",
+  "conv": "thiscall",
+  "this": "@guide",
+  "args": [{"name": "text", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "guide": {"size": "0x1400", "fill": "zero", "init": [
+      {"offset": "0x10", "u32": 1},
+      {"offset": "0x8C", "u32": 4},
+      {"offset": "0xDBC", "u32": 0}
+    ]},
+    "text": {"size": "0x300", "fill": "zero"},
+    "eqA": {"size": "0x20", "fill": "zero"},
+    "eqB": {"size": "0x20", "fill": "zero"}
+  },
+  "callees": {
+    "0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": [3]},
+    "0x005219C0": {"name": "strcpy", "conv": "cdecl", "args": ["ptr", "cstr"], "passthrough": true},
+    "0x004D055E": {"name": "dsp_chat_guess", "conv": "thiscall", "this": "ptr", "args": ["ptr", "int"]}
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@eqA"},
+    {"addr": "@text", "cstr": "abc"},
+    {"addr": "@guide", "offset": "0xE50", "cstr": "old"}
+  ],
+  "cases": [
+    {"name": "inactive ignores even empty input", "args": ["@text"], "memory": [
+      {"addr": "@guide", "offset": "0x10", "u32": 0}, {"addr": "@text", "cstr": ""}
+    ]},
+    {"name": "wrong mode ignores nonempty input", "args": ["@text"], "memory": [
+      {"addr": "@guide", "offset": "0x8C", "u32": 5}, {"addr": "@text", "cstr": "abc"}
+    ]},
+    {"name": "active highbit with mode four empty string chats", "args": ["@text"], "memory": [
+      {"addr": "@guide", "offset": "0x10", "u32": 2147483648}, {"addr": "@text", "cstr": ""},
+      {"addr": "0x006EFE2C", "u32": "@eqB"}
+    ]},
+    {"name": "mode comparison is full dword", "args": ["@text"], "memory": [
+      {"addr": "@guide", "offset": "0x8C", "u32": 260}, {"addr": "@text", "cstr": ""}
+    ]},
+    {"name": "length 255 is left intact", "args": ["@text"], "memory": [
+      {"addr": "@text", "cstr": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 255}}},
+    {"name": "length 256 truncates byte 255 before strcpy", "args": ["@text"], "memory": [
+      {"addr": "@text", "cstr": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+      }
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 256}}},
+    {"name": "signed strlen result does not truncate", "args": ["@text"], "memory": [
+      {"addr": "@text", "cstr": "short"}
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 4294967295}}},
+    {"name": "strlen writes selected index before destination is read", "args": ["@guide+0xDBC"], "memory": [
+      {"addr": "@guide", "offset": "0xDBC", "u32": 1}
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 1,
+      "writes": [{"arg": 0, "hex": "02000000"}]}}},
+    {"name": "source aliases destination exactly", "args": ["@guide+0xE50"], "memory": [
+      {"addr": "@guide", "offset": "0xE50", "cstr": "same"}
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 4}}},
+    {"name": "source overlaps destination by one byte", "args": ["@guide+0xE51"], "memory": [
+      {"addr": "@guide", "offset": "0xE50", "hex": "41626300"}
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 2}}},
+    {"name": "wrapped index destination aliases receiver", "args": ["@text"], "memory": [
+      {"addr": "@guide", "offset": "0xDBC", "u32": 65739286}, {"addr": "@text", "cstr": "w"}
+    ], "callees": {"0x005223D0": {"name": "_strlen", "conv": "cdecl", "args": ["cstr"], "ret": 1}}}
+  ],
+  "fuzz": {
+    "seed": 44223741,
+    "count": 30,
+    "args": [{"choices": ["@text", "@text+1"]}],
+    "memory": [
+      {"addr": "@guide", "offset": "0x10", "type": "u32", "choices": [0, 1, 2147483648, 4294967295]},
+      {"addr": "@guide", "offset": "0x8C", "type": "u32", "choices": [0, 4, 5]},
+      {"addr": "@guide", "offset": "0xDBC", "type": "u32", "range": [0, 3]}
+    ]
+  }
+}

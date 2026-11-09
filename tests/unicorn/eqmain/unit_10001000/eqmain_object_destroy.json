@@ -1,0 +1,311 @@
+{
+  "function": "eqmain_object_destroy_guess",
+  "original": "0x10001700",
+  "sources": [
+    "src/eqmain/unit_10001000.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@owner"},
+        {"offset": "0x20", "u32": 0},
+        {"offset": "0x24", "u32": 0},
+        {"offset": "0x28", "u32": 0}
+      ]
+    },
+    "owner": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": "@node0"}
+      ]
+    },
+    "node0": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@other"},
+        {"offset": "0x8", "u32": "@node1"}
+      ]
+    },
+    "node1": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@other"},
+        {"offset": "0x8", "u32": "@node2"}
+      ]
+    },
+    "node2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@other"},
+        {"offset": "0x8", "u32": 0}
+      ]
+    },
+    "other": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "child0": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "child1": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "child2": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "msg": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x10055a68", "u32": "@msg"},
+    {"addr": "@msg", "cstr": "free of a NULL object"},
+    {"addr": "0x1004cd7c", "u32": 0},
+    {"addr": "0x1004ce6c", "u32": 0}
+  ],
+  "callees": {
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x10007a80": {
+      "name": "FUN_10007a80",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10028430": {
+      "name": "FUN_10028430",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {
+      "name": "null pointer: message logged, nothing freed",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "found at list head: unlink node0, then free",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@node0", "offset": "0x4", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "found in second node: unlink node1 with head as arg 1",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@node0", "offset": "0x4", "u32": "@other"},
+        {"addr": "@node1", "offset": "0x4", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "found in last node: unlink node2",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@node1", "offset": "0x4", "u32": "@other"},
+        {"addr": "@node2", "offset": "0x4", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "not in list: walk to the end, free inside the loop",
+      "args": [
+        "@obj"
+      ]
+    },
+    {
+      "name": "list ends after node1: walk stops at next 0, free inside the loop",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@node1", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "empty list (head 0): no walk, free only",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": 0}
+      ]
+    },
+    {
+      "name": "ref A is the object (cleared), not in list",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "0x1004cd7c", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "ref B is the object (cleared), found in second node",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "0x1004ce6c", "u32": "@obj"},
+        {"addr": "@node0", "offset": "0x4", "u32": "@other"},
+        {"addr": "@node1", "offset": "0x4", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "both refs are the object (both cleared), found at head",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "0x1004cd7c", "u32": "@obj"},
+        {"addr": "0x1004ce6c", "u32": "@obj"},
+        {"addr": "@node0", "offset": "0x4", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "refs point at other objects (left alone), not in list",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "0x1004cd7c", "u32": "@other"},
+        {"addr": "0x1004ce6c", "u32": "@child0"}
+      ]
+    },
+    {
+      "name": "only child +0x20 set: FUN_10007a80 once",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@obj", "offset": "0x20", "u32": "@child0"}
+      ]
+    },
+    {
+      "name": "only child +0x24 set",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@obj", "offset": "0x24", "u32": "@child1"}
+      ]
+    },
+    {
+      "name": "only child +0x28 set",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@obj", "offset": "0x28", "u32": "@child2"}
+      ]
+    },
+    {
+      "name": "all three children, found in second node: call order 0x20, 0x24, 0x28, then unlink",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@obj", "offset": "0x20", "u32": "@child0"},
+        {"addr": "@obj", "offset": "0x24", "u32": "@child1"},
+        {"addr": "@obj", "offset": "0x28", "u32": "@child2"},
+        {"addr": "@node0", "offset": "0x4", "u32": "@other"},
+        {"addr": "@node1", "offset": "0x4", "u32": "@obj"}
+      ]
+    },
+    {
+      "name": "children 0x20 and 0x28 with empty list",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@obj", "offset": "0x20", "u32": "@child0"},
+        {"addr": "@obj", "offset": "0x28", "u32": "@child2"},
+        {"addr": "@owner", "offset": "0x1c", "u32": 0}
+      ]
+    },
+    {
+      "name": "children, both refs, and a match at head together",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {"addr": "@obj", "offset": "0x20", "u32": "@child0"},
+        {"addr": "@obj", "offset": "0x24", "u32": "@child1"},
+        {"addr": "@obj", "offset": "0x28", "u32": "@child2"},
+        {"addr": "0x1004cd7c", "u32": "@obj"},
+        {"addr": "0x1004ce6c", "u32": "@obj"},
+        {"addr": "@node0", "offset": "0x4", "u32": "@obj"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5888,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@obj",
+          "@obj",
+          "@obj",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x1004cd7c", "type": "ptr", "choices": [0, "@obj", "@other"]},
+      {"addr": "0x1004ce6c", "type": "ptr", "choices": [0, "@obj", "@other"]},
+      {"addr": "@obj", "offset": "0x20", "type": "ptr", "choices": [0, "@child0"]},
+      {"addr": "@obj", "offset": "0x24", "type": "ptr", "choices": [0, "@child1"]},
+      {"addr": "@obj", "offset": "0x28", "type": "ptr", "choices": [0, "@child2"]},
+      {"addr": "@owner", "offset": "0x1c", "type": "ptr", "choices": [0, "@node0", "@node1", "@node2"]},
+      {"addr": "@node0", "offset": "0x4", "type": "ptr", "choices": ["@obj", "@other"]},
+      {"addr": "@node1", "offset": "0x4", "type": "ptr", "choices": ["@obj", "@other"]},
+      {"addr": "@node2", "offset": "0x4", "type": "ptr", "choices": ["@obj", "@other"]}
+    ]
+  }
+}

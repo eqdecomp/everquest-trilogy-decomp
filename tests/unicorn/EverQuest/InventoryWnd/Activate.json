@@ -1,0 +1,157 @@
+{
+  "function": "CInventoryWnd_guess::Activate_guess",
+  "original": "0x004d0a04",
+  "sources": [
+    "src/EverQuest/InventoryWnd.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@cinventorywnd",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "cinventorywnd": {
+      "size": "0xc00",
+      "fill": "zero"
+    },
+    "localplayer": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@localplayer"
+    },
+    {
+      "addr": "@localplayer",
+      "offset": "0x1",
+      "cstr": "FixturePlayer"
+    },
+    {
+      "addr": "@cinventorywnd",
+      "offset": "0xba8",
+      "cstr": "fixture broadcast"
+    },
+    {
+      "addr": "0x006e4e70",
+      "u32": 0
+    },
+    {
+      "addr": "0x006e4e6c",
+      "u32": 0
+    },
+    {
+      "addr": "0x006b63f8",
+      "u8": 0
+    },
+    {
+      "addr": "0x006b6494",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x004d0d77": {
+      "name": "CEverQuest_SendNewText_guess",
+      "conv": "thiscall",
+      "args": [
+        "short",
+        "cstr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "all gates clear: formats, sends, then echoes",
+      "args": []
+    },
+    {
+      "name": "character creation object blocks broadcast",
+      "args": [],
+      "memory": [
+        {"addr": "0x006e4e70", "u32": 1}
+      ]
+    },
+    {
+      "name": "character select object blocks broadcast",
+      "args": [],
+      "memory": [
+        {"addr": "0x006e4e6c", "u32": 1}
+      ]
+    },
+    {
+      "name": "unaligned neighboring byte does not change select gate",
+      "args": [],
+      "memory": [
+        {"addr": "0x006e4e6b", "u8": 1}
+      ]
+    },
+    {
+      "name": "byte suppression flag blocks broadcast",
+      "args": [],
+      "memory": [
+        {"addr": "0x006b63f8", "u8": 1}
+      ]
+    },
+    {
+      "name": "dword suppression flag blocks broadcast",
+      "args": [],
+      "memory": [
+        {"addr": "0x006b6494", "u32": 1}
+      ]
+    },
+    {
+      "name": "unaligned neighboring byte does not change dword gate",
+      "args": [],
+      "memory": [
+        {"addr": "0x006b6493", "u8": 1}
+      ]
+    },
+    {
+      "name": "nonzero high-bit gate values also block",
+      "args": [],
+      "memory": [
+        {"addr": "0x006e4e70", "u32": "0x80000000"},
+        {"addr": "0x006e4e6c", "u32": "0xffffffff"},
+        {"addr": "0x006b63f8", "u8": 255},
+        {"addr": "0x006b6494", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "empty broadcast still sends and echoes empty text",
+      "args": [],
+      "memory": [
+        {"addr": "@cinventorywnd", "offset": "0xba8", "cstr": ""}
+      ]
+    },
+    {
+      "name": "longer broadcast body is passed through",
+      "args": [],
+      "memory": [
+        {"addr": "@cinventorywnd", "offset": "0xba8", "cstr": "A long broadcast body exercises formatting and forwarding beyond the short baseline input."}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5048836,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x006e4e70", "type": "u32", "range": [-1, 1]},
+      {"addr": "0x006e4e6c", "type": "u32", "range": [-1, 1]},
+      {"addr": "0x006b63f8", "type": "u8", "range": [0, 1]},
+      {"addr": "0x006b6494", "type": "u32", "range": [-1, 1]}
+    ]
+  }
+}

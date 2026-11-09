@@ -1,0 +1,592 @@
+{
+  "function": "t3dCopy3DSpriteDefinitionFrames_guess",
+  "original": "0x1000897d",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@oldFrames"
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": 4
+        },
+        {
+          "offset": "0x24",
+          "u32": "@polygons"
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@parent"
+        }
+      ]
+    },
+    "parent": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@sourceFrames"
+        }
+      ]
+    },
+    "sourceFrames": {
+      "size": "0x300",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x44",
+          "u32": "@sourceBuffer0"
+        },
+        {
+          "offset": "0x94",
+          "u32": "@sourceBuffer1"
+        },
+        {
+          "offset": "0xe4",
+          "u32": "@sourceBuffer2"
+        },
+        {
+          "offset": "0x134",
+          "u32": "@sourceBuffer3"
+        },
+        {
+          "offset": "0x184",
+          "u32": "@sourceBuffer4"
+        },
+        {
+          "offset": "0x1d4",
+          "u32": "@sourceBuffer5"
+        }
+      ]
+    },
+    "polygons": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x30",
+          "u32": 3
+        },
+        {
+          "offset": "0x5c",
+          "u32": 2
+        },
+        {
+          "offset": "0x88",
+          "u32": 5
+        },
+        {
+          "offset": "0xb4",
+          "u32": 4
+        },
+        {
+          "offset": "0xe0",
+          "u32": 6
+        }
+      ]
+    },
+    "oldFrames": {
+      "size": "0x300",
+      "fill": "zero"
+    },
+    "framecopy": {
+      "size": "0x300",
+      "fill": "zero"
+    },
+    "sourceBuffer0": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourceBuffer1": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourceBuffer2": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourceBuffer3": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourceBuffer4": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourceBuffer5": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "clone0": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "clone1": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "clone2": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "clone3": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "clone4": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "clone5": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@framecopy",
+        "@clone0",
+        "@clone1",
+        "@clone2",
+        "@clone3",
+        "@clone4",
+        "@clone5"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "frame-array allocation failure",
+      "args": [
+        "@sprite"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zero-frame boundary still installs the allocated array",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero-frame backing storage distinguishes an inclusive outer guard",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 0
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x4",
+          "u32": 4
+        },
+        {
+          "addr": "@framecopy",
+          "offset": "0x44",
+          "u32": "@sourceBuffer0"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one frame skips the inner allocation for a null buffer",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 1
+        },
+        {
+          "addr": "@sourceFrames",
+          "offset": "0x44",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one frame deep-copies a zero-sized polygon buffer",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 1
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one-past-frame backing storage distinguishes an inclusive loop tail",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 1
+        },
+        {
+          "addr": "@framecopy",
+          "offset": "0x94",
+          "u32": "@sourceBuffer1"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "two frames with a null first buffer and maximum vertex count",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 2
+        },
+        {
+          "addr": "@sourceFrames",
+          "offset": "0x44",
+          "u32": 0
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x30",
+          "u32": 8
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "four frame buffers preserve per-polygon allocation order",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 4
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x30",
+          "u32": 3
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x5c",
+          "u32": 2
+        },
+        {
+          "addr": "@polygons",
+          "offset": "0x88",
+          "u32": 5
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "six frames exercise the configured upper boundary",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 6
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "second buffer allocation failure frees the previous clone and frame array",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@framecopy",
+            "@clone0",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "allocation failure with a null previous frame buffer",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 2
+        },
+        {
+          "addr": "@sourceFrames",
+          "offset": "0x44",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@framecopy",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "later allocation failure frees only the immediately previous clone",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@framecopy",
+            "@clone0",
+            "@clone1",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 35197,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x20",
+        "type": "u32",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@polygons",
+        "offset": "0x4",
+        "type": "u32",
+        "count": 6,
+        "stride": "0x2c",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@sourceFrames",
+        "offset": "0x44",
+        "type": "ptr",
+        "choices": [
+          "@sourceBuffer0",
+          0
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@sourceFrames",
+        "offset": "0x94",
+        "type": "ptr",
+        "choices": [
+          "@sourceBuffer1",
+          0
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@sourceFrames",
+        "offset": "0xe4",
+        "type": "ptr",
+        "choices": [
+          "@sourceBuffer2",
+          0
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@sourceFrames",
+        "offset": "0x134",
+        "type": "ptr",
+        "choices": [
+          "@sourceBuffer3",
+          0
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@sourceFrames",
+        "offset": "0x184",
+        "type": "ptr",
+        "choices": [
+          "@sourceBuffer4",
+          0
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@sourceFrames",
+        "offset": "0x1d4",
+        "type": "ptr",
+        "choices": [
+          "@sourceBuffer5",
+          0
+        ],
+        "p": 0.5
+      }
+    ]
+  }
+}

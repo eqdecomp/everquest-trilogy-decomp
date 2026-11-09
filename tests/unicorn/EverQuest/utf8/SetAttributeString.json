@@ -1,0 +1,180 @@
+{
+  "function": "EQAttrMapOwner_guess::SetAttributeString_guess",
+  "original": "0x00403f58",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqattrmapowner",
+  "args": [
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "value",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eqattrmapowner": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4D00", "size": 16, "fill": "zero"},
+    {"addr": "0x006E4D04", "u32": "0x006E4D40"},
+    {"addr": "0x006E4D08", "u32": "0x006E4D80"},
+    {"addr": "0x006E4D40", "size": 64, "fill": "zero"},
+    {"addr": "0x006E4D80", "size": 64, "fill": "zero"},
+    {"addr": "0x006E4E00", "size": 256, "fill": "zero"},
+    {"addr": "0x006E4F00", "size": 256, "fill": "zero"},
+    {"addr": "0x006E4C00", "size": 16, "fill": "random"}
+  ],
+  "callees": {
+    "0x00404038": {
+      "name": "EQAttributeTarget_guess::SetAttribute_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": 1
+    },
+    "0x00404387": {
+      "name": "EQStrHashMap_guess::FindNodeByKey_guess",
+      "conv": "thiscall",
+      "args": [
+        "ignore",
+        "mem:4"
+      ],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 0, "hex": "004d6e00"}, {"arg": 0, "offset": 4, "hex": "44332211"}]
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004042f6": {
+      "name": "buffer_pair_call_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": ["0x006E4E00", "0x006E4F00"]
+    },
+    "0x0040455a": {
+      "name": "chain_table_find_or_insert_guess",
+      "conv": "thiscall",
+      "args": [
+        "mem:8"
+      ],
+      "ret": "0x006E4C00"
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "found node: old value freed, pair passed to erase, new key is node+4",
+      "args": ["abc", "defg"]
+    },
+    {
+      "name": "found node with empty strings",
+      "args": ["", ""]
+    },
+    {
+      "name": "found node with zero next",
+      "args": ["key", "value"],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ignore", "mem:4"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "004d6e00"}, {"arg": 0, "offset": 4, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "found node with null key and old value",
+      "args": ["key", "value"],
+      "memory": [
+        {"addr": "0x006E4D04", "u32": 0},
+        {"addr": "0x006E4D08", "u32": 0}
+      ]
+    },
+    {
+      "name": "not found: key is a copy of name, next reset to zero",
+      "args": ["abc", "defg"],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ignore", "mem:4"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}, {"arg": 0, "offset": 4, "hex": "44332211"}]
+        }
+      }
+    },
+    {
+      "name": "not found with empty strings",
+      "args": ["", ""],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ignore", "mem:4"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}, {"arg": 0, "offset": 4, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "not found with long name and short value",
+      "args": ["a-rather-long-attribute-name", "v"],
+      "callees": {
+        "0x00404387": {
+          "name": "UTF8_strlwr_guess", "conv": "thiscall", "args": ["ignore", "mem:4"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}, {"arg": 0, "offset": 4, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "SetAttribute rejects: nothing else runs",
+      "args": ["abc", "defg"],
+      "callees": {
+        "0x00404038": {
+          "name": "EQAttributeTarget_guess::SetAttribute_guess", "conv": "thiscall", "args": ["cstr", "cstr"], "ret": 0
+        }
+      }
+    },
+    {
+      "name": "SetAttribute rejects with high-bit result is still nonzero",
+      "args": ["abc", "defg"],
+      "callees": {
+        "0x00404038": {
+          "name": "EQAttributeTarget_guess::SetAttribute_guess", "conv": "thiscall", "args": ["cstr", "cstr"], "ret": 2147483648
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4210520,
+    "count": 40,
+    "args": [
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "0x006E4D04", "type": "u32", "choices": [0, 7228736, 7228800]},
+      {"addr": "0x006E4D08", "type": "u32", "choices": [0, 7228800, 7228736]},
+      {"addr": "0x006E4C00", "size": 16}
+    ]
+  }
+}

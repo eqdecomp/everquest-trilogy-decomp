@@ -1,0 +1,293 @@
+{
+  "function": "applyDirectionalLightingToEffectVertexColors_guess",
+  "original": "0x10034302",
+  "sources": [
+    "src/eqgfx/unit_10033BE5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderState",
+      "type": "ptr"
+    },
+    {
+      "name": "vertices",
+      "type": "ptr"
+    },
+    {
+      "name": "vertexCount",
+      "type": "int"
+    },
+    {
+      "name": "direction",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "renderstate": {
+      "size": "0x620",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1b8", "f32": 4000.0},
+        {"offset": "0x1bc", "f32": 2000.0},
+        {"offset": "0x1c0", "f32": 1000.0},
+        {"offset": "0x22c", "f32": 0.0},
+        {"offset": "0x238", "f32": 0.0},
+        {"offset": "0x244", "f32": 1.0},
+        {"offset": "0x248", "f32": 1.0},
+        {"offset": "0x24c", "f32": 0.0},
+        {"offset": "0x250", "f32": 0.0},
+        {"offset": "0x254", "f32": 0.0},
+        {"offset": "0x258", "f32": 1.0},
+        {"offset": "0x25c", "f32": 0.0}
+      ]
+    },
+    "vertices": {
+      "size": "0x180",
+      "fill": "zero"
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "direction": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "f32": -1.0}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100fc77c", "u32": "@fn"}
+  ],
+  "callees": {
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    },
+    "@fn": {
+      "name": "sqrt_stub",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 1.0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: a normal facing the light (z 0.8 against direction -z) gets all three colour increments",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x04", "f32": 0.0},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "facing away: a normal with z -0.8 is skipped (towardness < 0), colours unchanged",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x04", "f32": 0.0},
+        {"addr": "@vertices", "offset": "0x08", "f32": -0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "zero-length normal (all zero): lengthSquared 0 takes the zero factor",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "lengthSquared exactly 2^-14 (x = 2^-7): the threshold is <=, so the zero factor",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.0078125}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "lengthSquared exactly 2^-14 facing the direction (-x): still the zero factor, not the square root path (> is strict)",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@renderstate", "offset": "0x1b8", "f32": 1e30},
+        {"addr": "@renderstate", "offset": "0x1bc", "f32": 1e30},
+        {"addr": "@renderstate", "offset": "0x1c0", "f32": 1e30},
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.0078125},
+        {"addr": "@direction", "offset": "0x00", "f32": -100.0},
+        {"addr": "@direction", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "lengthSquared exactly the threshold constant (2^-14 plus one float ulp: x = 2^-7, y = 2.6975e-6): the zero factor",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@renderstate", "offset": "0x1b8", "f32": 1e30},
+        {"addr": "@renderstate", "offset": "0x1bc", "f32": 1e30},
+        {"addr": "@renderstate", "offset": "0x1c0", "f32": 1e30},
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.0078125},
+        {"addr": "@vertices", "offset": "0x04", "f32": 2.6975e-6},
+        {"addr": "@direction", "offset": "0x00", "f32": -100.0},
+        {"addr": "@direction", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "lengthSquared just above 2^-14 (z 0.0079): square root path, lit",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.0079}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "lengthSquared just below 2^-14 (z 0.0078): zero factor",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.0078}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "NaN normal x: lengthSquared NaN takes the zero path (JA not taken), the NaN quotient reaches rounding",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "u32": "0x7fc00000"},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "NaN direction x: towardness NaN fails the >= 0 test and the record is skipped",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.8},
+        {"addr": "@direction", "offset": "0x00", "u32": "0x7fc00000"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "+inf normal x, direction -x: towardness +inf applies, quotient inf/inf NaN reaches rounding",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "u32": "0x7f800000"},
+        {"addr": "@vertices", "offset": "0x04", "f32": 0.0},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.0},
+        {"addr": "@direction", "offset": "0x00", "f32": -1.0},
+        {"addr": "@direction", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "+inf normal x, direction +x: towardness -inf is skipped",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "u32": "0x7f800000"},
+        {"addr": "@vertices", "offset": "0x04", "f32": 0.0},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.0},
+        {"addr": "@direction", "offset": "0x00", "f32": 1.0},
+        {"addr": "@direction", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dot exactly zero (normal along x, direction -z): towardness -0.0 still applies (>= 0), no visible change",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "huge colour (1e30): the increments saturate through the rounding callee",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@renderstate", "offset": "0x1b8", "f32": 1e30},
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three vertices: lit, facing away, zero-length (the records are visited in order)",
+      "args": ["@renderstate", "@vertices", 3, "@direction"],
+      "memory": [
+        {"addr": "@vertices", "offset": "0x00", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.8},
+        {"addr": "@vertices", "offset": "0x30", "f32": 0.6},
+        {"addr": "@vertices", "offset": "0x38", "f32": -0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "non-identity matrix with all nine entries distinct, a non-unit direction: the frame mapping",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@renderstate", "offset": "0x22c", "f32": 0.1},
+        {"addr": "@renderstate", "offset": "0x238", "f32": 0.2},
+        {"addr": "@renderstate", "offset": "0x244", "f32": 0.3},
+        {"addr": "@renderstate", "offset": "0x248", "f32": 0.4},
+        {"addr": "@renderstate", "offset": "0x24c", "f32": 0.5},
+        {"addr": "@renderstate", "offset": "0x250", "f32": 0.6},
+        {"addr": "@renderstate", "offset": "0x254", "f32": 0.7},
+        {"addr": "@renderstate", "offset": "0x258", "f32": 0.8},
+        {"addr": "@renderstate", "offset": "0x25c", "f32": 0.9},
+        {"addr": "@direction", "offset": "0x00", "f32": 0.3},
+        {"addr": "@direction", "offset": "0x04", "f32": -0.5},
+        {"addr": "@direction", "offset": "0x08", "f32": 0.7},
+        {"addr": "@vertices", "offset": "0x00", "f32": -0.6},
+        {"addr": "@vertices", "offset": "0x04", "f32": -0.8},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.2}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "direction of length 2 (not normalised): the towardness scales with it",
+      "args": ["@renderstate", "@vertices", 1, "@direction"],
+      "memory": [
+        {"addr": "@direction", "offset": "0x08", "f32": -2.0},
+        {"addr": "@vertices", "offset": "0x08", "f32": 0.8}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "count 0: the loop is skipped, returns 1, nothing written",
+      "args": ["@renderstate", "@vertices", 0, "@direction"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "count -2: the loop is skipped (end wraps below the start), returns 1",
+      "args": ["@renderstate", "@vertices", -2, "@direction"],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 10034302,
+    "count": 50,
+    "args": [
+      {"choices": ["@renderstate"]},
+      {"choices": ["@vertices"]},
+      {"range": [-2, 8]},
+      {"choices": ["@direction"]}
+    ],
+    "memory": [
+      {"addr": "@renderstate", "offset": "0x1b8", "type": "float", "count": 3, "range": [-5000, 5000], "p": 0.8},
+      {"addr": "@renderstate", "offset": "0x22c", "type": "float", "count": 3, "stride": 12, "range": [-1, 1], "p": 0.7},
+      {"addr": "@renderstate", "offset": "0x248", "type": "float", "count": 6, "range": [-1, 1], "p": 0.7},
+      {"addr": "@direction", "type": "float", "count": 3, "range": [-1, 1], "p": 0.8},
+      {"addr": "@vertices", "offset": "0x00", "type": "float", "count": 8, "stride": 48, "range": [-2, 2]},
+      {"addr": "@vertices", "offset": "0x04", "type": "float", "count": 8, "stride": 48, "range": [-2, 2]},
+      {"addr": "@vertices", "offset": "0x08", "type": "float", "count": 8, "stride": 48, "range": [-2, 2]},
+      {"addr": "@vertices", "offset": "0x24", "type": "u32", "count": 8, "stride": 48, "p": 0.5},
+      {"addr": "@vertices", "offset": "0x28", "type": "u32", "count": 8, "stride": 48, "p": 0.5},
+      {"addr": "@vertices", "offset": "0x2c", "type": "u32", "count": 8, "stride": 48, "p": 0.5}
+    ]
+  }
+}

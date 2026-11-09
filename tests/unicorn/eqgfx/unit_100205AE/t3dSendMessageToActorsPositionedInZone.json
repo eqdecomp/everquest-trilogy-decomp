@@ -1,0 +1,424 @@
+{
+  "function": "t3dSendMessageToActorsPositionedInZone",
+  "original": "0x10020955",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "zone",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "message",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "zone": {
+      "size": "0x360",
+      "fill": "random"
+    },
+    "region": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "message": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "actors": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@actorA"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@actorB"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@actorC"
+        },
+        {
+          "offset": "0xc",
+          "u32": "@actorD"
+        }
+      ]
+    },
+    "actorA": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "actorB": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "actorC": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "actorD": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@zone",
+      "offset": "0x348",
+      "u32": 3
+    },
+    {
+      "addr": "@zone",
+      "offset": "0x350",
+      "u32": "@actors"
+    }
+  ],
+  "callees": {
+    "0x100208c6": {
+      "name": "t3dGetActorsPositionedInZone",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000a553": {
+      "name": "t3dSendMessageToActor",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: three reference actors, lookup finds nothing",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty reference list sends nothing",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x348",
+          "u32": 0
+        },
+        {
+          "addr": "@zone",
+          "offset": "0x350",
+          "u32": "@actors"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one reference actor",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x348",
+          "u32": 1
+        },
+        {
+          "addr": "@zone",
+          "offset": "0x350",
+          "u32": "@actors"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "two reference actors",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x348",
+          "u32": 2
+        },
+        {
+          "addr": "@zone",
+          "offset": "0x350",
+          "u32": "@actors"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "all four entries of the array",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x348",
+          "u32": 4
+        },
+        {
+          "addr": "@zone",
+          "offset": "0x350",
+          "u32": "@actors"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null entry in the list is sent unchecked",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x348",
+          "u32": 3
+        },
+        {
+          "addr": "@zone",
+          "offset": "0x350",
+          "u32": "@actors"
+        },
+        {
+          "addr": "@actors",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null message is passed on",
+      "args": [
+        "@zone",
+        "@region",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null region goes to the lookup",
+      "args": [
+        "@zone",
+        0,
+        "@message"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "lookup returns 1: nothing sent, result 0xffff3d3e",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "callees": {
+        "0x100208c6": {
+          "name": "t3dGetActorsPositionedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "lookup returns -1: still a match",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "callees": {
+        "0x100208c6": {
+          "name": "t3dGetActorsPositionedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "lookup returns 2: still a match",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "callees": {
+        "0x100208c6": {
+          "name": "t3dGetActorsPositionedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "lookup returns INT_MIN: still a match",
+      "args": [
+        "@zone",
+        "@region",
+        "@message"
+      ],
+      "callees": {
+        "0x100208c6": {
+          "name": "t3dGetActorsPositionedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": -2147483648
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "null zone on a match is not read",
+      "args": [
+        0,
+        "@region",
+        "@message"
+      ],
+      "callees": {
+        "0x100208c6": {
+          "name": "t3dGetActorsPositionedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 133461,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@zone"
+        ]
+      },
+      {
+        "choices": [
+          "@region",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@message",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@zone",
+        "offset": "0x348",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@actors",
+        "type": "ptr",
+        "count": 4,
+        "choices": [
+          "@actorA",
+          "@actorB",
+          "@actorC",
+          "@actorD",
+          0
+        ]
+      }
+    ]
+  }
+}

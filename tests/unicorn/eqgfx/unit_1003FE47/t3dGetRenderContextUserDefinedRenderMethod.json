@@ -1,0 +1,125 @@
+{
+  "function": "t3dGetRenderContextUserDefinedRenderMethod",
+  "original": "0x100429ff",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "methodIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "rendercontext": {
+      "size": "0x400",
+      "fill": "random",
+      "init": [
+        {"offset": "0x3dc", "u32": 4},
+        {"offset": "0x3e0", "u32": "@methods"}
+      ]
+    },
+    "methods": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x10000001"},
+        {"offset": "0x4", "u32": "0x10000002"},
+        {"offset": "0x8", "u32": "0x10000003"},
+        {"offset": "0xc", "u32": "0x10000004"},
+        {"offset": "0x10", "u32": "0x10000005"},
+        {"offset": "0x14", "u32": "0x10000006"},
+        {"offset": "0x18", "u32": "0xffffffff"},
+        {"offset": "0x1c", "u32": "0x80000007"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@rendercontext", 1]
+    },
+    {
+      "name": "first entry",
+      "args": ["@rendercontext", 0]
+    },
+    {
+      "name": "last entry below count",
+      "args": ["@rendercontext", 3]
+    },
+    {
+      "name": "index equals count",
+      "args": ["@rendercontext", 4]
+    },
+    {
+      "name": "index past count",
+      "args": ["@rendercontext", 5]
+    },
+    {
+      "name": "all bits set",
+      "args": ["@rendercontext", "0xffffffff"]
+    },
+    {
+      "name": "top bit set, index 0",
+      "args": ["@rendercontext", "0x80000000"]
+    },
+    {
+      "name": "top bit set, index within count",
+      "args": ["@rendercontext", "0x80000002"]
+    },
+    {
+      "name": "top bit set, index equals count",
+      "args": ["@rendercontext", "0x80000004"]
+    },
+    {
+      "name": "empty table, index 0",
+      "args": ["@rendercontext", 0],
+      "memory": [{"addr": "@rendercontext", "offset": "0x3dc", "u32": 0}]
+    },
+    {
+      "name": "one entry, index 0",
+      "args": ["@rendercontext", 0],
+      "memory": [{"addr": "@rendercontext", "offset": "0x3dc", "u32": 1}]
+    },
+    {
+      "name": "eight entries, last entry has top bit set",
+      "args": ["@rendercontext", 7],
+      "memory": [{"addr": "@rendercontext", "offset": "0x3dc", "u32": 8}]
+    },
+    {
+      "name": "eight entries, entry 0xffffffff",
+      "args": ["@rendercontext", 6],
+      "memory": [{"addr": "@rendercontext", "offset": "0x3dc", "u32": 8}]
+    },
+    {
+      "name": "count is u32 max (unsigned compare)",
+      "args": ["@rendercontext", 63],
+      "memory": [{"addr": "@rendercontext", "offset": "0x3dc", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 272895,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@rendercontext", "offset": "0x3dc", "type": "u32", "range": [0, 100]},
+      {"addr": "@rendercontext", "offset": "0x3e0", "type": "ptr", "choices": ["@methods"]},
+      {"addr": "@methods", "size": 512}
+    ]
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "function": "do_searchplayer_guess",
+  "original": "0x004a8721",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "gm": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x01", "cstr": "Gmname"},
+        {"offset": "0xF1", "u8": 1}
+      ]
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x01", "cstr": "Bob"}
+      ]
+    },
+    "spawn": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x01", "cstr": "Alice"}
+      ]
+    },
+    "everquest": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4D8C", "u32": "@gm"},
+    {"addr": "0x006E4D58", "u32": "@spawn"},
+    {"addr": "0x006E4DAC", "u32": 0},
+    {"addr": "0x006B3194", "u32": 0},
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x0058FBA4", "cstr": ""}
+  ],
+  "callees": {
+    "0x004b1435": {
+      "name": "EQPlayer::get_player_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:108",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "name not found: target stays unset, search text is sent",
+      "args": [0, "Alice"]
+    },
+    {
+      "name": "name found: the spawn becomes the target",
+      "args": [0, "Alice"],
+      "callees": {
+        "0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr"], "ret": "@spawn"}
+      }
+    },
+    {
+      "name": "second lookup miss clears the target (stored result is the second call's)",
+      "args": [0, "Alice"],
+      "callees": {
+        "0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr"], "ret": ["@spawn", 0]}
+      }
+    },
+    {
+      "name": "first lookup miss: no second lookup, target unchanged",
+      "args": [0, "Alice"],
+      "memory": [{"addr": "0x006E4DAC", "u32": "@target"}],
+      "callees": {
+        "0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr"], "ret": [0, "@spawn"]}
+      }
+    },
+    {
+      "name": "not found keeps an existing target",
+      "args": [0, "Alice"],
+      "memory": [{"addr": "0x006E4DAC", "u32": "@target"}]
+    },
+    {
+      "name": "empty name uses the current target",
+      "args": [0, ""],
+      "memory": [{"addr": "0x006E4DAC", "u32": "@target"}]
+    },
+    {
+      "name": "empty name with no target does nothing",
+      "args": [0, ""]
+    },
+    {
+      "name": "empty name with no target does nothing, even when the bytes after g_target are set",
+      "args": [0, ""],
+      "memory": [{"addr": "0x006E4DB0", "u8": 1}]
+    },
+    {
+      "name": "empty name, target with an empty name still reports",
+      "args": [0, ""],
+      "memory": [
+        {"addr": "0x006E4DAC", "u32": "@target"},
+        {"addr": "@target", "offset": "0x01", "cstr": ""}
+      ]
+    },
+    {
+      "name": "gm flag off: nothing happens",
+      "args": [0, "Alice"],
+      "memory": [{"addr": "@gm", "offset": "0xF1", "u8": 0}]
+    },
+    {
+      "name": "gm flag off with an empty name: nothing happens",
+      "args": [0, ""],
+      "memory": [
+        {"addr": "@gm", "offset": "0xF1", "u8": 0},
+        {"addr": "0x006E4DAC", "u32": "@target"}
+      ]
+    },
+    {
+      "name": "gm name empty is copied as is",
+      "args": [0, "Alice"],
+      "memory": [{"addr": "@gm", "offset": "0x01", "cstr": ""}]
+    },
+    {
+      "name": "29-character name exactly fills the searched name",
+      "args": [0, "abcdefghijklmnopqrstuvwxyz123"]
+    },
+    {
+      "name": "percent signs in the name stay text",
+      "args": [0, "%s%n%d"]
+    },
+    {
+      "name": "unused argument is ignored",
+      "args": [-1, "Bob"]
+    }
+  ],
+  "fuzz": {
+    "seed": 4884257,
+    "count": 48,
+    "args": [
+      {},
+      {"choices": ["", "Alice", "Bob", "Gmname", "abcdefghijklmnopqrstuvwxyz123", "%s%n", "x y"]}
+    ],
+    "memory": [
+      {"addr": "0x006E4DAC", "type": "ptr", "choices": ["@target", 0]},
+      {"addr": "@gm", "offset": "0xF1", "type": "u8", "choices": [0, 1, 2, 128]}
+    ]
+  }
+}

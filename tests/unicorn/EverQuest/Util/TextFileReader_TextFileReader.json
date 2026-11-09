@@ -1,0 +1,269 @@
+{
+  "function": "TextFileReader_TextFileReader_guess",
+  "original": "0x004e3833",
+  "sources": [
+    "src/EverQuest/Util.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "index",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "control": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@fn"
+        }
+      ]
+    },
+    "fn": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "order": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4dd0",
+      "u32": "@control"
+    }
+  ],
+  "callees": {
+    "0x004a3d01": {
+      "name": "EQTRACE_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "writes": [
+        {
+          "addr": "@order",
+          "hex": "11"
+        }
+      ]
+    },
+    "0x004c1703": {
+      "name": "FUN_004c1703",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "writes": [
+        {
+          "addr": "@order",
+          "hex": "22"
+        }
+      ]
+    },
+    "@fn": {
+      "name": "UnloadWave_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "valid first index and call before clear",
+      "args": [
+        "@self",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x478",
+          "u32": "0x12345678"
+        }
+      ],
+      "callees": {
+        "@fn": {
+          "name": "UnloadWave_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@self+0x478",
+              "hex": "78563412"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "valid one",
+      "args": [
+        "@self",
+        7,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x47c",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "valid last index",
+      "args": [
+        "@self",
+        -7,
+        719
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0xfb4",
+          "u32": "0x87654321"
+        }
+      ]
+    },
+    {
+      "name": "negative lower bound",
+      "args": [
+        "@self",
+        0,
+        -1
+      ]
+    },
+    {
+      "name": "signed minimum",
+      "args": [
+        "@self",
+        0,
+        -2147483648
+      ]
+    },
+    {
+      "name": "upper bound",
+      "args": [
+        "@self",
+        0,
+        720
+      ]
+    },
+    {
+      "name": "signed maximum",
+      "args": [
+        "@self",
+        0,
+        2147483647
+      ]
+    },
+    {
+      "name": "global null bypasses range check",
+      "args": [
+        "@self",
+        0,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dd0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "global null bypasses valid clear",
+      "args": [
+        "@self",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dd0",
+          "u32": 0
+        },
+        {
+          "addr": "@self",
+          "offset": "0x478",
+          "u32": "0x12345678"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5126195,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "range": [
+          -4,
+          725
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4dd0",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@control"
+        ]
+      },
+      {
+        "addr": "@self",
+        "offset": "0x478",
+        "type": "u32",
+        "count": 720,
+        "choices": [
+          0,
+          1,
+          305419896,
+          2271560481
+        ]
+      }
+    ]
+  }
+}

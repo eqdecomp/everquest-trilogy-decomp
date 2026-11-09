@@ -1,0 +1,198 @@
+{
+  "function": "parseAddMemoryBlock_guess",
+  "original": "0x1002db83",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    },
+    {
+      "name": "spriteList",
+      "type": "ptr"
+    },
+    {
+      "name": "spriteInst",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "spritelist": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "slot": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002dccf": {
+      "name": "isDynamicArrayFull_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002dd6f": {
+      "name": "getObjectValue_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 5
+    },
+    "0x1002dc8d": {
+      "name": "reserveDynamicArray_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    },
+    "0x1002dd34": {
+      "name": "appendDynamicArrayElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@slot"
+    }
+  },
+  "cases": [
+    {
+      "name": "no growth: spriteInst goes in the slot and 0 is returned",
+      "args": ["@parser", "@spritelist", 7],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "NULL spriteInst logs the NULL message and returns 1",
+      "args": ["@parser", "@spritelist", 0],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "NULL spriteInst returns before the growth check",
+      "args": ["@parser", "@spritelist", 0],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "growth check returning 2 (any nonzero) still grows",
+      "args": ["@parser", "@spritelist", 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 2}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "full list grows to count 5 + 10",
+      "args": ["@parser", "@spritelist", 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "full list with count 0 grows to 10",
+      "args": ["@parser", "@spritelist", 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x1002dd6f": {"name": "getObjectValue_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0xfffffff6 plus 10 wraps to 0",
+      "args": ["@parser", "@spritelist", 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x1002dd6f": {"name": "getObjectValue_guess", "conv": "cdecl", "args": ["ptr"], "ret": -10}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "growth failure logs out of memory and returns 1",
+      "args": ["@parser", "@spritelist", 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x1002dc8d": {"name": "FUN_1002dc8d", "conv": "cdecl", "args": ["ptr", "int"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "any nonzero growth status counts as a failure",
+      "args": ["@parser", "@spritelist", 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x1002dc8d": {"name": "FUN_1002dc8d", "conv": "cdecl", "args": ["ptr", "int"], "ret": -1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "negative spriteInst is stored as is",
+      "args": ["@parser", "@spritelist", -1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "INT_MIN spriteInst is stored as is",
+      "args": ["@parser", "@spritelist", -2147483648],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "NULL parser is handed to logParserError",
+      "args": [0, "@spritelist", 0],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "NULL spriteList is passed through, not checked",
+      "args": ["@parser", 0, 7],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "NULL spriteList with growth failure",
+      "args": ["@parser", 0, 7],
+      "callees": {
+        "0x1002dccf": {"name": "FUN_1002dccf", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x1002dc8d": {"name": "FUN_1002dc8d", "conv": "cdecl", "args": ["ptr", "int"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 1002902,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@parser", 0]
+      },
+      {
+        "choices": ["@spritelist", 0]
+      },
+      {
+        "range": [-4, 30]
+      }
+    ],
+    "memory": []
+  }
+}

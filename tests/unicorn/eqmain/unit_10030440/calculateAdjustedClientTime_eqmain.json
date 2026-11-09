@@ -1,0 +1,268 @@
+{
+  "function": "calculateAdjustedClientTime_eqmain_guess",
+  "original": "0x10030440",
+  "sources": [
+    "src/eqmain/unit_10030440.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "lock",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "lock": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x50",
+          "u32": 1000
+        }
+      ]
+    },
+    "item": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": 7
+        }
+      ]
+    }
+  },
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e120": {
+      "name": "FUN_1002e120",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@item"
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        5000,
+        5001
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 1000 counted, item 7 -> 993 bytes -> 155 ms, after the second timeGetTime",
+      "args": [
+        "@lock"
+      ],
+      "expect": {
+        "ret": 5156
+      }
+    },
+    {
+      "name": "nothing queued: FUN_1002e120 not called, the second timeGetTime is returned",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 5001
+      }
+    },
+    {
+      "name": "64 bytes -> 576000 / 57600 exactly 10",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 64
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 5011
+      }
+    },
+    {
+      "name": "63 bytes -> 567000 / 57600 = 9 (truncates)",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 63
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 5010
+      }
+    },
+    {
+      "name": "65 bytes -> 585000 / 57600 = 10",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 65
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 5011
+      }
+    },
+    {
+      "name": "1 byte -> 9000 / 57600 = 0 (truncates to zero)",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 1
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 5001
+      }
+    },
+    {
+      "name": "item larger than count: -1 byte, (uint)(-9000) / 57600 (unsigned division)",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 1
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 79566
+      }
+    },
+    {
+      "name": "count * 9000 wraps 32 bits (0x100000 bytes)",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 1048576
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "count equal to the item's size: zero bytes behind it",
+      "args": [
+        "@lock"
+      ],
+      "memory": [
+        {
+          "addr": "@lock",
+          "offset": "0x50",
+          "u32": 7
+        },
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u32": 7
+        }
+      ],
+      "expect": {
+        "ret": 5001
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 10030440,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@lock"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@lock",
+        "offset": "0x50",
+        "type": "int",
+        "choices": [0, 1, 2, 7, 63, 64, 65, 1000, 65536, 1048576, 2147483647, -1, -300]
+      },
+      {
+        "addr": "@item",
+        "offset": "0x1c",
+        "type": "int",
+        "choices": [0, 1, 2, 5, 7, 64, 900, 1000000, -3]
+      }
+    ]
+  }
+}

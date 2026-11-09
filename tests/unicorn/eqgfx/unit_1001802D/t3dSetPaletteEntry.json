@@ -1,0 +1,112 @@
+{
+  "function": "t3dSetPaletteEntry",
+  "original": "0x10018495",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "palette",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "red",
+      "type": "u8"
+    },
+    {
+      "name": "green",
+      "type": "u8"
+    },
+    {
+      "name": "blue",
+      "type": "u8"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x430",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@palette", 64, 17, 34, 51],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lowest valid index 1",
+      "args": ["@palette", 1, 255, 0, 128],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "highest valid index 0xfe",
+      "args": ["@palette", 254, 1, 2, 3],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 0 rejected",
+      "args": ["@palette", 0, 16, 32, 48],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index 0xff rejected",
+      "args": ["@palette", 255, 16, 32, 48],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index 0x100 rejected",
+      "args": ["@palette", 256, 5, 6, 7],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index 0x80000000 rejected (unsigned compare)",
+      "args": ["@palette", 2147483648, 5, 6, 7],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index 0xffffffff rejected",
+      "args": ["@palette", 4294967295, 5, 6, 7],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "null palette, index 0 touches nothing",
+      "args": [0, 0, 1, 1, 1],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "colour slots wider than a byte: only the low byte is stored",
+      "args": ["@palette", 128, 511, 65535, 4660],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero colours at a middle index",
+      "args": ["@palette", 127, 0, 0, 0],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 99477,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@palette"]
+      },
+      {
+        "choices": [0, 1, 2, 63, 100, 128, 200, 253, 254, 255, 256, 257, 2147483648, 4294967295]
+      },
+      {},
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

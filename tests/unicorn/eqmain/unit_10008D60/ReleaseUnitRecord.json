@@ -1,0 +1,393 @@
+{
+  "function": "ReleaseUnitRecord_guess",
+  "original": "0x1000be30",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rec",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rec": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": "@unit"
+        },
+        {
+          "offset": "0x24",
+          "u32": "@fn"
+        },
+        {
+          "offset": "0x28",
+          "u32": "0x1234abcd"
+        }
+      ]
+    },
+    "unit": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@obj"
+        }
+      ]
+    },
+    "obj": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000b210": {
+      "name": "FUN_1000b210",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@fn": {
+      "name": "release_cb",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: unit object set, callee then callback run, unit cleared",
+      "args": [
+        "@rec"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit object null: callee skipped, callback still runs",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit object -1 (non-null): callee still runs",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0x14",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unit object 0x80000000 (non-null): callee still runs",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@unit",
+          "offset": "0x14",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros: no unit and no callback, returns -2",
+      "args": [
+        "@rec"
+      ],
+      "objects": {
+        "rec": {
+          "size": "0x30",
+          "fill": "zero"
+        }
+      },
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "null record: returns -2",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "unit null: returns -2, callee and callback not run",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "callback null: returns -2, unit kept",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "unit and callback null: returns -2",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x1c",
+          "u32": 0
+        },
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "ordering: callee clears the unit, callback gets null and the clear is a no-op",
+      "args": [
+        "@rec"
+      ],
+      "callees": {
+        "0x1000b210": {
+          "name": "FUN_1000b210",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 28,
+              "hex": "00000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ordering: callee replaces the unit, callback gets the new unit",
+      "args": [
+        "@rec"
+      ],
+      "callees": {
+        "0x1000b210": {
+          "name": "FUN_1000b210",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 28,
+              "hex": "00007a00"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ordering: callee rewrites the arg, callback gets the new arg",
+      "args": [
+        "@rec"
+      ],
+      "callees": {
+        "0x1000b210": {
+          "name": "FUN_1000b210",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 40,
+              "hex": "0df0ad0b"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "arg -1",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "arg INT_MIN",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "arg INT_MAX",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": "0x7fffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 48688,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rec",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rec",
+        "offset": "0x1c",
+        "type": "u32",
+        "choices": [
+          0,
+          "@unit"
+        ]
+      },
+      {
+        "addr": "@rec",
+        "offset": "0x24",
+        "type": "u32",
+        "choices": [
+          0,
+          "@fn"
+        ]
+      },
+      {
+        "addr": "@rec",
+        "offset": "0x28",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4660,
+          "0x7fffffff",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@unit",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [
+          0,
+          "@obj",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

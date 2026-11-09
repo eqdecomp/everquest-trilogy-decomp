@@ -1,0 +1,53 @@
+{
+  "function": "ReportMissingComponents_guess",
+  "original": "0x0049231b",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused1", "type": "int"},
+    {"name": "unused2", "type": "int"},
+    {"name": "message", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "message": {
+      "size": "0xd0",
+      "fill": "zero",
+      "init": [{"offset": "0xcc", "u32": 1}]
+    },
+    "everquest": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [{"addr": "0x006efe2c", "u32": "@everquest"}],
+  "callees": {
+    "0x005219c0": {"name": "strcpy", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x005223d0": {"name": "strlen", "args": ["cstr"], "passthrough": true},
+    "0x005219d0": {"name": "strcat", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x004d055e": {"name": "dsp_chat_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "type one with no components still sends the fixed prefix and suffix", "args": [-1, 2147483647, "@message"]},
+    {"name": "type two selects the song prefix", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0xcc", "u32": 2}]},
+    {"name": "other type selects the default prefix", "args": [1, -1, "@message"], "memory": [{"addr": "@message", "offset": "0xcc", "u32": 0}]},
+    {"name": "signed high-bit message type selects the default prefix", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0xcc", "u32": 2147483648}]},
+    {"name": "one first component has no separator", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "Lute"}]},
+    {"name": "only sixth component has no leading separator", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0xac", "cstr": "Flute"}]},
+    {"name": "empty slots do not add separators between present components", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "Lute"}, {"addr": "@message", "offset": "0x4c", "cstr": "Drum"}, {"addr": "@message", "offset": "0xac", "cstr": "Flute"}]},
+    {"name": "all six component slots retain their order", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "A"}, {"addr": "@message", "offset": "0x2c", "cstr": "B"}, {"addr": "@message", "offset": "0x4c", "cstr": "C"}, {"addr": "@message", "offset": "0x6c", "cstr": "D"}, {"addr": "@message", "offset": "0x8c", "cstr": "E"}, {"addr": "@message", "offset": "0xac", "cstr": "F"}]},
+    {"name": "six maximum-length safe fields fill all six fixed-width input slots", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, {"addr": "@message", "offset": "0x2c", "cstr": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}, {"addr": "@message", "offset": "0x4c", "cstr": "ccccccccccccccccccccccccccccccc"}, {"addr": "@message", "offset": "0x6c", "cstr": "ddddddddddddddddddddddddddddddd"}, {"addr": "@message", "offset": "0x8c", "cstr": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, {"addr": "@message", "offset": "0xac", "cstr": "fffffffffffffffffffffffffffffff"}]},
+    {"name": "separator and suffix are read from their mutable binary globals", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "one"}, {"addr": "@message", "offset": "0x2c", "cstr": "two"}, {"addr": "0x0055e12c", "cstr": " <-> "}, {"addr": "0x00545998", "cstr": "!"}]},
+    {"name": "strcpy helper mutation is observed by later separator and suffix reads", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "one"}, {"addr": "@message", "offset": "0x2c", "cstr": "two"}], "callees": {"0x005219c0": {"name": "strcpy", "args": ["ignore", "cstr"], "passthrough": true, "writes": [{"addr": "0x0055e12c", "hex": "7c7c00"}, {"addr": "0x00545998", "hex": "2100"}]}}},
+    {"name": "chat receiver is reloaded after strcpy mutates the global", "args": [0, 0, "@message"], "memory": [{"addr": "@message", "offset": "0x0c", "cstr": "one"}], "callees": {"0x005219c0": {"name": "strcpy", "args": ["ignore", "cstr"], "passthrough": true, "writes": [{"addr": "0x006efe2c", "hex": "00007000"}]}}},
+    {"name": "chat helper receives the freshly read null everquest receiver", "args": [0, 0, "@message"], "memory": [{"addr": "0x006efe2c", "u32": 0}]},
+    {"name": "first two stack arguments remain unobserved inputs", "args": [-2147483648, 305419896, "@message"], "memory": [{"addr": "@message", "offset": "0xcc", "u32": 3}, {"addr": "@message", "offset": "0x8c", "cstr": "Ocarina"}]}
+  ],
+  "fuzz": {
+    "seed": 59923,
+    "count": 30,
+    "args": [
+      {"range": [-2147483648, 2147483647]},
+      {"range": [-2147483648, 2147483647]},
+      {"choices": ["@message"]}
+    ],
+    "memory": [{"addr": "@message", "offset": "0xcc", "type": "u32", "range": [0, 3]}]
+  }
+}

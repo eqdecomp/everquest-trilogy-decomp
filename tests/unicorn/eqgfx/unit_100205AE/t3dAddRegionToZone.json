@@ -1,0 +1,229 @@
+{
+  "function": "t3dAddRegionToZone",
+  "original": "0x10020674",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "zone",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@regions"
+        }
+      ]
+    },
+    "regions": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 39
+        }
+      ]
+    },
+    "zone": {
+      "size": "0x24",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": [1, 1]
+    },
+    "0x100190f9": {
+      "name": "t3dInsertReferenceIntoList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "tag_below_range",
+      "args": [0, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 38
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag_gap",
+      "args": [1, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 40
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag_27_both_found",
+      "args": [2, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 39
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "ret": [1, 1]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag_29_first_missing",
+      "args": [3, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 41
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "ret": [0, 1]
+        },
+        "0x100190f9": {
+          "ret": [0]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first_insert_fails_early",
+      "args": [4, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 39
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "ret": [0]
+        },
+        "0x100190f9": {
+          "ret": [1]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "second_insert_attempt",
+      "args": [5, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 41
+        }
+      ],
+      "callees": {
+        "0x100190b6": {
+          "ret": [1, 0]
+        },
+        "0x100190f9": {
+          "ret": [0],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 4,
+              "hex": "01000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag_above_range",
+      "args": [6, "@region", "@zone"],
+      "memory": [
+        {
+          "addr": "@regions",
+          "offset": "0x0",
+          "u32": 42
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 132724,
+    "count": 32,
+    "args": [
+      {},
+      {
+        "choices": ["@region"]
+      },
+      {
+        "choices": ["@zone"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@regions",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [37, 43]
+      }
+    ]
+  }
+}

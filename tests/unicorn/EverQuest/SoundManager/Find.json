@@ -1,0 +1,84 @@
+{
+  "function": "SoundTree_guess::Find_guess",
+  "original": "0x004eeab7",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@soundtree",
+  "args": [
+    {
+      "name": "out",
+      "type": "ptr"
+    },
+    {
+      "name": "key",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "soundtree": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": 4, "u32": "@header"}
+      ]
+    },
+    "header": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "node": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": 100}
+      ]
+    },
+    "key": {
+      "size": "0x4",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": 100}
+      ]
+    },
+    "out": {
+      "size": "0x4",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004eef98": {
+      "name": "FUN_004eef98",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "ret": "@node"
+    }
+  },
+  "cases": [
+    {"name": "key equal: found node", "args": ["@out", "@key"]},
+    {"name": "key one below node key: end", "args": ["@out", "@key"], "memory": [{"addr": "@key", "u32": 99}]},
+    {"name": "key one above node key: node", "args": ["@out", "@key"], "memory": [{"addr": "@key", "u32": 101}]},
+    {"name": "signed compare: negative key below positive", "args": ["@out", "@key"], "memory": [{"addr": "@key", "u32": "0xffffffff"}]},
+    {"name": "signed compare: positive key above negative node key", "args": ["@out", "@key"], "memory": [{"addr": "@key", "u32": 1}, {"addr": "@node+0xc", "u32": "0x80000000"}]},
+    {"name": "lower bound is end (header)", "args": ["@out", "@key"],
+     "callees": {"0x004eef98": {"name": "FUN_004eef98", "conv": "thiscall", "args": ["ptr"], "ret": "@header"}}},
+    {"name": "lower bound is end, header key would compare equal", "args": ["@out", "@key"], "memory": [{"addr": "@header+0xc", "u32": 100}],
+     "callees": {"0x004eef98": {"name": "FUN_004eef98", "conv": "thiscall", "args": ["ptr"], "ret": "@header"}}}
+  ],
+  "fuzz": {
+    "seed": 5171895,
+    "count": 40,
+    "args": [
+      {"choices": ["@out"]},
+      {"choices": ["@key"]}
+    ],
+    "memory": [
+      {"addr": "@soundtree", "offset": 4, "type": "u32", "choices": ["@header", "@node"]},
+      {"addr": "@node", "offset": "0xc", "type": "u32", "choices": [0, 1, 99, 100, 101, "0x7fffffff", "0x80000000", "0xffffffff"]},
+      {"addr": "@key", "offset": 0, "type": "u32", "choices": [0, 1, 99, 100, 101, "0x7fffffff", "0x80000000", "0xffffffff"]}
+    ]
+  }
+}

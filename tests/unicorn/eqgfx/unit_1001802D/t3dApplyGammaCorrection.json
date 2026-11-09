@@ -1,0 +1,94 @@
+{
+  "function": "t3dApplyGammaCorrection",
+  "original": "0x1001830b",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "palette", "type": "ptr"},
+    {"name": "redTable", "type": "ptr"},
+    {"name": "greenTable", "type": "ptr"},
+    {"name": "blueTable", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x420",
+      "fill": "random",
+      "init": [{"offset": "0x414", "u32": 1}]
+    },
+    "redtable": {"size": "0x100", "fill": "random"},
+    "greentable": {"size": "0x100", "fill": "random"},
+    "bluetable": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "flag set, all tables",
+     "args": ["@palette", "@redtable", "@greentable", "@bluetable"]},
+    {"name": "flag zero, all tables",
+     "args": ["@palette", "@redtable", "@greentable", "@bluetable"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "flag set, red table null",
+     "args": ["@palette", 0, "@greentable", "@bluetable"]},
+    {"name": "flag set, green table null",
+     "args": ["@palette", "@redtable", 0, "@bluetable"]},
+    {"name": "flag set, blue table null",
+     "args": ["@palette", "@redtable", "@greentable", 0]},
+    {"name": "flag zero, red table null",
+     "args": ["@palette", 0, "@greentable", "@bluetable"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "flag zero, green table null",
+     "args": ["@palette", "@redtable", 0, "@bluetable"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "flag zero, blue table null",
+     "args": ["@palette", "@redtable", "@greentable", 0],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "flag set, all tables null",
+     "args": ["@palette", 0, 0, 0]},
+    {"name": "flag zero, all tables null",
+     "args": ["@palette", 0, 0, 0],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "flag 2 (nonzero, not 1)",
+     "args": ["@palette", "@redtable", "@greentable", "@bluetable"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 2}]},
+    {"name": "flag 0x100 (low byte zero)",
+     "args": ["@palette", "@redtable", "@greentable", "@bluetable"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 256}]},
+    {"name": "flag 0x80000000 (sign bit only)",
+     "args": ["@palette", "@redtable", "@greentable", "@bluetable"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 2147483648}]},
+    {"name": "red table is the entries",
+     "args": ["@palette", "@palette+0x14", "@greentable", "@bluetable"]},
+    {"name": "green table is the entries",
+     "args": ["@palette", "@redtable", "@palette+0x14", "@bluetable"]},
+    {"name": "blue table is the entries, flag zero",
+     "args": ["@palette", "@redtable", "@greentable", "@palette+0x14"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "all tables are the entries",
+     "args": ["@palette", "@palette+0x14", "@palette+0x14", "@palette+0x14"]},
+    {"name": "all tables are the entries, flag zero",
+     "args": ["@palette", "@palette+0x14", "@palette+0x14", "@palette+0x14"],
+     "memory": [{"addr": "@palette", "offset": "0x414", "u32": 0}]},
+    {"name": "one table for all channels",
+     "args": ["@palette", "@redtable", "@redtable", "@redtable"]}
+  ],
+  "fuzz": {
+    "seed": 99083,
+    "count": 40,
+    "args": [
+      {"choices": ["@palette"]},
+      {"choices": ["@redtable", 0, "@palette+0x14"]},
+      {"choices": ["@greentable", 0, "@palette+0x14"]},
+      {"choices": ["@bluetable", 0, "@palette+0x14"]}
+    ],
+    "memory": [
+      {"addr": "@palette", "offset": "0x414", "type": "u32", "choices": [0, 1, 2, 256, 2147483648, 4294967295]},
+      {"addr": "@palette", "offset": "0x14", "size": 1024},
+      {"addr": "@redtable", "size": 256},
+      {"addr": "@greentable", "size": 256},
+      {"addr": "@bluetable", "size": 256}
+    ]
+  }
+}

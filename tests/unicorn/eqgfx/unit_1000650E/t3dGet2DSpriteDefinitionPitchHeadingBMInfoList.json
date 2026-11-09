@@ -1,0 +1,135 @@
+{
+  "function": "t3dGet2DSpriteDefinitionPitchHeadingBMInfoList",
+  "original": "0x10007c40",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "definition", "type": "ptr" },
+    { "name": "pitchEntryIndex", "type": "u32" },
+    { "name": "headingIndex", "type": "u32" },
+    { "name": "destination", "type": "ptr" }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x14", "u32": 3 },
+        { "offset": "0x18", "u32": 3 },
+        { "offset": "0x1c", "u32": "@pitch_entries" }
+      ]
+    },
+    "pitch_entries": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x08", "u32": 2 },
+        { "offset": "0x0c", "u32": "@heading_records_0" },
+        { "offset": "0x18", "u32": 3 },
+        { "offset": "0x1c", "u32": "@heading_records_1" },
+        { "offset": "0x28", "u32": 1 },
+        { "offset": "0x2c", "u32": "@heading_records_2" }
+      ]
+    },
+    "heading_records_0": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "0xdead0000" },
+        { "offset": "0x04", "u32": "@payload_0" },
+        { "offset": "0x08", "u32": "0xdead0001" },
+        { "offset": "0x0c", "u32": "@payload_1" }
+      ]
+    },
+    "heading_records_1": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "0xdead0010" },
+        { "offset": "0x04", "u32": "@payload_1" },
+        { "offset": "0x08", "u32": "0xdead0011" },
+        { "offset": "0x0c", "u32": "@payload_2" },
+        { "offset": "0x10", "u32": "0xdead0012" },
+        { "offset": "0x14", "u32": "@payload_0" }
+      ]
+    },
+    "heading_records_2": {
+      "size": "0x08",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "0xdead0020" },
+        { "offset": "0x04", "u32": "@payload_2" }
+      ]
+    },
+    "payload_0": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "0xa0a0a000" },
+        { "offset": "0x04", "u32": "0xa0a0a001" },
+        { "offset": "0x08", "u32": "0xa0a0a002" },
+        { "offset": "0x0c", "u32": "0xa0a0a003" },
+        { "offset": "0x10", "u32": "0xa0a0a004" }
+      ]
+    },
+    "payload_1": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "0xb1b1b100" },
+        { "offset": "0x04", "u32": "0xb1b1b101" },
+        { "offset": "0x08", "u32": "0xb1b1b102" },
+        { "offset": "0x0c", "u32": "0xb1b1b103" },
+        { "offset": "0x10", "u32": "0xb1b1b104" }
+      ]
+    },
+    "payload_2": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "0xc2c2c200" },
+        { "offset": "0x04", "u32": "0xc2c2c201" },
+        { "offset": "0x08", "u32": "0xc2c2c202" },
+        { "offset": "0x0c", "u32": "0xc2c2c203" },
+        { "offset": "0x10", "u32": "0xc2c2c204" }
+      ]
+    },
+    "destination": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "cases": [
+    { "name": "first entry first heading", "args": ["@definition", 0, 0, "@destination"] },
+    { "name": "first entry last heading", "args": ["@definition", 0, 1, "@destination"] },
+    { "name": "middle entry middle heading", "args": ["@definition", 1, 1, "@destination"] },
+    { "name": "middle entry last heading", "args": ["@definition", 1, 2, "@destination"] },
+    { "name": "last entry", "args": ["@definition", 2, 0, "@destination"] },
+    { "name": "entry count boundary", "args": ["@definition", 3, 0, "@destination"] },
+    { "name": "entry unsigned high bit", "args": ["@definition", 4294967295, 0, "@destination"] },
+    { "name": "heading count boundary", "args": ["@definition", 0, 2, "@destination"] },
+    { "name": "heading count boundary middle", "args": ["@definition", 1, 3, "@destination"] },
+    { "name": "heading unsigned high bit", "args": ["@definition", 1, 4294967295, "@destination"] },
+    {
+      "name": "zero byte count",
+      "args": ["@definition", 1, 2, "@destination"],
+      "memory": [{ "addr": "@definition", "offset": "0x14", "u32": 0 }]
+    }
+  ],
+  "fuzz": {
+    "seed": 31808,
+    "count": 40,
+    "args": [
+      { "choices": ["@definition"] },
+      { "choices": [0, 1, 2, 3, 4294967295] },
+      { "choices": [0, 1, 2, 3, 4294967295] },
+      { "choices": ["@destination"] }
+    ],
+    "memory": [
+      { "addr": "@definition", "offset": "0x14", "type": "u32", "range": [0, 5] }
+    ]
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "function": "copy_data_from_circular_buffer_guess",
+  "original": "0x10031250",
+  "sources": [
+    "src/eqmain/Network/rdp/ringbuf.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "ring",
+      "type": "ptr"
+    },
+    {
+      "name": "dst",
+      "type": "ptr"
+    },
+    {
+      "name": "n",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ring": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@buf"
+        },
+        {
+          "offset": "0x4",
+          "u32": 64
+        }
+      ]
+    },
+    "buf": {
+      "size": 64,
+      "fill": "random"
+    },
+    "dst": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "no wrap, n below stored",
+      "args": ["@ring", "@dst", 10],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+40", "offset": 12},
+        {"addr": "@ring", "u32": 32, "offset": 16}
+      ]
+    },
+    {
+      "name": "no wrap, n equals stored",
+      "args": ["@ring", "@dst", 32],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+40", "offset": 12},
+        {"addr": "@ring", "u32": 32, "offset": 16}
+      ]
+    },
+    {
+      "name": "no wrap, n one past stored",
+      "args": ["@ring", "@dst", 33],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+40", "offset": 12},
+        {"addr": "@ring", "u32": 32, "offset": 16}
+      ]
+    },
+    {
+      "name": "no wrap, n 4 (whole words)",
+      "args": ["@ring", "@dst", 4],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+40", "offset": 12},
+        {"addr": "@ring", "u32": 32, "offset": 16}
+      ]
+    },
+    {
+      "name": "no wrap, unaligned rd, n 7",
+      "args": ["@ring", "@dst", 7],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+9", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+40", "offset": 12},
+        {"addr": "@ring", "u32": 32, "offset": 16}
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": ["@ring", "@dst", 0],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+40", "offset": 12},
+        {"addr": "@ring", "u32": 32, "offset": 16}
+      ]
+    },
+    {
+      "name": "empty, n 0",
+      "args": ["@ring", "@dst", 0],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+8", "offset": 12},
+        {"addr": "@ring", "u32": 0, "offset": 16}
+      ]
+    },
+    {
+      "name": "empty, n 5 (copies from base)",
+      "args": ["@ring", "@dst", 5],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+8", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+8", "offset": 12},
+        {"addr": "@ring", "u32": 0, "offset": 16}
+      ]
+    },
+    {
+      "name": "full at rd==wr, n 10",
+      "args": ["@ring", "@dst", 10],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+16", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+16", "offset": 12},
+        {"addr": "@ring", "u32": 64, "offset": 16}
+      ]
+    },
+    {
+      "name": "full at rd==wr, n past tail",
+      "args": ["@ring", "@dst", 60],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+16", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+16", "offset": 12},
+        {"addr": "@ring", "u32": 64, "offset": 16}
+      ]
+    },
+    {
+      "name": "full from base, n 64",
+      "args": ["@ring", "@dst", 64],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf", "offset": 8},
+        {"addr": "@ring", "u32": "@buf", "offset": 12},
+        {"addr": "@ring", "u32": 64, "offset": 16}
+      ]
+    },
+    {
+      "name": "rd below wr spanning the buffer, n 64",
+      "args": ["@ring", "@dst", 64],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+64", "offset": 12},
+        {"addr": "@ring", "u32": 64, "offset": 16}
+      ]
+    },
+    {
+      "name": "wrapped, n within tail",
+      "args": ["@ring", "@dst", 10],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+50", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+10", "offset": 12},
+        {"addr": "@ring", "u32": 24, "offset": 16}
+      ]
+    },
+    {
+      "name": "wrapped, n equals tail",
+      "args": ["@ring", "@dst", 14],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+50", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+10", "offset": 12},
+        {"addr": "@ring", "u32": 24, "offset": 16}
+      ]
+    },
+    {
+      "name": "wrapped, n past tail",
+      "args": ["@ring", "@dst", 20],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+50", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+10", "offset": 12},
+        {"addr": "@ring", "u32": 24, "offset": 16}
+      ]
+    },
+    {
+      "name": "wrapped, count 0 (tail ignored)",
+      "args": ["@ring", "@dst", 7],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+50", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+10", "offset": 12},
+        {"addr": "@ring", "u32": 0, "offset": 16}
+      ]
+    },
+    {
+      "name": "wrapped, count 1",
+      "args": ["@ring", "@dst", 7],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+50", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+10", "offset": 12},
+        {"addr": "@ring", "u32": 1, "offset": 16}
+      ]
+    },
+    {
+      "name": "rd at end, count 64",
+      "args": ["@ring", "@dst", 10],
+      "memory": [
+        {"addr": "@ring", "u32": "@buf+64", "offset": 8},
+        {"addr": "@ring", "u32": "@buf+10", "offset": 12},
+        {"addr": "@ring", "u32": 64, "offset": 16}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 201296,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@ring"
+        ]
+      },
+      {
+        "choices": [
+          "@dst"
+        ]
+      },
+      {
+        "range": [0, 64]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@ring",
+        "offset": 8,
+        "type": "ptr",
+        "choices": ["@buf", "@buf+1", "@buf+3", "@buf+4", "@buf+8", "@buf+13", "@buf+16", "@buf+31", "@buf+32", "@buf+33", "@buf+48", "@buf+50", "@buf+63", "@buf+64"]
+      },
+      {
+        "addr": "@ring",
+        "offset": 12,
+        "type": "ptr",
+        "choices": ["@buf", "@buf+1", "@buf+3", "@buf+4", "@buf+8", "@buf+13", "@buf+16", "@buf+31", "@buf+32", "@buf+33", "@buf+48", "@buf+50", "@buf+63", "@buf+64"]
+      },
+      {
+        "addr": "@ring",
+        "offset": 16,
+        "type": "u32",
+        "range": [0, 64]
+      }
+    ]
+  }
+}

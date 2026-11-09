@@ -1,0 +1,269 @@
+{
+  "function": "t3dParseBinaryDMRGBTrackDef",
+  "original": "0x10025b20",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x8070",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "0x1234"},
+        {"offset": "0x38", "u32": "@names"},
+        {"offset": "0x8044", "u32": "@record"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "record": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0xfffffff0"},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": 4},
+        {"offset": "0xc", "u32": 2},
+        {"offset": "0x10", "u32": 7},
+        {"offset": "0x14", "u32": 9}
+      ]
+    },
+    "names": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "entries": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "track": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "trackDef": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": 4}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100aadec", "u32": 0},
+    {"addr": "@names", "offset": "0x30", "u8": 0}
+  ],
+  "callees": {
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@entries"},
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@trackDef"},
+    "0x10010aaa": {"name": "s3dGetDMSpriteDefinitionNumVertices", "conv": "cdecl", "args": ["ptr"], "ret": 4},
+    "0x1001156d": {"name": "s3dPatchDMSpriteDefLighting", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x100115dc": {"name": "s3dPatchDMTrackDefLighting", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x10010c30": {"name": "s3dDefineDMRGBTrack", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "ptr"], "ret": "@track"},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {
+      "name": "count 0, no name: define with a NULL array, nothing freed",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "count 0, define returns NULL: returns 0",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 0}
+      ],
+      "callees": {
+        "0x10010c30": {"name": "s3dDefineDMRGBTrack", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocation fails: return 0 with no define and no free",
+      "args": ["@context"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 3, reserved04 bit 0 and setTrackFlag: both flag writes",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0xc", "u32": 3},
+        {"addr": "@record", "offset": "0x4", "u8": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    },
+    {
+      "name": "define returns NULL: no flag writes, array still freed",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u8": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {
+        "0x10010c30": {"name": "s3dDefineDMRGBTrack", "conv": "cdecl", "args": ["ptr", "int", "int", "int", "int", "int", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "DAT on, R name of 12 chars: not longer than 12, so no patch",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "R12345678901"}
+      ]
+    },
+    {
+      "name": "DAT on, R name of 13 chars, sprite vertices match: patch, return the entry array",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "R1234567890123"}
+      ]
+    },
+    {
+      "name": "DAT on, R name of 13 chars, dictionary miss: define",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "R1234567890123"}
+      ],
+      "callees": {
+        "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "DAT on, R name of 13 chars, sprite has 5 vertices vs stride 4: define",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "R1234567890123"}
+      ],
+      "callees": {
+        "0x10010aaa": {"name": "s3dGetDMSpriteDefinitionNumVertices", "conv": "cdecl", "args": ["ptr"], "ret": 5}
+      }
+    },
+    {
+      "name": "DAT on, R name of 13 chars, dictionary miss, reserved and setTrackFlag: define with flag writes",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "R1234567890123"},
+        {"addr": "@record", "offset": "0x4", "u8": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {
+        "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "DAT on, P name of 3 chars, track def vertices match: patch via track def",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "P12"}
+      ]
+    },
+    {
+      "name": "DAT on, P name of 2 chars: not longer than 2, so no patch",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "P1"}
+      ]
+    },
+    {
+      "name": "DAT on, P name, track def has 9 vertices vs stride 4: define",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "P12"},
+        {"addr": "@trackDef", "offset": "0x14", "u32": 9}
+      ]
+    },
+    {
+      "name": "DAT on, name starts with X: no patch",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "cstr": "X1234567890123"}
+      ]
+    },
+    {
+      "name": "DAT on, empty name: no patch",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@names", "offset": "0x10", "u8": 0}
+      ]
+    },
+    {
+      "name": "DAT on, non-negative offset: no name, define with file offset 0",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@record", "offset": "0x0", "u32": 4}
+      ]
+    },
+    {
+      "name": "DAT on, offset 0 (not negative) with an R-looking string at names+0: no name, define",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@record", "offset": "0x0", "u32": 0},
+        {"addr": "@names", "offset": "0x0", "cstr": "R1234567890123"}
+      ]
+    },
+    {
+      "name": "DAT on, R name at offset -32 (names+0x20), sprite matches: patch",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 1},
+        {"addr": "@record", "offset": "0x0", "u32": "0xffffffe0"},
+        {"addr": "@names", "offset": "0x20", "cstr": "R1234567890123"}
+      ]
+    },
+    {
+      "name": "DAT 2 (nonzero, not 1), P name of 3 chars, count 1: patch via track def",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "0x100aadec", "u32": 2},
+        {"addr": "@names", "offset": "0x10", "cstr": "P12"},
+        {"addr": "@record", "offset": "0xc", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 154400,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@context"]
+      }
+    ],
+    "memory": [
+      {"addr": "@record", "offset": "0x0", "type": "int", "choices": [-16, -32, 0, 4]},
+      {"addr": "@record", "offset": "0x4", "type": "u8", "choices": [0, 1, 2, 3]},
+      {"addr": "@record", "offset": "0x8", "type": "int", "range": [0, 6]},
+      {"addr": "@record", "offset": "0xc", "type": "u32", "range": [1, 4]},
+      {"addr": "@record", "offset": "0x10", "type": "int", "range": [-3, 8]},
+      {"addr": "@record", "offset": "0x14", "type": "int", "range": [-3, 8]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "choices": [0, 1]},
+      {"addr": "0x100aadec", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@names", "offset": "0x10", "size": 32},
+      {"addr": "@names", "offset": "0x10", "type": "u8", "choices": [82, 80, 65, 0]},
+      {"addr": "@trackDef", "offset": "0x14", "type": "int", "range": [3, 5]}
+    ]
+  }
+}

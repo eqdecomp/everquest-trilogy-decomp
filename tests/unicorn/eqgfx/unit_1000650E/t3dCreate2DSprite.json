@@ -1,0 +1,359 @@
+{
+  "function": "t3dCreate2DSprite",
+  "original": "0x10007c86",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "volume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 100
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x34",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x30",
+          "u32": "@payload"
+        }
+      ]
+    },
+    "payload": {
+      "size": "0x8c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@defaultVolume"
+        },
+        {
+          "offset": "0x6c",
+          "u32": 25
+        },
+        {
+          "offset": "0x88",
+          "u32": "@frameSet"
+        }
+      ]
+    },
+    "sprite": {
+      "size": "0x8c",
+      "fill": "random"
+    },
+    "volume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "defaultVolume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "duplicatedVolume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "frameSet": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 9
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@sprite"
+    },
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@duplicatedVolume"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "success with explicit volume",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ]
+    },
+    {
+      "name": "allocation failure exits before copying",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "duplicate volume failure frees sprite",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "initializer failure frees sprite",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero volume selects definition default",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ]
+    },
+    {
+      "name": "zero definition default is still passed to duplicate",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@payload",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "update time addition crosses signed boundary",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "memory": [
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": "0x7fffffff"
+        },
+        {
+          "addr": "@payload",
+          "offset": "0x6c",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "update time wraps at 32 bits",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "memory": [
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@payload",
+          "offset": "0x6c",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "frame set reference count wraps",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "memory": [
+        {
+          "addr": "@frameSet",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "zero update interval and zero current time",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "memory": [
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@payload",
+          "offset": "0x6c",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 31878,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "@volume"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@context",
+        "offset": "0x8",
+        "type": "int",
+        "range": [
+          -100000,
+          100000
+        ]
+      },
+      {
+        "addr": "@payload",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@defaultVolume",
+          "@volume"
+        ]
+      },
+      {
+        "addr": "@payload",
+        "offset": "0x6c",
+        "type": "int",
+        "range": [
+          -10000,
+          10000
+        ]
+      },
+      {
+        "addr": "@frameSet",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -100000,
+          100000
+        ]
+      }
+    ]
+  }
+}

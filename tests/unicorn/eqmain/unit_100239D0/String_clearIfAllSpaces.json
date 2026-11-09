@@ -1,0 +1,160 @@
+{
+  "function": "String_clearIfAllSpaces_guess",
+  "original": "0x10023c10",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "text",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "text": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "one space",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three spaces",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 20 20 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "letter",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "61 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "spaces then letter",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 20 61 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "letter then spaces",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "61 20 20 20 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "tab (only the space is skipped)",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "09 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "space then tab",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 09 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "byte below space (0x1f)",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "1f 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "byte above space (0x21)",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "21 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "high byte",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "ff 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "NUL ends the scan: only the first byte is cleared",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 20 00 61 62 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "NUL first: letter after it is not read",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "00 61 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "31 spaces then NUL: scan ends on the last byte",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "31 spaces then letter in the last byte",
+      "args": ["@text"],
+      "memory": [{"addr": "@text", "hex": "20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 61"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry ECX unmapped (overwritten first): one space then NUL",
+      "args": ["@text"],
+      "regs": {"ecx": "0x00001000"},
+      "memory": [{"addr": "@text", "hex": "20 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "entry ECX unmapped (overwritten first): space then letter",
+      "args": ["@text"],
+      "regs": {"ecx": "0x00001000"},
+      "memory": [{"addr": "@text", "hex": "20 61 00"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "all GPRs but ESP unmapped at entry: one space then NUL",
+      "args": ["@text"],
+      "regs": {"eax": "0x00001000", "ebx": "0x00001000", "ecx": "0x00001000", "edx": "0x00001000", "esi": "0x00001000", "edi": "0x00001000", "ebp": "0x00001000"},
+      "memory": [{"addr": "@text", "hex": "20 00"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "all GPRs but ESP unmapped at entry: space then letter",
+      "args": ["@text"],
+      "regs": {"eax": "0x00001000", "ebx": "0x00001000", "ecx": "0x00001000", "edx": "0x00001000", "esi": "0x00001000", "edi": "0x00001000", "ebp": "0x00001000"},
+      "memory": [{"addr": "@text", "hex": "20 61 00"}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 146448,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@text"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@text",
+        "type": "u8",
+        "choices": [0, 32, 32, 32, 32, 9, 33, 31, 65, 128, 255],
+        "count": 12
+      }
+    ]
+  }
+}

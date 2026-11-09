@@ -1,0 +1,125 @@
+{
+  "function": "CompactText_guess",
+  "original": "0x10020fd0",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "@text"
+        }
+      ]
+    },
+    "text": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x7f",
+          "u8": 0
+        }
+      ]
+    },
+    "heap": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@heap"
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e",
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {"name": "empty", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 0}, {"addr": "@text", "cstr": ""}]},
+    {"name": "len 0, text not empty", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 0}, {"addr": "@text", "cstr": "abc"}]},
+    {"name": "no space", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 6}, {"addr": "@text", "cstr": "abcdef"}]},
+    {"name": "len shorter than text", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 2}, {"addr": "@text", "cstr": "abcdef"}]},
+    {"name": "NUL before len", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 5}, {"addr": "@text", "hex": "616200636400"}]},
+    {"name": "space first, no bracket", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 3}, {"addr": "@text", "cstr": " ab"}]},
+    {"name": "only spaces", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 3}, {"addr": "@text", "cstr": "   "}]},
+    {"name": "space last", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 3}, {"addr": "@text", "cstr": "ab "}]},
+    {"name": "bracket last after space", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 3}, {"addr": "@text", "cstr": "a ["}]},
+    {"name": "bracket at len", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 2}, {"addr": "@text", "cstr": "a ["}]},
+    {"name": "bracket right after space at start", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 3}, {"addr": "@text", "cstr": " [x"}]},
+    {"name": "3-space gap, run fills gap", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 7}, {"addr": "@text", "cstr": "a   [xy"}]},
+    {"name": "run longer than gap", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 10}, {"addr": "@text", "cstr": "a b[cdefgh"}]},
+    {"name": "6-space gap, run reads past NUL", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 9}, {"addr": "@text", "cstr": "a      [x"}]},
+    {"name": "bracket then space, no bracket", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 6}, {"addr": "@text", "cstr": "a [b c"}]},
+    {"name": "two gaps", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 8}, {"addr": "@text", "cstr": "a [b c[d"}]},
+    {"name": "zero path count 2", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 3}, {"addr": "@text", "cstr": "a b"}]},
+    {"name": "zero path count 3", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 4}, {"addr": "@text", "cstr": "a bc"}]},
+    {"name": "zero path count 4", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 5}, {"addr": "@text", "cstr": "a bcd"}]},
+    {"name": "zero path count 5", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 6}, {"addr": "@text", "cstr": "a bcde"}]},
+    {"name": "zero path count 7", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 8}, {"addr": "@text", "cstr": "a bcdefg"}]},
+    {"name": "zero path count 8", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 9}, {"addr": "@text", "cstr": "a bcdefgh"}]},
+    {"name": "bracket after one space, text ends in run", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 10}, {"addr": "@text", "cstr": "Bob [GUILD"}]},
+    {"name": "long, no space (0x30)", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 48}, {"addr": "@text", "cstr": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV"}]},
+    {"name": "hello world", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 11}, {"addr": "@text", "cstr": "hello world"}]},
+    {"name": "tags", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 16}, {"addr": "@text", "cstr": "ab cd [ef gh [ij"}]},
+    {"name": "len past NUL into random bytes", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x14", "u32": 6}, {"addr": "@text", "cstr": "a b"}]},
+    {"name": "overlapping text changes the loop end", "args": ["@self"], "memory": [{"addr": "@self", "offset": "0x0c", "u32": "@self"}, {"addr": "@self", "offset": "0x10", "u32": "0x20000000"}, {"addr": "@self", "offset": "0x14", "u32": "0x405b20"}]}
+  ],
+  "fuzz": {
+    "seed": 135120,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0x14",
+        "type": "int",
+        "range": [0, 64]
+      },
+      {
+        "addr": "@self",
+        "offset": "0xc",
+        "type": "ptr",
+        "choices": ["@text", "@text+0x8"]
+      },
+      {
+        "addr": "@text",
+        "type": "u8",
+        "choices": [32, 32, 32, 91, 91, 65, 97, 46, 0],
+        "count": 64
+      }
+    ]
+  }
+}

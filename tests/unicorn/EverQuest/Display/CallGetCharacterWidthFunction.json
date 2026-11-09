@@ -1,0 +1,141 @@
+{
+  "function": "InitializeEntryBlockArray_guess",
+  "original": "0x0040223a",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "param_1": {
+      "size": "0x220",
+      "fill": "random"
+    },
+    "helper_alloc": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "ret": "@helper_alloc"
+    },
+    "0x0040233c": {
+      "name": "AllocateEntryBlock_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "random object fields are cleared and pointer is returned",
+      "args": [
+        "@param_1"
+      ]
+    },
+    {
+      "name": "zero-filled object still receives the header value",
+      "args": [
+        "@param_1"
+      ],
+      "objects": {
+        "param_1": {
+          "size": "0x220",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "boundary sentinels around cleared range survive",
+      "args": [
+        "@param_1"
+      ],
+      "objects": {
+        "param_1": {
+          "size": "0x220",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x10",
+              "u32": "0x13579bdf"
+            },
+            {
+              "offset": "0x20c",
+              "u32": "0x2468ace0"
+            },
+            {
+              "offset": "0x218",
+              "u32": "0xdeadbeef"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "callee return does not replace the final header value",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x0040233c": {
+          "name": "FUN_0040233c",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": "0x7fffffff"
+        }
+      }
+    },
+    {
+      "name": "post-call store restores header after callee mutation",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x0040233c": {
+          "name": "FUN_0040233c",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@param_1",
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4203066,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

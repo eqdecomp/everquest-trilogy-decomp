@@ -1,0 +1,339 @@
+{
+  "function": "FlagContainer_initializeFlagContainer_guess",
+  "original": "0x1000f300",
+  "sources": [
+    "src/eqmain/unit_1000F230.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@flagcontainer",
+  "args": [
+    {
+      "name": "compare_",
+      "type": "ptr"
+    },
+    {
+      "name": "allocator_",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "flagcontainer": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "compare_": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "allocator_": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "node_a": {
+      "size": "0x18",
+      "fill": "random"
+    },
+    "node_b": {
+      "size": "0x18",
+      "fill": "random"
+    },
+    "existing_nil": {
+      "size": "0x18",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004CF14",
+      "u32": 0
+    },
+    {
+      "addr": "0x1004CF10",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@node_a",
+        "@node_b"
+      ]
+    },
+    "0x1003e980": {
+      "name": "std::_Lockit::_Lockit",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x1003ea1c": {
+      "name": "std::_Lockit::~_Lockit",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10033800": {
+      "name": "operator_delete",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "nil null, refs 0: node_a becomes the nil node, refs 0 -> 1, node_b is the head",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "nil exists: node_a is freed (operator_delete), nil kept, refs 3 -> 4",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "nil exists, refs 0 is still counted (the nil path does not reset it)",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "nil exists, refs INT_MAX wraps to INT_MIN",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 2147483647
+        }
+      ]
+    },
+    {
+      "name": "nil exists, refs -1 wraps to 0",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "nil null, refs -1 wraps to 0",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "nil null, refs INT_MAX wraps to INT_MIN (the nil path still counts)",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 2147483647
+        }
+      ]
+    },
+    {
+      "name": "compare_ and allocator_ are the same byte",
+      "args": [
+        "@allocator_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "compare_ is this+0: *compare_ is read after the +0 copy stored the allocator byte",
+      "args": [
+        "@flagcontainer",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "allocator_ is this+8: *allocator_ is read before the flag byte is cleared",
+      "args": [
+        "@compare_",
+        "@flagcontainer+8"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "compare_ is this+8: *compare_ is read before the flag byte is cleared",
+      "args": [
+        "@flagcontainer+8",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": 0
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "allocator_ is this+0: read before the +0 copy overwrites it",
+      "args": [
+        "@compare_",
+        "@flagcontainer"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004CF14",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x1004CF10",
+          "u32": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 40417,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@compare_",
+          "@allocator_",
+          "@flagcontainer",
+          "@flagcontainer+1",
+          "@flagcontainer+8"
+        ]
+      },
+      {
+        "choices": [
+          "@compare_",
+          "@allocator_",
+          "@flagcontainer",
+          "@flagcontainer+1",
+          "@flagcontainer+8"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1004CF14",
+        "type": "u32",
+        "choices": [
+          0,
+          "@existing_nil"
+        ]
+      },
+      {
+        "addr": "0x1004CF10",
+        "type": "int",
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          3,
+          2147483647,
+          -2147483648
+        ]
+      }
+    ]
+  }
+}

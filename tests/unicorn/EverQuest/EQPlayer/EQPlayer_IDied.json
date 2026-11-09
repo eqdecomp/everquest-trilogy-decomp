@@ -1,0 +1,252 @@
+{
+  "function": "EQPlayer_IDied_guess",
+  "original": "0x004b3e99",
+  "sources": [
+    "src/EverQuest/EQPlayer.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "edx",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x70",
+          "u32": "@actor"
+        },
+        {
+          "offset": "0x98",
+          "u8": 0
+        }
+      ]
+    },
+    "param_2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1234
+        },
+        {
+          "offset": "0x8",
+          "u16": 777
+        }
+      ]
+    },
+    "actor": {
+      "size": "0x400",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": 2864434397
+        }
+      ]
+    },
+    "other_player": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x98",
+          "u8": 1
+        }
+      ]
+    },
+    "sound": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "display": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@param_1",
+      "offset": "0x1",
+      "cstr": "Rast"
+    },
+    {
+      "addr": "0x006E4DDC",
+      "u32": "@sound"
+    },
+    {
+      "addr": "0x006E4D8C",
+      "u32": "@param_1"
+    },
+    {
+      "addr": "0x006E4D58",
+      "u32": "@other_player"
+    },
+    {
+      "addr": "0x00568308",
+      "u32": 2863311530
+    },
+    {
+      "addr": "0x006E4DE0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x004e25b5": {
+      "name": "EqSoundManager_guess::StopPlayerSounds_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004c1703": {
+      "name": "DbgLog_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004b1416": {
+      "name": "EQPlayer::GetPlayerFromID_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004a461e": {
+      "name": "EqGetTime",
+      "conv": "cdecl",
+      "args": [],
+      "ret": [
+        123456,
+        654321
+      ]
+    },
+    "0x004b3e1c": {
+      "name": "KnockedOut",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004a0860": {
+      "name": "MakeNPCCorpseName_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x00410b68": {
+      "name": "CDisplay::UpdatePlayerVisibility_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "player nonlocal, timed, sound enabled",
+      "args": ["@param_1", 17, "@param_2"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 0},
+        {"addr": "0x006E4D8C", "u32": "@other_player"}
+      ],
+      "callees": {"0x004a461e": {"ret": 4711}}
+    },
+    {
+      "name": "player local, lookup misses",
+      "args": ["@param_1", 0, "@param_2"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 0},
+        {"addr": "0x006E4DDC", "u32": 0},
+        {"addr": "0x006E4D8C", "u32": "@param_1"}
+      ],
+      "callees": {"0x004b1416": {"ret": 0}}
+    },
+    {
+      "name": "player local, lookup finds NPC",
+      "args": ["@param_1", -3, "@param_2"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 0},
+        {"addr": "@other_player", "offset": "0x98", "u8": 7},
+        {"addr": "0x006E4D8C", "u32": "@param_1"}
+      ],
+      "callees": {"0x004b1416": {"ret": "@other_player"}}
+    },
+    {
+      "name": "NPC local, lookup misses",
+      "args": ["@param_1", 4, "@param_2"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 1},
+        {"addr": "0x006E4D8C", "u32": "@param_1"}
+      ],
+      "callees": {"0x004b1416": {"ret": 0}}
+    },
+    {
+      "name": "NPC nonlocal, timer wraps",
+      "args": ["@param_1", 99, "@param_2"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 1},
+        {"addr": "0x006E4D8C", "u32": "@other_player"},
+        {"addr": "0x006E4DDC", "u32": 0}
+      ],
+      "callees": {"0x004a461e": {"ret": 4294967295}}
+    },
+    {
+      "name": "type 2 early exit",
+      "args": ["@param_1", 1, 0],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 2}
+      ]
+    },
+    {
+      "name": "type 3 early exit",
+      "args": ["@param_1", 1, 0],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 3}
+      ]
+    },
+    {
+      "name": "type 255 early exit",
+      "args": ["@param_1", 1, 0],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x98", "u8": 255}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4931225,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1"]},
+      {},
+      {"choices": ["@param_2"]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x98", "type": "u8", "choices": [0, 0, 1, 2, 3, 255]},
+      {"addr": "0x006E4DDC", "type": "ptr", "choices": [0, "@sound"]},
+      {"addr": "0x006E4D8C", "type": "ptr", "choices": ["@param_1", "@other_player"]},
+      {"addr": "@param_2", "offset": "0x4", "type": "u32", "range": [0, 65535]},
+      {"addr": "@param_2", "offset": "0x8", "type": "u16", "range": [0, 65535]},
+      {"addr": "@actor", "offset": "0x68", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@actor", "offset": "0x88", "type": "u8", "choices": [0, 1, 255]},
+      {"addr": "@actor", "offset": "0x2c0", "type": "u8", "choices": [0, 1, 255]}
+    ]
+  }
+}

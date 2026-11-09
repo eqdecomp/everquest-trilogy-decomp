@@ -1,0 +1,86 @@
+{
+  "function": "readPackFileHeader_guess",
+  "original": "0x10051e80",
+  "sources": ["src/eqgfx/ffcreate2/ff/packfs_o2.cpp"],
+  "conv": "fastcall",
+  "args": [{"name": "file", "type": "ptr"}],
+  "ret": "u32",
+  "objects": {
+    "file": {
+      "size": "0x2024",
+      "fill": "random",
+      "init": [{"offset": "0x4", "u32": 7}]
+    }
+  },
+  "callees": {
+    "0x1006a844": {
+      "name": "__read", "conv": "cdecl", "args": ["int", "ignore", "u32"],
+      "ret": [0, 0, 4],
+      "writes": [{"arg": 1, "offset": 0, "hex": "04000000"}]
+    },
+    "0x1006a833": {"name": "__tell", "conv": "cdecl", "args": ["int"], "ret": 305419896},
+    "0x10054ac0": {
+      "name": "processFileDataHeader_guess", "conv": "cdecl",
+      "args": ["ptr", "ignore", "ignore", "u32"], "ret": 1,
+      "writes": [{"arg": 1, "offset": 0, "hex": "34120000"}]
+    }
+  },
+  "cases": [
+    {"name": "normal-success", "args": ["@file"]},
+    {
+      "name": "size-at-limit", "args": ["@file"],
+      "callees": {
+        "0x1006a844": {
+          "name": "__read", "conv": "cdecl", "args": ["int", "ignore", "u32"],
+          "ret": [0, 0, 8192],
+          "writes": [{"arg": 1, "offset": 0, "hex": "00200000"}]
+        }
+      }
+    },
+    {
+      "name": "size-over-limit", "args": ["@file"],
+      "callees": {
+        "0x1006a844": {
+          "name": "__read", "conv": "cdecl", "args": ["int", "ignore", "u32"],
+          "ret": [0],
+          "writes": [{"arg": 1, "offset": 0, "hex": "01200000"}]
+        }
+      }
+    },
+    {
+      "name": "short-read-still-tells-position", "args": ["@file"],
+      "callees": {
+        "0x1006a844": {
+          "name": "__read", "conv": "cdecl", "args": ["int", "ignore", "u32"],
+          "ret": [0, 0, 3],
+          "writes": [{"arg": 1, "offset": 0, "hex": "04000000"}]
+        }
+      }
+    },
+    {
+      "name": "rejected-header", "args": ["@file"],
+      "callees": {
+        "0x10054ac0": {
+          "name": "processFileDataHeader_guess", "conv": "cdecl",
+          "args": ["ptr", "ignore", "ignore", "u32"], "ret": 0,
+          "writes": [{"arg": 1, "offset": 0, "hex": "34120000"}]
+        }
+      }
+    },
+    {
+      "name": "zero-size-success", "args": ["@file"],
+      "callees": {
+        "0x1006a844": {
+          "name": "__read", "conv": "cdecl", "args": ["int", "ignore", "u32"],
+          "ret": [0],
+          "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 335488, "count": 30,
+    "args": [{"choices": ["@file"]}],
+    "memory": [{"addr": "@file", "offset": "0x4", "type": "u32", "range": [0, 65535]}]
+  }
+}

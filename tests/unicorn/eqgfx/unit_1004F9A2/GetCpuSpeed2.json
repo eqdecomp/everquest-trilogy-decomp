@@ -1,0 +1,83 @@
+{
+  "function": "GetCpuSpeed2",
+  "original": "0x100508fd",
+  "sources": [
+    "src/eqgfx/unit_1004F9A2.c"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "clockTypical": {"size": "0x10", "fill": "zero"},
+    "clockFirstExit": {"size": "0x10", "fill": "zero"},
+    "clockBoundary": {"size": "0x10", "fill": "zero"},
+    "clockNegSecond": {"size": "0x10", "fill": "zero"},
+    "clockWrapFirst": {"size": "0x10", "fill": "zero"},
+    "clockSlow": {"size": "0x10", "fill": "zero"},
+    "OutputDebugStringA": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10076274", "u32": "@clockTypical"},
+    {"addr": "0x100760c4", "u32": "@OutputDebugStringA"}
+  ],
+  "callees": {
+    "@clockTypical": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 101, 102, 1500, 2100]},
+    "@clockFirstExit": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 102, 1105]},
+    "@clockBoundary": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 102, 1104, 1105, 2000]},
+    "@clockNegSecond": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 101, 102, 97, 2000]},
+    "@clockWrapFirst": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [5, "0xfffffff0", 10, 1500]},
+    "@clockSlow": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 100, 101, 102, 200, 400, 600, 800, 1000, 1104, 1105, 1200]},
+    "@OutputDebugStringA": {"name": "OutputDebugStringA", "conv": "stdcall", "args": ["cstr"], "ret": 0},
+    "0x100509dc": {"name": "t3dReadTimestampCounterLow_guess", "conv": "cdecl", "args": [], "ret": [0, 2500000]},
+    "0x10067992": {"name": "_sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true}
+  },
+  "cases": [
+    {"name": "typical", "args": [], "expect": {"ret": 2500}},
+    {"name": "first_loop_exits_at_once_second_at_1003", "args": [],
+     "memory": [{"addr": "0x10076274", "u32": "@clockFirstExit"}],
+     "expect": {"ret": 2500}},
+    {"name": "second_loop_diff_exactly_0x3ea_loops_once_more", "args": [],
+     "memory": [{"addr": "0x10076274", "u32": "@clockBoundary"}],
+     "expect": {"ret": 2500}},
+    {"name": "second_loop_negative_diff_still_loops", "args": [],
+     "memory": [{"addr": "0x10076274", "u32": "@clockNegSecond"}],
+     "expect": {"ret": 2500}},
+    {"name": "first_loop_negative_diff_still_loops", "args": [],
+     "memory": [{"addr": "0x10076274", "u32": "@clockWrapFirst"}],
+     "expect": {"ret": 2500}},
+    {"name": "long_loops_speed_7000", "args": [],
+     "memory": [{"addr": "0x10076274", "u32": "@clockSlow"}],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": [0, 7000000]}},
+     "expect": {"ret": 7000}},
+    {"name": "speed_exactly_1000_is_1", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": [0, 1000]}},
+     "expect": {"ret": 1}},
+    {"name": "speed_999_is_0", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": [0, 999]}},
+     "expect": {"ret": 0}},
+    {"name": "speed_truncates_1234567", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": [0, 1234567]}},
+     "expect": {"ret": 1234}},
+    {"name": "speed_unsigned_division_0xf0000000", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": [0, "0xf0000000"]}},
+     "expect": {"ret": 4026531}},
+    {"name": "tsc_difference_wraps_low_32_bits", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": ["0xfffff000", "0x2000"]}},
+     "expect": {"ret": 12}},
+    {"name": "tsc_end_before_start_is_unsigned", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": ["0x100", "0x50"]}},
+     "expect": {"ret": 4294967}},
+    {"name": "large_tsc_start_still_samples_clock_before_loop", "args": [],
+     "callees": {"0x100509dc": {"name": "FUN_100509dc", "conv": "cdecl", "args": [], "ret": ["0x40000000", "0x402625a0"]}},
+     "expect": {"ret": 2500}}
+  ],
+  "fuzz": {
+    "seed": 329981,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x10076274", "type": "ptr",
+       "choices": ["@clockTypical", "@clockFirstExit", "@clockBoundary", "@clockNegSecond", "@clockWrapFirst", "@clockSlow"]}
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "function": "assignReferenceHandle_guess",
+  "original": "0x10010ab0",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "a1", "type": "int"},
+    {"name": "other", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "coverage_ok": {"10010AD8-10010AF3": "the this == &other branch (this is the address of the by-value argument's own stack slot): a fixture can only give this as a value or an object, and no object is that stack slot"},
+  "objects": {
+    "self": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@old"}]},
+    "old": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 2}]},
+    "new": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 1}]},
+    "third": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vtable"}, {"offset": "0x4", "u32": 3}]},
+    "vtable": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@fn"}]},
+    "fn": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "@fn": {"name": "destroy_guess", "conv": "thiscall", "args": ["int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "typical: old count 2 -> 1, new count 1 -> 2", "args": ["@self", 0, "@new"]},
+    {"name": "old count 1: old destroyed", "args": ["@self", 0, "@new"], "memory": [{"addr": "@old", "offset": "0x4", "u32": 1}]},
+    {"name": "old null, fresh new (count 0): destroyed by the dtor", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": 0}, {"addr": "@new", "offset": "0x4", "u32": 0}]},
+    {"name": "old null, new count 1", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": 0}]},
+    {"name": "old count 2, fresh new (count 0)", "args": ["@self", 0, "@new"], "memory": [{"addr": "@new", "offset": "0x4", "u32": 0}]},
+    {"name": "old count 3, new count 3", "args": ["@self", 0, "@new"], "memory": [{"addr": "@old", "offset": "0x4", "u32": 3}, {"addr": "@new", "offset": "0x4", "u32": 3}]},
+    {"name": "old count 1, new count 0: old destroyed, new destroyed by the dtor", "args": ["@self", 0, "@new"], "memory": [{"addr": "@old", "offset": "0x4", "u32": 1}, {"addr": "@new", "offset": "0x4", "u32": 0}]},
+    {"name": "argument null, old count 1: old destroyed, holder cleared", "args": ["@self", 0, 0], "memory": [{"addr": "@old", "offset": "0x4", "u32": 1}]},
+    {"name": "argument null, old count 2: holder cleared only", "args": ["@self", 0, 0]},
+    {"name": "both null", "args": ["@self", 0, 0], "memory": [{"addr": "@self", "u32": 0}]},
+    {"name": "old == new, count 1: destroyed on release, then again by the dtor", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": "@new"}, {"addr": "@new", "offset": "0x4", "u32": 1}]},
+    {"name": "old == new, count 2", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": "@new"}, {"addr": "@new", "offset": "0x4", "u32": 2}]},
+    {"name": "old count 0: decrement to -1, no destroy", "args": ["@self", 0, "@new"], "memory": [{"addr": "@old", "offset": "0x4", "u32": 0}]},
+    {"name": "old count -1: decrement to -2, no destroy", "args": ["@self", 0, "@new"], "memory": [{"addr": "@old", "offset": "0x4", "u32": 4294967295}]},
+    {"name": "new count -1: +1 then -1 leaves -1, no destroy", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": 0}, {"addr": "@new", "offset": "0x4", "u32": 4294967295}]},
+    {"name": "new count INT_MAX: the increment wraps, the dtor brings it back", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": 0}, {"addr": "@new", "offset": "0x4", "u32": 2147483647}]},
+    {"name": "old is third (count 1): third destroyed", "args": ["@self", 0, "@new"], "memory": [{"addr": "@self", "u32": "@third"}, {"addr": "@third", "offset": "0x4", "u32": 1}]},
+    {"name": "a1 is ignored", "args": ["@self", 12345, "@new"]}
+  ],
+  "fuzz": {
+    "seed": 2214901,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {"choices": [0, 1, -1]},
+      {"choices": [0, "@new", "@old", "@third"]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x0", "type": "ptr", "choices": [0, "@old", "@new", "@third"]},
+      {"addr": "@old", "offset": "0x4", "type": "int", "range": [-2, 4]},
+      {"addr": "@new", "offset": "0x4", "type": "int", "range": [-2, 4]},
+      {"addr": "@third", "offset": "0x4", "type": "int", "range": [-2, 4]}
+    ]
+  }
+}

@@ -1,0 +1,304 @@
+{
+  "function": "t3dGetSkyRegionRenderMethod",
+  "original": "0x1001971b",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "levelOfDetailIndex",
+      "type": "u32"
+    },
+    {
+      "name": "renderMethodIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 40
+        },
+        {
+          "offset": "0x8",
+          "u32": 2
+        },
+        {
+          "offset": "0xc",
+          "u32": "@lods"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@methods"
+        }
+      ]
+    },
+    "lods": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 3
+        },
+        {
+          "offset": "0x4",
+          "u32": "@refs"
+        },
+        {
+          "offset": "0x8",
+          "u32": 2
+        },
+        {
+          "offset": "0xc",
+          "u32": "@refs"
+        }
+      ]
+    },
+    "refs": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 1
+        },
+        {
+          "offset": "0x14",
+          "u32": 2
+        },
+        {
+          "offset": "0x20",
+          "u32": 0
+        },
+        {
+          "offset": "0x2c",
+          "u32": 2
+        }
+      ]
+    },
+    "methods": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "0x11111111"
+        },
+        {
+          "offset": "0x54",
+          "u32": "0x22222222"
+        },
+        {
+          "offset": "0xa4",
+          "u32": "0x33333333"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@region",
+        1,
+        1
+      ],
+      "expect": {
+        "ret": "0x33333333"
+      }
+    },
+    {
+      "name": "first LOD and first method",
+      "args": [
+        "@region",
+        0,
+        0
+      ],
+      "expect": {
+        "ret": "0x22222222"
+      }
+    },
+    {
+      "name": "last valid method",
+      "args": [
+        "@region",
+        0,
+        2
+      ],
+      "expect": {
+        "ret": "0x11111111"
+      }
+    },
+    {
+      "name": "method count boundary",
+      "args": [
+        "@region",
+        0,
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "LOD count boundary",
+      "args": [
+        "@region",
+        2,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrong region type",
+      "args": [
+        "@region",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "u32": 39
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero LOD count",
+      "args": [
+        "@region",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero render method count",
+      "args": [
+        "@region",
+        1,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@lods",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 104219,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      },
+      {
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "range": [
+          0,
+          4
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@state",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          40,
+          39,
+          0
+        ]
+      },
+      {
+        "addr": "@state",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@lods",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@lods",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@refs",
+        "offset": "0x8",
+        "type": "u32",
+        "count": 4,
+        "stride": 12,
+        "range": [
+          0,
+          2
+        ]
+      }
+    ]
+  }
+}

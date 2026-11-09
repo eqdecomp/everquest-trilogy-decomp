@@ -1,0 +1,142 @@
+{
+  "function": "NextTaggedString_guess",
+  "original": "0x100251c0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "cstr",
+  "objects": {
+    "text": {
+      "size": "0x2100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xd", "cstr": "abc"},
+        {"offset": "0x30", "cstr": "Hello"},
+        {"offset": "0x36", "cstr": "World"},
+        {"offset": "0x200e", "hex": "595a"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1012b914", "u32": "@text+0x10"},
+    {"addr": "0x1012b91c", "u32": 0},
+    {"addr": "0x10129914", "size": 8192, "fill": "zero"},
+    {"addr": "@text", "offset": "0x2010", "u8": 88}
+  ],
+  "callees": {
+    "0x100250f0": {
+      "name": "FUN_100250f0",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0
+    },
+    "0x100284b0": {
+      "name": "FUN_100284b0",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1,
+      "writes": [{"arg": 2, "offset": 0, "hex": "44656300"}]
+    }
+  },
+  "cases": [
+    {"name": "copy_hello", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "expect": {"ret": "Hello"}},
+    {"name": "copy_world_after_hello", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 38}],
+     "expect": {"ret": "World"}},
+    {"name": "copy_nul_at_cursor", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 37}],
+     "expect": {"ret": ""}},
+    {"name": "copy_text_base_is_nul", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 0}],
+     "expect": {"ret": ""}},
+    {"name": "copy_negative_cursor_abc", "args": [],
+     "memory": [{"addr": "0x1012b91c", "hex": "fdffffff"}],
+     "expect": {"ret": "abc"}},
+    {"name": "copy_cursor_1ffe_YZ_stops_at_limit", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 8190}],
+     "expect": {"ret": "YZ"}},
+    {"name": "copy_cursor_1fff_Z_stops_at_limit", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 8191}],
+     "expect": {"ret": "Z"}},
+    {"name": "copy_cursor_2000_copies_nothing", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 8192}],
+     "expect": {"ret": ""}},
+    {"name": "copy_cursor_past_limit_copies_nothing", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 8197}],
+     "expect": {"ret": ""}},
+    {"name": "tag_high_half_only_copies", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": "0xffff0000"}
+     },
+     "expect": {"ret": "Hello"}},
+    {"name": "tag_low_half_zero_copies", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 65536}
+     },
+     "expect": {"ret": "Hello"}},
+    {"name": "tag_1_decodes", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 1}
+     },
+     "expect": {"ret": "Dec"}},
+    {"name": "tag_full_value_passed_to_decoder", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 74565}
+     },
+     "expect": {"ret": "Dec"}},
+    {"name": "tag_0x100_decodes", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 256}
+     },
+     "expect": {"ret": "Dec"}},
+    {"name": "decode_empty_result", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 2},
+       "0x100284b0": {"name": "FUN_100284b0", "conv": "cdecl", "args": ["ptr", "u32", "ptr"], "ret": 0,
+                      "writes": [{"arg": 2, "offset": 0, "hex": "00"}]}
+     },
+     "expect": {"ret": ""}},
+    {"name": "decode_cursor_reread_after_call", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 32}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 1},
+       "0x100284b0": {"name": "FUN_100284b0", "conv": "cdecl", "args": ["ptr", "u32", "ptr"], "ret": 1,
+                      "writes": [{"arg": 2, "offset": 0, "hex": "44656300"},
+                                 {"addr": "0x1012b91c", "hex": "40000000"}]}
+     },
+     "expect": {"ret": "Dec"}},
+    {"name": "decode_cursor_1fff_no_limit", "args": [],
+     "memory": [{"addr": "0x1012b91c", "u32": 8191}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 1}
+     },
+     "expect": {"ret": "Dec"}},
+    {"name": "decode_negative_cursor", "args": [],
+     "memory": [{"addr": "0x1012b91c", "hex": "fdffffff"}],
+     "callees": {
+       "0x100250f0": {"name": "FUN_100250f0", "conv": "stdcall", "args": [], "ret": 1}
+     },
+     "expect": {"ret": "Dec"}}
+  ],
+  "fuzz": {
+    "seed": 152000,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1012b91c", "type": "int", "choices": [-4, -1, 0, 1, 2, 3, 31, 32, 38, 8190, 8191, 8192, 8193, 8208]},
+      {"addr": "@text", "offset": "0x10", "type": "u8", "range": [1, 255], "count": 1024, "p": 0.25},
+      {"addr": "@text", "offset": "0x10", "type": "u8", "choices": [0, 65, 66, 67], "count": 12, "p": 0.5},
+      {"addr": "@text", "offset": "0x2010", "type": "u8", "range": [0, 255]}
+    ]
+  }
+}

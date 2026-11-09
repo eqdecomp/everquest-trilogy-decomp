@@ -1,0 +1,179 @@
+{
+  "function": "t3dGetActorRenderVolume",
+  "original": "0x1000a9ff",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "actor": {
+      "size": "0x110",
+      "fill": "random",
+      "init": [
+        {"offset": "0x30", "u32": 0},
+        {"offset": "0x34", "f32": 1.5},
+        {"offset": "0x38", "f32": 9.0}
+      ]
+    },
+    "volume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "sphylinder": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d422": {
+      "name": "t3dCreateSphylinder",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "float"
+      ],
+      "ret": "@sphylinder"
+    }
+  },
+  "cases": [
+    {
+      "name": "no volume: creates a sphylinder from the scale (x, 2x), stores it at +0x30, returns it",
+      "args": [
+        "@actor"
+      ]
+    },
+    {
+      "name": "existing volume: returned as is, t3dCreateSphylinder not called",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x30", "u32": "@volume"}
+      ]
+    },
+    {
+      "name": "volume is the actor itself: returned without a call",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x30", "u32": "@actor"}
+      ]
+    },
+    {
+      "name": "scale 0.25 (bounding radius at +0x38 is not read)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 0.25}
+      ]
+    },
+    {
+      "name": "scale +0.0: sphylinder (0, 0)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x00000000"}
+      ]
+    },
+    {
+      "name": "scale -0.0: sign kept through the doubling",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "scale -2.5: negative arguments",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": -2.5}
+      ]
+    },
+    {
+      "name": "scale denormal (smallest subnormal)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x00000001"}
+      ]
+    },
+    {
+      "name": "scale FLT_MAX: the doubled value overflows to +inf",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x7f7fffff"}
+      ]
+    },
+    {
+      "name": "scale +inf: both arguments +inf",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x7f800000"}
+      ]
+    },
+    {
+      "name": "scale quiet NaN: both arguments NaN with the same bits",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x7fc00000"}
+      ]
+    },
+    {
+      "name": "callee returns null: null is stored at +0x30 and returned",
+      "args": [
+        "@actor"
+      ],
+      "callees": {
+        "0x1001d422": {
+          "name": "t3dCreateSphylinder",
+          "conv": "cdecl",
+          "args": ["float", "float"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null actor: both sides fault on the +0x30 read",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 43519,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x30", "type": "ptr", "choices": ["@volume", 0, "@actor"]},
+      {"addr": "@actor", "offset": "0x34", "type": "float", "choices": [0.0, -0.0, 1.5, -2.5, 0.25, 1e-40, 3.4e38, 1e30]}
+    ]
+  }
+}

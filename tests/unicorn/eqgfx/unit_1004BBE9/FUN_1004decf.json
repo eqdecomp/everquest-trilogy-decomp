@@ -1,0 +1,140 @@
+{
+  "function": "s3dAccumulateWeightedDirectionalLighting_guess",
+  "original": "0x1004decf",
+  "sources": ["src/eqgfx/unit_1004BBE9.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "planeCoefficients", "type": "ptr"},
+    {"name": "contributionScale", "type": "ptr"},
+    {"name": "sourceVertices", "type": "ptr"},
+    {"name": "weightOffset", "type": "int"},
+    {"name": "destinationVertices", "type": "ptr"},
+    {"name": "vertexCount", "type": "int"},
+    {"name": "vertexEnabled", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "planecoefficients": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "f32": 1.0}]
+    },
+    "contributionscale": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 1.0},
+        {"offset": "0x4", "f32": 2.0},
+        {"offset": "0x8", "f32": 3.0}
+      ]
+    },
+    "sourcevertices": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": -2.0},
+        {"offset": "0xc", "f32": 2.0},
+        {"offset": "0x24", "f32": -4.0}
+      ]
+    },
+    "destinationvertices": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 10.0},
+        {"offset": "0x4", "f32": 20.0},
+        {"offset": "0x8", "f32": 30.0},
+        {"offset": "0xc", "f32": 10.0},
+        {"offset": "0x10", "f32": 20.0},
+        {"offset": "0x14", "f32": 30.0},
+        {"offset": "0x18", "f32": 10.0},
+        {"offset": "0x1c", "f32": 20.0},
+        {"offset": "0x20", "f32": 30.0},
+        {"offset": "0x24", "f32": 10.0},
+        {"offset": "0x28", "f32": 20.0},
+        {"offset": "0x2c", "f32": 30.0}
+      ]
+    },
+    "flags": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u8": 1},
+        {"offset": "0x1", "u8": 1},
+        {"offset": "0x2", "u8": 1},
+        {"offset": "0x3", "u8": 1}
+      ]
+    },
+    "weights": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x3", "u8": 1},
+        {"offset": "0x7", "u8": 2},
+        {"offset": "0xb", "u8": 3},
+        {"offset": "0xf", "u8": 4}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x10076284", "f32": 0.0},
+    {"addr": "0x100fa068", "size": "0x400", "fill": "zero"},
+    {"addr": "0x100fa06c", "f32": 0.5},
+    {"addr": "0x100fa070", "f32": 1.0},
+    {"addr": "0x100fa074", "f32": 1.5},
+    {"addr": "0x100fa078", "f32": 2.0}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "mixed positive negative zero and weighted contributions",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@weights", "@destinationvertices", 4, "@flags"]
+    },
+    {
+      "name": "disabled positive vertex",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@weights", "@destinationvertices", 1, "@flags"],
+      "memory": [{"addr": "@flags", "offset": "0x0", "u8": 0}]
+    },
+    {
+      "name": "strict zero threshold equality",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@weights", "@destinationvertices", 1, "@flags"],
+      "memory": [{"addr": "@sourcevertices", "offset": "0x0", "f32": 0.0}]
+    },
+    {
+      "name": "zero vertex count",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@weights", "@destinationvertices", 0, "@flags"]
+    },
+    {
+      "name": "negative contribution does not update",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@weights", "@destinationvertices", 1, "@flags"],
+      "memory": [{"addr": "@sourcevertices", "offset": "0x0", "f32": 2.0}]
+    },
+    {
+      "name": "table index and four byte stride",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@weights", "@destinationvertices", 3, "@flags"]
+    }
+  ],
+  "fuzz": {
+    "seed": 319183,
+    "count": 40,
+    "args": [
+      {"choices": ["@planecoefficients"]},
+      {"choices": ["@contributionscale"]},
+      {"choices": ["@sourcevertices"]},
+      {"choices": ["@weights"]},
+      {"choices": ["@destinationvertices"]},
+      {"range": [0, 4]},
+      {"choices": ["@flags"]}
+    ],
+    "memory": [
+      {"addr": "@planecoefficients", "type": "float", "count": 3, "range": [-3, 3]},
+      {"addr": "@contributionscale", "type": "float", "count": 3, "range": [-3, 3]},
+      {"addr": "@sourcevertices", "type": "float", "count": 15, "range": [-6, 6]},
+      {"addr": "@destinationvertices", "type": "float", "count": 15, "range": [-20, 20]},
+      {"addr": "@flags", "type": "u8", "count": 5, "range": [0, 1]},
+      {"addr": "@weights", "offset": "0x3", "type": "u8", "count": 4, "stride": 4, "range": [0, 255]},
+      {"addr": "0x100fa068", "type": "float", "count": 256, "range": [-2, 2]},
+      {"addr": "0x10076284", "type": "float", "range": [-1, 1]}
+    ]
+  }
+}

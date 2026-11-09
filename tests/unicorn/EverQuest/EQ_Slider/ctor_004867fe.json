@@ -1,0 +1,114 @@
+{
+  "function": "EQ_HSlider2_guess::EQ_HSlider2_guess",
+  "original": "0x004867fe",
+  "sources": [
+    "src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_hslider2",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "eq_hslider2": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "copyfn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "node1": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 4},
+        {"offset": "0x20", "u32": "@node2"}
+      ]
+    },
+    "node2": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 4}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x00534248", "u32": "@fn"},
+    {"addr": "0x00534240", "u32": "@copyfn"}
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450049": {
+      "name": "EQ_Overlay::EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "@fn": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "user32.dll!SetRect": {
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x004503be": {
+      "name": "EQ_Overlay_AddButton_guess",
+      "conv": "thiscall",
+      "args": ["int", "ptr", "int", "int", "int", "int"],
+      "writes": [
+        {"addr": "0x60000070", "hex": "20020060"}
+      ]
+    },
+    "@copyfn": {
+      "name": "CopyRect",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 1
+    },
+    "user32.dll!CopyRect": {
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 1
+    },
+    "0x00450168": {
+      "name": "EQ_Overlay::load_guess",
+      "conv": "thiscall",
+      "args": ["int", "int"]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {"name": "random-object-default", "args": []},
+    {"name": "zeroed-object", "args": [], "objects": {"eq_hslider2": {"fill": "zero"}}},
+    {"name": "distinct-preserved-bytes", "args": [], "objects": {"eq_hslider2": {"fill": "random", "init": [{"offset": "0x1e4", "hex": "a5 5a c3 3c 96 69 0f f0"}]}}},
+    {"name": "type-four-element", "args": [], "memory": [{"addr": "@node1", "offset": "0x14", "u16": 4}]},
+    {"name": "no-type-four-element", "args": [], "memory": [{"addr": "@node1", "offset": "0x14", "u16": 3}, {"addr": "@node2", "offset": "0x14", "u16": 5}]},
+    {"name": "later-type-four-element", "args": [], "memory": [{"addr": "@node1", "offset": "0x14", "u16": 3}, {"addr": "@node2", "offset": "0x14", "u16": 4}]},
+    {"name": "last-of-two-matches-wins", "args": [], "memory": [{"addr": "@node1", "offset": "0x14", "u16": 4}, {"addr": "@node2", "offset": "0x14", "u16": 4}]},
+    {"name": "empty-list", "args": [], "callees": {"0x004503be": {"name": "EQ_Overlay_AddButton_guess", "conv": "thiscall", "args": ["int", "ptr", "int", "int", "int", "int"]}}}
+  ],
+  "fuzz": {
+    "seed": 48676798,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@node1", "offset": "0x14", "type": "u16", "choices": [0, 3, 4, 5, 65535]},
+      {"addr": "@node2", "offset": "0x14", "type": "u16", "choices": [0, 3, 4, 5, 65535]}
+    ]
+  }
+}

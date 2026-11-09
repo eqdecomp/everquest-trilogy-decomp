@@ -1,0 +1,371 @@
+{
+  "function": "TextFileLoader_guess::loadParsedFile_guess",
+  "original": "0x00402412",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@loader",
+  "args": [
+    {
+      "name": "fileName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "loader": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "file": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "heap": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "parsed": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "vtable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@vtable+0xc"
+        }
+      ]
+    },
+    "loaded": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0053C2BC",
+      "from_image": "0x0053C2BC",
+      "image_size": 3
+    }
+  ],
+  "callees": {
+    "0x005223d0": {
+      "name": "strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005223bc": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x005222d2": {
+      "name": "fseek",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x0052214f": {
+      "name": "ftell",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 5
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@heap"
+    },
+    "0x00522038": {
+      "name": "fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x0050ed70": {
+      "name": "FUN_0050ed70",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": "@parsed"
+    },
+    "0x00510540": {
+      "name": "FUN_00510540",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 7
+    },
+    "0x004024e6": {
+      "name": "FUN_004024e6",
+      "conv": "thiscall",
+      "args": [
+        "u32",
+        "int"
+      ],
+      "ret": "@loaded"
+    },
+    "0x0050f2a0": {
+      "name": "FUN_0050f2a0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x00521fbb": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@vtable+0xc": {
+      "name": "vfunc3",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical name parses and returns the wrapper",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "single character name takes the non-empty path",
+      "args": [
+        "a"
+      ]
+    },
+    {
+      "name": "empty name returns zero",
+      "args": [
+        ""
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "open failure returns zero",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero-length file still parses and closes",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x0052214f": {
+          "name": "ftell",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "longest file size in the heap block",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x0052214f": {
+          "name": "ftell",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 63
+        }
+      }
+    },
+    {
+      "name": "failed seek is ignored and the read still happens",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x005222d2": {
+          "name": "fseek",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            -1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "short read is ignored",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null parse result skips the wrapper and returns zero",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x0050ed70": {
+          "name": "FUN_0050ed70",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "virtual flag zero returns zero",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "@vtable+0xc": {
+          "name": "vfunc3",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag 0x100 is zero in the low byte",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "@vtable+0xc": {
+          "name": "vfunc3",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 256
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag 0x80 is nonzero in the low byte",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "@vtable+0xc": {
+          "name": "vfunc3",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 128
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4203538,
+    "count": 40,
+    "args": [
+      {}
+    ]
+  }
+}

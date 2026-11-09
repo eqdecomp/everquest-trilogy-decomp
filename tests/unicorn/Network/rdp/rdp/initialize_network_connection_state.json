@@ -1,0 +1,175 @@
+{
+  "function": "initialize_network_connection_state_guess",
+  "original": "0x004f0b90",
+  "sources": [
+    "src/Network/rdp/rdp.c",
+    "src/Network/rdp/eventq.c",
+    "src/Network/rdp/connhash.c",
+    "src/Network/rdp/uevent.c",
+    "src/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f67c0": {
+      "name": "initializeNetworkBuffer_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004f5000": {
+      "name": "initializeCounter_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004f7880": {
+      "name": "uevent_init_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004f5440": {
+      "name": "list_init_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        12345678
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "random object, every field written once",
+      "args": [
+        "@rdp"
+      ]
+    },
+    {
+      "name": "time 0",
+      "args": [
+        "@rdp"
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "time all ones",
+      "args": [
+        "@rdp"
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            4294967295
+          ]
+        }
+      }
+    },
+    {
+      "name": "minus-one fields already zero, zero fields already -1 (each store visible)",
+      "args": [
+        "@rdp"
+      ],
+      "objects": {
+        "rdp": {
+          "size": "0x200",
+          "fill": "random",
+          "init": [
+            {"offset": "0x0", "u32": 4294967295},
+            {"offset": "0x4", "u32": 0},
+            {"offset": "0x8", "u32": 0},
+            {"offset": "0xc", "u32": 0},
+            {"offset": "0x10", "u32": 0},
+            {"offset": "0x14", "u32": 4294967295},
+            {"offset": "0x30", "u32": 4294967295},
+            {"offset": "0x34", "u32": 305419896},
+            {"offset": "0x40", "u32": 305419896},
+            {"offset": "0x44", "u32": 4294967295},
+            {"offset": "0x54", "u32": 4294967295},
+            {"offset": "0x58", "u32": 4294967295},
+            {"offset": "0x80", "u32": 4294967295},
+            {"offset": "0x84", "u32": 4294967295},
+            {"offset": "0x88", "u32": 4294967295},
+            {"offset": "0x10c", "u32": 4294967295},
+            {"offset": "0x110", "u32": 4294967295}
+          ]
+        }
+      }
+    },
+    {
+      "name": "object at a different address",
+      "args": [
+        "@rdp2"
+      ],
+      "objects": {
+        "rdp2": {
+          "size": "0x300",
+          "fill": "random"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5180304,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rdp"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@rdp", "offset": 0, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]},
+      {"addr": "@rdp", "offset": 4, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]},
+      {"addr": "@rdp", "offset": 20, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]},
+      {"addr": "@rdp", "offset": 88, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]},
+      {"addr": "@rdp", "offset": 132, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]},
+      {"addr": "@rdp", "offset": 260, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]},
+      {"addr": "@rdp", "offset": 268, "type": "u32", "choices": [0, 1, 4294967295, 2147483648]}
+    ]
+  }
+}

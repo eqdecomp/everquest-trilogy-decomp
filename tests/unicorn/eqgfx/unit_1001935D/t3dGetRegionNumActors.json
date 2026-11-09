@@ -1,0 +1,147 @@
+{
+  "function": "t3dGetRegionNumActors",
+  "original": "0x100194d8",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@actor_state"
+        }
+      ]
+    },
+    "actor_state": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 39
+        },
+        {
+          "offset": "0x4",
+          "u32": 17
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "type 0x27 returns actor count",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 39},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 305419896}
+      ],
+      "expect": {"ret": 305419896}
+    },
+    {
+      "name": "type 0x29 returns actor count",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 41},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 2147483647}
+      ],
+      "expect": {"ret": 2147483647}
+    },
+    {
+      "name": "lower boundary rejected",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 38},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 12345}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "interior type rejected",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 40},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 12345}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "upper boundary rejected",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 42},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 12345}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero actor count preserved",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 39},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative actor count preserved",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {"addr": "@actor_state", "offset": "0x0", "u32": 39},
+        {"addr": "@actor_state", "offset": "0x4", "u32": 4294967295}
+      ],
+      "expect": {"ret": -1}
+    }
+  ],
+  "fuzz": {
+    "seed": 103640,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor_state",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [38, 39, 40, 41, 42, 43, -1, 0, 305419896]
+      },
+      {
+        "addr": "@actor_state",
+        "offset": "0x4",
+        "type": "int",
+        "range": [-100000, 100000]
+      }
+    ]
+  }
+}

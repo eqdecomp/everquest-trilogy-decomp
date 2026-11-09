@@ -1,0 +1,173 @@
+{
+  "function": "SoundTree_guess_RotateLeft_guess",
+  "rewrite": "SoundTree_guess_RotateLeft_guess",
+  "original": "0x1001a341",
+  "sources": [
+    "src/eqgfx/EverQuest/SoundManager.c"
+  ],
+  "conv": "fastcall",
+  "args": [
+    { "name": "tree", "type": "ptr" },
+    { "name": "unused_edx", "type": "int" },
+    { "name": "node", "type": "ptr" }
+  ],
+  "ret": "void",
+  "size": "0x44",
+  "objects": {
+    "tree": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": "@header" }
+      ]
+    },
+    "node": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": "@parent" },
+        { "offset": "0x8", "u32": "@pivot" }
+      ]
+    },
+    "header": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": "@node" }
+      ]
+    },
+    "parent": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@node" },
+        { "offset": "0x8", "u32": "@alternate" }
+      ]
+    },
+    "parent2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@node" },
+        { "offset": "0x8", "u32": "@alternate" }
+      ]
+    },
+    "pivot": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@nilnode" }
+      ]
+    },
+    "child": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": "@alternate" }
+      ]
+    },
+    "nilnode": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "alternate": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "other": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "0x100aaddc", "u32": "@nilnode" }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "root node with nil left child",
+      "args": ["@tree", 0, "@node"]
+    },
+    {
+      "name": "root node with real left child",
+      "args": ["@tree", 0, "@node"],
+      "memory": [
+        { "addr": "@pivot", "offset": "0x0", "u32": "@child" }
+      ]
+    },
+    {
+      "name": "nonroot left branch with nil child",
+      "args": ["@tree", 0, "@node"],
+      "memory": [
+        { "addr": "@header", "offset": "0x4", "u32": "@alternate" },
+        { "addr": "@pivot", "offset": "0x0", "u32": "@nilnode" },
+        { "addr": "@parent", "offset": "0x0", "u32": "@node" }
+      ]
+    },
+    {
+      "name": "nonroot right branch with real child",
+      "args": ["@tree", 0, "@node"],
+      "memory": [
+        { "addr": "@header", "offset": "0x4", "u32": "@alternate" },
+        { "addr": "@pivot", "offset": "0x0", "u32": "@child" },
+        { "addr": "@parent", "offset": "0x0", "u32": "@alternate" },
+        { "addr": "@parent", "offset": "0x8", "u32": "@node" }
+      ]
+    },
+    {
+      "name": "tree aliases node and final parent store changes header",
+      "args": ["@node", 0, "@node"],
+      "memory": [
+        { "addr": "@node", "offset": "0x4", "u32": "@header" },
+        { "addr": "@header", "offset": "0x4", "u32": "@node" },
+        { "addr": "@node", "offset": "0x8", "u32": "@pivot" },
+        { "addr": "@pivot", "offset": "0x0", "u32": "@child" }
+      ]
+    },
+    {
+      "name": "pivot is also its old left child",
+      "args": ["@tree", 0, "@node"],
+      "memory": [
+        { "addr": "@header", "offset": "0x4", "u32": "@alternate" },
+        { "addr": "@node", "offset": "0x4", "u32": "@parent" },
+        { "addr": "@parent", "offset": "0x0", "u32": "@node" },
+        { "addr": "@node", "offset": "0x8", "u32": "@pivot" },
+        { "addr": "@pivot", "offset": "0x0", "u32": "@pivot" }
+      ]
+    },
+    {
+      "name": "parent aliases node",
+      "args": ["@tree", 0, "@node"],
+      "memory": [
+        { "addr": "@header", "offset": "0x4", "u32": "@alternate" },
+        { "addr": "@node", "offset": "0x0", "u32": "@node" },
+        { "addr": "@node", "offset": "0x4", "u32": "@node" },
+        { "addr": "@node", "offset": "0x8", "u32": "@pivot" },
+        { "addr": "@pivot", "offset": "0x0", "u32": "@child" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 107329,
+    "count": 32,
+    "args": [
+      { "choices": ["@tree"] },
+      { "range": [-4, 4] },
+      { "choices": ["@node"] }
+    ],
+    "memory": [
+      { "addr": "0x100aaddc", "type": "ptr", "choices": ["@nilnode", "@child", "@other", "@parent"] },
+      { "addr": "@tree", "offset": "0x4", "type": "ptr", "choices": ["@header", "@node", "@tree"] },
+      { "addr": "@header", "offset": "0x4", "type": "ptr", "choices": ["@node", "@alternate", "@parent"] },
+      { "addr": "@node", "offset": "0x0", "type": "ptr", "choices": ["@alternate", "@node", "@child"] },
+      { "addr": "@node", "offset": "0x4", "type": "ptr", "choices": ["@parent", "@parent2", "@node"] },
+      { "addr": "@node", "offset": "0x8", "type": "ptr", "choices": ["@pivot", "@parent", "@parent2", "@node"] },
+      { "addr": "@pivot", "offset": "0x0", "type": "ptr", "choices": ["@nilnode", "@child", "@other", "@parent"] },
+      { "addr": "@parent", "offset": "0x0", "type": "ptr", "choices": ["@node", "@alternate", "@child"] },
+      { "addr": "@parent", "offset": "0x8", "type": "ptr", "choices": ["@node", "@alternate", "@child"] },
+      { "addr": "@parent2", "offset": "0x0", "type": "ptr", "choices": ["@node", "@alternate", "@child"] },
+      { "addr": "@parent2", "offset": "0x8", "type": "ptr", "choices": ["@node", "@alternate", "@child"] },
+      { "addr": "@child", "offset": "0x4", "type": "ptr", "choices": ["@alternate", "@node", "@parent"] }
+    ]
+  }
+}

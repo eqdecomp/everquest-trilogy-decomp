@@ -1,0 +1,46 @@
+{
+  "function": "CDisplay::FindZoneTopZ",
+  "original": "0x00414705",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {"name": "y", "type": "u32"},
+    {"name": "x", "type": "u32"},
+    {"name": "z", "type": "float"}
+  ],
+  "ret": "float",
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "zero"},
+    "world": {"size": 16, "fill": "zero"},
+    "region": {"size": 16}
+  },
+  "memory": [
+    {"addr": "@display", "offset": 4, "u32": "@world"},
+    {"addr": "0x006E52E8", "u32": "@region"}
+  ],
+  "callees": {
+    "0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": [1, 2]},
+    "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": 1}
+  },
+  "cases": [
+    {"name": "zero initial AL returns sentinel", "args": ["0x3f800000", "0x40000000", 10.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": 256}}},
+    {"name": "initial nonzero then region miss returns sentinel", "args": ["0x3f800000", "0x40000000", 10.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": 5}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": 0}}},
+    {"name": "one upward step finds changed AL", "args": ["0x3f800000", "0x40000000", 10.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": [5, 6]}}},
+    {"name": "region writes vector Z but requery uses current Z local", "args": ["0x3f800000", "0x40000000", 10.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": [5, 6]}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0100803f020000400000fa44"}]}}},
+    {"name": "environment classes compare only low byte", "args": ["0x3f800000", "0x40000000", 1.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": [1, 257, 2]}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": [1, 1]}}},
+    {"name": "height cap compares against pointed-to 3000 global", "args": ["0x3f800000", "0x40000000", 0.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": 5}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": [1, 1], "writes": [{"addr": "0x005351c4", "hex": "00803b45"}]}}},
+    {"name": "world pointer reloads on the next region attempt", "args": ["0x3f800000", "0x40000000", 20.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": 5}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": [1, 0], "writes": [{"addr": "@display+0x4", "hex": "00000000"}]}}},
+    {"name": "unordered height comparison allows later environment change", "args": ["0x3f800000", "0x40000000", "nan"], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": [5, 6]}}},
+    {"name": "height exactly 3000 does not stop the walk", "args": ["0x3f800000", "0x40000000", 0.0], "callees": {"0x004147BB": {"name": "CDisplay_GetEnvironment_guess", "conv": "thiscall", "args": ["u32", "u32", "u32", "ptr"], "ret": 5}, "@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:12"], "ret": [1, 1, 1], "writes": [{"addr": "0x005351c4", "hex": "667e3b45"}]}}}
+  ],
+  "fuzz": {
+    "seed": 14705,
+    "count": 30,
+    "args": [
+      {"choices": [0, "0x3f800000", "0x7f800001", "0xffffffff"]},
+      {"choices": [0, "0x40000000", "0x7f800000", "0x7f800001"]},
+      {"choices": [-10000.0, -0.1, 0.0, 1.0, 2999.9, 3000.0, "nan", "inf"]}
+    ]
+  }
+}

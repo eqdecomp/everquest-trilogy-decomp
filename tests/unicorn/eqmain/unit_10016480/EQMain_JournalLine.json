@@ -1,0 +1,350 @@
+{
+  "function": "EQMain_JournalLine_guess",
+  "original": "0x100166b0",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "msg": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 42
+        }
+      ]
+    },
+    "tm": {
+      "size": "0x24",
+      "fill": "zero"
+    },
+    "fail_text": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "journal.txt could not be opened"
+        }
+      ]
+    },
+    "busy_text": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "journal already open"
+        }
+      ]
+    },
+    "time_fmt": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "%H:%M:%S"
+        }
+      ]
+    },
+    "line_fmt": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "%s %s"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004f888",
+      "u32": 0
+    },
+    {
+      "addr": "0x10055950",
+      "u32": "@fail_text"
+    },
+    {
+      "addr": "0x10055954",
+      "u32": "@busy_text"
+    },
+    {
+      "addr": "0x10055958",
+      "u32": "@time_fmt"
+    },
+    {
+      "addr": "0x1005595c",
+      "u32": "@line_fmt"
+    }
+  ],
+  "callees": {
+    "0x1003407f": {
+      "name": "FUN_1003407f",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": 8126464
+    },
+    "0x10020ef0": {
+      "name": "FUN_10020ef0",
+      "conv": "cdecl",
+      "args": [
+        "char"
+      ],
+      "ret": "@msg"
+    },
+    "0x100224b0": {
+      "name": "FUN_100224b0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int",
+        "char"
+      ]
+    },
+    "0x10033670": {
+      "name": "_strchr",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "passthrough": true
+    },
+    "0x10035b24": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1000000000
+    },
+    "0x100359c4": {
+      "name": "_localtime",
+      "conv": "cdecl",
+      "args": [
+        "mem:4"
+      ],
+      "ret": "@tm"
+    },
+    "0x10035112": {
+      "name": "_strftime",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "u32",
+        "cstr",
+        "ignore"
+      ],
+      "ret": 8,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "31323a30303a303000"
+        }
+      ]
+    },
+    "0x10034012": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "0x10034117": {
+      "name": "_sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x100343b9": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "journal open: busy message, text untouched",
+      "args": [
+        "<a>x"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004f888",
+          "u32": "0x7b0000"
+        }
+      ]
+    },
+    {
+      "name": "journal.txt won't open: fail message, text untouched",
+      "args": [
+        "<a>x"
+      ],
+      "callees": {
+        "0x1003407f": {
+          "name": "FUN_1003407f",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "opens, no tags",
+      "args": [
+        "hello world"
+      ]
+    },
+    {
+      "name": "empty text",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "tag blanked",
+      "args": [
+        "<a>x"
+      ]
+    },
+    {
+      "name": "3-char tag kept (strlen <= 3)",
+      "args": [
+        "<a>"
+      ]
+    },
+    {
+      "name": "third char not '>' keeps tag",
+      "args": [
+        "<abc"
+      ]
+    },
+    {
+      "name": "two tags both blanked",
+      "args": [
+        "<a>b<c>d"
+      ]
+    },
+    {
+      "name": "second tag too short stops the loop",
+      "args": [
+        "<a>x<bc"
+      ]
+    },
+    {
+      "name": "first tag fails, later valid tag kept",
+      "args": [
+        "<ab>cd<e>"
+      ]
+    },
+    {
+      "name": "lone '<' at the end",
+      "args": [
+        "x<"
+      ]
+    },
+    {
+      "name": "tag after a character, 4 long",
+      "args": [
+        "x<a>y"
+      ]
+    },
+    {
+      "name": "tag after a character, 3 long",
+      "args": [
+        "x<a>"
+      ]
+    },
+    {
+      "name": "run of '>' after '<'",
+      "args": [
+        "<>>>"
+      ]
+    },
+    {
+      "name": "no '<' at all",
+      "args": [
+        "plain text"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4417,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "hello",
+          "",
+          "plain text",
+          "<a>x",
+          "<a>",
+          "<abc",
+          "<ab",
+          "x<a>y",
+          "x<a>",
+          "<a>b<c>d",
+          "<a>x<bc",
+          "<ab>cd<e>",
+          "x<",
+          "<>>>",
+          "<<>>",
+          "<tag>text</tag>",
+          "hello <LINK> world",
+          "<",
+          "<<<<",
+          "a<b>c"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1004f888",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x7b0000"
+        ]
+      },
+      {
+        "addr": "@msg",
+        "offset": "0x4",
+        "type": "int",
+        "range": [
+          -8,
+          200
+        ]
+      }
+    ]
+  }
+}

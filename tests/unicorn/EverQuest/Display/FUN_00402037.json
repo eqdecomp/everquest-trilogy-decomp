@@ -1,0 +1,62 @@
+{
+  "function": "SetFloatPair_guess",
+  "original": "0x00402037",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "xy", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "target": {"size": "0x240", "fill": "random"},
+    "with_target": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0xC", "u32": "@target"}
+    ]},
+    "no_target": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0xC", "u32": 0}
+    ]},
+    "xy_pos": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "0x3FC00000"},
+      {"offset": "0x4", "u32": "0x47F1205A"}
+    ]},
+    "xy_neg": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "0xC0300000"},
+      {"offset": "0x4", "u32": "0xBF000000"}
+    ]},
+    "xy_zero": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0},
+      {"offset": "0x4", "u32": "0x80000000"}
+    ]},
+    "xy_big": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "0x501502F9"},
+      {"offset": "0x4", "u32": "0xD01502F9"}
+    ]},
+    "xy_rand": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "target set, positive floats truncated", "args": ["@with_target", 0, "@xy_pos"]},
+    {"name": "target set, negative floats truncate toward zero", "args": ["@with_target", 0, "@xy_neg"]},
+    {"name": "target set, +0 and -0", "args": ["@with_target", 0, "@xy_zero"]},
+    {"name": "target set, out of int range", "args": ["@with_target", 0, "@xy_big"]},
+    {"name": "target set, random bits", "args": ["@with_target", 7, "@xy_rand"]},
+    {"name": "no target only copies floats", "args": ["@no_target", 0, "@xy_pos"]},
+    {"name": "no target, random bits", "args": ["@no_target", 3, "@xy_rand"]},
+    {"name": "null xy faults", "args": ["@with_target", 0, 0]}
+  ],
+  "fuzz": {
+    "seed": 4202551,
+    "count": 40,
+    "args": [
+      {"choices": ["@with_target", "@no_target"]},
+      {},
+      {"choices": ["@xy_pos", "@xy_neg", "@xy_zero", "@xy_big", "@xy_rand"]}
+    ],
+    "memory": []
+  }
+}

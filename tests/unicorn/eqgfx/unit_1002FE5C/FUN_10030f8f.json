@@ -1,0 +1,246 @@
+{
+  "function": "initializeTextureMemorySlotTable_guess",
+  "original": "0x10030f8f",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "object": {
+      "size": "0x1e8",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x1c4",
+          "u32": 1
+        },
+        {
+          "offset": "0x1d4",
+          "u32": "0x12345678"
+        },
+        {
+          "offset": "0x1d8",
+          "u32": "0x87654321"
+        },
+        {
+          "offset": "0x1dc",
+          "u32": "0x11223344"
+        },
+        {
+          "offset": "0x1e0",
+          "u32": "0x1234"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1003138a": {
+      "name": "resetTextureMemorySlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x100313b7": {
+      "name": "releaseSlotToFreeList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocator failure records wrapped slot capacity and returns the error",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "success at zero count sets list head and skips the loop",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "0x00500000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "success with one input item performs 50 ordered slot initializations",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "0x00500000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "success with two input items performs 100 ordered slot initializations",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "0x00500000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative count preserves signed multiplication and wraps allocation size",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "maximum positive count uses 32-bit wrapped slot arithmetic on failure",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": "0x7fffffff"
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "signed minimum count wraps slot capacity to zero and skips successful loop",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x1c4",
+          "u32": "0x80000000"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "0x00500000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 200591,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@object",
+        "offset": "0x1c4",
+        "type": "int",
+        "range": [
+          -8,
+          8
+        ]
+      }
+    ]
+  }
+}

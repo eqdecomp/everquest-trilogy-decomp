@@ -1,0 +1,177 @@
+{
+  "function": "t3dSuspendSimpleSpriteAnimation",
+  "original": "0x1001b9de",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "suspend",
+      "type": "int"
+    },
+    {
+      "name": "resume_flags",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x2c",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@sprite",
+        1,
+        1
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@sprite",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "suspend sets bit 8 and keeps the other flag bits",
+      "args": [
+        "@sprite",
+        1,
+        "0x0badf00d"
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {"offset": "0xc", "u32": "0x00000021"},
+            {"offset": "0x20", "u32": "0x11111111"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "resume clears bit 8 (upper bytes of the dword kept) and ORs the bits in",
+      "args": [
+        "@sprite",
+        0,
+        "0x00000f00"
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {"offset": "0xc", "u32": "0xffffffff"},
+            {"offset": "0x20", "u32": "0x00000001"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "resume with bit 8 already clear",
+      "args": [
+        "@sprite",
+        0,
+        "0x80000000"
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {"offset": "0xc", "u32": "0x00000000"},
+            {"offset": "0x20", "u32": "0x7fffffff"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "resume with zero bits leaves +0x20 alone",
+      "args": [
+        "@sprite",
+        0,
+        0
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {"offset": "0xc", "u32": "0x00000108"},
+            {"offset": "0x20", "u32": "0x55aa55aa"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative suspend value is still a suspend",
+      "args": [
+        "@sprite",
+        -1,
+        "0xffffffff"
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {"offset": "0xc", "u32": "0x00000000"},
+            {"offset": "0x20", "u32": "0x12345678"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "suspend 2 over an already suspended sprite",
+      "args": [
+        "@sprite",
+        2,
+        "0x00000010"
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x2c",
+          "fill": "zero",
+          "init": [
+            {"offset": "0xc", "u32": "0x00000008"},
+            {"offset": "0x20", "u32": "0x0000ffff"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 113118,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "range": [-2, 3]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0xc", "type": "u32"},
+      {"addr": "@sprite", "offset": "0x20", "type": "u32"},
+      {"addr": "@sprite", "offset": "0x0", "size": 12}
+    ]
+  }
+}

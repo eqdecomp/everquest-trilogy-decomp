@@ -1,0 +1,74 @@
+{
+  "function": "connection_close",
+  "original": "0x004f21d0",
+  "sources": ["src/Network/rdp/connection.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "ptr"},
+    {"name": "param_4", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {"size": "0x800", "fill": "zero", "init": [{"offset": "0x0c", "u32": "@state"}]},
+    "state": {"size": "0x200", "fill": "zero", "init": [{"offset": "0xa4", "u32": "@node"}, {"offset": "0xd0", "u32": "@node"}]},
+    "node": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x8", "u32": "@node"}]},
+    "out": {"size": "0x4", "fill": "zero", "init": [{"offset": 0, "u32": "0xdeadbeef"}]},
+    "enter": {"size": "0x10"},
+    "leave": {"size": "0x10"}
+  },
+  "memory": [
+    {"addr": "0x00534194", "u32": "@enter"},
+    {"addr": "0x00534190", "u32": "@leave"}
+  ],
+  "callees": {
+    "0x004f51c0": {"name": "connhash_lock_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "@enter": {"name": "EnterCriticalSection_indirect", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "@leave": {"name": "LeaveCriticalSection_indirect", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "kernel32.dll!EnterCriticalSection": {"name": "EnterCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "kernel32.dll!LeaveCriticalSection": {"name": "LeaveCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "0x004f78e0": {"name": "RemoveMessagesFromConnection_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0, "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]},
+    "0x004f53f0": {"name": "wait_for_event_with_timeout_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0},
+    "0x004f1580": {"name": "close_connection_and_cleanup_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 0},
+    "0x004f5940": {"name": "cleanup_connection_queues_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 123456},
+    "0x004f3260": {"name": "NetworkConnection_send_disconnect_message_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+    "0x004ef130": {"name": "rdp_resort", "conv": "cdecl", "args": ["int", "int"], "ret": 0},
+    "0x004f78b0": {"name": "uevent_signal_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+    "0x004ef240": {"name": "rdp_unlock_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "null connection returns six", "args": [0, 0, "@out", 0]},
+    {"name": "sync close and pending event wait", "args": ["@conn", 0, "@out", 0]},
+    {"name": "sync close with 77c active", "args": ["@conn", 0, "@out", 0], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}]},
+    {"name": "sync close active with event signal", "args": ["@conn", 0, "@out", 123], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}]},
+    {"name": "sync close condition false from both flags", "args": ["@conn", 0, "@out", 17], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}, {"addr": "@conn", "offset": "0x780", "u32": 1}]},
+    {"name": "sync close matching short boundary", "args": ["@conn", 0, "@out", 0], "memory": [{"addr": "@conn", "offset": "0x780", "u32": 1}, {"addr": "@conn", "offset": "0x774", "u32": 1}, {"addr": "@conn", "offset": "0x778", "u16": 9}, {"addr": "@conn", "offset": "0x4b8", "u16": 9}]},
+    {"name": "sync close mismatching short boundary", "args": ["@conn", 0, "@out", 0], "memory": [{"addr": "@conn", "offset": "0x780", "u32": 1}, {"addr": "@conn", "offset": "0x774", "u32": 1}, {"addr": "@conn", "offset": "0x778", "u16": 10}, {"addr": "@conn", "offset": "0x4b8", "u16": 9}]},
+    {"name": "async close keeps active output pointer", "args": ["@conn", 50, "@out", 123], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}]},
+    {"name": "async close queues with zero flags", "args": ["@conn", 50, "@out", 123]},
+    {"name": "async close already active", "args": ["@conn", 50, "@out", 123], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}, {"addr": "@conn", "offset": "0x780", "u32": 1}]},
+    {"name": "async short equal and nonzero 774", "args": ["@conn", 50, "@out", 7], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}, {"addr": "@conn", "offset": "0x774", "u32": 1}, {"addr": "@conn", "offset": "0x778", "u16": "0xffff"}, {"addr": "@conn", "offset": "0x4b8", "u16": "0xffff"}]},
+    {"name": "async short mismatch and negative timeout", "args": ["@conn", -1, "@out", 7], "memory": [{"addr": "@conn", "offset": "0x77c", "u32": 1}, {"addr": "@conn", "offset": "0x774", "u32": 1}, {"addr": "@conn", "offset": "0x778", "u16": 0}, {"addr": "@conn", "offset": "0x4b8", "u16": "0xffff"}]}
+  ],
+  "fuzz": {
+    "seed": 5186000,
+    "count": 40,
+    "args": [
+      {"choices": [0, "@conn"]},
+      {"range": [-2, 120]},
+      {"choices": [0, "@out"]},
+      {"choices": [-1, 0, 1, 123]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x77c", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@conn", "offset": "0x780", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@conn", "offset": "0x774", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@conn", "offset": "0x778", "type": "u16", "choices": [0, 1, "0xffff"]},
+      {"addr": "@conn", "offset": "0x4b8", "type": "u16", "choices": [0, 1, "0xffff"]},
+      {"addr": "@state", "offset": "0xa4", "type": "u32", "choices": [0, "@node"]},
+      {"addr": "@node", "offset": "0x8", "type": "u32", "choices": [0, "@node"]}
+    ]
+  }
+}

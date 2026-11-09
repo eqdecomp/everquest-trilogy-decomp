@@ -1,0 +1,683 @@
+{
+  "function": "EQ_Character_MagicSystem_guess::GetBuffEffectLevel_guess",
+  "original": "0x00423c9c",
+  "sources": [
+    "src/EverQuest/EQ_Character_MagicSystem.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_character_magicsystem",
+  "args": [
+    {
+      "name": "effect",
+      "type": "char"
+    },
+    {
+      "name": "spell",
+      "type": "u32"
+    }
+  ],
+  "ret": "short",
+  "objects": {
+    "eq_character_magicsystem": {
+      "size": "0x31a",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xa0",
+          "u32": "@eq_player"
+        }
+      ]
+    },
+    "eq_player": {
+      "size": "0x74",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x70",
+          "u32": "@actorinfo"
+        }
+      ]
+    },
+    "actorinfo": {
+      "size": "0x362",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x344",
+          "hex": "0a0014001e00280032003c00460050005a0064006e00780082008c009600"
+        }
+      ]
+    },
+    "spell1": {
+      "size": "0x22e",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x222",
+          "hex": "0102161739fefefefefefe"
+        }
+      ]
+    },
+    "spell2": {
+      "size": "0x22e",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x222",
+          "hex": "0102161739fefefefefefe"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x005fe9a0",
+      "size": "0x2ee0",
+      "fill": "zero"
+    },
+    {
+      "addr": "0x005fe9a0",
+      "offset": "0x4",
+      "u32": "@spell1"
+    },
+    {
+      "addr": "0x005fe9a0",
+      "offset": "0x8",
+      "u32": "@spell2"
+    },
+    {
+      "addr": "0x005fe9a0",
+      "offset": "0x2edc",
+      "u32": "@spell2"
+    }
+  ],
+  "callees": {
+    "0x0042351a": {
+      "name": "CalcAffectChange",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u8",
+        "u32",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "missing-player",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0xa0",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "missing-actor-info",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_player",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no-active-buffs",
+      "args": [
+        22,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "spell-id-zero-is-skipped",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero-spell-id-with-table-entry-is-still-skipped",
+      "args": [
+        1,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 0
+        },
+        {
+          "addr": "0x005fe9a0",
+          "offset": "0x0",
+          "u32": "@spell1"
+        }
+      ],
+      "callees": {
+        "0x0042351a": {
+          "name": "FUN_0042351a",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u8",
+            "u32",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative-spell-id-is-skipped",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 65535
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "last-valid-spell-id",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 2999
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "spell-id-3000-clamps-to-2999",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 3000
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "large-positive-spell-id-clamps-to-2999",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 32767
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "matching-spell-filter-returns-directly",
+      "args": [
+        255,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "different-valid-spell-filter-skips-effect-scan",
+      "args": [
+        22,
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero-filter-scans-effects",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "high-filter-value-also-scans-effects",
+      "args": [
+        22,
+        3000
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "negative-filter-scans-effects",
+      "args": [
+        22,
+        4294967295
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "regular-effect-requires-negative-helper-result",
+      "args": [
+        1,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative-helper-result-accepts-regular-effect",
+      "args": [
+        1,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        }
+      ],
+      "callees": {
+        "0x0042351a": {
+          "name": "FUN_0042351a",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u8",
+            "u32",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 10
+      }
+    },
+    {
+      "name": "effect-order-and-buff-order",
+      "args": [
+        1,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x28e",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x292",
+          "u16": 2
+        }
+      ],
+      "callees": {
+        "0x0042351a": {
+          "name": "FUN_0042351a",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u8",
+            "u32",
+            "ptr"
+          ],
+          "ret": [
+            0,
+            -1
+          ]
+        }
+      },
+      "expect": {
+        "ret": 20
+      }
+    },
+    {
+      "name": "effect-slot-11-and-buff-14-boundaries",
+      "args": [
+        57,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x310",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x314",
+          "u16": 1
+        },
+        {
+          "addr": "@spell1",
+          "offset": "0x222",
+          "hex": "fefefefefefefefefefefe39"
+        }
+      ],
+      "expect": {
+        "ret": 150
+      }
+    },
+    {
+      "name": "missing-spell-record",
+      "args": [
+        22,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x284",
+          "u8": 1
+        },
+        {
+          "addr": "@eq_character_magicsystem",
+          "offset": "0x288",
+          "u16": 2
+        },
+        {
+          "addr": "0x005fe9a0",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 423900,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          22,
+          23,
+          57,
+          254,
+          255
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          2999,
+          3000,
+          2147483648,
+          4294967295
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@eq_character_magicsystem",
+        "offset": "0x284",
+        "type": "u8",
+        "count": 15,
+        "stride": 10,
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@eq_character_magicsystem",
+        "offset": "0x285",
+        "type": "u8",
+        "count": 15,
+        "stride": 10,
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@eq_character_magicsystem",
+        "offset": "0x288",
+        "type": "short",
+        "count": 15,
+        "stride": 10,
+        "choices": [
+          -32768,
+          -1,
+          0,
+          1,
+          2,
+          2999,
+          3000,
+          32767
+        ]
+      },
+      {
+        "addr": "@spell1",
+        "offset": "0x222",
+        "type": "u8",
+        "count": 12,
+        "choices": [
+          1,
+          2,
+          22,
+          23,
+          57,
+          254,
+          255
+        ]
+      },
+      {
+        "addr": "@spell2",
+        "offset": "0x222",
+        "type": "u8",
+        "count": 12,
+        "choices": [
+          1,
+          2,
+          22,
+          23,
+          57,
+          254,
+          255
+        ]
+      },
+      {
+        "addr": "@actorinfo",
+        "offset": "0x344",
+        "type": "short",
+        "count": 15,
+        "stride": 2,
+        "range": [
+          -100,
+          300
+        ]
+      }
+    ]
+  }
+}

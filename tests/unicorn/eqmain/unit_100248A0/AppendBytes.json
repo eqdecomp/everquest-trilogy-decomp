@@ -1,0 +1,116 @@
+{
+  "function": "AppendBytes_guess",
+  "original": "0x10025060",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "data",
+      "type": "ptr"
+    },
+    {
+      "name": "len",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "data": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1012b918",
+      "u32": 0
+    },
+    {
+      "addr": "0x10125914",
+      "size": 8192,
+      "fill": "random"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "len 0 at cursor 0",
+      "args": ["@data", 0]
+    },
+    {
+      "name": "one dword, no tail",
+      "args": ["@data", 4]
+    },
+    {
+      "name": "dwords and a 3-byte tail",
+      "args": ["@data", 7],
+      "memory": [{"addr": "0x1012b918", "u32": 16}]
+    },
+    {
+      "name": "tail only",
+      "args": ["@data", 3],
+      "memory": [{"addr": "0x1012b918", "u32": 16}]
+    },
+    {
+      "name": "one byte",
+      "args": ["@data", 1],
+      "memory": [{"addr": "0x1012b918", "u32": 256}]
+    },
+    {
+      "name": "next lands exactly on 0x2000 (copies)",
+      "args": ["@data", 4],
+      "memory": [{"addr": "0x1012b918", "u32": 8188}]
+    },
+    {
+      "name": "next is 0x2001 (no copy, no store)",
+      "args": ["@data", 4],
+      "memory": [{"addr": "0x1012b918", "u32": 8189}]
+    },
+    {
+      "name": "full 0x100 copy ends at 0x2000",
+      "args": ["@data", 256],
+      "memory": [{"addr": "0x1012b918", "u32": 7936}]
+    },
+    {
+      "name": "0xFF copy ends at 0x2000 (63 dwords + 3-byte tail)",
+      "args": ["@data", 255],
+      "memory": [{"addr": "0x1012b918", "u32": 7937}]
+    },
+    {
+      "name": "len past the buffer (no copy, source unread)",
+      "args": ["@data", 8192],
+      "memory": [{"addr": "0x1012b918", "u32": 4096}]
+    },
+    {
+      "name": "negative cursor passes the signed compare (JG)",
+      "args": ["@data", 4],
+      "memory": [{"addr": "0x1012b918", "u32": 4294967280}]
+    },
+    {
+      "name": "source is the cursor itself: copy reads it before the store",
+      "args": ["0x1012b918", 4],
+      "memory": [{"addr": "0x1012b918", "u32": 32}]
+    }
+  ],
+  "fuzz": {
+    "seed": 151648,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@data"]
+      },
+      {
+        "range": [0, 256]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1012b918",
+        "type": "u32",
+        "range": [0, 8448]
+      }
+    ]
+  }
+}

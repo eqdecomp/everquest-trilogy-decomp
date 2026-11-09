@@ -1,0 +1,115 @@
+{
+  "function": "SetTrackSortType_guess",
+  "original": "0x004a8cc3",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "command_context", "type": "int"},
+    {"name": "sort_text", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "profile": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [{"offset": "0x36", "u8": 4}]
+    },
+    "everquest": {"size": "0x100", "fill": "zero"},
+    "main": {"size": "0x100", "fill": "zero"},
+    "writer": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006b675c", "u32": "0x11223344"},
+    {"addr": "0x00534188", "u32": "@writer"},
+    {"addr": "0x006e4e44", "u32": "@main"}
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    },
+    "0x0046a760": {
+      "name": "EQ_Main::DoTrackSort_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "@writer": {
+      "name": "WritePrivateProfileStringA",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "cstr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "profile is null", "args": [0, "N"], "memory": [{"addr": "0x006e4da8", "u32": 0}]},
+    {"name": "non Ranger profile", "args": [0, "N"], "memory": [{"addr": "@profile", "offset": "0x36", "u8": 3}]},
+    {"name": "normal uppercase", "args": [0, "N"]},
+    {"name": "normal lowercase and trailing text", "args": [1, "normal"]},
+    {"name": "distance uppercase", "args": [0, "D"]},
+    {"name": "distance lowercase", "args": [0, "d"]},
+    {"name": "consider uppercase", "args": [0, "C"]},
+    {"name": "consider lowercase", "args": [0, "c"]},
+    {"name": "reverse distance", "args": [0, "RD"]},
+    {"name": "reverse distance mixed case", "args": [0, "rDextra"]},
+    {"name": "reverse distance lowercase", "args": [0, "rd"]},
+    {"name": "reverse consider", "args": [0, "RC"]},
+    {"name": "reverse consider mixed case", "args": [0, "rCextra"]},
+    {"name": "reverse consider lowercase", "args": [0, "rc"]},
+    {"name": "reverse with unsupported second character", "args": [0, "Rx"]},
+    {"name": "reverse with empty second character", "args": [0, "R"]},
+    {"name": "unknown command", "args": [0, "X"]},
+    {"name": "empty command", "args": [0, ""]},
+    {
+      "name": "chat helper mutation follows the mode store",
+      "args": [0, "C"],
+      "callees": {
+        "0x004d05b7": {
+          "name": "CEverQuest::print_chat_guess",
+          "conv": "thiscall",
+          "args": ["cstr"],
+          "writes": [{"addr": "0x006b675c", "hex": "efbeadde"}]
+        }
+      }
+    },
+    {
+      "name": "writer and sorter ordering",
+      "args": [0, "D"],
+      "callees": {
+        "0x004d05b7": {
+          "name": "CEverQuest::print_chat_guess",
+          "conv": "thiscall",
+          "args": ["cstr"],
+          "writes": [{"addr": "0x006b675c", "hex": "11111111"}]
+        },
+        "@writer": {
+          "name": "WritePrivateProfileStringA",
+          "conv": "stdcall",
+          "args": ["cstr", "cstr", "cstr", "cstr"],
+          "ret": 0,
+          "writes": [{"addr": "0x006b675c", "hex": "22222222"}]
+        },
+        "0x0046a760": {
+          "name": "EQ_Main::DoTrackSort_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [{"addr": "0x006b675c", "hex": "33333333"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4885699,
+    "count": 40,
+    "args": [
+      {"choices": [-2147483648, -1, 0, 1, 2147483647]},
+      {"choices": ["N", "n", "D", "d", "C", "c", "R", "r", "RD", "rd", "RC", "rc", "Rx", "Ra", "", "normal", "distance", "consider"]}
+    ],
+    "memory": [
+      {"addr": "@profile", "offset": "0x36", "type": "u8", "choices": [0, 3, 4, 5, 255]},
+      {"addr": "0x006b675c", "type": "u32", "choices": [0, 1, 2, 3, 4, 4294967295]}
+    ]
+  }
+}

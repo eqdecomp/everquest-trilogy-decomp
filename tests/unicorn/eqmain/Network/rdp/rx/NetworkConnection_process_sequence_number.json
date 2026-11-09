@@ -1,0 +1,359 @@
+{
+  "function": "NetworkConnection_process_sequence_number_guess",
+  "original": "0x1002f170",
+  "sources": [
+    "src/eqmain/Network/rdp/rx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "seq",
+      "type": "u16"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x3000",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x17C",
+          "u16": 100
+        },
+        {
+          "offset": "0x17E",
+          "u16": 100
+        },
+        {
+          "offset": "0x180",
+          "size": 132,
+          "fill": "zero"
+        },
+        {
+          "offset": "0x204",
+          "u16": 5
+        },
+        {
+          "offset": "0x206",
+          "u16": 100
+        },
+        {
+          "offset": "0x208",
+          "u16": 100
+        },
+        {
+          "offset": "0x44C",
+          "u16": 1
+        },
+        {
+          "offset": "0x44E",
+          "u16": 100
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1234567
+    },
+    "0x10030e30": {
+      "name": "bitarray_setbit_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x10030eb0": {
+      "name": "getbit_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x10030d70": {
+      "name": "copyBitfieldToBuffer_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "_note": "Object defaults: rx_base 100, rx_max 100, bit window zeroed, ack_count 5, ack_min/ack_max 100, msgid_valid 1. The bit window is 128 bytes (RdpBitArray_guess), MSB first: bit n is byte n>>3, mask 0x80>>(n&7). Bit indices past the window (seq > rx_base+0x80) land in the next fields and the object stays 0x3000 bytes so the largest index (0x7fff) is still inside it. Cases without expect check only the differential result.",
+  "cases": [
+    {
+      "name": "first arrival at 50 (msgid and ack_count zero)",
+      "args": ["@conn", 50],
+      "memory": [
+        {"addr": "@conn+0x44c", "u16": 0},
+        {"addr": "@conn+0x204", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first arrival at 0 wraps rx_base and rx_max to 0xffff, the run moves rx_base back to 0",
+      "args": ["@conn", 0],
+      "memory": [
+        {"addr": "@conn+0x44c", "u16": 0},
+        {"addr": "@conn+0x204", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first arrival at 32768",
+      "args": ["@conn", 32768],
+      "memory": [
+        {"addr": "@conn+0x44c", "u16": 0},
+        {"addr": "@conn+0x204", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first arrival at 65535",
+      "args": ["@conn", 65535],
+      "memory": [
+        {"addr": "@conn+0x44c", "u16": 0},
+        {"addr": "@conn+0x204", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "ack window starts at 60 (ack_count zero), behind rx_base",
+      "args": ["@conn", 60],
+      "memory": [
+        {"addr": "@conn+0x204", "u16": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 90 lowers ack_min, behind rx_base",
+      "args": ["@conn", 90],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 120 raises ack_max, bit 19 set, no run",
+      "args": ["@conn", 120],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 110 inside the ack range: rx_max raised, ack range kept",
+      "args": ["@conn", 110],
+      "memory": [
+        {"addr": "@conn+0x206", "u16": 90},
+        {"addr": "@conn+0x208", "u16": 130}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq equal to rx_base and to ack_min and ack_max",
+      "args": ["@conn", 100],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 99, one behind rx_base, lowers ack_min",
+      "args": ["@conn", 99],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 102, bit 0 clear: bit 1 set, rx_base stays",
+      "args": ["@conn", 102],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "incoming EBX 1 does not change the initial bit index",
+      "args": ["@conn", 102],
+      "regs": {"ebx": 1, "edi": 1},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 101, bit 0 already set: prev 1, run of one",
+      "args": ["@conn", 101],
+      "memory": [
+        {"addr": "@conn+0x180", "u8": 128}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 101, bit 0 clear: run of one moves rx_base to 101",
+      "args": ["@conn", 101],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 103, bits 0-1 set: run of three moves rx_base to 103",
+      "args": ["@conn", 103],
+      "memory": [
+        {"addr": "@conn+0x180", "u8": 192}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 101, bits 0-9 set: run of ten crosses the byte boundary",
+      "args": ["@conn", 101],
+      "memory": [
+        {"addr": "@conn+0x180", "u8": 255},
+        {"addr": "@conn+0x181", "u8": 192}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 101, bits 0-7 set: run stops at the byte boundary",
+      "args": ["@conn", 101],
+      "memory": [
+        {"addr": "@conn+0x180", "u8": 255}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 101, bits 0, 1 and 5 set: the copy keeps bit 5 after the run",
+      "args": ["@conn", 101],
+      "memory": [
+        {"addr": "@conn+0x180", "u8": 196}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 103, bit 2 already set: prev 1 with no run",
+      "args": ["@conn", 103],
+      "memory": [
+        {"addr": "@conn+0x180", "u8": 32}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 0 with rx_base 0xffff: the bit index wraps to 0, rx_base wraps to 0",
+      "args": ["@conn", 0],
+      "memory": [
+        {"addr": "@conn+0x17c", "u16": 65535}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 0xffff with rx_base 0xfffe: run of one, rx_base reaches 0xffff",
+      "args": ["@conn", 65535],
+      "memory": [
+        {"addr": "@conn+0x17c", "u16": 65534}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 1100: bit 999 stays clear, rx_max raised",
+      "args": ["@conn", 1100],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 1200: bit 1099 lands past the 128-byte window (overflow kept)",
+      "args": ["@conn", 1200],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq rx_base+0x8000: last bit index 0x7fff",
+      "args": ["@conn", 32868]
+    },
+    {
+      "name": "seq rx_base+0x8001: ahead by more than 0x8000 reads as behind",
+      "args": ["@conn", 32869],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 120 below rx_max 150: rx_max kept",
+      "args": ["@conn", 120],
+      "memory": [
+        {"addr": "@conn+0x17e", "u16": 150}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "ack_min compare is unsigned: 100 is below 40000",
+      "args": ["@conn", 100],
+      "memory": [
+        {"addr": "@conn+0x204", "u16": 3},
+        {"addr": "@conn+0x206", "u16": 40000},
+        {"addr": "@conn+0x208", "u16": 40000}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ack_max compare is unsigned: 1 is not above 0x8000",
+      "args": ["@conn", 1],
+      "memory": [
+        {"addr": "@conn+0x204", "u16": 3},
+        {"addr": "@conn+0x206", "u16": 0},
+        {"addr": "@conn+0x208", "u16": 32768}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ack_count zero, seq 130 ahead: window starts at 130, rx_max raised",
+      "args": ["@conn", 130],
+      "memory": [
+        {"addr": "@conn+0x204", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "msgid zero with ack_count 3: init runs, ack_min lowered, rx_base moves to 90",
+      "args": ["@conn", 90],
+      "memory": [
+        {"addr": "@conn+0x44c", "u16": 0},
+        {"addr": "@conn+0x204", "u16": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "seq 0 behind rx_base lowers ack_min to 0",
+      "args": ["@conn", 0],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "seq 0xffff is behind rx_base 100 by the signed rule",
+      "args": ["@conn", 65535],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "ack range inverted: seq equal to ack_min falls through to ack_max",
+      "args": ["@conn", 130],
+      "memory": [
+        {"addr": "@conn+0x206", "u16": 130},
+        {"addr": "@conn+0x208", "u16": 85}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 192880,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@conn"]
+      },
+      {
+        "choices": [0, 1, 50, 90, 99, 100, 101, 102, 103, 104, 110, 120, 130, 160, 200, 300, 4095, 32767, 32768, 32869, 40000, 65535]
+      }
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x44c", "type": "u16", "range": [0, 2], "p": 0.9},
+      {"addr": "@conn", "offset": "0x17c", "type": "u16", "range": [90, 130]},
+      {"addr": "@conn", "offset": "0x17e", "type": "u16", "range": [90, 160]},
+      {"addr": "@conn", "offset": "0x204", "type": "u16", "range": [0, 4]},
+      {"addr": "@conn", "offset": "0x206", "type": "u16", "range": [80, 130]},
+      {"addr": "@conn", "offset": "0x208", "type": "u16", "range": [80, 140]},
+      {"addr": "@conn", "offset": "0x180", "size": 16}
+    ]
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "function": "msg_pq_update",
+  "original": "0x00491bf0",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "everquest": {
+      "size": "0xc00",
+      "fill": "zero"
+    },
+    "stml": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl"},
+        {"offset": "0x8c", "u32": 1}
+      ]
+    },
+    "vtbl": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@vslot1"},
+        {"offset": "0x8", "u32": "@vslot2"}
+      ]
+    },
+    "vslot1": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "vslot2": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006e4df4", "u32": "@stml"}
+  ],
+  "callees": {
+    "0x00436946": {
+      "name": "CStmlWnd::ParseSTML_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x00521b10": {
+      "name": "memcpy",
+      "args": ["ignore", "ignore", "u32"],
+      "passthrough": true
+    },
+    "@vslot1": {
+      "name": "vtbl slot 1 (CStmlWnd)",
+      "conv": "thiscall",
+      "args": []
+    },
+    "@vslot2": {
+      "name": "vtbl slot 2 (CStmlWnd)",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: new petition, flag 0, named; queue count 0 -> 25 redraws the window",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x4", "u32": 1},
+        {"addr": "@param_1", "offset": "0xc", "u32": 5},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"},
+        {"addr": "@param_1", "offset": "0x50", "u32": 2}
+      ]
+    },
+    {
+      "name": "found in slot 3, flag -1 removes it",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 3},
+        {"addr": "@param_1", "offset": "0x4", "u32": 1},
+        {"addr": "@param_1", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0xc", "u32": 5},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"},
+        {"addr": "@param_1", "offset": "0x50", "u32": 2},
+        {"addr": "@everquest", "offset": "0x1a8", "u32": 3},
+        {"addr": "@everquest", "offset": "0x1ac", "u32": 1},
+        {"addr": "@everquest", "offset": "0x1b4", "u32": 5}
+      ]
+    },
+    {
+      "name": "found in slot 3, flag 1 removes it",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 3},
+        {"addr": "@param_1", "offset": "0x4", "u32": 1},
+        {"addr": "@param_1", "offset": "0x8", "u32": 1},
+        {"addr": "@param_1", "offset": "0xc", "u32": 5},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"},
+        {"addr": "@param_1", "offset": "0x50", "u32": 2},
+        {"addr": "@everquest", "offset": "0x1a8", "u32": 3},
+        {"addr": "@everquest", "offset": "0x1ac", "u32": 1},
+        {"addr": "@everquest", "offset": "0x1b4", "u32": 5}
+      ]
+    },
+    {
+      "name": "found in slot 3, flag 0 overwrites it in place",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 3},
+        {"addr": "@param_1", "offset": "0x4", "u32": 7},
+        {"addr": "@param_1", "offset": "0x8", "u32": 0},
+        {"addr": "@param_1", "offset": "0xc", "u32": 0},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"},
+        {"addr": "@param_1", "offset": "0x50", "u32": 2},
+        {"addr": "@everquest", "offset": "0x1a8", "u32": 3},
+        {"addr": "@everquest", "offset": "0x1ac", "u32": 1},
+        {"addr": "@everquest", "offset": "0x1b4", "u32": 5}
+      ]
+    },
+    {
+      "name": "not found, flag -1: the message is not a candidate",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"},
+        {"addr": "@param_1", "offset": "0x50", "u32": 2}
+      ]
+    },
+    {
+      "name": "not found, nameless: strcpy of Unknown User, flag 2",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x4", "u32": 4},
+        {"addr": "@param_1", "offset": "0x8", "u32": 2},
+        {"addr": "@param_1", "offset": "0x50", "u32": 0}
+      ]
+    },
+    {
+      "name": "no window (DAT_006E4DF4 null)",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "0x006e4df4", "u32": 0},
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"}
+      ]
+    },
+    {
+      "name": "window in mode 0: count changed but no redraw",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@stml", "offset": "0x8c", "u32": 0},
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"}
+      ]
+    },
+    {
+      "name": "window in mode 1, count unchanged (old count 25): no redraw",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@everquest", "offset": "0xba4", "u32": 25},
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"}
+      ]
+    },
+    {
+      "name": "unsigned seq compare: slot 0 seq 0x80000000 is beaten by seq 1",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 9},
+        {"addr": "@param_1", "offset": "0x8", "u32": 0},
+        {"addr": "@param_1", "offset": "0x10", "cstr": "Bob"},
+        {"addr": "@everquest", "offset": "0x58", "u32": "0x80000000"},
+        {"addr": "@everquest", "offset": "0xcc", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4791280,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x0", "type": "i32", "range": [-1, 4]},
+      {"addr": "@param_1", "offset": "0x4", "type": "i32", "range": [-3, 3]},
+      {"addr": "@param_1", "offset": "0x8", "type": "i32", "choices": [-1, 0, 1, 2]},
+      {"addr": "@param_1", "offset": "0xc", "type": "u32", "choices": [0, 1, 2, 3, 7, 2147483648, 4294967295]},
+      {"addr": "@param_1", "offset": "0x10", "type": "u8", "choices": [0, 66, 67]},
+      {"addr": "@param_1", "offset": "0x50", "type": "i32", "range": [-2, 6]},
+      {"addr": "@everquest", "offset": "0x4c", "type": "i32", "count": 25, "stride": 116, "range": [-1, 4]},
+      {"addr": "@everquest", "offset": "0x50", "type": "i32", "count": 25, "stride": 116, "range": [-3, 3]},
+      {"addr": "@everquest", "offset": "0x58", "type": "u32", "count": 25, "stride": 116, "choices": [0, 1, 2, 3, 7, 2147483648, 4294967295]},
+      {"addr": "@everquest", "offset": "0xba4", "type": "i32", "range": [0, 25]},
+      {"addr": "@stml", "offset": "0x8c", "type": "i32", "choices": [0, 1, 1, 2, 3]},
+      {"addr": "0x006e4df4", "type": "ptr", "choices": ["@stml", "@stml", 0]}
+    ]
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "function": "cleanupWorldObject_guess",
+  "original": "0x100191d8",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "worldObject",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "worldobject": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "0x30003000"},
+        {"offset": "0xc", "u8": 0},
+        {"offset": "0x24", "u32": "@payload"},
+        {"offset": "0x2c", "u32": "@regions"},
+        {"offset": "0x34", "u32": 0}
+      ]
+    },
+    "payload": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x25"},
+        {"offset": "0x4", "u32": "@owner"}
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 5}
+      ]
+    },
+    "regions": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x27"},
+        {"offset": "0xc", "u32": "0x30004000"},
+        {"offset": "0x18", "u32": "0x30005000"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10009237": {
+      "name": "_t3dRemoveActiveAI",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x100191bd": {
+      "name": "t3dFreeReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: owner decremented, both region blocks freed, payload freed",
+      "args": ["@world", "@worldobject"]
+    },
+    {
+      "name": "world null is only passed through",
+      "args": [0, "@worldobject"]
+    },
+    {
+      "name": "helper runs when +0x34 is set",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0x34", "u32": 1}]
+    },
+    {
+      "name": "negative helperPending (-1) still runs the helper",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0x34", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "flags bit 0 removes the dictionary entry",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0xc", "u8": 1}]
+    },
+    {
+      "name": "flags bit 1 alone does not remove the dictionary entry",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0xc", "u8": 2}]
+    },
+    {
+      "name": "flags bit 5 keeps the payload",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0xc", "u8": 32}]
+    },
+    {
+      "name": "flags bits 0 and 5 together",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0xc", "u8": 33}]
+    },
+    {
+      "name": "null payload: the final free still runs with NULL",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0x24", "u32": 0}]
+    },
+    {
+      "name": "payload tag 0x26 is not decremented",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@payload", "offset": "0x0", "u32": 38}]
+    },
+    {
+      "name": "payload with a null owner",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@payload", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "owner count 1 goes to 0",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@owner", "offset": "0x10", "u32": 1}]
+    },
+    {
+      "name": "owner count 0 wraps to -1",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@owner", "offset": "0x10", "u32": 0}]
+    },
+    {
+      "name": "null region set",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0x2c", "u32": 0}]
+    },
+    {
+      "name": "region tag 0x26 is skipped",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@regions", "offset": "0x0", "u32": 38}]
+    },
+    {
+      "name": "region tag 0x29 is cleaned",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@regions", "offset": "0x0", "u32": 41}]
+    },
+    {
+      "name": "region first block null",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@regions", "offset": "0xc", "u32": 0}]
+    },
+    {
+      "name": "region second block null",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@regions", "offset": "0x18", "u32": 0}]
+    },
+    {
+      "name": "region both blocks null: only the reference list is cleared",
+      "args": ["@world", "@worldobject"],
+      "memory": [
+        {"addr": "@regions", "offset": "0xc", "u32": 0},
+        {"addr": "@regions", "offset": "0x18", "u32": 0}
+      ]
+    },
+    {
+      "name": "nothing to clean: only the NULL payload free runs",
+      "args": ["@world", "@worldobject"],
+      "memory": [
+        {"addr": "@worldobject", "offset": "0x24", "u32": 0},
+        {"addr": "@worldobject", "offset": "0x2c", "u32": 0}
+      ]
+    },
+    {
+      "name": "helper clears flags and payload before the later reads",
+      "args": ["@world", "@worldobject"],
+      "memory": [
+        {"addr": "@worldobject", "offset": "0x34", "u32": 1},
+        {"addr": "@worldobject", "offset": "0xc", "u8": 1}
+      ],
+      "callees": {
+        "0x10009237": {
+          "name": "FUN_10009237",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "writes": [
+            {"arg": 1, "offset": 12, "hex": "00"},
+            {"arg": 1, "offset": 36, "hex": "00000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "helper clears the region set before the region test",
+      "args": ["@world", "@worldobject"],
+      "memory": [{"addr": "@worldobject", "offset": "0x34", "u32": 1}],
+      "callees": {
+        "0x10009237": {
+          "name": "FUN_10009237",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "writes": [
+            {"arg": 1, "offset": 44, "hex": "00000000"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 102872,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world",
+          "0x0"
+        ]
+      },
+      {
+        "choices": [
+          "@worldobject"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@worldobject", "offset": "0x8", "type": "ptr", "choices": ["0x30003000", "0x0"]},
+      {"addr": "@worldobject", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@worldobject", "offset": "0x24", "type": "ptr", "choices": ["@payload", "0x0"]},
+      {"addr": "@worldobject", "offset": "0x2c", "type": "ptr", "choices": ["@regions", "0x0"]},
+      {"addr": "@worldobject", "offset": "0x34", "type": "u32", "choices": [0, 0, 1, 2, "0xffffffff"]},
+      {"addr": "@payload", "offset": "0x0", "type": "u32", "choices": [37, 37, 38, 40, 0]},
+      {"addr": "@payload", "offset": "0x4", "type": "ptr", "choices": ["@owner", "0x0"]},
+      {"addr": "@owner", "offset": "0x10", "type": "int", "range": [-2, 6]},
+      {"addr": "@regions", "offset": "0x0", "type": "u32", "choices": [39, 39, 41, 38, 40, 0]},
+      {"addr": "@regions", "offset": "0xc", "type": "ptr", "choices": ["0x30004000", "0x0"]},
+      {"addr": "@regions", "offset": "0x18", "type": "ptr", "choices": ["0x30005000", "0x0"]}
+    ]
+  }
+}

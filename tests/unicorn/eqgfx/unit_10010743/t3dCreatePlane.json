@@ -1,0 +1,196 @@
+{
+  "function": "t3dCreatePlane",
+  "original": "0x10011944",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "normal",
+      "type": "ptr"
+    },
+    {
+      "name": "distance",
+      "type": "float"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "normal": {
+      "size": "0xc",
+      "fill": "random"
+    },
+    "allocated": {
+      "size": "0x14",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocated"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@normal",
+        1.5
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": 3.0
+        }
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@normal",
+        0.0
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": 0.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": 0.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": 0.0
+        }
+      ]
+    },
+    {
+      "name": "negative-distance",
+      "args": [
+        "@normal",
+        -4.25
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": -1.5
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": 2.25
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": -3.75
+        }
+      ]
+    },
+    {
+      "name": "large-mixed",
+      "args": [
+        "@normal",
+        1000000.0
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": 1000000000.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": -0.00001
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": 3.4028235e38
+        }
+      ]
+    },
+    {
+      "name": "allocation-fails",
+      "args": [
+        "@normal",
+        1.5
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "normal-is-the-new-block",
+      "args": [
+        "@allocated",
+        1.5
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 72004,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@normal",
+          "@allocated"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@normal",
+        "offset": "0x0",
+        "type": "float",
+        "count": 3,
+        "range": [
+          -100,
+          100
+        ]
+      },
+      {
+        "addr": "@normal",
+        "offset": "0x0",
+        "size": 12,
+        "p": 0.25
+      }
+    ]
+  }
+}

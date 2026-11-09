@@ -1,0 +1,47 @@
+{
+  "function": "EQPMInfo::~EQPMInfo",
+  "original": "0x004bd18d",
+  "sources": [
+    "src/EverQuest/EQPMInfo.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqpminfo",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eqpminfo": {"size": "0x100", "fill": "zero"},
+    "display": {"size": "0x100", "fill": "zero"},
+    "actor": {"size": 16, "fill": "zero"},
+    "light": {"size": 16, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E4DE0", "u32": "@display"},
+    {"addr": "@eqpminfo", "offset": "0x0", "u32": "@actor"},
+    {"addr": "@eqpminfo", "offset": "0x4", "u32": "@light"}
+  ],
+  "callees": {
+    "0x00410970": {"name": "CDisplay::DeleteLight", "conv": "thiscall", "args": ["ptr"]},
+    "0x00411715": {"name": "CDisplay::DeleteActor", "conv": "thiscall", "args": ["ptr"]}
+  },
+  "cases": [
+    {"name": "both set: light deleted first, then actor, both cleared", "args": []},
+    {"name": "light null: only actor deleted", "args": [], "memory": [{"addr": "@eqpminfo+0x4", "u32": 0}]},
+    {"name": "actor null: only light deleted", "args": [], "memory": [{"addr": "@eqpminfo+0x0", "u32": 0}]},
+    {"name": "both null: nothing called", "args": [], "memory": [{"addr": "@eqpminfo+0x0", "u32": 0}, {"addr": "@eqpminfo+0x4", "u32": 0}]},
+    {"name": "other fields untouched", "args": [], "memory": [{"addr": "@eqpminfo+0x8", "u32": 3735928559}, {"addr": "@eqpminfo+0xfc", "u32": 305419896}]},
+    {"name": "display is a different object", "args": [], "memory": [{"addr": "0x006E4DE0", "u32": "@light"}]},
+    {"name": "high-bit pointer values count as non-null", "args": [], "memory": [{"addr": "@eqpminfo+0x0", "u32": 2147483648}, {"addr": "@eqpminfo+0x4", "u32": 1}]},
+    {"name": "low-byte-only pointer is non-null", "args": [], "memory": [{"addr": "@eqpminfo+0x0", "u32": 256}, {"addr": "@eqpminfo+0x4", "u32": 16777216}]}
+  ],
+  "fuzz": {
+    "seed": 4968845,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "@eqpminfo+0x0", "type": "u32", "choices": [0, "@actor", 1, 2147483648, 4294967295]},
+      {"addr": "@eqpminfo+0x4", "type": "u32", "choices": [0, "@light", 1, 2147483648, 4294967295]},
+      {"addr": "@eqpminfo+0x8", "type": "u32", "choices": [0, 305419896]},
+      {"addr": "0x006E4DE0", "type": "u32", "choices": ["@display", "@light"]}
+    ]
+  }
+}

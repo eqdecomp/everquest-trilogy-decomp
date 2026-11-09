@@ -1,0 +1,141 @@
+{
+  "function": "CSkillsSelectWnd_guess::CreateSkillChild_guess",
+  "original": "0x004ebbca",
+  "sources": ["src/EverQuest/SkillsSelectWnd.cpp"],
+  "conv": "thiscall",
+  "this": "@cskillsselectwnd",
+  "args": [
+    {"name": "lookup", "type": "ptr"},
+    {"name": "name", "type": "cstr"},
+    {"name": "data", "type": "ptr"},
+    {"name": "destination", "type": "ptr"},
+    {"name": "skillId", "type": "u32"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "cskillsselectwnd": {
+      "size": "0x60", "fill": "zero",
+      "init": [{"offset": "0x46", "u8": 1}]
+    },
+    "lookup": {
+      "size": 4, "fill": "zero",
+      "init": [{"offset": 0, "u32": "@provider"}]
+    },
+    "provider": {
+      "size": 4, "fill": "zero",
+      "init": [{"offset": 0, "u32": "@providerVtable"}]
+    },
+    "providerVtable": {
+      "size": "0x10", "fill": "zero",
+      "init": [{"offset": "0xc", "u32": "@lookup_get_surface"}]
+    },
+    "surfaceVtable": {
+      "size": "0x50", "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@surface_release"},
+        {"offset": "0x2c", "u32": "@surface_get_data"},
+        {"offset": "0x4c", "u32": "@surface_set_data"}
+      ]
+    },
+    "lookup_get_surface": {"size": 1, "fill": "zero"},
+    "surface_get_data": {"size": 1, "fill": "zero"},
+    "surface_release": {"size": 1, "fill": "zero"},
+    "surface_set_data": {"size": 1, "fill": "zero"},
+    "data": {"size": "0x100", "fill": "random"},
+    "destination": {"size": "0x100", "fill": "random"},
+    "newchild": {"size": "0x1c", "fill": "random"},
+    "namecopy": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x30001000", "u32": "@surfaceVtable"},
+    {"addr": "0x30002000", "size": 64, "fill": "random"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x00521960": {"name": "memset", "conv": "cdecl", "args": ["ignore", "int", "u32"], "passthrough": true},
+    "0x005218c6": {
+      "name": "operator_new", "conv": "cdecl", "args": ["u32"],
+      "ret": ["@newchild", "@namecopy"]
+    },
+    "0x004ebd52": {
+      "name": "InitializeComInterfaces_guess", "conv": "thiscall", "args": ["ptr", "ptr"],
+      "ret": "@newchild"
+    },
+    "@lookup_get_surface": {
+      "name": "lookup_get_surface", "conv": "stdcall",
+      "args": ["ptr", "mem:12", "ignore", "int"], "ret": 0,
+      "writes": [{"arg": 2, "offset": 0, "hex": "00100030"}]
+    },
+    "@surface_get_data": {
+      "name": "surface_get_data", "conv": "stdcall",
+      "args": ["ptr", "int", "int", "ignore", "ignore", "int", "int", "int"], "ret": 0,
+      "writes": [
+        {"arg": 3, "offset": 0, "hex": "00200030"},
+        {"arg": 4, "offset": 0, "hex": "20000000"}
+      ]
+    },
+    "@surface_release": {
+      "name": "surface_release", "conv": "stdcall", "args": ["ptr"], "ret": 0
+    },
+    "@surface_set_data": {
+      "name": "surface_set_data", "conv": "stdcall",
+      "args": ["ptr", "ptr", "u32", "int", "int"], "ret": 0
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess", "conv": "cdecl", "args": ["ptr", "cstr"], "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "rewrite_inline": ["??0SkillObject_guess@@QAE@PAX0@Z"],
+  "cases": [
+    {"name": "provider is null", "args": ["@lookup", "abc", "@data", "@destination", 1],
+     "memory": [{"addr": "@lookup", "u32": 0}]},
+    {"name": "null name", "args": ["@lookup", 0, "@data", "@destination", 1]},
+    {"name": "null destination", "args": ["@lookup", "abc", "@data", 0, 1]},
+    {"name": "zero skill id", "args": ["@lookup", "abc", "@data", "@destination", 0]},
+    {"name": "child already set", "args": ["@lookup", "abc", "@data", "@destination", 1],
+     "memory": [{"addr": "@cskillsselectwnd", "offset": "0x4", "u32": 1}]},
+    {"name": "first lookup fails", "args": ["@lookup", "abc", "@data", "@destination", 1],
+     "callees": {"@lookup_get_surface": {"name": "lookup_get_surface", "conv": "stdcall",
+       "args": ["ptr", "ignore", "ignore", "int"], "ret": 1}}},
+    {"name": "lookup succeeds without surface output", "args": ["@lookup", "abc", "@data", "@destination", 805310464],
+     "callees": {"@lookup_get_surface": {"name": "lookup_get_surface", "conv": "stdcall",
+       "args": ["ptr", "mem:12", "ignore", "int"], "ret": 0}}},
+    {"name": "surface query fails", "args": ["@lookup", "abc", "@data", "@destination", 1],
+     "callees": {"@surface_get_data": {"name": "surface_get_data", "conv": "stdcall",
+       "args": ["ptr", "int", "int", "ignore", "ignore", "int", "int", "int"], "ret": 1}}},
+    {"name": "success zero bytes", "args": ["@lookup", "abc", "@data", "@destination", 1],
+     "callees": {"@surface_get_data": {"name": "surface_get_data", "conv": "stdcall",
+       "args": ["ptr", "int", "int", "ignore", "ignore", "int", "int", "int"], "ret": 0,
+       "writes": [{"arg": 3, "offset": 0, "hex": "00200030"},
+         {"arg": 4, "offset": 0, "hex": "00000000"}]}}},
+    {"name": "success one byte and flag clear", "args": ["@lookup", "skill", "@data", "@destination", 65535],
+     "memory": [{"addr": "@cskillsselectwnd", "offset": "0x46", "u8": 0}],
+     "callees": {"@surface_get_data": {"name": "surface_get_data", "conv": "stdcall",
+       "args": ["ptr", "int", "int", "ignore", "ignore", "int", "int", "int"], "ret": 0,
+       "writes": [{"arg": 3, "offset": 0, "hex": "00200030"},
+         {"arg": 4, "offset": 0, "hex": "01000000"}]}}},
+    {"name": "success normal", "args": ["@lookup", "blacksmith", "@data", "@destination", 305419896]}
+  ],
+  "fuzz": {
+    "seed": 5159882,
+    "count": 32,
+    "args": [
+      {"choices": ["@lookup"]},
+      {},
+      {"choices": ["@data", 0]},
+      {"choices": ["@destination", 0]},
+      {"choices": [0, 1, 65535, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@lookup", "offset": 0, "type": "u32", "choices": [0, "@provider"], "p": 0.25},
+      {"addr": "@cskillsselectwnd", "offset": "0x4", "type": "u32", "choices": [0, 1], "p": 0.25},
+      {"addr": "@cskillsselectwnd", "offset": "0x46", "type": "u8", "choices": [0, 1, 255]},
+      {"addr": "@data", "size": 18, "p": 0.5},
+      {"addr": "@destination", "size": 64, "p": 0.5}
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "function": "LoadSequence_guess",
+  "original": "0x004e4401",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unused_edx", "type": "int"},
+    {"name": "path", "type": "cstr"}
+  ],
+  "ret": "bool",
+  "objects": {
+    "self": {"size": "0x60", "fill": "random"},
+    "drv": {"size": "0x80", "fill": "random"},
+    "img": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006ECDF4", "u32": "@drv"},
+    {"addr": "@drv", "offset": "0x60", "u32": "0x00C0FFEE"},
+    {"addr": "@img", "offset": "0x14", "u16": 12}
+  ],
+  "callees": {
+    "mss32.dll!_AIL_file_read@8": {"name": "_AIL_file_read@8", "conv": "stdcall", "args": ["cstr", "u32"], "ret": "@img"},
+    "0x00523be0": {"name": "__stat", "conv": "cdecl", "args": ["cstr", "ignore"], "ret": 0, "writes": [{"arg": 1, "offset": 20, "hex": "00010000"}]},
+    "mss32.dll!_AIL_allocate_sequence_handle@4": {"name": "_AIL_allocate_sequence_handle@4", "conv": "stdcall", "args": ["u32"], "ret": "0x5EC0BEEF"}
+  },
+  "rewrite_aliases": {
+    "__stat": "0x00523be0"
+  },
+  "cases": [
+    {"name": "typical load", "args": ["@self", 1, "music.xmi"], "expect": {"ret": 1}},
+    {"name": "no driver object", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "0x006ECDF4", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "no driver object, neighbour global set", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "0x006ECDF4", "u32": 0}, {"addr": "0x006ECDF8", "u32": "0x11223344"}], "expect": {"ret": 0}},
+    {"name": "driver without midi handle", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@drv", "offset": "0x60", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "file read fails: count 0, handle still allocated, stat not called", "args": ["@self", 1, "missing.xmi"],
+     "callees": {"mss32.dll!_AIL_file_read@8": {"name": "_AIL_file_read@8", "conv": "stdcall", "args": ["cstr", "u32"], "ret": 0}}, "expect": {"ret": 1}},
+    {"name": "stat fails", "args": ["@self", 1, "music.xmi"],
+     "callees": {"0x00523be0": {"name": "__stat", "conv": "cdecl", "args": ["cstr", "ignore"], "ret": -1}}, "expect": {"ret": 1}},
+    {"name": "stat returns 1", "args": ["@self", 1, "music.xmi"],
+     "callees": {"0x00523be0": {"name": "__stat", "conv": "cdecl", "args": ["cstr", "ignore"], "ret": 1, "writes": [{"arg": 1, "offset": 20, "hex": "00010000"}]}}, "expect": {"ret": 1}},
+    {"name": "size 20 is too small", "args": ["@self", 1, "music.xmi"],
+     "callees": {"0x00523be0": {"name": "__stat", "conv": "cdecl", "args": ["cstr", "ignore"], "ret": 0, "writes": [{"arg": 1, "offset": 20, "hex": "14000000"}]}}, "expect": {"ret": 1}},
+    {"name": "size 21 is enough", "args": ["@self", 1, "music.xmi"],
+     "callees": {"0x00523be0": {"name": "__stat", "conv": "cdecl", "args": ["cstr", "ignore"], "ret": 0, "writes": [{"arg": 1, "offset": 20, "hex": "15000000"}]}}, "expect": {"ret": 1}},
+    {"name": "negative size is signed small", "args": ["@self", 1, "music.xmi"],
+     "callees": {"0x00523be0": {"name": "__stat", "conv": "cdecl", "args": ["cstr", "ignore"], "ret": 0, "writes": [{"arg": 1, "offset": 20, "hex": "00000080"}]}}, "expect": {"ret": 1}},
+    {"name": "image at -0x14: field pointer is null", "args": ["@self", 1, "music.xmi"],
+     "callees": {"mss32.dll!_AIL_file_read@8": {"name": "_AIL_file_read@8", "conv": "stdcall", "args": ["cstr", "u32"], "ret": "0xFFFFFFEC"}}, "expect": {"ret": 1}},
+    {"name": "count 0", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 0}], "expect": {"ret": 1}},
+    {"name": "count 64 kept", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 64}], "expect": {"ret": 1}},
+    {"name": "count 65 capped", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 65}], "expect": {"ret": 1}},
+    {"name": "count 63 kept", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 63}], "expect": {"ret": 1}},
+    {"name": "count 0x8000 unsigned capped", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 32768}], "expect": {"ret": 1}},
+    {"name": "count 0xFFFF unsigned capped", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 65535}], "expect": {"ret": 1}},
+    {"name": "count 0x140 high byte set capped", "args": ["@self", 1, "music.xmi"], "memory": [{"addr": "@img", "offset": "0x14", "u16": 320}], "expect": {"ret": 1}},
+    {"name": "empty path", "args": ["@self", 0, ""], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 5129217,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": ["music.xmi", "a", ""]}
+    ],
+    "memory": [
+      {"addr": "@img", "offset": "0x14", "type": "u16", "choices": [0, 1, 20, 63, 64, 65, 128, 255, 256, 320, 32767, 32768, 65535]},
+      {"addr": "@drv", "offset": "0x60", "type": "u32", "choices": [0, 1, 305419896, 4294967295]}
+    ]
+  }
+}

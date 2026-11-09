@@ -1,0 +1,177 @@
+{
+  "function": "rdp_enqueue_item_guess",
+  "original": "0x10028c50",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    },
+    {
+      "name": "item",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": {
+      "size": "0x1d8",
+      "fill": "random",
+      "init": [
+        {"offset": "0xa4", "u32": 0},
+        {"offset": "0xac", "u32": 0}
+      ]
+    },
+    "item": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": 0}
+      ]
+    },
+    "owner": {
+      "size": "0x60",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10028a90": {
+      "name": "FUN_10028a90",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1002e120": {
+      "name": "FUN_1002e120",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x1002df20": {
+      "name": "FUN_1002df20",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"]
+    },
+    "0x1002e910": {
+      "name": "signalMessageProcessing_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "empty list, no owner: queued and signalled",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@rdp", "offset": "0xa4", "u32": 0},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    },
+    {
+      "name": "list has a head, no owner: queued, no signal",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@rdp", "offset": "0xa4", "u32": "@owner"},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    },
+    {
+      "name": "empty list, link_offset 8: head - link is -8, no signal",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@rdp", "offset": "0xa4", "u32": 0},
+        {"addr": "@rdp", "offset": "0xac", "u32": 8}
+      ]
+    },
+    {
+      "name": "head 8 with link_offset 8: difference 0, signalled",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@rdp", "offset": "0xa4", "u32": 8},
+        {"addr": "@rdp", "offset": "0xac", "u32": 8}
+      ]
+    },
+    {
+      "name": "owner with +0x4c 0, empty list: queued and signalled",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@item", "offset": "0x8", "u32": "@owner"},
+        {"addr": "@owner", "offset": "0x4c", "u32": 0},
+        {"addr": "@rdp", "offset": "0xa4", "u32": 0},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    },
+    {
+      "name": "owner with +0x4c 0, list has a head: queued, no signal",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@item", "offset": "0x8", "u32": "@owner"},
+        {"addr": "@owner", "offset": "0x4c", "u32": 0},
+        {"addr": "@rdp", "offset": "0xa4", "u32": "@item"},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    },
+    {
+      "name": "owner with +0x4c 1: freed, list untouched",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@item", "offset": "0x8", "u32": "@owner"},
+        {"addr": "@owner", "offset": "0x4c", "u32": 1},
+        {"addr": "@rdp", "offset": "0xa4", "u32": 0},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    },
+    {
+      "name": "owner with +0x4c -1: freed (any non-zero value)",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@item", "offset": "0x8", "u32": "@owner"},
+        {"addr": "@owner", "offset": "0x4c", "u32": 4294967295},
+        {"addr": "@rdp", "offset": "0xa4", "u32": 0},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    },
+    {
+      "name": "item +0x20 preset: cleared before the add",
+      "args": ["@rdp", "@item"],
+      "memory": [
+        {"addr": "@item", "offset": "0x20", "u32": 1437226410},
+        {"addr": "@rdp", "offset": "0xa4", "u32": 0},
+        {"addr": "@rdp", "offset": "0xac", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002850,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@rdp"]
+      },
+      {
+        "choices": ["@item"]
+      }
+    ],
+    "memory": [
+      {"addr": "@rdp", "offset": "0xa4", "type": "ptr", "choices": [0, "@item", "@owner", 8]},
+      {"addr": "@rdp", "offset": "0xac", "type": "u32", "choices": [0, 4, 8, 16]},
+      {"addr": "@item", "offset": "0x8", "type": "ptr", "choices": [0, "@owner"]},
+      {"addr": "@owner", "offset": "0x4c", "type": "u32", "choices": [0, 1, 2147483648, 4294967295]}
+    ]
+  }
+}

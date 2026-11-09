@@ -1,0 +1,186 @@
+{
+  "function": "PackFsTree_rotateLeft_guess",
+  "original": "0x1000ff60",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [
+    {
+      "name": "x",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "nil": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "root": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "head": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "self": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@head"}
+      ]
+    },
+    "xp": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@x"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@xsib"}
+      ]
+    },
+    "xsib": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@xp"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "x": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@xp"},
+        {"offset": "0x8", "u32": "@child"}
+      ]
+    },
+    "child": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@childLeft"},
+        {"offset": "0x4", "u32": "@x"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "childLeft": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x4", "u32": "@child"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1004cf14", "u32": "@nil"},
+    {"addr": "@nil", "u32": "@nil"},
+    {"addr": "@nil", "offset": "0x4", "u32": "@nil"},
+    {"addr": "@nil", "offset": "0x8", "u32": "@nil"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: x is the left child of xp, child has a left subtree",
+      "args": ["@x"]
+    },
+    {
+      "name": "x is the right child of xp (xp->right == x), child has a left subtree",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@xp", "u32": "@xsib"},
+        {"addr": "@xp", "offset": "0x8", "u32": "@x"}
+      ]
+    },
+    {
+      "name": "x is the left child of xp, child has no left subtree (nil)",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@child", "u32": "@nil"}
+      ]
+    },
+    {
+      "name": "x is the right child of xp, child has no left subtree (nil)",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@xp", "u32": "@xsib"},
+        {"addr": "@xp", "offset": "0x8", "u32": "@x"},
+        {"addr": "@child", "u32": "@nil"}
+      ]
+    },
+    {
+      "name": "x is the root (head->parent == x), child has a left subtree",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@x"},
+        {"addr": "@x", "offset": "0x4", "u32": "@head"}
+      ]
+    },
+    {
+      "name": "x is the root, child has no left subtree (nil)",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@x"},
+        {"addr": "@x", "offset": "0x4", "u32": "@head"},
+        {"addr": "@child", "u32": "@nil"}
+      ]
+    },
+    {
+      "name": "x is the left child of the root (the root is xp), child has a left subtree",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@xp"}
+      ]
+    },
+    {
+      "name": "x is the right child of the root (the root is xp)",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@xp"},
+        {"addr": "@xp", "u32": "@xsib"},
+        {"addr": "@xp", "offset": "0x8", "u32": "@x"}
+      ]
+    },
+    {
+      "name": "x->right is the nil sentinel (corrupt tree: nil's left points to itself)",
+      "args": ["@x"],
+      "memory": [
+        {"addr": "@x", "offset": "0x8", "u32": "@nil"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 65376,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@x", "@xp", "@child", "@xsib", "@root", "@head", "@nil"]
+      }
+    ],
+    "memory": [
+      {"addr": "@head", "offset": "0x4", "type": "ptr", "choices": ["@root", "@x", "@xp", "@nil"]},
+      {"addr": "@x", "offset": "0x4", "type": "ptr", "choices": ["@xp", "@head", "@root", "@nil", "@x"]},
+      {"addr": "@x", "offset": "0x8", "type": "ptr", "choices": ["@child", "@nil", "@xsib"]},
+      {"addr": "@child", "type": "ptr", "choices": ["@childLeft", "@nil", "@xsib"]},
+      {"addr": "@xp", "type": "ptr", "choices": ["@x", "@xsib", "@nil"]},
+      {"addr": "@xp", "offset": "0x8", "type": "ptr", "choices": ["@x", "@xsib", "@nil"]}
+    ]
+  }
+}

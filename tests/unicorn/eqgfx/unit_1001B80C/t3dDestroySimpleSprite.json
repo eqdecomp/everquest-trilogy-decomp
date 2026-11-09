@@ -1,0 +1,131 @@
+{
+  "function": "t3dDestroySimpleSprite",
+  "original": "0x1001b94a",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0c", "u8": 0},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0x28", "u32": "@owner"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: no uses, not in the dictionary, memory freed",
+      "args": ["@context", "@sprite"]
+    },
+    {
+      "name": "one use left: error code, nothing touched",
+      "args": ["@context", "@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x10", "u32": 1}]
+    },
+    {
+      "name": "use count with the top bit set (unsigned compare)",
+      "args": ["@context", "@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x10", "u32": 2147483648}]
+    },
+    {
+      "name": "dictionary flag 0x01: entry removed, then freed",
+      "args": ["@context", "@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0xc", "u8": 1}]
+    },
+    {
+      "name": "keep-memory flag 0x20: not freed",
+      "args": ["@context", "@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0xc", "u8": 32}]
+    },
+    {
+      "name": "flags 0x21: entry removed, not freed",
+      "args": ["@context", "@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0xc", "u8": 33}]
+    },
+    {
+      "name": "owner count 0: decrement wraps",
+      "args": ["@context", "@sprite"],
+      "memory": [{"addr": "@owner", "offset": "0x10", "u32": 0}]
+    },
+    {
+      "name": "owner count 1 and flags 0xfe: bit 0 clear, memory freed",
+      "args": ["@context", "@sprite"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x10", "u32": 1},
+        {"addr": "@sprite", "offset": "0xc", "u8": 254}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 112970,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x10", "type": "u32", "choices": [0, 0, 0, 0, 1, 2, 2147483648]},
+      {"addr": "@sprite", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@sprite", "offset": "0x8", "type": "u32"},
+      {"addr": "@owner", "offset": "0x10", "type": "u32", "choices": [0, 1, 7, 4294967295]}
+    ]
+  }
+}

@@ -1,0 +1,471 @@
+{
+  "function": "InitializeComInterfaces_guess",
+  "original": "0x004ebd52",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "com",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "com": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt"
+        }
+      ]
+    },
+    "com2": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt2"
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@fn_qi"
+        }
+      ]
+    },
+    "vt2": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@fn_qi2"
+        }
+      ]
+    },
+    "fn_qi": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "fn_qi2": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006EFE40",
+      "u32": "0x11223344"
+    }
+  ],
+  "callees": {
+    "0x005218d4": {
+      "name": "__CxxThrowException@8",
+      "conv": "stdcall",
+      "args": [
+        "mem:4",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "@fn_qi": {
+      "name": "QueryInterface",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "mem:16",
+        "ptr"
+      ],
+      "ret": [
+        0,
+        1
+      ],
+      "writes": [
+        {
+          "arg": 2,
+          "hex": "a1b2c3d4"
+        }
+      ]
+    },
+    "@fn_qi2": {
+      "name": "QueryInterface2",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "mem:16",
+        "ptr"
+      ],
+      "ret": [
+        0,
+        0
+      ],
+      "writes": [
+        {
+          "arg": 2,
+          "hex": "55667788"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "both interfaces ok",
+      "args": [
+        "@self",
+        1,
+        "abc",
+        "@com"
+      ],
+      "callees": {
+        "@fn_qi": {
+          "name": "QueryInterface",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "mem:16",
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0
+          ],
+          "writes": [
+            {
+              "arg": 2,
+              "hex": "a1b2c3d4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "second interface fails (clears +0xC)",
+      "args": [
+        "@self",
+        0,
+        "",
+        "@com"
+      ]
+    },
+    {
+      "name": "second interface returns -1",
+      "args": [
+        "@self",
+        7,
+        "xyz",
+        "@com"
+      ],
+      "callees": {
+        "@fn_qi": {
+          "name": "QueryInterface",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "mem:16",
+            "ptr"
+          ],
+          "ret": [
+            0,
+            -2147467262
+          ],
+          "writes": [
+            {
+              "arg": 2,
+              "hex": "a1b2c3d4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "first interface fails: throw (stub returns, then continues)",
+      "args": [
+        "@self",
+        2,
+        "sound",
+        "@com"
+      ],
+      "callees": {
+        "@fn_qi": {
+          "name": "QueryInterface",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "mem:16",
+            "ptr"
+          ],
+          "ret": [
+            1,
+            0
+          ],
+          "writes": [
+            {
+              "arg": 2,
+              "hex": "a1b2c3d4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "both fail",
+      "args": [
+        "@self",
+        2,
+        "sound",
+        "@com"
+      ],
+      "callees": {
+        "@fn_qi": {
+          "name": "QueryInterface",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "mem:16",
+            "ptr"
+          ],
+          "ret": [
+            -1,
+            5
+          ],
+          "writes": [
+            {
+              "arg": 2,
+              "hex": "a1b2c3d4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "QI leaves the out pointers untouched (constructor zeroes stay)",
+      "args": [
+        "@self",
+        4,
+        "q",
+        "@com"
+      ],
+      "callees": {
+        "@fn_qi": {
+          "name": "QueryInterface",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "mem:16",
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "QI untouched, first fails",
+      "args": [
+        "@self",
+        4,
+        "q",
+        "@com"
+      ],
+      "callees": {
+        "@fn_qi": {
+          "name": "QueryInterface",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "mem:16",
+            "ptr"
+          ],
+          "ret": [
+            3,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "null com: Invalid Pointers throw (real _CxxThrowException; RaiseException smashes its return = noreturn)",
+      "args": [
+        "@self",
+        5,
+        "abc",
+        0
+      ],
+      "callees": {
+        "0x005218d4": {
+          "name": "__CxxThrowException@8",
+          "conv": "stdcall",
+          "args": [
+            "mem:4",
+            "u32"
+          ],
+          "passthrough": true
+        },
+        "kernel32.dll!RaiseException": {
+          "name": "RaiseException",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "u32",
+            "u32",
+            "mem:12"
+          ],
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 16,
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "null name: Invalid Pointers throw (noreturn)",
+      "args": [
+        "@self",
+        6,
+        0,
+        "@com"
+      ],
+      "callees": {
+        "0x005218d4": {
+          "name": "__CxxThrowException@8",
+          "conv": "stdcall",
+          "args": [
+            "mem:4",
+            "u32"
+          ],
+          "passthrough": true
+        },
+        "kernel32.dll!RaiseException": {
+          "name": "RaiseException",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "u32",
+            "u32",
+            "mem:12"
+          ],
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 16,
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "both null: Invalid Pointers throw (noreturn)",
+      "args": [
+        "@self",
+        6,
+        0,
+        0
+      ],
+      "callees": {
+        "0x005218d4": {
+          "name": "__CxxThrowException@8",
+          "conv": "stdcall",
+          "args": [
+            "mem:4",
+            "u32"
+          ],
+          "passthrough": true
+        },
+        "kernel32.dll!RaiseException": {
+          "name": "RaiseException",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "u32",
+            "u32",
+            "mem:12"
+          ],
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 16,
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "other object, both ok",
+      "args": [
+        "@self",
+        3,
+        "listener",
+        "@com2"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5160274,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "a",
+          "",
+          {
+            "from_image": "0x0056248C",
+            "image_size": 9,
+            "as": "cstr"
+          },
+          "3d"
+        ]
+      },
+      {
+        "choices": [
+          "@com",
+          "@com2"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006EFE40",
+        "type": "u32"
+      }
+    ]
+  }
+}

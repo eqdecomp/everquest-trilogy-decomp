@@ -1,0 +1,111 @@
+{
+  "function": "UnitDeleteChildren_guess",
+  "original": "0x10025a00",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "record",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "Ghidra's decompiler signature is void and the only caller (FUN_100259e0, call at 100259E3) does not read EAX after the call; EAX at each RET is only the count the loop last read from +4 (a register leftover, not a return value)",
+  "objects": {
+    "record": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 2},
+        {"offset": "0x8", "u32": "@array"},
+        {"offset": "0xc", "u32": 7}
+      ]
+    },
+    "array": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@childA"},
+        {"offset": "0x4", "u32": "@childB"}
+      ]
+    },
+    "childA": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "@vtable"}]},
+    "childB": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "@vtable"}]},
+    "childC": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "@vtable"}]},
+    "vtable": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "@destroy"}]},
+    "destroy": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "@destroy": {"conv": "thiscall", "args": ["int"]}
+  },
+  "cases": [
+    {
+      "name": "typical: two children",
+      "args": ["@record"]
+    },
+    {
+      "name": "count zero",
+      "args": ["@record"],
+      "memory": [{"addr": "@record", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "count negative",
+      "args": ["@record"],
+      "memory": [{"addr": "@record", "offset": "0x4", "u32": "0xfffffffd"}]
+    },
+    {
+      "name": "array null",
+      "args": ["@record"],
+      "memory": [{"addr": "@record", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "null element skipped",
+      "args": ["@record"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u32": 3},
+        {"addr": "@array", "offset": "0x0", "u32": 0},
+        {"addr": "@array", "offset": "0x8", "u32": "@childC"}
+      ]
+    },
+    {
+      "name": "one child",
+      "args": ["@record"],
+      "memory": [{"addr": "@record", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "count re-read after call (callee sets count to 1)",
+      "args": ["@record"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u32": 3},
+        {"addr": "@array", "offset": "0x8", "u32": "@childC"}
+      ],
+      "callees": {
+        "@destroy": {"conv": "thiscall", "args": ["int"], "writes": [{"addr": "@record+0x4", "hex": "01000000"}]}
+      }
+    },
+    {
+      "name": "array re-read after call (callee clears the next slot)",
+      "args": ["@record"],
+      "callees": {
+        "@destroy": {"conv": "thiscall", "args": ["int"], "writes": [{"addr": "@array+0x4", "hex": "00000000"}]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 154112,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@record"]
+      }
+    ],
+    "memory": [
+      {"addr": "@record", "offset": "0x4", "type": "int", "range": [-3, 5]},
+      {"addr": "@record", "offset": "0x8", "type": "ptr", "choices": ["@array", "@array", "0x0"]},
+      {"addr": "@array", "type": "ptr", "count": 6, "choices": ["@childA", "@childB", "@childC", "0x0"]}
+    ]
+  }
+}

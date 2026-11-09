@@ -1,0 +1,709 @@
+{
+  "function": "s3dDecodePVSForRegion",
+  "original": "0x10020094",
+  "sources": [
+    "src/eqgfx/unit_1001E0E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x368",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": 4},
+        {"offset": "0x24", "u32": "@regions"},
+        {"offset": "0x334", "u32": 4},
+        {"offset": "0x33c", "u32": "@visible"},
+        {"offset": "0x340", "u32": 255}
+      ]
+    },
+    "regions": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@regionA"},
+        {"offset": "0x4", "u32": "@regionA"},
+        {"offset": "0x8", "u32": "@regionA"},
+        {"offset": "0xc", "u32": "@regionA"},
+        {"offset": "0x10", "u32": "@regionA"},
+        {"offset": "0x14", "u32": "@regionA"},
+        {"offset": "0x18", "u32": "@regionA"},
+        {"offset": "0x1c", "u32": "@regionA"},
+        {"offset": "0x20", "u32": "@regionB"},
+        {"offset": "0x24", "u32": "@regionB"},
+        {"offset": "0x28", "u32": "@regionB"},
+        {"offset": "0x2c", "u32": "@regionB"},
+        {"offset": "0x30", "u32": "@regionB"},
+        {"offset": "0x34", "u32": "@regionB"},
+        {"offset": "0x38", "u32": "@regionB"},
+        {"offset": "0x3c", "u32": "@regionB"}
+      ]
+    },
+    "regionA": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": "@pvsA"}
+      ]
+    },
+    "regionB": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": "@pvsB"}
+      ]
+    },
+    "pvsA": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@blobA"},
+        {"offset": "0x18", "u32": 1}
+      ]
+    },
+    "pvsB": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@blobB"},
+        {"offset": "0x18", "u32": 0}
+      ]
+    },
+    "blobA": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 8},
+        {"offset": "0x4", "u32": "@codesA"}
+      ]
+    },
+    "blobB": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 2},
+        {"offset": "0x4", "u32": "@codesB"}
+      ]
+    },
+    "codesA": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "hex": "03000341058104c00040008000c00000"}
+      ]
+    },
+    "codesB": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "hex": "02000900"}
+      ]
+    },
+    "visible": {
+      "size": "0x4000",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@visible"
+    },
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": "@visible"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: mode 1 skip, runs, zero-length tokens of each tag",
+      "args": [
+        "@world",
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 1 empty stream",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@blobA",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 2: 0x3f skips a 16-bit count and ends the stream",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 2
+        },
+        {
+          "addr": "@blobA",
+          "u32": 3
+        },
+        {
+          "addr": "@codesA",
+          "hex": "3f0500"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 2: 0xff emits a 16-bit run",
+      "args": [
+        "@world",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 2
+        },
+        {
+          "addr": "@blobA",
+          "u32": 3
+        },
+        {
+          "addr": "@codesA",
+          "hex": "ff0300"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 2: 0xff with a zero run",
+      "args": [
+        "@world",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 2
+        },
+        {
+          "addr": "@blobA",
+          "u32": 3
+        },
+        {
+          "addr": "@codesA",
+          "hex": "ff0000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 2: byte tokens of every class, zero and non-zero",
+      "args": [
+        "@world",
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 2
+        },
+        {
+          "addr": "@blobA",
+          "u32": 10
+        },
+        {
+          "addr": "@codesA",
+          "hex": "424887c3c080a8407f00"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 2: a 0x3f skip moves the next run",
+      "args": [
+        "@world",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 2
+        },
+        {
+          "addr": "@blobA",
+          "u32": 6
+        },
+        {
+          "addr": "@codesA",
+          "hex": "3f2301ff0100"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 2: a 0xff run with the stream continuing after it",
+      "args": [
+        "@world",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 2
+        },
+        {
+          "addr": "@blobA",
+          "u32": 6
+        },
+        {
+          "addr": "@codesA",
+          "hex": "ff0100420000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other encoding: region inside the sorted list",
+      "args": [
+        "@world",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "addr": "@blobA",
+          "u32": 4
+        },
+        {
+          "addr": "@codesA",
+          "hex": "0100030005000800"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other encoding: list ends below the region",
+      "args": [
+        "@world",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "addr": "@blobA",
+          "u32": 3
+        },
+        {
+          "addr": "@codesA",
+          "hex": "010003000500"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other encoding: list entry equal to the region is kept twice",
+      "args": [
+        "@world",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "addr": "@blobA",
+          "u32": 3
+        },
+        {
+          "addr": "@codesA",
+          "hex": "020004000600"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other encoding: empty list gives the region alone",
+      "args": [
+        "@world",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@pvsA",
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "addr": "@blobA",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "region 12 reads the second region table entry",
+      "args": [
+        "@world",
+        12
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no visible list yet: allocate, capacity becomes the region count",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x33c",
+          "u32": 0
+        },
+        {
+          "addr": "@world",
+          "offset": "0x334",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no visible list yet and the allocation fails",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x33c",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "no visible list and no regions: allocate zero bytes",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x33c",
+          "u32": 0
+        },
+        {
+          "addr": "@world",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation ignores the cached region",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x33c",
+          "u32": 0
+        },
+        {
+          "addr": "@world",
+          "offset": "0x340",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "cached region: nothing is decoded",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x340",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity below the region count: reallocate",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x334",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity below the region count and the reallocation fails",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x334",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "capacity above the region count: no reallocation",
+      "args": [
+        "@world",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x334",
+          "u32": 9
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1020094,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "range": [
+          0,
+          15
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@world",
+        "offset": "0x18",
+        "type": "u32",
+        "range": [
+          0,
+          16
+        ]
+      },
+      {
+        "addr": "@world",
+        "offset": "0x334",
+        "type": "u32",
+        "range": [
+          0,
+          16
+        ]
+      },
+      {
+        "addr": "@world",
+        "offset": "0x33c",
+        "type": "ptr",
+        "choices": [
+          "@visible",
+          0
+        ]
+      },
+      {
+        "addr": "@world",
+        "offset": "0x340",
+        "type": "u32",
+        "range": [
+          0,
+          15
+        ]
+      },
+      {
+        "addr": "@pvsA",
+        "offset": "0x18",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          7
+        ]
+      },
+      {
+        "addr": "@blobA",
+        "offset": "0x0",
+        "type": "int",
+        "range": [
+          0,
+          16
+        ]
+      },
+      {
+        "addr": "@codesA",
+        "type": "u8",
+        "count": 32,
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          5,
+          7,
+          8,
+          15,
+          16,
+          31,
+          32,
+          42,
+          62,
+          64,
+          65,
+          70,
+          72,
+          79,
+          80,
+          81,
+          87,
+          88,
+          127,
+          128,
+          129,
+          135,
+          136,
+          158,
+          160,
+          170,
+          190,
+          191
+        ]
+      }
+    ]
+  }
+}

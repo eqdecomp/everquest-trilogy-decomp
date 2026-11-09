@@ -1,0 +1,118 @@
+{
+  "function": "t3dRemoveElementFromReferenceList",
+  "original": "0x10019179",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "list",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "list": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 5},
+        {"offset": "0x8", "u32": 16},
+        {"offset": "0xc", "u32": "@references"}
+      ]
+    },
+    "references": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": 101},
+        {"offset": "0x04", "u32": 102},
+        {"offset": "0x08", "u32": 103},
+        {"offset": "0x0c", "u32": 104},
+        {"offset": "0x10", "u32": 105},
+        {"offset": "0x14", "u32": 106},
+        {"offset": "0x18", "u32": 107},
+        {"offset": "0x1c", "u32": 108}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10067d30": {"name": "memcpy", "args": ["ptr", "ptr", "u32"], "passthrough": true}
+  },
+  "cases": [
+    {
+      "name": "first reference of five",
+      "args": [0, "@list"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "middle reference of five",
+      "args": [2, "@list"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last reference of five",
+      "args": [4, "@list"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two references, remove first",
+      "args": [0, "@list"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "single reference",
+      "args": [0, "@list"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index equals count",
+      "args": [5, "@list"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index past count",
+      "args": [6, "@list"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 3}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "empty list",
+      "args": [0, "@list"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "huge index on small list",
+      "args": ["0xffffffff", "@list"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "last reference of sixteen",
+      "args": [15, "@list"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 16}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 102777,
+    "count": 40,
+    "args": [
+      {"range": [-4, 18]},
+      {"choices": ["@list"]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x4", "type": "u32", "range": [0, 18]},
+      {"addr": "@references", "type": "u32", "count": 16}
+    ]
+  }
+}

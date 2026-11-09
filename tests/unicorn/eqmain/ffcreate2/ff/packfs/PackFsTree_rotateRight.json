@@ -1,0 +1,259 @@
+{
+  "function": "PackFsTree_rotateRight_guess",
+  "original": "0x1000ffc0",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    },
+    {
+      "name": "x",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@head"}
+      ]
+    },
+    "head": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "root": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@head"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "parent": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@sibling"},
+        {"offset": "0x4", "u32": "@root"},
+        {"offset": "0x8", "u32": "@x"}
+      ]
+    },
+    "x": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@child"},
+        {"offset": "0x4", "u32": "@parent"},
+        {"offset": "0x8", "u32": "@xright"}
+      ]
+    },
+    "child": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@cleft"},
+        {"offset": "0x4", "u32": "@x"},
+        {"offset": "0x8", "u32": "@grand"}
+      ]
+    },
+    "grand": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@child"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "cleft": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@child"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "xright": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@x"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "sibling": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@parent"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "nilnode": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nilnode"},
+        {"offset": "0x4", "u32": "@nilnode"},
+        {"offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    "altnil": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@altnil"},
+        {"offset": "0x4", "u32": "@altnil"},
+        {"offset": "0x8", "u32": "@altnil"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1004cf14", "u32": "@nilnode"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: x is its parent's right child, child has a right grandchild",
+      "args": ["@self", 1, "@x"]
+    },
+    {
+      "name": "zero edx (unused register)",
+      "args": ["@self", 0, "@x"]
+    },
+    {
+      "name": "x is the root (head->parent == x)",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@x"}
+      ]
+    },
+    {
+      "name": "root whose parent link is the head",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@x"},
+        {"addr": "@x", "offset": "0x4", "u32": "@head"}
+      ]
+    },
+    {
+      "name": "x is the left child of its parent",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@parent", "offset": "0x0", "u32": "@x"},
+        {"addr": "@parent", "offset": "0x8", "u32": "@sibling"}
+      ]
+    },
+    {
+      "name": "x is neither child of its parent",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@parent", "offset": "0x0", "u32": "@sibling"},
+        {"addr": "@parent", "offset": "0x8", "u32": "@sibling"}
+      ]
+    },
+    {
+      "name": "child has no right grandchild",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@child", "offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    {
+      "name": "root with a childless left child",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@x"},
+        {"addr": "@child", "offset": "0x8", "u32": "@nilnode"}
+      ]
+    },
+    {
+      "name": "child is its own right child (grandchild write aliases child->parent)",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@child", "offset": "0x8", "u32": "@child"}
+      ]
+    },
+    {
+      "name": "x is its own left child",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@x", "offset": "0x0", "u32": "@x"}
+      ]
+    },
+    {
+      "name": "right grandchild is the head (write aliases head->parent before the root test)",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@child", "offset": "0x8", "u32": "@head"}
+      ]
+    },
+    {
+      "name": "x's parent is the nil sentinel",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@x", "offset": "0x4", "u32": "@nilnode"}
+      ]
+    },
+    {
+      "name": "x's parent is the head",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@x", "offset": "0x4", "u32": "@head"}
+      ]
+    },
+    {
+      "name": "x has no left child",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "@x", "offset": "0x0", "u32": "@nilnode"}
+      ]
+    },
+    {
+      "name": "nil sentinel is a different object from the child's right link",
+      "args": ["@self", 1, "@x"],
+      "memory": [
+        {"addr": "0x1004cf14", "u32": "@altnil"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5173,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": ["@x", "@child", "@parent", "@root", "@grand", "@xright", "@sibling", "@cleft", "@nilnode", "@altnil"]}
+    ],
+    "memory": [
+      {"addr": "@head", "offset": "0x4", "type": "ptr", "choices": ["@x", "@root", "@parent", "@child", "@nilnode", "@head"]},
+      {"addr": "@x", "offset": "0x0", "type": "ptr", "choices": ["@child", "@grand", "@cleft", "@xright", "@nilnode", "@x"]},
+      {"addr": "@x", "offset": "0x4", "type": "ptr", "choices": ["@parent", "@root", "@head", "@nilnode", "@x", "@child"]},
+      {"addr": "@x", "offset": "0x8", "type": "ptr", "choices": ["@xright", "@nilnode", "@x"]},
+      {"addr": "@child", "offset": "0x8", "type": "ptr", "choices": ["@grand", "@nilnode", "@child", "@x", "@head", "@root"]},
+      {"addr": "@parent", "offset": "0x0", "type": "ptr", "choices": ["@x", "@sibling", "@nilnode", "@parent"]},
+      {"addr": "@parent", "offset": "0x8", "type": "ptr", "choices": ["@x", "@sibling", "@nilnode", "@parent"]},
+      {"addr": "0x1004cf14", "type": "ptr", "choices": ["@nilnode", "@altnil"], "p": 0.5}
+    ]
+  }
+}

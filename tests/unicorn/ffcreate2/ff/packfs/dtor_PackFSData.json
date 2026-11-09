@@ -1,0 +1,185 @@
+{
+  "function": "PackFSData_guess::~PackFSData_guess",
+  "original": "0x004dd8f0",
+  "sources": [
+    "src/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfsdata",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "packfsdata": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x11223344"
+        },
+        {
+          "offset": "0x4",
+          "u32": "0x7fffffff"
+        },
+        {
+          "offset": "0x8",
+          "u32": "0x12345678"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x004c4813": {
+      "name": "decrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": []
+    },
+    {
+      "name": "null_data",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@packfsdata",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "low_boundary_data",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@packfsdata",
+          "offset": "0x4",
+          "u32": 2
+        },
+        {
+          "addr": "@packfsdata",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "high_boundary_data",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@packfsdata",
+          "offset": "0x4",
+          "u32": "0x7fffffff"
+        },
+        {
+          "addr": "@packfsdata",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "distinct_ordering_witness",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@packfsdata",
+          "offset": "0x0",
+          "u32": "0xdeadbeef"
+        },
+        {
+          "addr": "@packfsdata",
+          "offset": "0x4",
+          "u32": 3
+        },
+        {
+          "addr": "@packfsdata",
+          "offset": "0x8",
+          "u32": "0x76543210"
+        }
+      ]
+    },
+    {
+      "name": "null this faults on the first store, before any field is read",
+      "this": "0x0",
+      "args": []
+    },
+    {
+      "name": "data aliases this: delete receives the object's own address",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@packfsdata",
+          "offset": "0x8",
+          "u32": "@packfsdata"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5101808,
+    "count": 32,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@packfsdata",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@packfsdata",
+        "offset": "0x4",
+        "type": "int",
+        "range": [
+          2,
+          100000
+        ]
+      },
+      {
+        "addr": "@packfsdata",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

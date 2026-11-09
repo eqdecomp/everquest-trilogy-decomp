@@ -1,0 +1,92 @@
+{
+  "function": "CXWnd_BringChildWndToTop_guess",
+  "original": "0x004e2058",
+  "sources": ["src/Suite/Suite/XWnd.cpp"],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "float",
+  "objects": {
+    "player": {"size": "0x100", "fill": "random"},
+    "info": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006E4D8C", "u32": "@player"},
+    {"addr": "0x0053510C", "f32": 0.0},
+    {"addr": "@player", "offset": "0x70", "u32": "@info"},
+    {"addr": "@info", "offset": "0x48", "f32": 10.0},
+    {"addr": "@info", "offset": "0x4c", "f32": 25.5}
+  ],
+  "callees": {},
+  "cases": [
+    {"name": "positive difference returned as is"},
+    {
+      "name": "negative difference is negated",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "f32": 25.5},
+        {"addr": "@info", "offset": "0x4c", "f32": 10.0}
+      ]
+    },
+    {
+      "name": "equal values give zero",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "f32": 7.25},
+        {"addr": "@info", "offset": "0x4c", "f32": 7.25}
+      ]
+    },
+    {
+      "name": "tiny negative difference",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "f32": 1.0},
+        {"addr": "@info", "offset": "0x4c", "f32": 0.99999994}
+      ]
+    },
+    {
+      "name": "both negative, result positive",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "f32": -3.0},
+        {"addr": "@info", "offset": "0x4c", "f32": -8.0}
+      ]
+    },
+    {
+      "name": "NaN is unordered so it is negated",
+      "memory": [{"addr": "@info", "offset": "0x4c", "hex": "0000c07f"}]
+    },
+    {
+      "name": "infinite difference",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "hex": "0000807f"},
+        {"addr": "@info", "offset": "0x4c", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "inf minus inf is NaN",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "hex": "0000807f"},
+        {"addr": "@info", "offset": "0x4c", "hex": "0000807f"}
+      ]
+    },
+    {
+      "name": "zero and negative zero",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "hex": "00000080"},
+        {"addr": "@info", "offset": "0x4c", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "difference exceeding float range is kept in extended precision",
+      "memory": [
+        {"addr": "@info", "offset": "0x48", "f32": 3.0e38},
+        {"addr": "@info", "offset": "0x4c", "f32": -3.0e38}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5120088,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@info", "offset": "0x48", "type": "float", "range": [-100, 100]},
+      {"addr": "@info", "offset": "0x4c", "type": "float", "range": [-100, 100]}
+    ]
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "function": "list3_free_all_guess",
+  "original": "0x10028480",
+  "sources": [
+    "src/eqmain/unit_10028340.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "list",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "list": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "n0": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x8", "u32": "@n1"}
+      ]
+    },
+    "n1": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@n0"},
+        {"offset": "0x8", "u32": "@n2"}
+      ]
+    },
+    "n2": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@n1"},
+        {"offset": "0x8", "u32": 0}
+      ]
+    },
+    "n3": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x8", "u32": 0}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10028430": {
+      "name": "list3_unlink_free_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "passthrough": true
+    },
+    "0x10033568": {
+      "name": "free_node_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["int", "int", "ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "empty",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": 0},
+        {"addr": "@list", "offset": "0x4", "u32": 0},
+        {"addr": "@list", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "single node alone",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": "@n3"},
+        {"addr": "@list", "offset": "0x4", "u32": "@n3"},
+        {"addr": "@list", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "single node at head",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": "@n0"},
+        {"addr": "@list", "offset": "0x4", "u32": "@n2"},
+        {"addr": "@list", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "single node at tail",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": "@n2"},
+        {"addr": "@list", "offset": "0x4", "u32": "@n2"},
+        {"addr": "@list", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "typical chain",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": "@n0"},
+        {"addr": "@list", "offset": "0x4", "u32": "@n2"},
+        {"addr": "@list", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "count stops before tail",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": "@n0"},
+        {"addr": "@list", "offset": "0x4", "u32": "@n2"},
+        {"addr": "@list", "offset": "0x8", "u32": 2}
+      ]
+    },
+    {
+      "name": "from middle, stale head",
+      "args": ["@list"],
+      "memory": [
+        {"addr": "@list", "u32": "@n1"},
+        {"addr": "@list", "offset": "0x4", "u32": "@n2"},
+        {"addr": "@list", "offset": "0x8", "u32": 2}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 164992,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@list"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x0", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3"]},
+      {"addr": "@list", "offset": "0x4", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3"]},
+      {"addr": "@list", "offset": "0x8", "type": "int", "range": [0, 1]},
+      {"addr": "@n0", "offset": "0x0", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n0", "offset": "0x8", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n1", "offset": "0x0", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n1", "offset": "0x8", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n2", "offset": "0x0", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n2", "offset": "0x8", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n3", "offset": "0x0", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]},
+      {"addr": "@n3", "offset": "0x8", "type": "ptr", "choices": ["@n0", "@n1", "@n2", "@n3", 0]}
+    ]
+  }
+}

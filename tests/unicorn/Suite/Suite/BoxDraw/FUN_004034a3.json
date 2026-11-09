@@ -1,0 +1,149 @@
+{
+  "function": "ReallocateAndInsertFillArray_guess",
+  "original": "0x004034a3",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "array", "type": "ptr"},
+    {"name": "edxDummy", "type": "ptr"},
+    {"name": "source", "type": "ptr"},
+    {"name": "value", "type": "ptr"},
+    {"name": "requestedCount", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "array": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@old"},
+        {"offset": "0x4", "u32": "@old+0x10"},
+        {"offset": "0x8", "u32": "@old+0x20"}
+      ]
+    },
+    "old": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0x11111111"},
+        {"offset": "0x4", "u32": "0x22222222"},
+        {"offset": "0x8", "u32": "0x33333333"},
+        {"offset": "0xc", "u32": "0x44444444"},
+        {"offset": "0x10", "u32": "0x55555555"},
+        {"offset": "0x14", "u32": "0x66666666"},
+        {"offset": "0x18", "u32": "0x77777777"},
+        {"offset": "0x1c", "u32": "0x88888888"}
+      ]
+    },
+    "newbuf": {"size": "0x1000", "fill": "zero"},
+    "value": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "0xa5a5a5a5"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x0058fb58", "size": 64, "fill": "zero"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x00401366": {"name": "pool_alloc_guess", "conv": "cdecl", "args": ["u32"], "ret": "@newbuf"},
+    "0x004016c4": {"name": "copy_dwords_guess", "conv": "cdecl", "args": ["ptr", "ptr", "ptr", "u32", "int"], "passthrough": true},
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {
+      "name": "zero count, null storage avoids free",
+      "args": ["@array", 0, 0, "@value", 0],
+      "memory": [
+        {"addr": "@array", "offset": "0x0", "u32": 0},
+        {"addr": "@array", "offset": "0x4", "u32": 0},
+        {"addr": "@array", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero count with allocated empty old buffer",
+      "args": ["@array", 0, "@old", "@value", 0],
+      "memory": [
+        {"addr": "@array", "offset": "0x4", "u32": "@old"},
+        {"addr": "@array", "offset": "0x8", "u32": "@old+0x20"}
+      ]
+    },
+    {
+      "name": "one inserted into empty array, special branch",
+      "args": ["@array", 0, "@old", "@value", 1],
+      "memory": [
+        {"addr": "@array", "offset": "0x4", "u32": "@old"},
+        {"addr": "@array", "offset": "0x8", "u32": "@old+0x20"}
+      ]
+    },
+    {
+      "name": "one inserted with one old item and suffix",
+      "args": ["@array", 0, "@old+0x4", "@value", 1],
+      "memory": [
+        {"addr": "@array", "offset": "0x4", "u32": "@old+0x4"},
+        {"addr": "@array", "offset": "0x8", "u32": "@old+0x20"}
+      ]
+    },
+    {
+      "name": "requested zero grows to old count and inserts before all",
+      "args": ["@array", 0, "@old", "@value", 0]
+    },
+    {
+      "name": "request equals old count, middle prefix and suffix ordering",
+      "args": ["@array", 0, "@old+0x8", "@value", 4]
+    },
+    {
+      "name": "request exceeds old count, inserts five in middle",
+      "args": ["@array", 0, "@old+0x8", "@value", 5]
+    },
+    {
+      "name": "request smaller than old count rounds up to old count",
+      "args": ["@array", 0, "@old+0xc", "@value", 2]
+    },
+    {
+      "name": "source at end copies all prefix and no suffix",
+      "args": ["@array", 0, "@old+0x10", "@value", 3]
+    },
+    {
+      "name": "128 byte old capacity returns to pool list 15",
+      "args": ["@array", 0, "@old+0x4", "@value", 1],
+      "memory": [{"addr": "@array", "offset": "0x8", "u32": "@old+0x20"}]
+    },
+    {
+      "name": "132 byte old capacity uses operator delete",
+      "args": ["@array", 0, "@old+0x4", "@value", 1],
+      "memory": [{"addr": "@array", "offset": "0x8", "u32": "@old+0x21"}]
+    },
+    {
+      "name": "old buffer at 124 byte pool boundary",
+      "args": ["@array", 0, "@old+0x10", "@value", 6],
+      "memory": [{"addr": "@array", "offset": "0x8", "u32": "@old+0x1f"}]
+    },
+    {
+      "name": "old capacity well over pool threshold",
+      "args": ["@array", 0, "@old+0x8", "@value", 3],
+      "memory": [{"addr": "@array", "offset": "0x8", "u32": "@old+0x40"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4207779,
+    "count": 40,
+    "args": [
+      {"choices": ["@array"]},
+      {"choices": [0]},
+      {"choices": ["@old", "@old+0x4", "@old+0x8", "@old+0xc", "@old+0x10"]},
+      {"choices": ["@value"]},
+      {"range": [0, 8]}
+    ],
+    "memory": [
+      {"addr": "@old", "type": "u32", "count": 8},
+      {"addr": "@value", "type": "u32"},
+      {"addr": "@array", "offset": "0x8", "type": "ptr", "choices": ["@old+0x20", "@old+0x21", "@old+0x40"]},
+      {"addr": "0x0058fb58", "type": "u32", "count": 16}
+    ]
+  }
+}

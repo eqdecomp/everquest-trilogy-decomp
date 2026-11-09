@@ -1,0 +1,465 @@
+{
+  "function": "EQ_Character_FallDamage_guess::TakeFallDamage",
+  "original": "0x0042444c",
+  "rewrite": "EQ_Character_FallDamage_guess::TakeFallDamage",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_character",
+  "args": [
+    {
+      "name": "verticalVelocity",
+      "type": "float"
+    }
+  ],
+  "ret": "short",
+  "objects": {
+    "eq_character": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xa0",
+          "u32": "@spawn"
+        },
+        {
+          "offset": "0x9ef",
+          "u8": 0
+        }
+      ]
+    },
+    "spawn": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x54",
+          "f32": 1.25
+        },
+        {
+          "offset": "0x80",
+          "u32": 4660
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00535224",
+      "from_image": "0x00535224",
+      "image_size": 4
+    },
+    {
+      "addr": "0x00535198",
+      "from_image": "0x00535198",
+      "image_size": 4
+    },
+    {
+      "addr": "0x0053536c",
+      "from_image": "0x0053536C",
+      "image_size": 4
+    },
+    {
+      "addr": "0x0053510c",
+      "f32": 0.0
+    },
+    {
+      "addr": "0x00535124",
+      "from_image": "0x00535124",
+      "image_size": 4
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x0041bc98": {
+      "name": "EQ_Character::cur_encumbrance",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    },
+    "0x004246a9": {
+      "name": "EQ_Character::HasSkillPassthrough_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004a3d01": {
+      "name": "EQTRACE_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int",
+        "double",
+        "double",
+        "double",
+        "double",
+        "double"
+      ],
+      "ret": 0
+    },
+    "0x004247f0": {
+      "name": "EQ_Character::ApplyDamage_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "mem:36",
+        "int",
+        "int"
+      ],
+      "ret": 305419896
+    }
+  },
+  "rewrite_aliases": {
+    "__ftol": "0x004ef0cf"
+  },
+  "cases": [
+    {
+      "name": "adjusted velocity exactly zero returns without damage",
+      "args": [
+        1.5
+      ]
+    },
+    {
+      "name": "negative adjusted velocity returns without damage",
+      "args": [
+        -4.0
+      ]
+    },
+    {
+      "name": "small positive value truncates to zero damage",
+      "args": [
+        1.6
+      ]
+    },
+    {
+      "name": "lower-bound comparison reads the exact threshold address",
+      "args": [
+        1.9
+      ],
+      "memory": [
+        {
+          "addr": "0x0053510b",
+          "u8": 0
+        },
+        {
+          "addr": "0x0053510c",
+          "hex": "00003f00"
+        }
+      ]
+    },
+    {
+      "name": "positive damage reaches trace and ApplyDamage",
+      "args": [
+        2.5
+      ]
+    },
+    {
+      "name": "packet copies the current spawn id and zeroes its damage modifiers",
+      "args": [
+        4.5
+      ],
+      "objects": {
+        "spawn": {
+          "init": [
+            {
+              "offset": "0x80",
+              "u32": 4042322160
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "integer damage truncates the converted float result",
+      "args": [
+        3.0
+      ]
+    },
+    {
+      "name": "damage skill succeeds with zero stored skill and still sends message",
+      "args": [
+        2.5
+      ],
+      "objects": {
+        "eq_character": {
+          "init": [
+            {
+              "offset": "0x9ef",
+              "u8": 0
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004246a9": {
+          "name": "EQ_Character::HasSkillPassthrough_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "skill reduction to zero sends message and returns without applying damage",
+      "args": [
+        2.5
+      ],
+      "objects": {
+        "eq_character": {
+          "init": [
+            {
+              "offset": "0x9ef",
+              "u8": 10
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004246a9": {
+          "name": "EQ_Character::HasSkillPassthrough_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "skill reduces but does not eliminate damage",
+      "args": [
+        4.5
+      ],
+      "objects": {
+        "eq_character": {
+          "init": [
+            {
+              "offset": "0x9ef",
+              "u8": 10
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004246a9": {
+          "name": "EQ_Character::HasSkillPassthrough_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "damage threshold is inclusive at adjusted velocity nine",
+      "args": [
+        10.5
+      ]
+    },
+    {
+      "name": "high damage branch fixes damage at ten thousand",
+      "args": [
+        20.0
+      ]
+    },
+    {
+      "name": "damage cap bypasses the skill reduction and message call",
+      "args": [
+        20.0
+      ],
+      "objects": {
+        "eq_character": {
+          "init": [
+            {
+              "offset": "0x9ef",
+              "u8": 1
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004246a9": {
+          "name": "EQ_Character::HasSkillPassthrough_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "positive encumbrance changes the adjusted velocity",
+      "args": [
+        -7.5
+      ],
+      "callees": {
+        "0x0041bc98": {
+          "ret": 1000
+        }
+      }
+    },
+    {
+      "name": "negative encumbrance changes the adjusted velocity",
+      "args": [
+        12.5
+      ],
+      "callees": {
+        "0x0041bc98": {
+          "ret": -1000
+        }
+      }
+    },
+    {
+      "name": "just below the nine threshold stays on calculated damage path",
+      "args": [
+        10.499
+      ]
+    },
+    {
+      "name": "just above the nine threshold takes the fixed damage branch",
+      "args": [
+        10.501
+      ]
+    },
+    {
+      "name": "skill leaves one point and still applies damage",
+      "args": [
+        2.5
+      ],
+      "objects": {
+        "eq_character": {
+          "init": [
+            {
+              "offset": "0x9ef",
+              "u8": 9
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004246a9": {
+          "name": "EQ_Character::HasSkillPassthrough_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "maximum byte skill value removes damage",
+      "args": [
+        2.5
+      ],
+      "objects": {
+        "eq_character": {
+          "init": [
+            {
+              "offset": "0x9ef",
+              "u8": 255
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004246a9": {
+          "name": "EQ_Character::HasSkillPassthrough_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "nonzero spawn vertical speed is included in trace values",
+      "args": [
+        4.5
+      ],
+      "objects": {
+        "spawn": {
+          "init": [
+            {
+              "offset": "0x54",
+              "f32": -3.75
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4342860,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          -20.0,
+          -1.5,
+          0.0,
+          1.5,
+          1.5001,
+          1.6,
+          2.0,
+          2.5,
+          3.0,
+          4.5,
+          8.0,
+          10.499,
+          10.5,
+          12.0,
+          20.0,
+          80.0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@eq_character",
+        "offset": "0x9ef",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          9,
+          10,
+          30,
+          255
+        ]
+      },
+      {
+        "addr": "@spawn",
+        "offset": "0x54",
+        "type": "float",
+        "range": [
+          -50,
+          50
+        ]
+      }
+    ]
+  }
+}

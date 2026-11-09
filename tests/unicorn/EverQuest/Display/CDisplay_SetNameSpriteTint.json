@@ -1,0 +1,179 @@
+{
+  "function": "CDisplay_SetNameSpriteTint_guess",
+  "original": "0x00411ee6",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "stdcall",
+  "args": [{"name": "param_1", "type": "ptr"}],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [{"offset": "0x70", "u32": "@actor_info"}]
+    },
+    "actor_info": {
+      "size": "0x260",
+      "fill": "random",
+      "init": [
+        {"offset": "0x254", "u32": "@dag_a"},
+        {"offset": "0x25c", "u32": "@dag_b"}
+      ]
+    },
+    "dag_a": {"size": 4},
+    "dag_b": {"size": 4},
+    "sprite_ok": {"size": 4, "fill": "zero", "init": [{"offset": 0, "u32": 81}]},
+    "sprite_wrong": {"size": 4, "fill": "zero", "init": [{"offset": 0, "u32": 80}]},
+    "getDagFn": {"size": 4},
+    "tintFn": {"size": 4},
+    "other": {"size": 4}
+  },
+  "memory": [
+    {"addr": "0x006e52b8", "u32": "@getDagFn"},
+    {"addr": "0x006e514c", "u32": "@tintFn"},
+    {"addr": "0x006b7108", "u32": 1},
+    {"addr": "0x006e4dac", "u32": "@other"},
+    {"addr": "0x005917dc", "u32": 0}
+  ],
+  "callees": {
+    "@getDagFn": {
+      "name": "t3dGetDagSprite",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@sprite_ok", "@sprite_ok"]
+    },
+    "@tintFn": {
+      "name": "s3dSetStringSpriteTint",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:3"],
+      "ret": 0
+    },
+    "0x004b4868": {
+      "name": "EQPlayer::IsRoleplaying_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "null player", "args": [0]},
+    {"name": "null actor info", "args": ["@param_1"], "memory": [{"addr": "@param_1", "offset": "0x70", "u32": 0}]},
+    {"name": "null primary dag", "args": ["@param_1"], "memory": [{"addr": "@actor_info", "offset": "0x254", "u32": 0}]},
+    {"name": "primary sprite missing", "args": ["@param_1"], "callees": {"@getDagFn": {"name": "t3dGetDagSprite", "conv": "cdecl", "args": ["ptr"], "ret": 0}}},
+    {"name": "primary sprite wrong type", "args": ["@param_1"], "callees": {"@getDagFn": {"name": "t3dGetDagSprite", "conv": "cdecl", "args": ["ptr"], "ret": "@sprite_wrong"}}},
+    {"name": "gm player tint", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0xf1", "u8": 1},
+      {"addr": "@param_1", "offset": "0x98", "u8": 0}, {"addr": "@param_1", "offset": "0xfc", "u32": 0}
+    ]},
+    {"name": "npc tint wins over gm", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0xf1", "u8": 1},
+      {"addr": "@param_1", "offset": "0x98", "u8": 1}, {"addr": "@param_1", "offset": "0xfc", "u32": 0}
+    ]},
+    {"name": "anon suppresses gm tint", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0xf1", "u8": 1},
+      {"addr": "@param_1", "offset": "0x98", "u8": 0}, {"addr": "@param_1", "offset": "0xfc", "u32": 1}
+    ]},
+    {"name": "pvp not roleplaying", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 1}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": 0}}},
+    {"name": "pvp roleplaying", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 1}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "roleplay mode zero", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 0}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "roleplay mode four second call", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 4}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": [0, 1]}}},
+    {"name": "ordinary player color", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 1}
+    ]},
+    {"name": "roleplay first mode address", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 16777216},
+      {"addr": "0x006b7107", "u8": 0}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "roleplay second mode address", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 0},
+      {"addr": "0x006b7107", "u8": 4}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": [0, 1]}}},
+    {"name": "mode two race five", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 5}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 2}
+    ]},
+    {"name": "mode two race eight", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 8}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 2}
+    ]},
+    {"name": "mode two race one", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 1}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 2}
+    ]},
+    {"name": "mode two unlisted race", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 2}
+    ]},
+    {"name": "mode two race nine", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 9}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 2}
+    ]},
+    {"name": "race f3 lower boundary", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 243}, {"addr": "@param_1", "offset": "0x98", "u8": 0},
+      {"addr": "@param_1", "offset": "0xa0", "u8": 0}, {"addr": "0x006b7108", "u32": 1}
+    ]},
+    {"name": "race f4 max hp special", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 244}, {"addr": "@param_1", "offset": "0x88", "u32": 2000}
+    ]},
+    {"name": "race f4 ordinary", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 244}, {"addr": "@param_1", "offset": "0x88", "u32": 1999}
+    ]},
+    {"name": "target pulse starts at zero", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 244}, {"addr": "@param_1", "offset": "0x88", "u32": 2000},
+      {"addr": "0x006e4dac", "u32": "@param_1"}, {"addr": "0x005917dc", "u32": 0}
+    ]},
+    {"name": "target pulse resets at ten", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 244}, {"addr": "@param_1", "offset": "0x88", "u32": 2000},
+      {"addr": "0x006e4dac", "u32": "@param_1"}, {"addr": "0x005917dc", "u32": 10}
+    ]},
+    {"name": "target pulse clamps negative color", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 244}, {"addr": "@param_1", "offset": "0x88", "u32": 2000},
+      {"addr": "0x006e4dac", "u32": "@param_1"}, {"addr": "0x005917dc", "u32": 100}
+    ]},
+    {"name": "target pulse clamps negative green", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 20}, {"addr": "@param_1", "offset": "0xf1", "u8": 0},
+      {"addr": "@param_1", "offset": "0x98", "u8": 0}, {"addr": "@param_1", "offset": "0xa0", "u8": 0},
+      {"addr": "0x006b7108", "u32": 0}, {"addr": "0x006e4dac", "u32": "@param_1"}, {"addr": "0x005917dc", "u32": 100}
+    ], "callees": {"0x004b4868": {"name": "EQPlayer::IsRoleplaying_guess", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "target pulse one step red channel", "args": ["@param_1"], "memory": [
+      {"addr": "@param_1", "offset": "0x9a", "u16": 244}, {"addr": "@param_1", "offset": "0x88", "u32": 1999},
+      {"addr": "0x006e4dac", "u32": "@param_1"}, {"addr": "0x005917dc", "u32": 1}
+    ]},
+    {"name": "skip second dag", "args": ["@param_1"], "memory": [{"addr": "@actor_info", "offset": "0x25c", "u32": 0}]},
+    {"name": "second sprite missing", "args": ["@param_1"], "callees": {"@getDagFn": {"name": "t3dGetDagSprite", "conv": "cdecl", "args": ["ptr"], "ret": ["@sprite_ok", 0]}}},
+    {"name": "second sprite wrong type", "args": ["@param_1"], "callees": {"@getDagFn": {"name": "t3dGetDagSprite", "conv": "cdecl", "args": ["ptr"], "ret": ["@sprite_ok", "@sprite_wrong"]}}}
+  ],
+  "fuzz": {
+    "seed": 4267750,
+    "count": 40,
+    "args": [{"choices": ["@param_1"]}],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x70", "type": "ptr", "choices": ["@actor_info", 0]},
+      {"addr": "@actor_info", "offset": "0x254", "type": "ptr", "choices": ["@dag_a", 0]},
+      {"addr": "@actor_info", "offset": "0x25c", "type": "ptr", "choices": ["@dag_b", 0]},
+      {"addr": "@param_1", "offset": "0x9a", "type": "u16", "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 20, 130, 243, 244, 65535]},
+      {"addr": "@param_1", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3]},
+      {"addr": "@param_1", "offset": "0xf1", "type": "u8", "range": [0, 3]},
+      {"addr": "@param_1", "offset": "0xfc", "type": "int", "choices": [-1, 0, 1]},
+      {"addr": "@param_1", "offset": "0xa0", "type": "u8", "range": [0, 1]},
+      {"addr": "@param_1", "offset": "0x88", "type": "int", "choices": [0, 1999, 2000, 2001]},
+      {"addr": "0x006b7108", "type": "int", "choices": [0, 1, 2, 3, 4]},
+      {"addr": "0x006e4dac", "type": "ptr", "choices": ["@param_1", "@other"]},
+      {"addr": "0x005917dc", "type": "int", "choices": [-1, 0, 1, 9, 10, 11, 20]}
+    ]
+  }
+}

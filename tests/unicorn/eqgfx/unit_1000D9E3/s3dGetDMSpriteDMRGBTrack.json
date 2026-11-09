@@ -1,0 +1,183 @@
+{
+  "function": "s3dGetDMSpriteDMRGBTrack",
+  "original": "0x1001069d",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "sprite": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@sprite",
+      "offset": "0x24",
+      "u32": "0x11111111"
+    },
+    {
+      "addr": "@sprite",
+      "offset": "0x28",
+      "u32": "0x22222222"
+    },
+    {
+      "addr": "@sprite",
+      "offset": "0x2c",
+      "u32": "0x33333333"
+    },
+    {
+      "addr": "@sprite",
+      "offset": "0x30",
+      "u32": "0x44444444"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "reads the field at +0x28",
+      "args": [
+        "@sprite"
+      ],
+      "expect": {
+        "ret": "0x22222222"
+      }
+    },
+    {
+      "name": "zero track",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "all bits set",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x28",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": "0xffffffff"
+      }
+    },
+    {
+      "name": "sign bit set",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x28",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": "0x80000000"
+      }
+    },
+    {
+      "name": "sign bit clear",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x28",
+          "u32": "0x7fffffff"
+        }
+      ],
+      "expect": {
+        "ret": "0x7fffffff"
+      }
+    },
+    {
+      "name": "byte pattern a1a2a3a4",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x28",
+          "u32": "0xa4a3a2a1"
+        }
+      ],
+      "expect": {
+        "ret": "0xa4a3a2a1"
+      }
+    },
+    {
+      "name": "second sprite copy",
+      "args": [
+        "@sprite2"
+      ],
+      "objects": {
+        "sprite2": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x28",
+              "u32": "0x0badf00d"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0x0badf00d"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 67229,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x28",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff",
+          "0x12345678",
+          "0xdeadbeef"
+        ]
+      }
+    ]
+  }
+}

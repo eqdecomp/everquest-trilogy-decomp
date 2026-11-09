@@ -1,0 +1,198 @@
+{
+  "function": "t3dGet3DSpriteDefinitionPolygonPlane",
+  "original": "0x100084c3",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "plane",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": "@polygons"}
+      ]
+    },
+    "polygons": {
+      "size": "0x160",
+      "fill": "random"
+    },
+    "plane": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: count 2, index 1: polygon 1's normal (0.6, 0.8, 0) and distance 12.5 copied, type 0x2F",
+      "args": ["@definition", 1, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 2},
+        {"addr": "@polygons", "offset": "0x3c", "f32": 0.6},
+        {"addr": "@polygons", "offset": "0x40", "f32": 0.8},
+        {"addr": "@polygons", "offset": "0x44", "f32": 0.0},
+        {"addr": "@polygons", "offset": "0x48", "f32": 12.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first record: count 3, index 0: negative normal components and negative distance",
+      "args": ["@definition", 0, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 3},
+        {"addr": "@polygons", "offset": "0x10", "f32": -1.5},
+        {"addr": "@polygons", "offset": "0x14", "f32": 2.25},
+        {"addr": "@polygons", "offset": "0x18", "f32": -3.0},
+        {"addr": "@polygons", "offset": "0x1c", "f32": -0.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last valid: count 3, index 2 == count - 1",
+      "args": ["@definition", 2, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 3},
+        {"addr": "@polygons", "offset": "0x68", "f32": 1.0},
+        {"addr": "@polygons", "offset": "0x6c", "f32": 0.0},
+        {"addr": "@polygons", "offset": "0x70", "f32": 0.0},
+        {"addr": "@polygons", "offset": "0x74", "f32": 100.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "boundary: count 3, index 3 == count is not below the count",
+      "args": ["@definition", 3, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 3}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "boundary: count 3, index 4 == count + 1",
+      "args": ["@definition", 4, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 3}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "boundary: count 0, index 0 is not below it",
+      "args": ["@definition", 0, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 0}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "count 0xFFFFFFFF, index 7: the count is compared unsigned, so this is valid",
+      "args": ["@definition", 7, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 4294967295},
+        {"addr": "@polygons", "offset": "0x144", "f32": 0.5},
+        {"addr": "@polygons", "offset": "0x148", "f32": 0.25},
+        {"addr": "@polygons", "offset": "0x14c", "f32": 0.125},
+        {"addr": "@polygons", "offset": "0x150", "f32": 7.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 0x80000000 with count 4: the sign bit does not make it valid",
+      "args": ["@definition", 2147483648, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 4}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "NaN bits in polygon 0's normal and distance are copied bit for bit",
+      "args": ["@definition", 0, "@plane"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 1},
+        {"addr": "@polygons", "offset": "0x10", "u32": 2143289345},
+        {"addr": "@polygons", "offset": "0x14", "u32": 2139095041},
+        {"addr": "@polygons", "offset": "0x18", "u32": 2147483648},
+        {"addr": "@polygons", "offset": "0x1c", "u32": 2141192193}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "plane = polygon record 1 base: the type store lands on its vertex count before the copy",
+      "args": ["@definition", 1, "@polygons+0x2c"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 2},
+        {"addr": "@polygons", "offset": "0x3c", "f32": 0.6},
+        {"addr": "@polygons", "offset": "0x40", "f32": 0.8},
+        {"addr": "@polygons", "offset": "0x44", "f32": 0.0},
+        {"addr": "@polygons", "offset": "0x48", "f32": 12.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "plane = the source normal: the type store overwrites normal.x before the copy reads it",
+      "args": ["@definition", 0, "@polygons+0x10"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 1},
+        {"addr": "@polygons", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygons", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygons", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygons", "offset": "0x1c", "f32": 12.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "plane = the source distance: the type store hits it before the copy and the distance load",
+      "args": ["@definition", 0, "@polygons+0x1c"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 1},
+        {"addr": "@polygons", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygons", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygons", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygons", "offset": "0x1c", "f32": 12.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "plane = the definition itself: the copy overwrites its refcount at +0x10",
+      "args": ["@definition", 0, "@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 2},
+        {"addr": "@polygons", "offset": "0x10", "f32": 4.5},
+        {"addr": "@polygons", "offset": "0x14", "f32": -6.75},
+        {"addr": "@polygons", "offset": "0x18", "f32": 8.0},
+        {"addr": "@polygons", "offset": "0x1c", "f32": -10.0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 33987,
+    "count": 40,
+    "args": [
+      {"choices": ["@definition"]},
+      {"range": [0, 11]},
+      {"choices": ["@plane", "@polygons", "@polygons+0x10", "@polygons+0x1c", "@polygons+0x2c", "@polygons+0x3c", "@definition", "@definition+0x4"]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 8]},
+      {"addr": "@polygons", "offset": "0x10", "type": "u32", "count": 8, "stride": "0x2c"},
+      {"addr": "@polygons", "offset": "0x1c", "type": "u32", "count": 8, "stride": "0x2c"}
+    ]
+  }
+}

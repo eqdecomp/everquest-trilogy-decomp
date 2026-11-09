@@ -1,0 +1,68 @@
+{
+  "function": "CEverQuest_004cb4fa_guess::DisbandGroup_guess",
+  "original": "0x004cb4fa",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "conv": "thiscall",
+  "this": "@ceverquest_004cb4fa",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "ceverquest_004cb4fa": {"size": "0x100", "fill": "zero"},
+    "eqstate": {"size": "0x200", "fill": "zero"},
+    "playerprofile": {"size": "0x100", "fill": "zero", "init": [{"offset": "0", "cstr": "Alice"}]},
+    "otherprofile": {"size": "0x100", "fill": "zero", "init": [{"offset": "0", "cstr": "Ranger"}]}
+  },
+  "memory": [
+    {"addr": "0x006E4DA8", "u32": "@playerprofile"},
+    {"addr": "0x005FE8BD", "size": "0x1e0", "fill": "zero"},
+    {"addr": "0x005FE8BD", "cstr": "Bob"},
+    {"addr": "0x005FE8DB", "cstr": "Carol"},
+    {"addr": "0x005FE8F9", "cstr": "Dan"},
+    {"addr": "0x005FE917", "cstr": "Eve"},
+    {"addr": "0x005FE935", "cstr": "Frank"},
+    {"addr": "0x005FE953", "cstr": "Grace"},
+    {"addr": "0x005FE971", "cstr": "Heidi"},
+    {"addr": "0x005FE98F", "cstr": "Ivan"},
+    {"addr": "0x005FE9AD", "cstr": ""},
+    {"addr": "0x005FE968", "cstr": "Alice"},
+    {"addr": "0x0058FBA3", "cstr": "x"},
+    {"addr": "0x006E4E44", "u32": "@eqstate"},
+    {"addr": "@eqstate", "offset": 180, "u8": 0},
+    {"addr": "@eqstate", "offset": 181, "u8": 0},
+    {"addr": "@eqstate", "offset": 182, "cstr": "Invitee"},
+    {"addr": "@eqstate", "offset": 212, "cstr": "Previous"},
+    {"addr": "0x006B3194", "u32": "0x007A1000"}
+  ],
+  "callees": {
+    "0x00524240": {"name": "_strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "passthrough": true},
+    "0x005219C0": {"name": "strcpy_guess", "conv": "cdecl", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x005224FB": {"name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ignore", "u32", "ignore", "u32", "int"]},
+    "0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "args": ["cstr"]}
+  },
+  "cases": [
+    {"name": "equal name with an empty party slot disbands", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 0}, {"addr": "0x005FE8BD", "cstr": ""}]},
+    {"name": "negative signed party index disbands without indexing", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 128}]},
+    {"name": "equal name removes slot zero", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 0}]},
+    {"name": "party index byte is read at positive offset 0xb4", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 0}, {"addr": "@eqstate", "offset": -180, "u8": 255}]},
+    {"name": "equal name removes last populated boundary slot", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 7}]},
+    {"name": "equal name with the next empty slot disbands", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 8}]},
+    {"name": "strcmpi accepts a case-only name difference", "args": [], "memory": [{"addr": "@playerprofile", "cstr": "aLiCe"}, {"addr": "@eqstate", "offset": 180, "u8": 2}]},
+    {"name": "different name and no pending invitation sends opcode 2044", "args": [], "memory": [{"addr": "0x005FE968", "cstr": "Server"}, {"addr": "@eqstate", "offset": 181, "u8": 0}]},
+    {"name": "different name with pending invitation cancels it", "args": [], "memory": [{"addr": "0x005FE968", "cstr": "Server"}, {"addr": "@eqstate", "offset": 181, "u8": 1}, {"addr": "@eqstate", "offset": 182, "cstr": "Invitee"}]},
+    {"name": "member index is reloaded after the first strcpy", "args": [], "memory": [{"addr": "@eqstate", "offset": 180, "u8": 1}], "callees": {"0x005219C0": {"name": "strcpy_guess", "conv": "cdecl", "args": ["ignore", "cstr"], "passthrough": true, "writes": [{"addr": "@eqstate", "offset": 180, "hex": "02"}]}}},
+    {"name": "profile name is reloaded between invitation copies", "args": [], "memory": [{"addr": "0x005FE968", "cstr": "Server"}, {"addr": "@eqstate", "offset": 181, "u8": 0}], "callees": {"0x005219C0": {"name": "strcpy_guess", "conv": "cdecl", "args": ["ignore", "cstr"], "passthrough": true, "writes": [{"addr": "@playerprofile", "hex": "45766500"}]}}},
+    {"name": "invitee field is reloaded after chat callback", "args": [], "memory": [{"addr": "0x005FE968", "cstr": "Server"}, {"addr": "@eqstate", "offset": 181, "u8": 1}, {"addr": "@eqstate", "offset": 182, "cstr": "OldInvite"}], "callees": {"0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "args": ["cstr"], "writes": [{"addr": "@eqstate", "offset": 182, "hex": "4e657700"}]}}},
+    {"name": "cancel path clears pending flag and both invite strings", "args": [], "memory": [{"addr": "0x005FE968", "cstr": "Other"}, {"addr": "@eqstate", "offset": 181, "u8": 255}, {"addr": "@eqstate", "offset": 182, "cstr": "Queued"}, {"addr": "@eqstate", "offset": 212, "cstr": "OldTarget"}]}
+  ],
+  "fuzz": {
+    "seed": 5027066,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "@eqstate", "offset": 180, "type": "char", "choices": [-128, -1, 0, 1, 2, 5, 6, 7, 8]},
+      {"addr": "@eqstate", "offset": 181, "type": "u8", "choices": [0, 1, 127, 255]},
+      {"addr": "0x006E4DA8", "type": "u32", "choices": ["@playerprofile", "@otherprofile"]}
+    ]
+  }
+}

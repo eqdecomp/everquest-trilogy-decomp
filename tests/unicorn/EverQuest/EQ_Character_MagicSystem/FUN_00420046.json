@@ -1,0 +1,255 @@
+{
+  "function": "ApplySpellMovementRate_guess",
+  "original": "0x00420046",
+  "sources": [
+    "src/EverQuest/EQ_Character_MagicSystem.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@param_1",
+  "args": [
+    {
+      "name": "param_2",
+      "type": "short"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0xa5",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xa0",
+          "u32": "@player"
+        }
+      ]
+    },
+    "player": {
+      "size": "0xf0",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x48",
+          "f32": 1.25
+        },
+        {
+          "offset": "0x4c",
+          "f32": -2.5
+        },
+        {
+          "offset": "0x50",
+          "f32": 3.75
+        },
+        {
+          "offset": "0x58",
+          "f32": -4.5
+        },
+        {
+          "offset": "0x70",
+          "u32": "@actor"
+        },
+        {
+          "offset": "0xec",
+          "f32": 2.0
+        }
+      ]
+    },
+    "actor": {
+      "size": "0xbc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xb8",
+          "f32": 17.5
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00535224",
+      "from_image": "0x00535224",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x004b117b": {
+      "name": "EQPlayer::TurnOffAutoFollow_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "missing player pointer",
+      "args": [
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0xa0",
+          "u32": 0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0xa4",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "missing actor info pointer",
+      "args": [
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "reset at -1000",
+      "args": [
+        -1000
+      ]
+    },
+    {
+      "name": "reset below -999",
+      "args": [
+        -1001
+      ]
+    },
+    {
+      "name": "short minimum reset",
+      "args": [
+        -32768
+      ]
+    },
+    {
+      "name": "normal boundary -999",
+      "args": [
+        -999
+      ]
+    },
+    {
+      "name": "clamp below -65",
+      "args": [
+        -66
+      ]
+    },
+    {
+      "name": "clamp boundary -65",
+      "args": [
+        -65
+      ]
+    },
+    {
+      "name": "negative magnitude",
+      "args": [
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0xec",
+          "f32": 0.5
+        }
+      ]
+    },
+    {
+      "name": "zero input",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "positive input",
+      "args": [
+        1
+      ]
+    },
+    {
+      "name": "short maximum",
+      "args": [
+        32767
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0xec",
+          "f32": 7.25
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4325446,
+    "count": 32,
+    "args": [
+      {
+        "range": [
+          -32768,
+          32767
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0xa0",
+        "type": "ptr",
+        "choices": [
+          "@player",
+          0
+        ]
+      },
+      {
+        "addr": "@player",
+        "offset": "0x70",
+        "type": "ptr",
+        "choices": [
+          "@actor",
+          0
+        ]
+      },
+      {
+        "addr": "@player",
+        "offset": "0xec",
+        "type": "float",
+        "choices": [
+          0.25,
+          0.5,
+          1.0,
+          2.0,
+          4.0,
+          8.0
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0xb8",
+        "type": "float",
+        "choices": [
+          -100.0,
+          -17.5,
+          0.0,
+          17.5,
+          100.0
+        ]
+      },
+      {
+        "addr": "0x00535224",
+        "type": "float",
+        "choices": [
+          0.005,
+          0.01,
+          0.02
+        ]
+      }
+    ]
+  }
+}

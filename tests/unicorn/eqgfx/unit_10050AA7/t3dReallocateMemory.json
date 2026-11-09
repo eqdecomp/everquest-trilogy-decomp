@@ -1,0 +1,165 @@
+{
+  "function": "t3dReallocateMemory",
+  "original": "0x10050c8c",
+  "sources": [
+    "src/eqgfx/unit_10050AA7.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "memory",
+      "type": "ptr"
+    },
+    {
+      "name": "byteCount",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "memory": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1006a29c": {
+      "name": "_realloc",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x100509ee": {
+      "name": "logDebugMessage_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x10050aa7": {
+      "name": "st_write_mem_error_textfile",
+      "conv": "cdecl",
+      "args": []
+    }
+  },
+  "rewrite_aliases": {
+    "_realloc": "0x1006a29c"
+  },
+  "cases": [
+    {
+      "name": "success_same_pointer",
+      "args": [
+        "@memory",
+        16
+      ],
+      "callees": {
+        "0x1006a29c": {
+          "name": "_realloc",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": "@memory"
+        }
+      }
+    },
+    {
+      "name": "success_other_pointer",
+      "args": [
+        "@memory",
+        32
+      ],
+      "callees": {
+        "0x1006a29c": {
+          "name": "_realloc",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": "0x23456000"
+        }
+      }
+    },
+    {
+      "name": "success_zero_size",
+      "args": [
+        "@memory",
+        0
+      ],
+      "callees": {
+        "0x1006a29c": {
+          "name": "_realloc",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": "0x23456004"
+        }
+      }
+    },
+    {
+      "name": "success_null_input",
+      "args": [
+        0,
+        64
+      ],
+      "callees": {
+        "0x1006a29c": {
+          "name": "_realloc",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": "0x23456008"
+        }
+      }
+    },
+    {
+      "name": "failure_nonnull_pointer",
+      "args": [
+        "@memory",
+        1
+      ]
+    },
+    {
+      "name": "failure_null_input_zero_size",
+      "args": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "failure_signed_size_boundary",
+      "args": [
+        "@memory",
+        2147483647
+      ]
+    },
+    {
+      "name": "failure_unsigned_size_boundary",
+      "args": [
+        "@memory",
+        2147483648
+      ]
+    },
+    {
+      "name": "failure_max_size",
+      "args": [
+        "@memory",
+        4294967295
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 330892,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@memory",
+          0,
+          "0x23456789"
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

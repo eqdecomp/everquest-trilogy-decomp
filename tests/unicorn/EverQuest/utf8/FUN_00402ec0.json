@@ -1,0 +1,174 @@
+{
+  "function": "UiObjectFactory_guess::CreateAndConfigureObject_guess",
+  "original": "0x00402ec0",
+  "sources": ["src/EverQuest/utf8.cpp"],
+  "conv": "thiscall",
+  "this": "@owner",
+  "args": [
+    {"name": "name_guess", "type": "cstr"},
+    {"name": "parameter_guess", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@world"},
+        {"offset": "0x4", "u32": 1}
+      ]
+    },
+    "world": {"size": "0x4", "fill": "zero"},
+    "fn": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "hex": "b840000060c3"}]
+    },
+    "fn2": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "hex": "837c240c017506b860000060c3b870000060c3"}]
+    },
+    "definition": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@bitmap_info"}]
+    },
+    "bitmap_info": {"size": "0x4", "fill": "zero"},
+    "overlay": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 256},
+        {"offset": "0x4", "u32": 64}
+      ]
+    },
+    "overlay_alt": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 512},
+        {"offset": "0x4", "u32": 128}
+      ]
+    },
+    "arg_data": {"size": "0x80", "fill": "zero"},
+    "newobj": {"size": "0x94", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e51fc", "u32": "@fn"},
+    {"addr": "0x006e534c", "u32": "@fn2"}
+  ],
+  "callees": {
+    "@fn": {
+      "name": "t3dDefineBMInfo_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr", "cstr", "u32"],
+      "ret": "@definition"
+    },
+    "@fn2": {
+      "name": "t3dOverlayOpen_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "ret": "@overlay"
+    },
+    "0x00401e99": {
+      "name": "EQOverlayObject_guess::EQOverlayObject_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004038e9": {
+      "name": "EQOverlayObject_guess::SetBounds_guess",
+      "conv": "thiscall",
+      "args": ["float", "float"],
+      "passthrough": true
+    },
+    "0x0040383b": {
+      "name": "EQOverlayObject_guess::SetParameter_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": "@newobj"
+    },
+    "0x0052244b": {
+      "name": "frexp",
+      "conv": "cdecl",
+      "args": ["double", "ignore"],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "bitmap-branch power-of-two ordering",
+      "args": ["first.bmp", "@arg_data"]
+    },
+    {
+      "name": "just below two powers",
+      "args": ["below.bmp", "@arg_data"],
+      "memory": [
+        {"addr": "@overlay", "offset": "0x0", "u32": 255},
+        {"addr": "@overlay", "offset": "0x4", "u32": 63}
+      ]
+    },
+    {
+      "name": "just above two powers",
+      "args": ["above.bmp", "@arg_data"],
+      "memory": [
+        {"addr": "@overlay", "offset": "0x0", "u32": 257},
+        {"addr": "@overlay", "offset": "0x4", "u32": 65}
+      ]
+    },
+    {
+      "name": "one and zero dimensions",
+      "args": ["small.bmp", "@arg_data"],
+      "memory": [
+        {"addr": "@overlay", "offset": "0x0", "u32": 1},
+        {"addr": "@overlay", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "negative and signed boundary dimensions",
+      "args": ["signed.bmp", "@arg_data"],
+      "memory": [
+        {"addr": "@overlay", "offset": "0x0", "u32": 4294967293},
+        {"addr": "@overlay", "offset": "0x4", "u32": 2147483648}
+      ]
+    },
+    {
+      "name": "metadata absent null-pointer branch",
+      "args": ["unused.bmp", "@arg_data"],
+      "memory": [{"addr": "@owner", "offset": "0x4", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4206272,
+    "count": 40,
+    "args": [
+      {},
+      {"choices": ["@arg_data"]}
+    ],
+    "memory": [
+      {"addr": "@owner", "offset": "0x4", "type": "u32", "choices": [1, 2, 3, 17]},
+      {"addr": "@overlay", "offset": "0x0", "type": "int", "range": [-100000, 100000]},
+      {"addr": "@overlay", "offset": "0x4", "type": "int", "range": [-100000, 100000]}
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "function": "EQ_PC_guess::MaxAirSupply_guess",
+  "original": "0x0041ba4e",
+  "sources": ["src/EverQuest/EQ_PC.cpp"],
+  "rewrite": "EQ_PC_guess::MaxAirSupply_guess",
+  "conv": "thiscall",
+  "this": "@eq_pc",
+  "args": [],
+  "ret": "u8",
+  "objects": {
+    "eq_pc": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x34", "u16": 0}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0041b258": {
+      "name": "EQ_Character::Sta_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "special short overrides below-minimum result", "args": [], "memory": [{"addr": "@eq_pc", "offset": "0x34", "u16": 128}], "callees": {"0x0041b258": {"ret": 30}}, "expect": {"ret": 127}},
+    {"name": "special short overrides upper clamp", "args": [], "memory": [{"addr": "@eq_pc", "offset": "0x34", "u16": 128}], "callees": {"0x0041b258": {"ret": 131}}, "expect": {"ret": 127}},
+    {"name": "one below lower input boundary wraps then caps", "args": [], "callees": {"0x0041b258": {"ret": 29}}, "expect": {"ret": 100}},
+    {"name": "lower input boundary produces zero then minimum", "args": [], "callees": {"0x0041b258": {"ret": 30}}, "expect": {"ret": 10}},
+    {"name": "last result below minimum", "args": [], "callees": {"0x0041b258": {"ret": 39}}, "expect": {"ret": 10}},
+    {"name": "minimum boundary", "args": [], "callees": {"0x0041b258": {"ret": 40}}, "expect": {"ret": 10}},
+    {"name": "within range", "args": [], "callees": {"0x0041b258": {"ret": 50}}, "expect": {"ret": 20}},
+    {"name": "below upper boundary", "args": [], "callees": {"0x0041b258": {"ret": 129}}, "expect": {"ret": 99}},
+    {"name": "upper boundary", "args": [], "callees": {"0x0041b258": {"ret": 130}}, "expect": {"ret": 100}},
+    {"name": "above upper boundary clamps", "args": [], "callees": {"0x0041b258": {"ret": 131}}, "expect": {"ret": 100}},
+    {"name": "short just below special remains ordinary", "args": [], "memory": [{"addr": "@eq_pc", "offset": "0x34", "u16": 127}], "callees": {"0x0041b258": {"ret": 50}}, "expect": {"ret": 20}},
+    {"name": "short just above special remains ordinary", "args": [], "memory": [{"addr": "@eq_pc", "offset": "0x34", "u16": 129}], "callees": {"0x0041b258": {"ret": 50}}, "expect": {"ret": 20}},
+    {"name": "negative short is not special", "args": [], "memory": [{"addr": "@eq_pc", "offset": "0x34", "u16": 65535}], "callees": {"0x0041b258": {"ret": 50}}, "expect": {"ret": 20}}
+  ],
+  "fuzz": {
+    "seed": 4307534,
+    "count": 30,
+    "args": [],
+    "memory": [{"addr": "@eq_pc", "offset": "0x34", "type": "short", "range": [-32768, 32767]}],
+    "callees": {
+      "0x0041b258": {
+        "name": "EQ_Character::Sta_guess",
+        "conv": "thiscall",
+        "args": [],
+        "ret": [-128, 0, 29, 30, 31, 39, 40, 50, 99, 100, 129, 130, 131, 255]
+      }
+    }
+  }
+}

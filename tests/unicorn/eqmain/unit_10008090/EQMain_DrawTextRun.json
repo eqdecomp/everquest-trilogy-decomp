@@ -1,0 +1,469 @@
+{
+  "function": "EQMain_DrawTextRun_guess",
+  "original": "0x100082c0",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "u32"
+    },
+    {
+      "name": "param_5",
+      "type": "cstr"
+    },
+    {
+      "name": "param_6",
+      "type": "int"
+    },
+    {
+      "name": "param_7",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "holder": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@surface"
+        }
+      ]
+    },
+    "surface": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x44",
+          "u32": "@getdc"
+        },
+        {
+          "offset": "0x68",
+          "u32": "@releasedc"
+        }
+      ]
+    },
+    "getdc": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "releasedc": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@getdc": {
+      "name": "GetDC",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "bc3a0000"
+        }
+      ]
+    },
+    "@releasedc": {
+      "name": "ReleaseDC",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "gdi32.dll!SetTextColor": {
+      "name": "SetTextColor",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "gdi32.dll!SetBkMode": {
+      "name": "SetBkMode",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 1
+    },
+    "gdi32.dll!SetTextAlign": {
+      "name": "SetTextAlign",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10008230": {
+      "name": "FUN_10008230",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "gdi32.dll!GetTextExtentPoint32A": {
+      "name": "GetTextExtentPoint32A",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "cstr",
+        "int",
+        "ignore"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "2a000000"
+        },
+        {
+          "arg": 3,
+          "offset": 4,
+          "hex": "0d000000"
+        }
+      ]
+    },
+    "gdi32.dll!TextOutA": {
+      "name": "TextOutA",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "cstr",
+        "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@holder",
+        10,
+        20,
+        16711680,
+        "Hello",
+        1,
+        25
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "NULL text returns 0 before any call",
+      "args": [
+        "@holder",
+        10,
+        20,
+        16711680,
+        0,
+        1,
+        25
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty text",
+      "args": [
+        "@holder",
+        0,
+        0,
+        0,
+        "",
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "one-character text",
+      "args": [
+        "@holder",
+        0,
+        1,
+        16711680,
+        "x",
+        0,
+        1
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "negative x and y, all-ones colour",
+      "args": [
+        "@holder",
+        -5,
+        -7,
+        4294967295,
+        "Tab",
+        -1,
+        4294967295
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "long text, large x and y",
+      "args": [
+        "@holder",
+        639,
+        479,
+        255,
+        "Common Tongue: a longer line of text",
+        1000,
+        3
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "param_6 and param_7 order into FUN_10008230",
+      "args": [
+        "@holder",
+        1,
+        2,
+        3,
+        "Ab",
+        17,
+        34
+      ],
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "HDC is read back from the param_5 slot (GetDC writes 0xcafe)",
+      "args": [
+        "@holder",
+        3,
+        4,
+        5,
+        "Hi",
+        6,
+        7
+      ],
+      "callees": {
+        "@getdc": {
+          "name": "GetDC",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "feca0000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "junk registers (nonzero), typical text: the text is taken from the argument, not from a register",
+      "args": [
+        "@holder",
+        10,
+        20,
+        16711680,
+        "Hello",
+        1,
+        25
+      ],
+      "regs": {
+        "eax": 305419896,
+        "ecx": 305419897,
+        "edx": 305419898,
+        "ebx": 305419899,
+        "esi": 305419900,
+        "edi": 305419901,
+        "ebp": 305419902
+      },
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "junk registers (nonzero), NULL text: still returns 0 before any call",
+      "args": [
+        "@holder",
+        10,
+        20,
+        16711680,
+        0,
+        1,
+        25
+      ],
+      "regs": {
+        "eax": 305419896,
+        "ecx": 305419897,
+        "edx": 305419898,
+        "ebx": 305419899,
+        "esi": 305419900,
+        "edi": 305419901,
+        "ebp": 305419902
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero registers, typical text",
+      "args": [
+        "@holder",
+        10,
+        20,
+        16711680,
+        "Hello",
+        1,
+        25
+      ],
+      "regs": {
+        "eax": 0,
+        "ecx": 0,
+        "edx": 0,
+        "ebx": 0,
+        "esi": 0,
+        "edi": 0,
+        "ebp": 0
+      },
+      "expect": {
+        "ret": 42
+      }
+    },
+    {
+      "name": "holder+0xc is read again after TextOutA: ReleaseDC goes to the surface the field then holds",
+      "args": [
+        "0x1004cf00",
+        10,
+        20,
+        16711680,
+        "Hello",
+        1,
+        25
+      ],
+      "memory": [
+        {"addr": "0x1004cf00", "size": 32, "fill": "zero"},
+        {"addr": "0x1004cf0c", "u32": "@surface"},
+        {"addr": "0x1004cf80", "size": 32, "fill": "zero"},
+        {"addr": "0x1004cf80", "u32": "@vtable2"}
+      ],
+      "objects": {
+        "vtable2": {
+          "size": "0x80",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x44", "u32": "@getdc"},
+            {"offset": "0x68", "u32": "@releasedc2"}
+          ]
+        },
+        "releasedc2": {"size": "0x10", "fill": "zero"}
+      },
+      "callees": {
+        "gdi32.dll!TextOutA": {
+          "name": "TextOutA",
+          "conv": "stdcall",
+          "args": ["ptr", "int", "int", "cstr", "int"],
+          "ret": 1,
+          "writes": [{"addr": "0x1004cf0c", "hex": "80cf0410"}]
+        },
+        "@releasedc2": {
+          "name": "ReleaseDC",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr"],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 42
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 33472,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@holder"
+        ]
+      },
+      {},
+      {},
+      {},
+      {
+        "choices": [
+          "Hello",
+          "",
+          "Tab",
+          "x",
+          "Common Tongue",
+          0
+        ]
+      },
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

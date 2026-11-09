@@ -1,0 +1,403 @@
+{
+  "function": "InitializeConnection_guess",
+  "original": "0x004e055c",
+  "sources": [
+    "src/EverQuest/net.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 305419896
+        }
+      ]
+    },
+    "app": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006ECCA8",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x004f1160": {
+      "name": "rdp_destroy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    },
+    "0x004f0c70": {
+      "name": "rdp_create",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "00 00 70 00"
+        }
+      ]
+    },
+    "0x004f1460": {
+      "name": "rdp_connect",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004f23c0": {
+      "name": "connection_app_ptr_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@app"
+    },
+    "0x004f46a0": {
+      "name": "ExchangeField618_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ]
+    },
+    "0x004f23a0": {
+      "name": "connection_set_field_620_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "existing context, successful create and connect",
+      "args": [
+        "@param_1",
+        1,
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 324508639
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 7340032
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty context, successful setup with zero connection id",
+      "args": [
+        "@param_1",
+        -2147483648,
+        2147483647
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "create failure, no context to clean up",
+      "args": [
+        "@param_1",
+        7,
+        9
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 4294967295
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004f0c70": {
+          "name": "rdp_create_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 17
+        }
+      },
+      "expect": {
+        "ret": 17
+      }
+    },
+    {
+      "name": "create failure after writing a context, cleanup it",
+      "args": [
+        "@param_1",
+        11,
+        13
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 42
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004f0c70": {
+          "name": "rdp_create_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 23,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00 00 70 00"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 23
+      }
+    },
+    {
+      "name": "connect failure destroys the new context",
+      "args": [
+        "@param_1",
+        55,
+        89
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 16777215
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004f1460": {
+          "name": "rdp_connect_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": -7
+        }
+      },
+      "expect": {
+        "ret": -7
+      }
+    },
+    {
+      "name": "null global and high-bit connection id",
+      "args": [
+        "@param_1",
+        -1,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 2147483648
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "nonzero global is cleared before create failure",
+      "args": [
+        "@param_1",
+        0,
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 2147483647
+        },
+        {
+          "addr": "0x006ECCA8",
+          "u32": 7364000
+        }
+      ],
+      "callees": {
+        "0x004f0c70": {
+          "name": "rdp_create_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "low nonzero global distinguishes adjacent-byte read",
+      "args": [
+        "@param_1",
+        3,
+        5
+      ],
+      "memory": [
+        {
+          "addr": "0x006ECCA8",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x004f0c70": {
+          "name": "rdp_create_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 31
+        }
+      },
+      "expect": {
+        "ret": 31
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5113180,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          42,
+          2147483648,
+          305419896,
+          4294967295
+        ]
+      },
+      {
+        "addr": "0x006ECCA8",
+        "type": "u32",
+        "choices": [
+          0,
+          7340032,
+          7364000,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

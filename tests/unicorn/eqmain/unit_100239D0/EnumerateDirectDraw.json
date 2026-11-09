@@ -1,0 +1,97 @@
+{
+  "function": "EnumerateDirectDraw_guess",
+  "original": "0x10024840",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {"addr": "0x101258fc", "u32": 7}
+  ],
+  "callees": {
+    "0x1003231a": {
+      "name": "DirectDrawEnumerateA",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10024fd0": {
+      "name": "FUN_10024fd0",
+      "conv": "cdecl",
+      "args": ["u32"]
+    }
+  },
+  "cases": [
+    {
+      "name": "no driver reports: the nonzero global is zeroed before FUN_10024fd0 sees it",
+      "args": []
+    },
+    {
+      "name": "global already zero",
+      "args": [],
+      "memory": [{"addr": "0x101258fc", "u32": 0}]
+    },
+    {
+      "name": "one driver reported during the first enumeration (ordering: the store precedes the call)",
+      "args": [],
+      "callees": {
+        "0x1003231a": {
+          "name": "DirectDrawEnumerateA",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr"],
+          "ret": 0,
+          "writes": [{"addr": "0x101258fc", "hex": "01000000"}]
+        }
+      }
+    },
+    {
+      "name": "three drivers reported",
+      "args": [],
+      "callees": {
+        "0x1003231a": {
+          "name": "DirectDrawEnumerateA",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr"],
+          "ret": 0,
+          "writes": [{"addr": "0x101258fc", "hex": "03000000"}]
+        }
+      }
+    },
+    {
+      "name": "count with the top bit set reaches FUN_10024fd0 unchanged",
+      "args": [],
+      "callees": {
+        "0x1003231a": {
+          "name": "DirectDrawEnumerateA",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr"],
+          "ret": 0,
+          "writes": [{"addr": "0x101258fc", "hex": "ffffff7f"}]
+        }
+      }
+    },
+    {
+      "name": "enumerator fails with E_FAIL: EAX on return is the HRESULT of the second call",
+      "args": [],
+      "callees": {
+        "0x1003231a": {
+          "name": "DirectDrawEnumerateA",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr"],
+          "ret": 2147500037
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 149568,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x101258fc", "type": "u32", "range": [0, 40]}
+    ]
+  }
+}

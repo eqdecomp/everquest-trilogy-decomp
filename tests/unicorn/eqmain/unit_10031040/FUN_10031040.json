@@ -1,0 +1,77 @@
+{
+  "function": "CompareShorts_guess",
+  "original": "0x10031040",
+  "sources": [
+    "src/eqmain/unit_10031040.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "first",
+      "type": "ptr"
+    },
+    {
+      "name": "second",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "first": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u16": 5}]
+    },
+    "second": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u16": 3}]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "greater", "args": ["@first", "@second"], "expect": {"ret": 1}},
+    {"name": "less", "args": ["@second", "@first"], "expect": {"ret": -1}},
+    {"name": "same pointer", "args": ["@first", "@first"], "expect": {"ret": 0}},
+    {"name": "equal values", "args": ["@first", "@second"],
+     "memory": [{"addr": "@second", "u16": 5}], "expect": {"ret": 0}},
+    {"name": "diff +1", "args": ["@first", "@second"],
+     "memory": [{"addr": "@second", "u16": 4}], "expect": {"ret": 1}},
+    {"name": "diff -1", "args": ["@first", "@second"],
+     "memory": [{"addr": "@second", "u16": 6}], "expect": {"ret": -1}},
+    {"name": "negative vs positive", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 65535}, {"addr": "@second", "u16": 1}], "expect": {"ret": -1}},
+    {"name": "positive vs negative", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 1}, {"addr": "@second", "u16": 65535}], "expect": {"ret": 1}},
+    {"name": "wraps negative", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 30000}, {"addr": "@second", "u16": 35536}], "expect": {"ret": -1}},
+    {"name": "wraps positive", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 35536}, {"addr": "@second", "u16": 30000}], "expect": {"ret": 1}},
+    {"name": "min vs zero", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 32768}, {"addr": "@second", "u16": 0}], "expect": {"ret": -1}},
+    {"name": "zero vs min", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 0}, {"addr": "@second", "u16": 32768}], "expect": {"ret": -1}},
+    {"name": "max vs min", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 32767}, {"addr": "@second", "u16": 32768}], "expect": {"ret": -1}},
+    {"name": "max vs zero", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u16": 32767}, {"addr": "@second", "u16": 0}], "expect": {"ret": 1}},
+    {"name": "high bits set in dword", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u32": 4294967295}, {"addr": "@second", "u32": 65535}], "expect": {"ret": 0}},
+    {"name": "upper halves ignored", "args": ["@first", "@second"],
+     "memory": [{"addr": "@first", "u32": 2864054277}, {"addr": "@second", "u32": 1431699459}], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 200768,
+    "count": 40,
+    "args": [
+      {"choices": ["@first"]},
+      {"choices": ["@second"]}
+    ],
+    "memory": [
+      {"addr": "@first", "type": "u16", "range": [0, 65535]},
+      {"addr": "@second", "type": "u16", "range": [0, 65535]},
+      {"addr": "@second", "type": "u16", "choices": [0, 1, 5, 65535, 32767, 32768]}
+    ]
+  }
+}

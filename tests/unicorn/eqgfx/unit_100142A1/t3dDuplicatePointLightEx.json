@@ -1,0 +1,277 @@
+{
+  "function": "t3dDuplicatePointLightEx",
+  "original": "0x1001441d",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceLight",
+      "type": "ptr"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    },
+    {
+      "name": "bindImmediately",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourcelight": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@lightowner"
+        }
+      ]
+    },
+    "position": {
+      "size": "0x0c",
+      "fill": "random"
+    },
+    "lightowner": {
+      "size": "0x18",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    "duplicate": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "ownedblock": {
+      "size": "0x0c",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@duplicate",
+        "@ownedblock"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000129d": {
+      "name": "traverseLightInfluenceBsp_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "first allocation fails",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "owned block allocation fails",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@duplicate",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "registration fails",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "registration succeeds without immediate bind",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        0
+      ]
+    },
+    {
+      "name": "bind flag must equal one",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        2
+      ]
+    },
+    {
+      "name": "immediate bind succeeds",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        1
+      ]
+    },
+    {
+      "name": "immediate bind fails and frees both allocations",
+      "args": [
+        "@context",
+        "@sourcelight",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x1000129d": {
+          "name": "FUN_1000129d",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 82973,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@sourcelight"
+        ]
+      },
+      {
+        "choices": [
+          "@position"
+        ]
+      },
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sourcelight",
+        "size": 16
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": 20,
+        "size": 44
+      },
+      {
+        "addr": "@position",
+        "type": "float",
+        "count": 3
+      },
+      {
+        "addr": "@lightowner",
+        "offset": 16,
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

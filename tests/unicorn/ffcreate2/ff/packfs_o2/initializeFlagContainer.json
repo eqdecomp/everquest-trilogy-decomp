@@ -1,0 +1,370 @@
+{
+  "function": "FlagContainer_guess::initializeFlagContainer_guess",
+  "original": "0x004f9e30",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@flagcontainer",
+  "args": [
+    {
+      "name": "compare_",
+      "type": "ptr"
+    },
+    {
+      "name": "allocator_",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "flagcontainer": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "compare_": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "allocator_": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "node_a": {
+      "size": "0x18",
+      "fill": "random"
+    },
+    "node_b": {
+      "size": "0x18",
+      "fill": "random"
+    },
+    "existing_nil": {
+      "size": "0x18",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006F039C",
+      "u32": 0
+    },
+    {
+      "addr": "0x006F0398",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@node_a",
+        "@node_b"
+      ]
+    },
+    "0x00531890": {
+      "name": "??0_Lockit@std@@QAE@XZ",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x0053192c": {
+      "name": "leave_critical_section_if_target_is_2_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "first container: nil null, node_a becomes the nil node, refs 0 -> 1, node_b is the head",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": 0
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "nil exists: node_a is freed, nil kept, refs 3 -> 4",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "nil exists, refs 0 stays counted (no reset of the nil path)",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "nil exists, refs INT_MAX wraps to INT_MIN",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 2147483647
+        }
+      ]
+    },
+    {
+      "name": "nil null, refs -1 wraps to 0",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": 0
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "compare_ and allocator_ are the same byte",
+      "args": [
+        "@allocator_",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": 0
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "compare_ points at this+0: reads the allocator byte just stored",
+      "args": [
+        "@flagcontainer",
+        "@allocator_"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "allocator_ points at this+1: read before compare is stored",
+      "args": [
+        "@compare_",
+        "@flagcontainer+0x1"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": 0
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "compare_ at this+1, allocator_ at this+0",
+      "args": [
+        "@flagcontainer+0x1",
+        "@flagcontainer"
+      ],
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "all-zero this and args, nil null",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "objects": {
+        "flagcontainer": {
+          "size": "0x10",
+          "fill": "zero"
+        },
+        "compare_": {
+          "size": "0x10",
+          "fill": "zero"
+        },
+        "allocator_": {
+          "size": "0x10",
+          "fill": "zero"
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": 0
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "high-bit bytes (0x80 allocator, 0xff compare) are copied unsigned-agnostic",
+      "args": [
+        "@compare_",
+        "@allocator_"
+      ],
+      "objects": {
+        "compare_": {
+          "size": "0x10",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u8": 255
+            }
+          ]
+        },
+        "allocator_": {
+          "size": "0x10",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u8": 128
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x006F039C",
+          "u32": "@existing_nil"
+        },
+        {
+          "addr": "0x006F0398",
+          "u32": 7
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5217840,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@compare_",
+          "@allocator_",
+          "@flagcontainer",
+          "@flagcontainer+0x1"
+        ]
+      },
+      {
+        "choices": [
+          "@allocator_",
+          "@compare_",
+          "@flagcontainer",
+          "@flagcontainer+0x1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006F039C",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@existing_nil"
+        ]
+      },
+      {
+        "addr": "0x006F0398",
+        "type": "int",
+        "range": [
+          -16,
+          1000
+        ]
+      },
+      {
+        "addr": "@compare_",
+        "type": "char",
+        "range": [
+          -128,
+          127
+        ]
+      },
+      {
+        "addr": "@allocator_",
+        "type": "char",
+        "range": [
+          -128,
+          127
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "function": "ProcessQueuedValues_guess",
+  "original": "0x00401fe8",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    },
+    {
+      "name": "unused",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "@owner"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@queue_a"
+        },
+        {
+          "offset": "0x10",
+          "u32": "@queue_b"
+        }
+      ]
+    },
+    "owner": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "queue_a": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "queue_b": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x00403adb": {
+      "name": "PollMouseDeviceData_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004021b0": {
+      "name": "PollDeviceData_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x00402099": {
+      "name": "EQNodeQueue_guess::Pop_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    },
+    "0x00401a1f": {
+      "name": "DispatchUIEvent_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty queues",
+      "args": [
+        "@self",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "interleaved callback order",
+      "args": [
+        "@self",
+        1,
+        1
+      ],
+      "callees": {
+        "0x00402099": {
+          "name": "EQNodeQueue_guess::Pop_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": [
+            "0x00110001",
+            "0x00220002",
+            "0x00110003",
+            0,
+            0,
+            "0x00220004",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "queue a only",
+      "args": [
+        "@self",
+        -1,
+        7
+      ],
+      "callees": {
+        "0x00402099": {
+          "name": "EQNodeQueue_guess::Pop_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": [
+            "0x00a00001",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "queue b only",
+      "args": [
+        "@self",
+        9,
+        -3
+      ],
+      "callees": {
+        "0x00402099": {
+          "name": "EQNodeQueue_guess::Pop_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": [
+            0,
+            "0x00b00002",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "last iteration boundary",
+      "args": [
+        "@self",
+        305419896,
+        -305419896
+      ],
+      "callees": {
+        "0x00402099": {
+          "name": "EQNodeQueue_guess::Pop_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            "0x00c10001",
+            "0x00c20002"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4202472,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {
+        "range": [
+          -8,
+          64
+        ]
+      },
+      {
+        "range": [
+          -8,
+          64
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0x04",
+        "type": "ptr",
+        "choices": [
+          "@owner",
+          "@queue_a",
+          "@queue_b"
+        ]
+      },
+      {
+        "addr": "@self",
+        "offset": "0x0c",
+        "type": "ptr",
+        "choices": [
+          "@queue_a",
+          "@queue_b"
+        ]
+      },
+      {
+        "addr": "@self",
+        "offset": "0x10",
+        "type": "ptr",
+        "choices": [
+          "@queue_a",
+          "@queue_b"
+        ]
+      }
+    ]
+  }
+}

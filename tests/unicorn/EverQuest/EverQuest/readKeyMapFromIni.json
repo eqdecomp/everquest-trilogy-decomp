@@ -1,0 +1,82 @@
+{
+  "function": "readKeyMapFromIni",
+  "original": "0x004c2109",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "int"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "suffix_null": {"size": 8, "fill": "zero", "init": [{"offset": 0, "cstr": "NULL"}]},
+    "suffix_keyboard": {"size": 16, "fill": "zero", "init": [{"offset": 0, "cstr": "Keyboard"}]},
+    "suffix_mouse": {"size": 8, "fill": "zero", "init": [{"offset": 0, "cstr": "Mouse"}]},
+    "key_enter": {"size": 8, "fill": "zero", "init": [{"offset": 0, "cstr": "ENTER"}]},
+    "key_broken": {"size": 8, "fill": "zero", "init": [{"offset": 0, "cstr": "BROKEN"}]},
+    "key_last": {"size": 8, "fill": "zero", "init": [{"offset": 0, "cstr": "LAST"}]}
+  },
+  "memory": [
+    {"addr": "0x0056999c", "u32": "@suffix_null"},
+    {"addr": "0x005699a0", "u32": "@suffix_keyboard"},
+    {"addr": "0x005699a4", "u32": "@suffix_mouse"},
+    {"addr": "0x0056a370", "cstr": "R"},
+    {"addr": "0x00569b60", "size": 376, "fill": "zero"},
+    {"addr": "0x00569b60", "u8": 65},
+    {"addr": "0x00569b64", "u32": 65},
+    {"addr": "0x00569b68", "u8": 66},
+    {"addr": "0x00569b6c", "u32": 66},
+    {"addr": "0x00569cd0", "u8": 81},
+    {"addr": "0x00569cd4", "u32": 81},
+    {"addr": "0x00569cd8", "u32": 13},
+    {"addr": "0x00569cdc", "u32": "@key_enter"},
+    {"addr": "0x00569ce0", "u32": "0xffffffff"},
+    {"addr": "0x00569ce4", "u32": "@key_broken"},
+    {"addr": "0x00569e80", "u32": 51},
+    {"addr": "0x00569e84", "u32": "@key_last"}
+  ],
+  "callees": {
+    "0x005219c0": {"name": "strcpy", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x005219d0": {"name": "strcat", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x00522920": {"name": "strcmp", "args": ["cstr", "cstr"], "passthrough": true},
+    "0x005316c0": {"name": "_strnicmp", "args": ["cstr", "cstr", "int"], "passthrough": true},
+    "0x005223d0": {"name": "strlen", "args": ["cstr"], "passthrough": true},
+    "0x00524240": {"name": "_strcmpi", "args": ["cstr", "cstr"], "passthrough": true},
+    "kernel32.dll!GetPrivateProfileStringA": {
+      "name": "GetPrivateProfileStringA",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"],
+      "ret": 7,
+      "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b4100"}]
+    }
+  },
+  "cases": [
+    {"name": "none sentinel", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 6, "writes": [{"arg": 3, "offset": 0, "hex": "2a4e4f4e452a00"}]}}},
+    {"name": "first character key", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 1, "writes": [{"arg": 3, "offset": 0, "hex": "4100"}]}}},
+    {"name": "second character and key suffix", "args": [1, 1], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 1, "writes": [{"arg": 3, "offset": 0, "hex": "4200"}]}}},
+    {"name": "last character table entry", "args": [2, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 1, "writes": [{"arg": 3, "offset": 0, "hex": "5100"}]}}},
+    {"name": "unmapped character", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 1, "writes": [{"arg": 3, "offset": 0, "hex": "7a00"}]}}},
+    {"name": "shift modifier", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 7, "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b4100"}]}}},
+    {"name": "control modifier", "args": [1, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 9, "writes": [{"arg": 3, "offset": 0, "hex": "434f4e54524f4c2b4200"}]}}},
+    {"name": "alt modifier", "args": [2, 1], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 5, "writes": [{"arg": 3, "offset": 0, "hex": "414c542b5100"}]}}},
+    {"name": "all modifiers and character", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 19, "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b434f4e54524f4c2b414c542b4100"}]}}},
+    {"name": "repeated modifier uses three passes", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 14, "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b53484946542b4100"}]}}},
+    {"name": "all modifiers and final named entry", "args": [2, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 23, "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b414c542b434f4e54524f4c2b4c41535400"}]}}},
+    {"name": "named key", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 5, "writes": [{"arg": 3, "offset": 0, "hex": "454e54455200"}]}}},
+    {"name": "named sentinel", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 6, "writes": [{"arg": 3, "offset": 0, "hex": "42524f4b454e00"}]}}},
+    {"name": "sentinel clears modifier bits", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 13, "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b42524f4b454e00"}]}}},
+    {"name": "named key missing", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 7, "writes": [{"arg": 3, "offset": 0, "hex": "4d495353494e4700"}]}}},
+    {"name": "four prefixes exceed three strips", "args": [0, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 26, "writes": [{"arg": 3, "offset": 0, "hex": "53484946542b53484946542b53484946542b53484946542b4100"}]}}},
+    {"name": "empty profile value", "args": [1, 0], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 0, "writes": [{"arg": 3, "offset": 0, "hex": "00"}]}}},
+    {"name": "two character unknown name", "args": [2, 2], "callees": {"kernel32.dll!GetPrivateProfileStringA": {"name": "GetPrivateProfileStringA", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr", "int", "cstr"], "ret": 2, "writes": [{"arg": 3, "offset": 0, "hex": "414200"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4989193,
+    "count": 30,
+    "args": [
+      {"choices": [0, 1, 2]},
+      {"choices": [-1, 0, 1, 2]}
+    ],
+    "memory": []
+  }
+}

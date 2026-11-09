@@ -1,0 +1,127 @@
+{
+  "function": "NetworkConnection_FreeBuffers_guess",
+  "original": "0x004f2730",
+  "sources": [
+    "src/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x5dc", "u32": 100000},
+        {"offset": "0x5f4", "u32": 200000},
+        {"offset": "0x60c", "u32": 300000},
+        {"offset": "0x7a0", "u32": "@ev"},
+        {"offset": "0x7a4", "u32": "@res"}
+      ]
+    },
+    "ev": {"size": "0x10", "fill": "random"},
+    "res": {"size": "0x10", "fill": "random"},
+    "i1": {"size": "0x40", "init": [{"offset": "0x28", "u32": 11}]},
+    "i2": {"size": "0x40", "init": [{"offset": "0x28", "u32": 220}]},
+    "i3": {"size": "0x40", "init": [{"offset": "0x28", "u32": 3300}]},
+    "i4": {"size": "0x40", "init": [{"offset": "0x28", "u32": 44000}]},
+    "i5": {"size": "0x40", "init": [{"offset": "0x28", "u32": 4294967295}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x004f5500": {
+      "name": "list_remove_head_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@i1", "@i2", 0, "@i3", 0, "@i4", "@i5", 0, 0, 0, 0]
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x004f78b0": {
+      "name": "uevent_signal_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "items in every queue, event and result set",
+      "args": ["@conn"]
+    },
+    {
+      "name": "all queues empty, no event, no result",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": [0, 0, 0, 0]}
+      },
+      "memory": [
+        {"addr": "@conn", "offset": "0x7a0", "u32": 0},
+        {"addr": "@conn", "offset": "0x7a4", "u32": 0}
+      ]
+    },
+    {
+      "name": "hold only (two items), result only",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@i1", "@i2", 0, 0, 0, 0]}
+      },
+      "memory": [
+        {"addr": "@conn", "offset": "0x7a0", "u32": 0}
+      ]
+    },
+    {
+      "name": "wait only, event only",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": [0, "@i3", "@i4", 0, 0, 0]}
+      },
+      "memory": [
+        {"addr": "@conn", "offset": "0x7a4", "u32": 0}
+      ]
+    },
+    {
+      "name": "sent only, byte count wraps below zero",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": [0, 0, "@i5", "@i4", "@i1", 0, 0]}
+      },
+      "memory": [
+        {"addr": "@conn", "offset": "0x5dc", "u32": 5}
+      ]
+    },
+    {
+      "name": "same item in each queue (order of subtraction per queue)",
+      "args": ["@conn"],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@i3", 0, "@i3", 0, "@i3", 0, 0]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5187376,
+    "count": 40,
+    "args": [
+      {"choices": ["@conn"]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x5dc", "type": "u32"},
+      {"addr": "@conn", "offset": "0x5f4", "type": "u32"},
+      {"addr": "@conn", "offset": "0x60c", "type": "u32"},
+      {"addr": "@conn", "offset": "0x7a0", "type": "u32", "choices": [0, "@ev"]},
+      {"addr": "@conn", "offset": "0x7a4", "type": "u32", "choices": [0, "@res"]},
+      {"addr": "@i1", "offset": "0x28", "type": "u32"},
+      {"addr": "@i2", "offset": "0x28", "type": "u32"},
+      {"addr": "@i3", "offset": "0x28", "type": "u32"},
+      {"addr": "@i4", "offset": "0x28", "type": "u32"},
+      {"addr": "@i5", "offset": "0x28", "type": "u32"}
+    ]
+  }
+}

@@ -1,0 +1,228 @@
+{
+  "function": "NetworkConnection_initializeRDPConnection_guess",
+  "original": "0x1002cfc0",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@rdp"},
+        {"offset": "0x5c", "u32": 0},
+        {"offset": "0x6e8", "u32": 10},
+        {"offset": "0x710", "u32": 1},
+        {"offset": "0x718", "u32": "@oldbuffer"},
+        {"offset": "0x468", "u32": 0},
+        {"offset": "0x724", "u32": 990},
+        {"offset": "0x738", "u32": 4}
+      ]
+    },
+    "rdp": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": 1}
+      ]
+    },
+    "oldbuffer": {
+      "size": "0x800",
+      "fill": "random"
+    },
+    "newbuffer": {
+      "size": "0x800",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e6e0": {"name": "FUN_1002e6e0", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1002f9f0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [1000, 1001]},
+    "0x10028bf0": {"name": "rdp_unlock_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@newbuffer"},
+    "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10035b24": {"name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": 0, "writes": [{"arg": 0, "offset": 0, "hex": "78563412"}]}
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e",
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {
+      "name": "null object returns six",
+      "args": [0],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "rdp socket -1 returns eight before any timeout check",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@rdp", "offset": "0xc", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 20}
+      ],
+      "expect": {"ret": 8}
+    },
+    {
+      "name": "typical copies the backup into a new buffer",
+      "args": ["@param_1"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeroed connection allocates a fresh buffer",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "fill": "zero", "size": 2048},
+        {"addr": "@param_1", "offset": "0xc", "u32": "@rdp"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fresh buffer malloc failure returns two",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "fill": "zero", "size": 2048},
+        {"addr": "@param_1", "offset": "0xc", "u32": "@rdp"}
+      ],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "backup copy malloc failure returns two",
+      "args": ["@param_1"],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "timeout pending returns nine",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 20}
+      ],
+      "expect": {"ret": 9}
+    },
+    {
+      "name": "timeout at exactly the threshold proceeds",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 10}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero threshold never times out",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bit one alone skips the timeout check",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 1},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 1000}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "stamp after now is a wrapped unsigned difference, not a timeout",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 20},
+        {"addr": "@param_1", "offset": "0x724", "u32": 1005}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "timeout is checked before the connection sentinel",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 20},
+        {"addr": "@param_1", "offset": "0x710", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 9}
+    },
+    {
+      "name": "connection sentinel returns eight after a passed timeout",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x5c", "u32": 2},
+        {"addr": "@param_1", "offset": "0x6e8", "u32": 10},
+        {"addr": "@param_1", "offset": "0x710", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 8}
+    },
+    {
+      "name": "existing backup is freed and replaced",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x468", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null backup ignores a stale copy pointer",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x718", "u32": 0},
+        {"addr": "@param_1", "offset": "0x468", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count copies nothing",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x738", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "largest copy that fits the buffers (count 127)",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x738", "u32": 127}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 184256,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@param_1", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x5c", "type": "u8", "range": [0, 255]},
+      {"addr": "@param_1", "offset": "0x6e8", "type": "u32", "range": [0, 20]},
+      {"addr": "@param_1", "offset": "0x710", "type": "u32", "choices": ["0xffffffff"], "p": 0.15},
+      {"addr": "@param_1", "offset": "0x718", "type": "ptr", "choices": ["@oldbuffer", 0]},
+      {"addr": "@param_1", "offset": "0x468", "type": "u32", "choices": [0, 1]},
+      {"addr": "@param_1", "offset": "0x724", "type": "u32", "range": [990, 1010]},
+      {"addr": "@param_1", "offset": "0x738", "type": "u32", "range": [0, 100]},
+      {"addr": "@rdp", "offset": "0xc", "type": "u32", "choices": ["0xffffffff"], "p": 0.1}
+    ]
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "function": "LongestMatch_guess",
+  "original": "0x10009e40",
+  "sources": [
+    "src/eqmain/unit_10009B10.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "s",
+      "type": "ptr"
+    },
+    {
+      "name": "cur_match",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "s": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": "0x8000"},
+        {"offset": "0x2c", "u32": "0xff"},
+        {"offset": "0x30", "u32": "@win"},
+        {"offset": "0x38", "u32": "@prev"},
+        {"offset": "0x64", "u32": "0x100"},
+        {"offset": "0x68", "u32": "0x5555"},
+        {"offset": "0x6c", "u32": "0x1000"},
+        {"offset": "0x70", "u32": 2},
+        {"offset": "0x74", "u32": 8},
+        {"offset": "0x84", "u32": 32},
+        {"offset": "0x88", "u32": 258}
+      ]
+    },
+    "win": {
+      "size": "0x400",
+      "fill": "zero"
+    },
+    "prev": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero window: full 258 match reaches nice_match, break",
+      "args": ["@s", 16]
+    },
+    {
+      "name": "lookahead 100 clips nice_match and the return",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x6c", "u32": 100}]
+    },
+    {
+      "name": "lookahead equal to best_len returns best_len",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x6c", "u32": 258}]
+    },
+    {
+      "name": "lookahead one above best_len",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x6c", "u32": 259}]
+    },
+    {
+      "name": "scan_end mismatch: continue, chain ends at 0",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@win", "offset": "0x12", "u8": 1}]
+    },
+    {
+      "name": "scan_end1 mismatch",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@win", "offset": "0x11", "u8": 1}]
+    },
+    {
+      "name": "first byte mismatch",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@win", "offset": "0x10", "u8": 1}]
+    },
+    {
+      "name": "second byte mismatch",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@win", "offset": "0x11", "u8": 1}, {"addr": "@win", "offset": "0x101", "u8": 1}]
+    },
+    {
+      "name": "mismatch at byte 3 of the match: len 3 beats 2",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@win", "offset": "0x13", "u8": 1}]
+    },
+    {
+      "name": "mismatch at bytes 4..10",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@win", "offset": "0x1a", "u8": 1}, {"addr": "@s", "offset": "0x88", "u32": 300}]
+    },
+    {
+      "name": "nice_match above 258: chain continues, second equal match not better",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x88", "u32": 300},
+                 {"addr": "@prev", "offset": "0x20", "u16": 32},
+                 {"addr": "@win", "offset": "0x40", "u8": 7}]
+    },
+    {
+      "name": "len equal nice_match breaks",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x88", "u32": 9},
+                 {"addr": "@win", "offset": "0x19", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 48}]
+    },
+    {
+      "name": "len one below nice_match continues",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x88", "u32": 10},
+                 {"addr": "@win", "offset": "0x19", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 48}]
+    },
+    {
+      "name": "chain cycle exhausted by chain_length 5 (no shift)",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x74", "u32": 5},
+                 {"addr": "@s", "offset": "0x84", "u32": 3},
+                 {"addr": "@s", "offset": "0x88", "u32": 300},
+                 {"addr": "@win", "offset": "0x12", "u8": 1},
+                 {"addr": "@win", "offset": "0x22", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 32},
+                 {"addr": "@prev", "offset": "0x40", "u16": 16}]
+    },
+    {
+      "name": "chain_length 3: the third chain entry is the only match",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x74", "u32": 3},
+                 {"addr": "@win", "offset": "0x12", "u8": 1},
+                 {"addr": "@win", "offset": "0x22", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 32},
+                 {"addr": "@prev", "offset": "0x40", "u16": 48}]
+    },
+    {
+      "name": "prev_length equal good_match: chain 8 shifted to 2",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x74", "u32": 8},
+                 {"addr": "@s", "offset": "0x84", "u32": 2},
+                 {"addr": "@win", "offset": "0x12", "u8": 1},
+                 {"addr": "@win", "offset": "0x22", "u8": 1},
+                 {"addr": "@win", "offset": "0x33", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 32},
+                 {"addr": "@prev", "offset": "0x40", "u16": 48},
+                 {"addr": "@prev", "offset": "0x60", "u16": 16}]
+    },
+    {
+      "name": "chain_length 2 shifted to 0 wraps: walks until limit",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x74", "u32": 2},
+                 {"addr": "@s", "offset": "0x84", "u32": 0},
+                 {"addr": "@s", "offset": "0x88", "u32": 300},
+                 {"addr": "@win", "offset": "0x12", "u8": 1},
+                 {"addr": "@win", "offset": "0x22", "u8": 1},
+                 {"addr": "@win", "offset": "0x34", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 32},
+                 {"addr": "@prev", "offset": "0x40", "u16": 48},
+                 {"addr": "@prev", "offset": "0x60", "u16": 64}]
+    },
+    {
+      "name": "limit: next cur_match equal limit stops",
+      "args": ["@s", "0x90"],
+      "memory": [{"addr": "@s", "offset": "0x24", "u32": "0x180"},
+                 {"addr": "@s", "offset": "0x88", "u32": 300},
+                 {"addr": "@win", "offset": "0x92", "u8": 1},
+                 {"addr": "@win", "offset": "0x8b", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": "0x86"},
+                 {"addr": "@prev", "offset": "0x0c", "u16": "0x70"}]
+    },
+    {
+      "name": "limit: next cur_match one above limit continues",
+      "args": ["@s", "0x90"],
+      "memory": [{"addr": "@s", "offset": "0x24", "u32": "0x180"},
+                 {"addr": "@s", "offset": "0x88", "u32": 300},
+                 {"addr": "@win", "offset": "0x92", "u8": 1},
+                 {"addr": "@win", "offset": "0x8d", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": "0x87"},
+                 {"addr": "@prev", "offset": "0x0e", "u16": "0x70"}]
+    },
+    {
+      "name": "strstart equal MAX_DIST: limit 0",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x24", "u32": "0x206"},
+                 {"addr": "@win", "offset": "0x12", "u8": 1}]
+    },
+    {
+      "name": "strstart one above MAX_DIST: limit 1",
+      "args": ["@s", 16],
+      "memory": [{"addr": "@s", "offset": "0x24", "u32": "0x205"},
+                 {"addr": "@win", "offset": "0x12", "u8": 1},
+                 {"addr": "@prev", "offset": "0x20", "u16": 1},
+                 {"addr": "@win", "offset": "0x3", "u8": 1}]
+    },
+    {
+      "name": "w_mask applied to the prev index",
+      "args": ["@s", "0x110"],
+      "memory": [{"addr": "@s", "offset": "0x2c", "u32": "0x0f"},
+                 {"addr": "@s", "offset": "0x88", "u32": 300},
+                 {"addr": "@win", "offset": "0x112", "u8": 1},
+                 {"addr": "@prev", "offset": "0x00", "u16": "0x40"},
+                 {"addr": "@prev", "offset": "0x20", "u16": "0x50"},
+                 {"addr": "@win", "offset": "0x50", "u8": 1}]
+    }
+  ],
+  "fuzz": {
+    "seed": 40512,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@s"
+        ]
+      },
+      {"range": [0, 383]}
+    ],
+    "memory": [
+      {"addr": "@s", "offset": "0x24", "type": "u32", "range": [200, 768]},
+      {"addr": "@s", "offset": "0x2c", "type": "u32", "choices": [255, 127, 15]},
+      {"addr": "@s", "offset": "0x64", "type": "u32", "range": [128, 320]},
+      {"addr": "@s", "offset": "0x6c", "type": "u32", "range": [0, 300]},
+      {"addr": "@s", "offset": "0x70", "type": "u32", "range": [1, 12]},
+      {"addr": "@s", "offset": "0x74", "type": "u32", "range": [4, 40]},
+      {"addr": "@s", "offset": "0x84", "type": "u32", "range": [0, 16]},
+      {"addr": "@s", "offset": "0x88", "type": "int", "range": [-2, 300]},
+      {"addr": "@prev", "type": "u16", "range": [0, 383], "count": 256},
+      {"addr": "@win", "type": "u8", "range": [0, 1], "count": 1024, "p": 0.8}
+    ]
+  }
+}

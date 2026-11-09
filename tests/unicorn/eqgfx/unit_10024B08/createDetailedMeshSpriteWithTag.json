@@ -1,0 +1,183 @@
+{
+  "function": "createDetailedMeshSpriteWithTag_guess",
+  "original": "0x10025917",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "fileContext",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "filecontext": {
+      "size": "0x8068",
+      "fill": "random",
+      "init": [
+        { "offset": "0x4", "u32": "@dictionary" },
+        { "offset": "0x38", "u32": 4096 },
+        { "offset": "0x8044", "u32": "@record" },
+        { "offset": "0x804c", "u32": "@data_by_offset" },
+        { "offset": "0x8064", "u32": 1 }
+      ]
+    },
+    "dictionary": { "size": "0x40", "fill": "random" },
+    "record": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": 5 },
+        { "offset": "0x4", "u32": 0 }
+      ]
+    },
+    "data_by_offset": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@mesh0" },
+        { "offset": "0x4", "u32": "@mesh1" },
+        { "offset": "0x8", "u32": "@mesh2" },
+        { "offset": "0xc", "u32": "@mesh3" }
+      ]
+    },
+    "mesh_lookup": { "size": "0x20", "fill": "random" },
+    "mesh0": { "size": "0x20", "fill": "random" },
+    "mesh1": { "size": "0x20", "fill": "random" },
+    "mesh2": { "size": "0x20", "fill": "random" },
+    "mesh3": { "size": "0x20", "fill": "random" },
+    "sprite": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0xc", "u32": 0 }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@mesh_lookup"
+    },
+    "0x1001034c": {
+      "name": "s3dCreateDMSprite",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": "@sprite"
+    },
+    "0x100174b8": {
+      "name": "t3dSetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "nonnegative source offset and positive tag offset map to index zero",
+      "args": ["@filecontext"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 5 },
+        { "addr": "@record", "offset": "0x4", "u32": 0 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 1 }
+      ]
+    },
+    {
+      "name": "last data table index and negative tag offset; failed tag skips dictionary add",
+      "args": ["@filecontext"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 4294967292 },
+        { "addr": "@record", "offset": "0x4", "u32": 3 },
+        { "addr": "@filecontext", "offset": "0x38", "u32": 200 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 0 }
+      ],
+      "callees": {
+        "0x100174b8": {
+          "name": "t3dSetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "negative source and tag offsets are resolved against file size",
+      "args": ["@filecontext"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 4294967284 },
+        { "addr": "@record", "offset": "0x4", "u32": 4294967288 },
+        { "addr": "@filecontext", "offset": "0x38", "u32": 1000 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 1 }
+      ]
+    },
+    {
+      "name": "zero tag skips tag insertion but still applies the sprite flag",
+      "args": ["@filecontext"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 0 },
+        { "addr": "@record", "offset": "0x4", "u32": 1 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 1 }
+      ]
+    },
+    {
+      "name": "zero flag and positive tag still call tag setter with zero",
+      "args": ["@filecontext"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 1 },
+        { "addr": "@record", "offset": "0x4", "u32": 2 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 0 }
+      ]
+    },
+    {
+      "name": "null sprite skips tag and flag accesses",
+      "args": ["@filecontext"],
+      "callees": {
+        "0x1001034c": {
+          "name": "s3dCreateDMSprite",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 0
+        }
+      },
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 4294967295 },
+        { "addr": "@record", "offset": "0x4", "u32": 4294967295 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 1 }
+      ]
+    },
+    {
+      "name": "INT_MIN offsets preserve wrapped subtraction",
+      "args": ["@filecontext"],
+      "memory": [
+        { "addr": "@record", "offset": "0x0", "u32": 2147483648 },
+        { "addr": "@record", "offset": "0x4", "u32": 2147483648 },
+        { "addr": "@filecontext", "offset": "0x38", "u32": 123 },
+        { "addr": "@filecontext", "offset": "0x8064", "u32": 1 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 153879,
+    "count": 40,
+    "args": [
+      { "choices": ["@filecontext"] }
+    ],
+    "memory": [
+      { "addr": "@filecontext", "offset": "0x38", "type": "int", "range": [0, 65535] },
+      { "addr": "@record", "offset": "0x0", "type": "int", "choices": [-2147483648, -1, 0, 1, 2, 2147483647] },
+      { "addr": "@record", "offset": "0x4", "type": "int", "choices": [-2147483648, -4096, -1, 0, 1, 2, 3] },
+      { "addr": "@filecontext", "offset": "0x8064", "type": "int", "choices": [-1, 0, 1] }
+    ]
+  }
+}

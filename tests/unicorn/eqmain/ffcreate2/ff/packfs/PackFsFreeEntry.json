@@ -1,0 +1,201 @@
+{
+  "function": "PackFsFreeEntry_guess",
+  "original": "0x10007a80",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "entry",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "entry": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 3},
+        {"offset": "0x4", "u32": 5},
+        {"offset": "0xc", "u32": "@obj"}
+      ]
+    },
+    "obj": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"}
+      ]
+    },
+    "vt": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@rel"}
+      ]
+    },
+    "n1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@entry"},
+        {"offset": "0x8", "u32": "@n2"}
+      ]
+    },
+    "n2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@n3"}
+      ]
+    },
+    "n3": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "rel": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004ce90", "u32": "@n1"},
+    {"addr": "0x1004cebc", "u32": 1000}
+  ],
+  "callees": {
+    "0x10028430": {
+      "name": "FUN_10028430",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@rel": {
+      "name": "Release",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "found first node, release, typical",
+      "args": ["@entry"]
+    },
+    {
+      "name": "found second node",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@n1", "offset": "0x4", "u32": 0},
+        {"addr": "@n2", "offset": "0x4", "u32": "@entry"}
+      ]
+    },
+    {
+      "name": "found third node",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@n1", "offset": "0x4", "u32": 0},
+        {"addr": "@n3", "offset": "0x4", "u32": "@entry"}
+      ]
+    },
+    {
+      "name": "not in list",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@n1", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "empty list",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "0x1004ce90", "u32": 0}
+      ]
+    },
+    {
+      "name": "empty list, flag set",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "0x1004ce90", "u32": 0},
+        {"addr": "@entry", "offset": "0x10", "u32": 1}
+      ]
+    },
+    {
+      "name": "flag set, no release",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@entry", "offset": "0x10", "u32": 1}
+      ]
+    },
+    {
+      "name": "flag -1, no release",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@entry", "offset": "0x10", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "found third node, flag set",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@n1", "offset": "0x4", "u32": 0},
+        {"addr": "@n3", "offset": "0x4", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x10", "u32": 1}
+      ]
+    },
+    {
+      "name": "negative width",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@entry", "offset": "0x0", "u32": "0xfffffffd"}
+      ]
+    },
+    {
+      "name": "total goes negative",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "0x1004cebc", "u32": 0}
+      ]
+    },
+    {
+      "name": "large dimensions wrap",
+      "args": ["@entry"],
+      "memory": [
+        {"addr": "@entry", "offset": "0x0", "u32": "0x40000"},
+        {"addr": "@entry", "offset": "0x4", "u32": "0x20000"}
+      ]
+    },
+    {
+      "name": "null pointers",
+      "args": [0]
+    }
+  ],
+  "fuzz": {
+    "seed": 31360,
+    "count": 40,
+    "args": [
+      {
+        "choices": [0, "@entry", "@entry", "@entry"]
+      }
+    ],
+    "memory": [
+      {"addr": "0x1004ce90", "type": "ptr", "choices": [0, "@n1", "@n1", "@n2", "@n3"]},
+      {"addr": "0x1004cebc", "type": "int", "range": [-1000, 100000]},
+      {"addr": "@entry", "offset": "0x0", "type": "int", "range": [-40, 300]},
+      {"addr": "@entry", "offset": "0x4", "type": "int", "range": [-40, 300]},
+      {"addr": "@entry", "offset": "0x10", "type": "int", "choices": [0, 0, 0, 1, -1]},
+      {"addr": "@n1", "offset": "0x4", "type": "ptr", "choices": [0, "@entry", "@entry"]},
+      {"addr": "@n1", "offset": "0x8", "type": "ptr", "choices": [0, "@n2"]},
+      {"addr": "@n2", "offset": "0x4", "type": "ptr", "choices": [0, "@entry"]},
+      {"addr": "@n2", "offset": "0x8", "type": "ptr", "choices": [0, "@n3"]},
+      {"addr": "@n3", "offset": "0x4", "type": "ptr", "choices": [0, "@entry"]}
+    ]
+  }
+}

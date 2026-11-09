@@ -1,0 +1,158 @@
+{
+  "function": "t3dClearBackBuffer",
+  "original": "0x1004a570",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "device": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@device_vtbl"}
+      ]
+    },
+    "device_vtbl": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x34", "u32": "@SetViewport"},
+        {"offset": "0x3c", "u32": "@GetViewport"}
+      ]
+    },
+    "helper": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "SetViewport": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "GetViewport": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "grBufferClear": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100FBA6C", "u32": "@device"},
+    {"addr": "0x100F3E8C", "u32": "@grBufferClear"},
+    {"addr": "0x100F3FE4", "u32": "@helper"},
+    {"addr": "0x100FBA70", "size": 24, "fill": "random"},
+    {"addr": "0x100FBA74", "u32": "0x00001234"}
+  ],
+  "callees": {
+    "0x10045db0": {
+      "name": "t3dD3DXContextClear",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": 0
+    },
+    "@GetViewport": {
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "000000000000000080020000e0010000000000000000803f"}
+      ],
+      "ret": 0
+    },
+    "@SetViewport": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:24"],
+      "ret": 0
+    },
+    "@grBufferClear": {
+      "conv": "stdcall",
+      "args": ["int", "int", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "mode1 helper returns 0: no retry",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}]
+    },
+    {
+      "name": "mode1 helper returns 0x88760816 then 0: retry with mode 1",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "FUN_10045db0", "conv": "cdecl", "args": ["ptr", "int"], "ret": ["0x88760816", 0]}
+      }
+    },
+    {
+      "name": "mode1 helper returns 0x88760816 both times: second result ignored",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "FUN_10045db0", "conv": "cdecl", "args": ["ptr", "int"], "ret": "0x88760816"}
+      }
+    },
+    {
+      "name": "mode1 helper returns 0x88760815: no retry (one below the code)",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "FUN_10045db0", "conv": "cdecl", "args": ["ptr", "int"], "ret": "0x88760815"}
+      }
+    },
+    {
+      "name": "mode1 helper returns 0x88760817: no retry (one above the code)",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "FUN_10045db0", "conv": "cdecl", "args": ["ptr", "int"], "ret": "0x88760817"}
+      }
+    },
+    {
+      "name": "mode1 helper returns -1: no retry",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {
+        "0x10045db0": {"name": "FUN_10045db0", "conv": "cdecl", "args": ["ptr", "int"], "ret": "0xffffffff"}
+      }
+    },
+    {
+      "name": "mode2 calls grBufferClear(0, 0, depth) and returns",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode0 does nothing",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 0}]
+    },
+    {
+      "name": "mode3 does nothing",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 3}]
+    },
+    {
+      "name": "mode4 does nothing",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": 4}]
+    },
+    {
+      "name": "mode -1 does nothing",
+      "args": [],
+      "memory": [{"addr": "0x100FB8A8", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 304496,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x100FB8A8", "type": "int", "choices": [0, 1, 1, 2, 2, 3, 4, -1, 7]},
+      {"addr": "0x100FBA74", "type": "u32"},
+      {"addr": "0x100FBA70", "size": 24}
+    ]
+  }
+}

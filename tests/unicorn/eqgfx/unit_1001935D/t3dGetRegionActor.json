@@ -1,0 +1,189 @@
+{
+  "function": "t3dGetRegionActor",
+  "original": "0x100194F1",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actorLookup",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "actorIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actorlookup": {
+      "size": "0x180",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x17c", "u32": "@actorvalues"}
+      ]
+    },
+    "region": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x2c", "u32": "@actorstate"}
+      ]
+    },
+    "actorstate": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0x27"},
+        {"offset": "0x4", "u32": 3},
+        {"offset": "0xc", "u32": "@actorindices"}
+      ]
+    },
+    "actorindices": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 2},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0x8", "u32": 4},
+        {"offset": "0xc", "u32": 1},
+        {"offset": "0x10", "u32": 3},
+        {"offset": "0x14", "u32": 5}
+      ]
+    },
+    "actorvalues": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0x11112222"},
+        {"offset": "0x4", "u32": "0x22223333"},
+        {"offset": "0x8", "u32": "0x33334444"},
+        {"offset": "0xc", "u32": "0x44445555"},
+        {"offset": "0x10", "u32": "0x55556666"},
+        {"offset": "0x14", "u32": "0x66667777"},
+        {"offset": "0x18", "u32": "0x77778888"},
+        {"offset": "0x1c", "u32": "0x7f123456"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "type 0x27 index zero maps to actor two",
+      "args": ["@actorlookup", "@region", 0],
+      "expect": {"ret": "0x33334444"}
+    },
+    {
+      "name": "type 0x27 index one maps to actor zero",
+      "args": ["@actorlookup", "@region", 1],
+      "expect": {"ret": "0x11112222"}
+    },
+    {
+      "name": "type 0x27 last valid index",
+      "args": ["@actorlookup", "@region", 2],
+      "expect": {"ret": "0x55556666"}
+    },
+    {
+      "name": "type 0x29 is also accepted",
+      "args": ["@actorlookup", "@region", 2],
+      "memory": [{"addr": "@actorstate", "offset": "0x0", "u32": "0x29"}],
+      "expect": {"ret": "0x55556666"}
+    },
+    {
+      "name": "type below accepted range",
+      "args": ["@actorlookup", "@region", 1],
+      "memory": [{"addr": "@actorstate", "offset": "0x0", "u32": "0x26"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type 0x28 is rejected",
+      "args": ["@actorlookup", "@region", 1],
+      "memory": [{"addr": "@actorstate", "offset": "0x0", "u32": "0x28"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type above accepted range",
+      "args": ["@actorlookup", "@region", 1],
+      "memory": [{"addr": "@actorstate", "offset": "0x0", "u32": "0x2a"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index equal to actor count is rejected",
+      "args": ["@actorlookup", "@region", 3],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index greater than actor count is rejected",
+      "args": ["@actorlookup", "@region", 4],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "single actor at index zero",
+      "args": ["@actorlookup", "@region", 0],
+      "memory": [{"addr": "@actorstate", "offset": "0x4", "u32": 1}],
+      "expect": {"ret": "0x33334444"}
+    },
+    {
+      "name": "single actor rejects index one",
+      "args": ["@actorlookup", "@region", 1],
+      "memory": [{"addr": "@actorstate", "offset": "0x4", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero actors rejects index zero",
+      "args": ["@actorlookup", "@region", 0],
+      "memory": [{"addr": "@actorstate", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "maximum unsigned index rejected",
+      "args": ["@actorlookup", "@region", "0xffffffff"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "invalid type rejects maximum unsigned index",
+      "args": ["@actorlookup", "@region", "0xffffffff"],
+      "memory": [{"addr": "@actorstate", "offset": "0x0", "u32": "0x28"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative actor count compares as unsigned",
+      "args": ["@actorlookup", "@region", 5],
+      "memory": [{"addr": "@actorstate", "offset": "0x4", "u32": "0xffffffff"}],
+      "expect": {"ret": "0x66667777"}
+    },
+    {
+      "name": "type 0x29 first index",
+      "args": ["@actorlookup", "@region", 0],
+      "memory": [{"addr": "@actorstate", "offset": "0x0", "u32": "0x29"}],
+      "expect": {"ret": "0x33334444"}
+    },
+    {
+      "name": "count two rejects index two",
+      "args": ["@actorlookup", "@region", 2],
+      "memory": [{"addr": "@actorstate", "offset": "0x4", "u32": 2}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 103665,
+    "count": 40,
+    "args": [
+      {"choices": ["@actorlookup"]},
+      {"choices": ["@region"]},
+      {"choices": [0, 1, 2, 3, 4, 5, 6, 7, "0xffffffff"]}
+    ],
+    "memory": [
+      {"addr": "@actorstate", "offset": "0x0", "type": "u32", "choices": ["0x26", "0x27", "0x28", "0x29", "0x2a"]},
+      {"addr": "@actorstate", "offset": "0x4", "type": "u32", "range": [0, 6]},
+      {"addr": "@actorindices", "type": "u32", "count": 6, "range": [0, 7]},
+      {"addr": "@actorvalues", "type": "u32", "count": 8, "range": [0, 2147483647]}
+    ]
+  }
+}

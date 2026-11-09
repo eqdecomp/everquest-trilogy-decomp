@@ -1,0 +1,130 @@
+{
+  "function": "s3dGetDMSpriteDefinitionNumVertices",
+  "original": "0x10010aaa",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite_def",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "sprite_def": {
+      "size": "0x1c",
+      "fill": "random"
+    },
+    "count32": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "count16": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "prefers u32",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": "@count32"},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count32", "u32": 12345},
+        {"addr": "@count16", "u16": 67}
+      ],
+      "expect": {"ret": 12345}
+    },
+    {
+      "name": "falls back to u16",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count16", "u16": 4660}
+      ],
+      "expect": {"ret": 4660}
+    },
+    {
+      "name": "u32 zero still takes u32 path",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": "@count32"},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count32", "u32": 0},
+        {"addr": "@count16", "u16": 999}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "u32 max",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": "@count32"},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": 0},
+        {"addr": "@count32", "u32": 4294967295}
+      ],
+      "expect": {"ret": 4294967295}
+    },
+    {
+      "name": "u16 zero",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count16", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "u16 max zero extends",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count16", "u16": 65535}
+      ],
+      "expect": {"ret": 65535}
+    },
+    {
+      "name": "u16 high bit not sign extended",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count16", "u16": 32768}
+      ],
+      "expect": {"ret": 32768}
+    },
+    {
+      "name": "u16 one",
+      "args": ["@sprite_def"],
+      "memory": [
+        {"addr": "@sprite_def", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite_def", "offset": "0x18", "u32": "@count16"},
+        {"addr": "@count16", "u16": 1}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 68266,
+    "count": 30,
+    "args": [
+      {
+        "choices": ["@sprite_def"]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite_def", "offset": "0x14", "type": "u32", "choices": [0, "@count32"]},
+      {"addr": "@sprite_def", "offset": "0x18", "type": "u32", "choices": ["@count16"]},
+      {"addr": "@count32", "type": "u32"},
+      {"addr": "@count16", "type": "u16"}
+    ]
+  }
+}

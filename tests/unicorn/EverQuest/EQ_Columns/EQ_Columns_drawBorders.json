@@ -1,0 +1,88 @@
+{
+  "function": "EQ_Columns_drawBorders_guess",
+  "original": "0x00433129",
+  "sources": ["src/EverQuest/EQ_Columns.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0xc0",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x70", "u32": "@n1"},
+        {"offset": "0x84", "u32": 0},
+        {"offset": "0x88", "u32": 1},
+        {"offset": "0xa0", "u32": 10},
+        {"offset": "0xa4", "u32": 20},
+        {"offset": "0xb0", "u32": 30},
+        {"offset": "0xb4", "u32": 40}
+      ]
+    },
+    "n1": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 1},
+        {"offset": "0x20", "u32": "@n2"}
+      ]
+    },
+    "n2": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 2},
+        {"offset": "0x20", "u32": "@n3"}
+      ]
+    },
+    "n3": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 0},
+        {"offset": "0x20", "u32": 0}
+      ]
+    },
+    "textO": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006EFDFC", "u32": 7},
+    {"addr": "0x006E4E68", "u32": "@textO"}
+  ],
+  "callees": {
+    "0x00432f84": {"name": "EQ_Columns::drawFrame_guess", "conv": "thiscall", "args": ["ptr"]},
+    "0x0048d21a": {"name": "EQ_TextO::WriteTextHD_guess", "conv": "thiscall", "args": ["cstr", "int", "int", "int", "int", "int"]}
+  },
+  "cases": [
+    {"name": "default node draws frame then Done", "args": ["@self", 0]},
+    {"name": "guard off", "args": ["@self", 1], "memory": [{"addr": "@self", "offset": "0x88", "u32": 0}]},
+    {"name": "empty list", "args": ["@self", -1], "memory": [{"addr": "@self", "offset": "0x70", "u32": 0}]},
+    {"name": "type zero only draws frame", "args": ["@self", 0], "memory": [{"addr": "@n1", "offset": "0x14", "u16": 0}, {"addr": "@n1", "offset": "0x20", "u32": 0}]},
+    {"name": "type one Done coordinates", "args": ["@self", 0], "memory": [{"addr": "@self", "offset": "0xa0", "u32": -17}, {"addr": "@self", "offset": "0xa4", "u32": 0}]},
+    {"name": "type two Start", "args": ["@self", 0], "memory": [{"addr": "@self", "offset": "0x70", "u32": "@n2"}, {"addr": "@self", "offset": "0x84", "u32": 0}, {"addr": "@n2", "offset": "0x20", "u32": 0}]},
+    {"name": "type two Restart", "args": ["@self", 0], "memory": [{"addr": "@self", "offset": "0x70", "u32": "@n2"}, {"addr": "@self", "offset": "0x84", "u32": -1}, {"addr": "@n2", "offset": "0x20", "u32": 0}]},
+    {"name": "unsupported signed short", "args": ["@self", 0], "memory": [{"addr": "@n1", "offset": "0x14", "u16": 65535}, {"addr": "@n1", "offset": "0x20", "u32": 0}]},
+    {"name": "ordered mixed list", "args": ["@self", 0], "memory": [{"addr": "@n1", "offset": "0x14", "u16": 3}, {"addr": "@n1", "offset": "0x20", "u32": "@n2"}, {"addr": "@n2", "offset": "0x14", "u16": 2}, {"addr": "@n2", "offset": "0x20", "u32": "@n3"}, {"addr": "@n3", "offset": "0x14", "u16": 1}, {"addr": "@n3", "offset": "0x20", "u32": 0}]},
+    {"name": "large positive node type", "args": ["@self", 0], "memory": [{"addr": "@n1", "offset": "0x14", "u16": 32767}, {"addr": "@n1", "offset": "0x20", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 4403329,
+    "count": 40,
+    "args": [{"choices": ["@self"]}, {"range": [-1, 1]}],
+    "memory": [
+      {"addr": "@self", "offset": "0x70", "type": "ptr", "choices": [0, "@n1"]},
+      {"addr": "@self", "offset": "0x84", "type": "int", "range": [-2, 2]},
+      {"addr": "@self", "offset": "0x88", "type": "int", "range": [0, 1]},
+      {"addr": "@self", "offset": "0xa0", "type": "int", "range": [-100, 100]},
+      {"addr": "@self", "offset": "0xa4", "type": "int", "range": [-100, 100]},
+      {"addr": "@self", "offset": "0xb0", "type": "int", "range": [-100, 100]},
+      {"addr": "@self", "offset": "0xb4", "type": "int", "range": [-100, 100]},
+      {"addr": "@n1", "offset": "0x14", "type": "short", "choices": [-32768, -1, 0, 1, 2, 3, 32767]},
+      {"addr": "@n2", "offset": "0x14", "type": "short", "choices": [-32768, -1, 0, 1, 2, 3, 32767]},
+      {"addr": "@n3", "offset": "0x14", "type": "short", "choices": [-32768, -1, 0, 1, 2, 3, 32767]}
+    ]
+  }
+}

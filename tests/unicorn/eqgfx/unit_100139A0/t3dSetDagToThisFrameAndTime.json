@@ -1,0 +1,234 @@
+{
+  "function": "t3dSetDagToThisFrameAndTime",
+  "original": "0x10013c06",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dag",
+      "type": "ptr"
+    },
+    {
+      "name": "frameNumber",
+      "type": "u32"
+    },
+    {
+      "name": "time",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dag": {
+      "size": "0x11c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "0x00600000"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001ce1e": {
+      "name": "t3dGetTrackNumFrames",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 65536
+    }
+  },
+  "cases": [
+    {
+      "name": "ordinary frame",
+      "args": [
+        "@dag",
+        1,
+        "0x3f123456"
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 4
+        }
+      }
+    },
+    {
+      "name": "first frame and single-frame loop",
+      "args": [
+        "@dag",
+        0,
+        "0x80000001"
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "last frame wraps to zero",
+      "args": [
+        "@dag",
+        2,
+        "0x7fc12345"
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 3
+        }
+      }
+    },
+    {
+      "name": "frame before last",
+      "args": [
+        "@dag",
+        1,
+        "0x12345678"
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 3
+        }
+      }
+    },
+    {
+      "name": "frame equals count",
+      "args": [
+        "@dag",
+        3,
+        17
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 3
+        }
+      }
+    },
+    {
+      "name": "zero frames",
+      "args": [
+        "@dag",
+        0,
+        29
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "16-bit next-frame threshold",
+      "args": [
+        "@dag",
+        65534,
+        31
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 65535
+        }
+      }
+    },
+    {
+      "name": "frame counter above 16-bit range",
+      "args": [
+        "@dag",
+        65536,
+        37
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 65537
+        }
+      }
+    },
+    {
+      "name": "unsigned frame comparison",
+      "args": [
+        "@dag",
+        "0xffffffff",
+        41
+      ],
+      "callees": {
+        "0x1001ce1e": {
+          "name": "t3dGetTrackNumFrames",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 65536
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 80902,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dag"
+        ]
+      },
+      {
+        "range": [
+          0,
+          65537
+        ]
+      },
+      {
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

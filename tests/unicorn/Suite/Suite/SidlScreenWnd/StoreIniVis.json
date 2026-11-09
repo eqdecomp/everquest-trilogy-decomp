@@ -1,0 +1,262 @@
+{
+  "function": "HandleLevelUp_guess",
+  "original": "0x004a1147",
+  "sources": [
+    "src/Suite/Suite/SidlScreenWnd.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "pc",
+      "type": "ptr"
+    },
+    {
+      "name": "level",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "pc": {
+      "size": "0x1fa4",
+      "fill": "random"
+    },
+    "everquest": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "everquestB": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "@pc", "offset": "0x34", "u16": 4},
+    {"addr": "@pc", "offset": "0x36", "u8": 7},
+    {"addr": "@pc", "offset": "0x1048", "u8": 10}
+  ],
+  "callees": {
+    "0x004807fc": {
+      "name": "EQ_PC_guess::GetExpForLevel_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "u8",
+        "u8",
+        "u16"
+      ],
+      "ret": 100
+    },
+    "0x00419bca": {
+      "name": "EQ_Character::Max_Mana_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [],
+      "ret": 77
+    },
+    "0x00419a2f": {
+      "name": "EQ_Character::Max_HP_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "int"
+      ],
+      "ret": 555
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004c53c2": {
+      "name": "SaveToUIIniFile_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "int"
+      ]
+    },
+    "0x004a11e3": {
+      "name": "setSkillsByLevel",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x005224fb": {
+      "name": "_sprintf",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical level above highest raises it",
+      "args": ["@pc", 12]
+    },
+    {
+      "name": "level equal to highest keeps it",
+      "args": ["@pc", 10]
+    },
+    {
+      "name": "level below highest keeps it",
+      "args": ["@pc", 5]
+    },
+    {
+      "name": "level one above highest",
+      "args": ["@pc", 11]
+    },
+    {
+      "name": "level one below highest",
+      "args": ["@pc", 9]
+    },
+    {
+      "name": "level zero wraps the byte argument",
+      "args": ["@pc", 0]
+    },
+    {
+      "name": "level 255 against highest 254",
+      "args": ["@pc", 255],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 254}]
+    },
+    {
+      "name": "level 255 against highest 255",
+      "args": ["@pc", 255],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 255}]
+    },
+    {
+      "name": "wide level truncated to a byte above highest, printed in full",
+      "args": ["@pc", 4660],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 51}]
+    },
+    {
+      "name": "wide level truncated to a byte equal to highest",
+      "args": ["@pc", 4660],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 52}]
+    },
+    {
+      "name": "level 256 truncates to zero",
+      "args": ["@pc", 256],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 0}]
+    },
+    {
+      "name": "negative level",
+      "args": ["@pc", -1]
+    },
+    {
+      "name": "high highest level with unsigned compare",
+      "args": ["@pc", 100],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 200}]
+    },
+    {
+      "name": "high level against low highest with unsigned compare",
+      "args": ["@pc", 200],
+      "memory": [{"addr": "@pc", "offset": "0x1048", "u8": 100}]
+    },
+    {
+      "name": "race and class pass through, high race word",
+      "args": ["@pc", 20],
+      "memory": [
+        {"addr": "@pc", "offset": "0x34", "u16": 65535},
+        {"addr": "@pc", "offset": "0x36", "u8": 255}
+      ]
+    },
+    {
+      "name": "experience callee returns minus one so exp becomes zero",
+      "args": ["@pc", 30],
+      "callees": {
+        "0x004807fc": {
+          "name": "EQ_PC_guess::FUN_004807fc_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": ["u8", "u8", "u16"],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "large experience value",
+      "args": ["@pc", 30],
+      "callees": {
+        "0x004807fc": {
+          "name": "EQ_PC_guess::FUN_004807fc_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": ["u8", "u8", "u16"],
+          "ret": "0x7ffffffe"
+        }
+      }
+    },
+    {
+      "name": "mana and hp wider than 16 bits are truncated",
+      "args": ["@pc", 30],
+      "callees": {
+        "0x00419bca": {
+          "name": "EQ_Character::Max_Mana_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": [],
+          "ret": "0x12345"
+        },
+        "0x00419a2f": {
+          "name": "EQ_Character::Max_HP_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": ["int"],
+          "ret": "0x2abcd"
+        }
+      }
+    },
+    {
+      "name": "negative mana and hp",
+      "args": ["@pc", 31],
+      "callees": {
+        "0x00419bca": {
+          "name": "EQ_Character::Max_Mana_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": [],
+          "ret": -5
+        },
+        "0x00419a2f": {
+          "name": "EQ_Character::Max_HP_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": ["int"],
+          "ret": -9
+        }
+      }
+    },
+    {
+      "name": "different everquest object",
+      "args": ["@pc", 40],
+      "memory": [
+        {"addr": "0x006efe2c", "u32": "@everquestB"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4854087,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@pc"
+        ]
+      },
+      {"range": [-4, 300]}
+    ],
+    "memory": [
+      {"addr": "@pc", "offset": "0x1048", "type": "u8", "range": [0, 255]},
+      {"addr": "@pc", "offset": "0x34", "type": "u16"},
+      {"addr": "@pc", "offset": "0x36", "type": "u8"}
+    ]
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "function": "InflateTreesBits_guess",
+  "original": "0x1000c3e0",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "codeLens", "type": "ptr"},
+    {"name": "bitsOut", "type": "ptr"},
+    {"name": "tableOut", "type": "ptr"},
+    {"name": "space", "type": "int"},
+    {"name": "z", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "codelens": {"size": "0x4c", "fill": "random"},
+    "bitsout": {"size": "0x4", "fill": "zero"},
+    "tableout": {"size": "0x4", "fill": "zero"},
+    "work": {"size": "0x4c", "fill": "zero"},
+    "fn_alloc": {"size": "0x10", "fill": "zero"},
+    "fn_free": {"size": "0x10", "fill": "zero"},
+    "z": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {"offset": "0x20", "u32": "@fn_alloc"},
+        {"offset": "0x24", "u32": "@fn_free"},
+        {"offset": "0x28", "u32": "0x0badc0de"}
+      ]
+    }
+  },
+  "callees": {
+    "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": 0},
+    "@fn_alloc": {"name": "zalloc_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32"], "ret": "@work"},
+    "@fn_free": {"name": "zfree_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "tree built, lookup bits set",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}]
+    },
+    {
+      "name": "tree built, zero lookup bits: incomplete",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 0}]
+    },
+    {
+      "name": "over-subscribed tree",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -3}}
+    },
+    {
+      "name": "over-subscribed tree, zero lookup bits",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 0}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -3}}
+    },
+    {
+      "name": "incomplete code longer than one bit, lookup bits set",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -5}}
+    },
+    {
+      "name": "incomplete code longer than one bit, zero lookup bits",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 0}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -5}}
+    },
+    {
+      "name": "work space exhausted, lookup bits set",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -4}}
+    },
+    {
+      "name": "work space exhausted, zero lookup bits",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 0}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -4}}
+    },
+    {
+      "name": "work array not allocated",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}],
+      "callees": {"@fn_alloc": {"name": "zalloc_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32"], "ret": 0}}
+    },
+    {
+      "name": "work array not allocated, zero lookup bits",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 0}],
+      "callees": {"@fn_alloc": {"name": "zalloc_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32"], "ret": 0}}
+    },
+    {
+      "name": "positive result, lookup bits set",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": 1}}
+    },
+    {
+      "name": "positive result, zero lookup bits",
+      "args": ["@codelens", "@bitsout", "@tableout", 1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 0}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": 1}}
+    },
+    {
+      "name": "all-ones lookup bits, space at its top",
+      "args": ["@codelens", "@bitsout", "@tableout", 1472, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 4294967295}]
+    },
+    {
+      "name": "negative space passed through to the tree build",
+      "args": ["@codelens", "@bitsout", "@tableout", -1, "@z"],
+      "memory": [{"addr": "@bitsout", "u32": 7}],
+      "callees": {"0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -4}}
+    }
+  ],
+  "fuzz": {
+    "seed": 7310223,
+    "count": 40,
+    "args": [
+      {"choices": ["@codelens"]},
+      {"choices": ["@bitsout"]},
+      {"choices": ["@tableout"]},
+      {"range": [-8, 1472]},
+      {"choices": ["@z"]}
+    ],
+    "memory": [
+      {"addr": "@bitsout", "type": "u32", "choices": [0, 1, 7, 2147483648]}
+    ]
+  }
+}

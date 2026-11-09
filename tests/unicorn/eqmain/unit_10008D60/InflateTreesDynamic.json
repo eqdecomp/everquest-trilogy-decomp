@@ -1,0 +1,193 @@
+{
+  "function": "InflateTreesDynamic_guess",
+  "original": "0x1000c960",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "numLit", "type": "u32"},
+    {"name": "numDist", "type": "u32"},
+    {"name": "codeLens", "type": "ptr"},
+    {"name": "litBits", "type": "ptr"},
+    {"name": "distBits", "type": "ptr"},
+    {"name": "litTable", "type": "ptr"},
+    {"name": "distTable", "type": "ptr"},
+    {"name": "space", "type": "int"},
+    {"name": "z", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "codelens": {"size": "0x480", "fill": "random"},
+    "litbits": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 1}]},
+    "distbits": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 1}]},
+    "littable": {"size": "0x100", "fill": "random"},
+    "disttable": {"size": "0x100", "fill": "random"},
+    "work": {"size": "0x480", "fill": "random"},
+    "zalloc": {"size": "0x10", "fill": "zero"},
+    "zfree": {"size": "0x10", "fill": "zero"},
+    "z": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": 0},
+        {"offset": "0x20", "u32": "@zalloc"},
+        {"offset": "0x24", "u32": "@zfree"},
+        {"offset": "0x28", "u32": 12648430}
+      ]
+    }
+  },
+  "callees": {
+    "0x1000c490": {
+      "name": "FUN_1000c490",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"],
+      "ret": 0
+    },
+    "@zalloc": {
+      "name": "zalloc_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "u32"],
+      "ret": "@work"
+    },
+    "@zfree": {
+      "name": "zfree_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: both trees built, both bit depths set",
+      "args": [1, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "distance bits zero, 257 literal codes: accepted",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "memory": [{"addr": "@distbits", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "distance bits zero, 258 literal codes: empty distance tree",
+      "args": [258, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "memory": [{"addr": "@distbits", "u32": 0}],
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "distance bits zero, maximum literal count (unsigned compare)",
+      "args": [4294967295, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "memory": [{"addr": "@distbits", "u32": 0}],
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "distance bits set, 258 literal codes: accepted",
+      "args": [258, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero distance codes, distance bits zero: accepted",
+      "args": [1, 0, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "memory": [{"addr": "@distbits", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "literal bits zero: incomplete literal tree, no distance build",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "memory": [{"addr": "@litbits", "u32": 0}],
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "work array cannot be allocated",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "@zalloc": {"name": "zalloc_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32"], "ret": 0}
+      },
+      "expect": {"ret": -4}
+    },
+    {
+      "name": "literal tree over-subscribed",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -3}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "literal tree out of space",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -4}
+      },
+      "expect": {"ret": -4}
+    },
+    {
+      "name": "literal tree incomplete",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -5}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "literal tree returns another nonzero code",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": -1}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "distance tree over-subscribed",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": [0, -3]}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "distance tree incomplete",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": [0, -5]}
+      },
+      "expect": {"ret": -3}
+    },
+    {
+      "name": "distance tree out of space",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": [0, -4]}
+      },
+      "expect": {"ret": -4}
+    },
+    {
+      "name": "distance tree returns another nonzero code",
+      "args": [257, 1, "@codelens", "@litbits", "@distbits", "@littable", "@disttable", 1, "@z"],
+      "callees": {
+        "0x1000c490": {"name": "FUN_1000c490", "conv": "cdecl", "args": ["ptr", "u32", "u32", "int", "int", "ptr", "ptr", "int", "mem:4", "ptr"], "ret": [0, -1]}
+      },
+      "expect": {"ret": -3}
+    }
+  ],
+  "fuzz": {
+    "seed": 51552,
+    "count": 40,
+    "args": [
+      {"choices": [0, 1, 2, 256, 257, 258, 259, 288, 4294967295]},
+      {"choices": [0, 1, 2, 30]},
+      {"choices": ["@codelens"]},
+      {"choices": ["@litbits"]},
+      {"choices": ["@distbits"]},
+      {"choices": ["@littable"]},
+      {"choices": ["@disttable"]},
+      {"range": [-4, 30]},
+      {"choices": ["@z"]}
+    ],
+    "memory": [
+      {"addr": "@litbits", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@distbits", "type": "u32", "choices": [0, 1, 2]}
+    ]
+  }
+}

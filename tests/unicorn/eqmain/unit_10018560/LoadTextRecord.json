@@ -1,0 +1,194 @@
+{
+  "function": "LoadTextRecord_guess",
+  "original": "0x10018990",
+  "sources": [
+    "src/eqmain/unit_10018560.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "stream",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "stream": {
+      "size": "0x2000",
+      "fill": "random"
+    },
+    "d1": {
+      "size": "0x1000",
+      "fill": "random",
+      "init": [{"offset": "0x40", "u8": 0}]
+    },
+    "d2": {
+      "size": "0x1000",
+      "fill": "random",
+      "init": [{"offset": "0x40", "u8": 0}]
+    },
+    "d3": {
+      "size": "0x1000",
+      "fill": "random",
+      "init": [{"offset": "0x40", "u8": 0}]
+    },
+    "d4": {
+      "size": "0x1000",
+      "fill": "random",
+      "init": [{"offset": "0x40", "u8": 0}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100250a0": {
+      "name": "FUN_100250a0",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x10025120": {
+      "name": "FUN_10025120",
+      "conv": "stdcall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x10025150": {
+      "name": "FUN_10025150",
+      "conv": "stdcall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": ["@d1", "@d2", "@d3", "@d4"]
+    },
+    "0x10033330": {
+      "name": "_strncpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "dword A zero: defaults for three fields, one stream string",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 0},
+        {"addr": "@stream", "offset": "0x6", "u32": 9}
+      ]
+    },
+    {
+      "name": "dword A nonzero: mode 3, four stream strings in order",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0x6", "u32": "0x22"},
+        {"addr": "@stream", "offset": "0xa", "u32": 3}
+      ]
+    },
+    {
+      "name": "dword A 0xffffffff is nonzero (no signed test on the first dword)",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": "0xffffffff"},
+        {"addr": "@stream", "offset": "0xa", "u32": 3}
+      ]
+    },
+    {
+      "name": "dword A 0x80000000 is nonzero",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": "0x80000000"},
+        {"addr": "@stream", "offset": "0xa", "u32": 3}
+      ]
+    },
+    {
+      "name": "mode -1: lower bound kept (JL not taken)",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "mode -2: below the lower bound, cleared",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": "0xfffffffe"}
+      ]
+    },
+    {
+      "name": "mode 0: inside the range, kept",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": 0}
+      ]
+    },
+    {
+      "name": "mode 5: upper bound kept (JLE taken)",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": 5}
+      ]
+    },
+    {
+      "name": "mode 6: above the upper bound, cleared",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": 6}
+      ]
+    },
+    {
+      "name": "mode INT_MIN: cleared (signed compare)",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "mode INT_MAX: cleared",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": "0x2", "u32": 1},
+        {"addr": "@stream", "offset": "0xa", "u32": "0x7fffffff"}
+      ]
+    },
+    {
+      "name": "all-zero stream: zero dword A, empty strings",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "size": 8192, "fill": "zero"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 100752,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@stream"]
+      }
+    ],
+    "memory": [
+      {"addr": "@stream", "offset": "0x2", "type": "u32", "choices": [0, 0, 1, 4294967295, 2147483648, 7], "p": 0.6},
+      {"addr": "@stream", "offset": "0xa", "type": "i32"},
+      {"addr": "@stream", "offset": "0xe", "size": 4096}
+    ]
+  }
+}

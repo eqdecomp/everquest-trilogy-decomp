@@ -1,0 +1,195 @@
+{
+  "function": "SendLastNameChange_guess",
+  "original": "0x004a4c6d",
+  "sources": [
+    "src/EverQuest/SpellBookWnd.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "ptr"
+    },
+    {
+      "name": "args",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "Marn"
+        }
+      ]
+    },
+    "rest": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Returned remainder"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@player"
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": "0x7a1000"
+    }
+  ],
+  "callees": {
+    "0x004dbc84": {
+      "name": "CEverQuest::GrabFirstWord2_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "ptr"
+      ],
+      "ret": "@rest",
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "4d61726e00"
+        }
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:94",
+        "u32",
+        "int"
+      ]
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null text uses usage chat",
+      "args": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "empty text uses usage chat",
+      "args": [
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "two words sends and confirms",
+      "args": [
+        0,
+        "target newname"
+      ]
+    },
+    {
+      "name": "one word",
+      "args": [
+        0,
+        "target"
+      ]
+    },
+    {
+      "name": "many words",
+      "args": [
+        0,
+        "target newname ignored words"
+      ]
+    },
+    {
+      "name": "long command",
+      "args": [
+        0,
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
+      ]
+    },
+    {
+      "name": "long parsed name overwrites packet tail",
+      "args": [
+        0,
+        "target ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHI"
+      ],
+      "callees": {
+        "0x004dbc84": {
+          "name": "CEverQuest::GrabFirstWord2_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr",
+            "ptr"
+          ],
+          "ret": "@rest",
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "4142434445464748494a4b4c4d4e4f505152535455565758595a41424344454647484900"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4869229,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

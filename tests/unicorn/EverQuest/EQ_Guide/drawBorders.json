@@ -1,0 +1,109 @@
+{
+  "function": "EQ_GuideDraw_guess::drawBorders_guess",
+  "original": "0x00437eca",
+  "sources": [
+    "src/EverQuest/EQ_Guide.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@guide",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "guide": {"size": "0x2200", "fill": "random", "init": [
+      {"offset": "0x70", "u32": "@n1"},
+      {"offset": "0x90", "u32": 1}
+    ]},
+    "n1": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x14", "u16": 0},
+      {"offset": "0x20", "u32": "@n2"}
+    ]},
+    "n2": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x14", "u16": 3},
+      {"offset": "0x20", "u32": 0}
+    ]},
+    "overlay": {"size": "0x20", "fill": "zero", "init": [
+      {"offset": "0x04", "u32": 4660}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x0058fc6c", "u32": 2},
+    {"addr": "0x006b63e4", "u16": 800},
+    {"addr": "0x006e4e04", "u32": "@overlay"}
+  ],
+  "callees": {
+    "user32.dll!CopyRect": {
+      "name": "CopyRect",
+      "conv": "stdcall",
+      "args": ["ptr", "mem:16"],
+      "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "0a000000140000006e00000046000000"}]
+    },
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x004500be": {
+      "name": "EQ_Overlay::drawExplicit",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": ["ptr", "ptr", "ptr"]
+    },
+    "0x00450125": {
+      "name": "EQ_Overlay::drawPartial_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": ["ptr", "ptr", "ptr", "int"]
+    }
+  },
+  "cases": [
+    {"name": "explicit draws: mode 2, width 800, two nodes"},
+    {"name": "guide inactive: nothing is drawn", "objects": {"guide": {"init": [{"offset": "0x90", "u32": 0}]}}},
+    {"name": "inactive flag only its low byte zero still active", "objects": {"guide": {"init": [{"offset": "0x90", "u32": 256}]}}},
+    {"name": "empty list: nothing is drawn", "objects": {"guide": {"init": [{"offset": "0x70", "u32": 0}]}}},
+    {"name": "inactive and empty list", "objects": {"guide": {"init": [{"offset": "0x70", "u32": 0}, {"offset": "0x90", "u32": 0}]}}},
+    {"name": "mode 2 and width 640: partial draws", "memory": [{"addr": "0x006b63e4", "u16": 640}]},
+    {"name": "mode 2, width word 0x280 with high word set still equal", "memory": [{"addr": "0x006b63e4", "u32": 65152}]},
+    {"name": "mode 2, width word 0 differs from 640", "memory": [{"addr": "0x006b63e4", "u16": 0}]},
+    {"name": "mode 1: partial draws", "memory": [{"addr": "0x0058fc6c", "u32": 1}]},
+    {"name": "mode 3: partial draws", "memory": [{"addr": "0x0058fc6c", "u32": 3}]},
+    {"name": "mode 0x10002 low word only: partial draws", "memory": [{"addr": "0x0058fc6c", "u32": 65538}]},
+    {"name": "mode 0: partial draws", "memory": [{"addr": "0x0058fc6c", "u32": 0}]},
+    {"name": "negative node index selects a rect before the table", "objects": {"n1": {"init": [{"offset": "0x14", "u16": 65535}]}}},
+    {"name": "node index with high byte set, sign extended", "objects": {"n1": {"init": [{"offset": "0x14", "u16": 33024}]}}},
+    {"name": "single node", "objects": {"n1": {"init": [{"offset": "0x20", "u32": 0}]}}},
+    {"name": "second node only partial because mode changes are global", "objects": {"n1": {"init": [{"offset": "0x14", "u16": 15}]}}, "memory": [{"addr": "0x0058fc6c", "u32": 1}]},
+    {"name": "rect with negative left and small size", "callees": {"user32.dll!CopyRect": {
+      "name": "CopyRect", "conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "fbffffff070000002c01000009000000"}]}}},
+    {"name": "rect with negative left, explicit", "memory": [{"addr": "0x006b63e4", "u16": 1024}], "callees": {"user32.dll!CopyRect": {
+      "name": "CopyRect", "conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "fbffffff070000002c01000009000000"}]}}},
+    {"name": "empty rect: width 1 height 0", "callees": {"user32.dll!CopyRect": {
+      "name": "CopyRect", "conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "05000000050000000500000005000000"}]}}},
+    {"name": "inverted rect: negative height", "callees": {"user32.dll!CopyRect": {
+      "name": "CopyRect", "conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "64000000c80000003200000096000000"}]}}},
+    {"name": "distinct rect fields: left 1 top 2 right 3 bottom 4", "callees": {"user32.dll!CopyRect": {
+      "name": "CopyRect", "conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "01000000020000000300000004000000"}]}}},
+    {"name": "overlay value changes the first stack argument", "objects": {"overlay": {"init": [{"offset": "0x04", "u32": 2864434397}]}}}
+  ],
+  "fuzz": {
+    "seed": 4423370,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x0058fc6c", "type": "u32", "choices": [0, 1, 2, 2, 2, 3], "p": 0.8},
+      {"addr": "0x006b63e4", "type": "u16", "choices": [640, 640, 800, 0, 1024, 639], "p": 0.8},
+      {"addr": "@guide", "offset": "0x90", "type": "u32", "choices": [0, 1, 1, 1, 1, 7]},
+      {"addr": "@guide", "offset": "0x70", "type": "ptr", "choices": [0, "@n1", "@n1", "@n1"]},
+      {"addr": "@n1", "offset": "0x14", "type": "short", "range": [-2, 15]},
+      {"addr": "@n1", "offset": "0x20", "type": "ptr", "choices": [0, "@n2", "@n2"]},
+      {"addr": "@n2", "offset": "0x14", "type": "short", "range": [-2, 15]},
+      {"addr": "@overlay", "offset": "0x04", "type": "u32", "range": [0, 100000]}
+    ]
+  }
+}

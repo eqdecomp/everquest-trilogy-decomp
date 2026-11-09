@@ -1,0 +1,128 @@
+{
+  "function": "seekRelative_guess",
+  "original": "0x10052bc0",
+  "sources": ["src/eqgfx/ffcreate2/ff/verify_o2.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "positionDelta", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [{"offset": "0", "u32": "@file"}]
+    },
+    "file": {
+      "size": "0x2024",
+      "fill": "zero",
+      "init": [
+        {"offset": "0", "u32": "@vtable"},
+        {"offset": "0x4", "u32": 7},
+        {"offset": "0x2008", "u32": "0x10000"},
+        {"offset": "0x200c", "u32": "0x1000"},
+        {"offset": "0x2010", "u32": 0},
+        {"offset": "0x2014", "u32": "0x3000"},
+        {"offset": "0x2018", "u32": "@owner"},
+        {"offset": "0x2020", "u32": 0}
+      ]
+    },
+    "owner": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@ownerName"},
+        {"offset": "0xc", "u32": 1}
+      ]
+    },
+    "ownerName": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "vtable": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [{"offset": "0", "u32": "@fn"}]
+    },
+    "fn": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100fc014", "u32": 0},
+    {"addr": "0x100fbc10", "size": "0x200", "fill": "zero"},
+    {"addr": "@ownerName", "cstr": "fixture owner"}
+  ],
+  "callees": {
+    "0x1006ab62": {
+      "name": "__lseek",
+      "conv": "cdecl",
+      "args": ["int", "long", "int"],
+      "ret": 0
+    },
+    "0x1006a844": {
+      "name": "__read",
+      "conv": "cdecl",
+      "args": ["int", "mem:4", "u32"],
+      "ret": 4,
+      "writes": [{"arg": 1, "offset": 0, "hex": "78563412"}]
+    },
+    "0x1006a833": {
+      "name": "__tell",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": "0x12345678"
+    },
+    "0x100549a0": {
+      "name": "verifyConditionOrFatalError_guess",
+      "conv": "cdecl",
+      "args": ["bool", "cstr", "cstr"],
+      "ret": 0
+    },
+    "@fn": {
+      "name": "checkFileReadError",
+      "conv": "cdecl",
+      "args": ["cstr", "cstr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {"name": "same position", "args": ["@self", 0, 0], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1000"}]},
+    {"name": "same block forward", "args": ["@self", 0, 16], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1000"}]},
+    {"name": "same block backward", "args": ["@self", 0, -16], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1000"}]},
+    {"name": "negative result clamps", "args": ["@self", 0, -2], "memory": [{"addr": "@file", "offset": "0x200c", "u32": 1}]},
+    {"name": "equal to end returns early", "args": ["@self", 0, "0x1000"], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x2000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x1000"}]},
+    {"name": "past end returns early", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x2000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}]},
+    {"name": "adjacent block forward", "args": ["@self", 0, 16], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x6000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}]},
+    {"name": "forward skip one block", "args": ["@self", 0, "0x5000"], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x6000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x100"}]},
+    {"name": "forward skip three blocks", "args": ["@self", 0, "0x9100"], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0xa000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x100"}]},
+    {"name": "backward seek", "args": ["@self", 0, -16384], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x6000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x5100"}]},
+    {"name": "backward seek then skip", "args": ["@self", 0, -8192], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0xa000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x9100"}]},
+    {"name": "null owner on block change", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}, {"addr": "@file", "offset": "0x2018", "u32": 0}]},
+    {"name": "disabled owner on block change", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}, {"addr": "@owner", "offset": "0xc", "u32": 0}]},
+    {"name": "false callback result", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}], "callees": {"@fn": {"name": "checkFileReadError", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}}},
+    {"name": "debug index last slot", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}, {"addr": "0x100fc014", "u32": 63}]},
+    {"name": "debug index full", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x200c", "u32": "0x1ff0"}, {"addr": "0x100fc014", "u32": 64}]},
+    {"name": "signed overflow clamps", "args": ["@self", 0, 32], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x7fffffff"}, {"addr": "@file", "offset": "0x200c", "u32": "0x7ffffff0"}]},
+    {"name": "return at signed end boundary", "args": ["@self", 0, 0], "memory": [{"addr": "@file", "offset": "0x2008", "u32": "0x1000"}, {"addr": "@file", "offset": "0x200c", "u32": "0x2000"}]}
+  ],
+  "fuzz": {
+    "seed": 338880,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {"choices": [-1, 0, 1, "0x12345678"]},
+      {"choices": [-65536, -32768, -24576, -8193, -8192, -4096, -1, 0, 1, 4096, 8191, 8192, 8193, 24576, 32768, 65536]}
+    ],
+    "memory": [
+      {"addr": "@file", "offset": "0x2008", "type": "u32", "choices": [0, 4096, 8191, 8192, 16384, 24576, 32768, 65536, "0x7fffffff", "0x80000000"]},
+      {"addr": "@file", "offset": "0x200c", "type": "u32", "choices": [0, 1, 4095, 4096, 8191, 8192, 8193, 16384, 24576, 32768, 65536, "0x7fffffff", "0x80000000"]},
+      {"addr": "@file", "offset": "0x2018", "type": "u32", "choices": [0, "@owner"], "p": 0.5},
+      {"addr": "@owner", "offset": "0xc", "type": "u32", "choices": [0, 1], "p": 0.5},
+      {"addr": "0x100fc014", "type": "u32", "range": [0, 70], "p": 0.5}
+    ]
+  }
+}

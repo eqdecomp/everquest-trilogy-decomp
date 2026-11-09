@@ -1,0 +1,93 @@
+{
+  "function": "InitializeDirectSound_guess",
+  "original": "0x004e7a0e",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {"addr": "0x006ece3c", "u32": 0},
+    {"addr": "0x006ece40", "u32": 0}
+  ],
+  "callees": {
+    "0x004a3d01": {"name": "EQTRACE_guess", "conv": "cdecl", "args": ["cstr"], "varargs": "printf"},
+    "0x004f8220": {"name": "fdebug", "conv": "cdecl", "args": ["cstr"], "varargs": "printf"},
+    "ole32.dll!CoInitialize": {"name": "CoInitialize", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "0x004e72e1": {"name": "InitializeVoiceRecognition_guess", "conv": "cdecl", "args": ["int"], "ret": 0},
+    "0x004e708b": {"name": "InitializeVoiceDictionary_guess", "conv": "cdecl", "args": ["int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "typical", "args": [1], "expect": {"ret": 1}},
+    {"name": "zeros", "args": [0], "expect": {"ret": 1}},
+    {"name": "already_active_flag1", "args": [1],
+     "memory": [{"addr": "0x006ece3c", "u32": 1}, {"addr": "0x006ece40", "u32": 0}],
+     "expect": {"ret": 1}},
+    {"name": "already_active_flag_negative", "args": [1],
+     "memory": [{"addr": "0x006ece3c", "u32": 4294967295}, {"addr": "0x006ece40", "u32": 0}],
+     "expect": {"ret": 1}},
+    {"name": "already_active_flag2_keeps_dat40", "args": [-3],
+     "memory": [{"addr": "0x006ece3c", "u32": 2}, {"addr": "0x006ece40", "u32": 0}],
+     "expect": {"ret": 1}},
+    {"name": "coinit_fails_minus1", "args": [7],
+     "memory": [{"addr": "0x006ece3c", "u32": 0}, {"addr": "0x006ece40", "u32": 0}],
+     "callees": {"ole32.dll!CoInitialize": {"name": "CoInitialize", "conv": "stdcall", "args": ["ptr"], "ret": -1}},
+     "expect": {"ret": 0}},
+    {"name": "coinit_fails_E_FAIL_keeps_dat40", "args": [7],
+     "memory": [{"addr": "0x006ece3c", "u32": 0}, {"addr": "0x006ece40", "u32": 5}],
+     "callees": {"ole32.dll!CoInitialize": {"name": "CoInitialize", "conv": "stdcall", "args": ["ptr"], "ret": -2147467259}},
+     "expect": {"ret": 0}},
+    {"name": "coinit_S_FALSE_success", "args": [0],
+     "memory": [{"addr": "0x006ece3c", "u32": 0}, {"addr": "0x006ece40", "u32": 7}],
+     "callees": {"ole32.dll!CoInitialize": {"name": "CoInitialize", "conv": "stdcall", "args": ["ptr"], "ret": 1}},
+     "expect": {"ret": 1}},
+    {"name": "coinit_positive_max_success", "args": [0],
+     "memory": [{"addr": "0x006ece3c", "u32": 0}, {"addr": "0x006ece40", "u32": 7}],
+     "callees": {"ole32.dll!CoInitialize": {"name": "CoInitialize", "conv": "stdcall", "args": ["ptr"], "ret": 2147483647}},
+     "expect": {"ret": 1}},
+    {"name": "vr_fails_minus1_skips_dsound", "args": [5],
+     "callees": {"0x004e72e1": {"name": "InitializeVoiceRecognition_guess", "conv": "cdecl", "args": ["int"], "ret": -1}},
+     "expect": {"ret": 0}},
+    {"name": "vr_fails_E_FAIL", "args": [5],
+     "callees": {"0x004e72e1": {"name": "InitializeVoiceRecognition_guess", "conv": "cdecl", "args": ["int"], "ret": -2147467259}},
+     "expect": {"ret": 0}},
+    {"name": "vr_positive_max_ds_ok", "args": [5],
+     "callees": {"0x004e72e1": {"name": "InitializeVoiceRecognition_guess", "conv": "cdecl", "args": ["int"], "ret": 2147483647}},
+     "expect": {"ret": 1}},
+    {"name": "ds_fails_minus1_keeps_dat", "args": [5],
+     "memory": [{"addr": "0x006ece3c", "u32": 0}, {"addr": "0x006ece40", "u32": 3}],
+     "callees": {"0x004e708b": {"name": "InitializeDirectSoundDevice_guess", "conv": "cdecl", "args": ["int"], "ret": -1}},
+     "expect": {"ret": 0}},
+    {"name": "ds_fails_E_FAIL_after_vr_1", "args": [5],
+     "callees": {"0x004e72e1": {"name": "InitializeVoiceRecognition_guess", "conv": "cdecl", "args": ["int"], "ret": 1},
+                 "0x004e708b": {"name": "InitializeDirectSoundDevice_guess", "conv": "cdecl", "args": ["int"], "ret": -2147467259}},
+     "expect": {"ret": 0}},
+    {"name": "ds_fails_int_min", "args": [5],
+     "callees": {"0x004e708b": {"name": "InitializeDirectSoundDevice_guess", "conv": "cdecl", "args": ["int"], "ret": -2147483648}},
+     "expect": {"ret": 0}},
+    {"name": "ds_positive_success_keeps_dat_writes", "args": [5],
+     "memory": [{"addr": "0x006ece3c", "u32": 0}, {"addr": "0x006ece40", "u32": 7}],
+     "callees": {"0x004e708b": {"name": "InitializeDirectSoundDevice_guess", "conv": "cdecl", "args": ["int"], "ret": 5}},
+     "expect": {"ret": 1}},
+    {"name": "param_minus1_passthrough", "args": [-1], "expect": {"ret": 1}},
+    {"name": "param_big_passthrough", "args": [305419896], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 5143054,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "0x006ece3c", "type": "int", "choices": [0, 0, 1, -1, 2]},
+      {"addr": "0x006ece40", "type": "int", "choices": [0, 1, 7, -1]}
+    ]
+  }
+}

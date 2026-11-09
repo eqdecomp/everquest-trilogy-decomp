@@ -1,0 +1,162 @@
+{
+  "function": "SharedPointer_SharedPointer_guess",
+  "original": "0x004faee0",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "node": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006f035c",
+      "u32": 3
+    }
+  ],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@node"
+    },
+    "0x004f8310": {
+      "name": "_verify",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "cstr",
+        "cstr"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@self", 1, "@source"]
+    },
+    {
+      "name": "edx dummy zero",
+      "args": ["@self", 0, "@source"]
+    },
+    {
+      "name": "null source: nothing allocated",
+      "args": ["@self", 1, 0]
+    },
+    {
+      "name": "null source, table full",
+      "args": ["@self", 1, 0],
+      "memory": [{"addr": "0x006f035c", "u32": 64}]
+    },
+    {
+      "name": "table count 0",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": 0}]
+    },
+    {
+      "name": "table count 63 = last slot",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": 63}]
+    },
+    {
+      "name": "table count 64 = full",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": 64}]
+    },
+    {
+      "name": "table count 65",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": 65}]
+    },
+    {
+      "name": "table count 0x80000000 unsigned",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": "0x80000000"}]
+    },
+    {
+      "name": "table count 0xffffffff unsigned",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "refcount of new node starts from zero, wraps nothing",
+      "args": ["@self", 1, "@source"],
+      "objects": {"node": {"size": "0x20", "fill": "zero"}}
+    },
+    {
+      "name": "operator_new fails, room in table",
+      "args": ["@self", 1, "@source"],
+      "callees": {"0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": 0}}
+    },
+    {
+      "name": "operator_new fails, table full",
+      "args": ["@self", 1, "@source"],
+      "memory": [{"addr": "0x006f035c", "u32": 64}],
+      "callees": {"0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": 0}}
+    },
+    {
+      "name": "odd source value",
+      "args": ["@self", 1, "0x12345678"]
+    }
+  ],
+  "fuzz": {
+    "seed": 5222112,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@source",
+          0,
+          1,
+          "0xffffffff",
+          "0x7000"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006f035c",
+        "type": "u32",
+        "range": [0, 80]
+      }
+    ]
+  }
+}

@@ -1,0 +1,344 @@
+{
+  "function": "NetworkConnection_ProcessNetworkPackets_guess",
+  "original": "0x1002c930",
+  "sources": [
+    "src/eqmain/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0c", "u32": "@client"},
+        {"offset": "0x478", "u16": 65}
+      ]
+    },
+    "client": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "stats": {
+      "size": "0x900",
+      "fill": "zero"
+    },
+    "pkt": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0c", "u32": 1000},
+        {"offset": "0x20", "u32": 100}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100498b4", "u32": "@stats"}
+  ],
+  "callees": {
+    "0x1002e120": {
+      "name": "list_peek_head_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@pkt", "@pkt", "@pkt", "@pkt"]
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1000
+    },
+    "0x10030d30": {
+      "name": "bandwidth_get_time_empty_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002afe0": {
+      "name": "getTimeFromEQClient_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002e130": {
+      "name": "list_remove_head_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": "@pkt"
+    },
+    "0x1002cd70": {
+      "name": "NetworkConnection_SendPacket_guess",
+      "conv": "cdecl",
+      "args": ["int", "ptr", "int", "ushort"]
+    },
+    "0x1002df20": {
+      "name": "list_add_tail_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"]
+    },
+    "0x10028a90": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1002cfc0": {
+      "name": "NetworkConnection_initializeRDPConnection_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x1002c5b0": {
+      "name": "NetworkConnection_Disconnect_guess",
+      "conv": "cdecl",
+      "args": ["int", "int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "bandwidth gate underflows: early return, counter 0x870",
+      "args": ["@conn"],
+      "callees": {
+        "0x10030d30": {"name": "bandwidth_get_time_empty_guess", "conv": "cdecl", "args": ["ptr"], "ret": 2000}
+      }
+    },
+    {
+      "name": "empty main queue: idle counter 0x868",
+      "args": ["@conn"],
+      "callees": {
+        "0x1002e120": {"name": "list_peek_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@pkt", 0]}
+      }
+    },
+    {
+      "name": "empty main queue with forced probe sends SendPacket(0, 0, 0)",
+      "args": ["@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x6ec", "u32": 1}],
+      "callees": {
+        "0x1002e120": {"name": "list_peek_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@pkt", 0]}
+      }
+    },
+    {
+      "name": "head 50 ms ahead of now is not due: idle",
+      "args": ["@conn"]
+    },
+    {
+      "name": "due at 10 ms, window open, unreliable: resend and free",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 2000},
+        {"addr": "@conn", "offset": "0x6e8", "u32": 3000}
+      ]
+    },
+    {
+      "name": "due, seq 200 ahead of window: requeue without resend",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@pkt", "offset": "0x12", "u16": 200},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 2000},
+        {"addr": "@conn", "offset": "0x6e8", "u32": 3000}
+      ]
+    },
+    {
+      "name": "due, window closed, flag bit 2 set: initRDP then disconnect 0x50000",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 2000},
+        {"addr": "@conn", "offset": "0x6e8", "u32": 500},
+        {"addr": "@conn", "offset": "0x5c", "u8": 2},
+        {"addr": "@conn", "offset": "0x6d4", "u32": 1}
+      ]
+    },
+    {
+      "name": "due, window closed, flag bit 2 clear: disconnect 0x40000",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 500},
+        {"addr": "@conn", "offset": "0x6d4", "u32": 1}
+      ]
+    },
+    {
+      "name": "due, window closed, no disconnect flag: return",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 500}
+      ]
+    },
+    {
+      "name": "due, window open, flag bit 2 set: initRDP then resend",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 2000},
+        {"addr": "@conn", "offset": "0x6e8", "u32": 3000},
+        {"addr": "@conn", "offset": "0x5c", "u8": 2}
+      ]
+    },
+    {
+      "name": "peek path, client 0x45, 40 ms late: send (unreliable)",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x478", "u16": 69},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960}
+      ]
+    },
+    {
+      "name": "peek path, client 0x41, clamp floor 50 admits 40 ms: send",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960}
+      ]
+    },
+    {
+      "name": "peek path, reliable packet is requeued",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@pkt", "offset": "0x11", "u8": 2}
+      ]
+    },
+    {
+      "name": "peek path, clamp ceiling 0xffff: send at 0 ms",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x6a0", "u16": 36864}
+      ]
+    },
+    {
+      "name": "peek path, 51 ms late against clamp 51 (boundary): send",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x69e", "u16": 51},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 949}
+      ]
+    },
+    {
+      "name": "peek path, 52 ms late against clamp 51 (boundary): skip",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x69e", "u16": 51},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 948}
+      ]
+    },
+    {
+      "name": "peek path, client 0x45 at 10000 ms (boundary): send",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x478", "u16": 69},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 4294958296}
+      ]
+    },
+    {
+      "name": "peek path, client 0x45 at 10001 ms (boundary): skip",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x478", "u16": 69},
+        {"addr": "@pkt", "offset": "0x0c", "u32": 4294958295}
+      ]
+    },
+    {
+      "name": "peek path, second peek empty: skips the send block",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1}
+      ],
+      "callees": {
+        "0x1002e120": {"name": "list_peek_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@pkt", "@pkt", 0, "@pkt"]}
+      }
+    },
+    {
+      "name": "peek path, third peek empty: uVar9 = 0 and client 0x45 sends",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c0", "u32": 1},
+        {"addr": "@conn", "offset": "0x478", "u16": 69}
+      ],
+      "callees": {
+        "0x1002e120": {"name": "list_peek_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@pkt", "@pkt", "@pkt", 0]}
+      }
+    },
+    {
+      "name": "clamp middle value 64 on the not-due path: idle",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x69e", "u16": 64}
+      ]
+    },
+    {
+      "name": "clamp ceiling on the not-due path: idle",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6a0", "u16": 36864}
+      ]
+    },
+    {
+      "name": "due at exactly 10 ms with iVar6 == 10 and window open: resend",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 2000},
+        {"addr": "@conn", "offset": "0x6e8", "u32": 3000},
+        {"addr": "@pkt", "offset": "0x12", "u16": 0}
+      ]
+    },
+    {
+      "name": "clamp sum 51 is not floored: 11 ms ahead stays idle",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x69e", "u16": 51}
+      ]
+    },
+    {
+      "name": "uVar10 exactly at window 0x6e4 (boundary): no resend",
+      "args": ["@conn"],
+      "memory": [
+        {"addr": "@pkt", "offset": "0x0c", "u32": 960},
+        {"addr": "@conn", "offset": "0x6e4", "u32": 1000},
+        {"addr": "@conn", "offset": "0x6e8", "u32": 3000}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002930,
+    "count": 40,
+    "args": [
+      {"choices": ["@conn"]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x478", "type": "u16", "choices": [69, 65, 66]},
+      {"addr": "@conn", "offset": "0x6c0", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x69e", "type": "u16", "range": [0, 60]},
+      {"addr": "@conn", "offset": "0x6a0", "type": "u16", "range": [0, 40]},
+      {"addr": "@conn", "offset": "0x488", "type": "u16", "range": [0, 200]},
+      {"addr": "@conn", "offset": "0x5c", "type": "u8", "choices": [0, 2, 3, 1]},
+      {"addr": "@conn", "offset": "0x20c", "type": "u32", "range": [0, 1100]},
+      {"addr": "@conn", "offset": "0x6e4", "type": "u32", "range": [0, 1500]},
+      {"addr": "@conn", "offset": "0x6e8", "type": "u32", "range": [0, 1500]},
+      {"addr": "@conn", "offset": "0x6d4", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x6ec", "type": "u32", "choices": [0, 1]},
+      {"addr": "@pkt", "offset": "0x0c", "type": "u32", "range": [0, 1100]},
+      {"addr": "@pkt", "offset": "0x08", "type": "u32", "range": [0, 1100]},
+      {"addr": "@pkt", "offset": "0x10", "type": "u16", "range": [0, 50]},
+      {"addr": "@pkt", "offset": "0x11", "type": "u8", "choices": [0, 2, 1]},
+      {"addr": "@pkt", "offset": "0x12", "type": "u16", "range": [0, 300]},
+      {"addr": "@pkt", "offset": "0x20", "type": "u32", "range": [0, 500]}
+    ]
+  }
+}

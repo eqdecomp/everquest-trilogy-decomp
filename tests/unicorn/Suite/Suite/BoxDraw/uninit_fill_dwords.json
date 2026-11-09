@@ -1,0 +1,42 @@
+{
+  "function": "uninit_fill_dwords_guess",
+  "original": "0x00402855",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "dest", "type": "ptr"},
+    {"name": "count", "type": "uint"},
+    {"name": "value", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dst": {"size": "0x40", "fill": "random"},
+    "val": {"size": "0x4", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "count 0", "args": ["@dst", 0, "@val"]},
+    {"name": "count 0, null dest and value", "args": [0, 0, 0]},
+    {"name": "count 1", "args": ["@dst", 1, "@val"]},
+    {"name": "count 2", "args": ["@dst+0x10", 2, "@val"]},
+    {"name": "count 3, offset dest", "args": ["@dst+0x8", 3, "@val"]},
+    {"name": "count 16 fills the buffer", "args": ["@dst", 16, "@val"]},
+    {"name": "null dest, count 1: store skipped, value never read", "args": [0, 1, 0]},
+    {"name": "null dest, count 3: advances return without reading value", "args": [0, 3, 0]},
+    {"name": "value aliases dest[1]: later stores read the overwritten dword", "args": ["@dst", 4, "@dst+0x4"]},
+    {"name": "value aliases dest[0]", "args": ["@dst", 3, "@dst"]},
+    {"name": "unaligned value overlaps the first store", "args": ["@dst", 3, "@dst+1"]},
+    {"name": "count 1, last dword of the buffer", "args": ["@dst+0x3c", 1, "@val"]}
+  ],
+  "fuzz": {
+    "seed": 4202577,
+    "count": 40,
+    "args": [
+      {"choices": ["@dst", "@dst+0x4", "@dst+0x10"]},
+      {"choices": [0, 1, 2, 3, 4, 8, 12]},
+      {"choices": ["@val", "@dst+0x20", "@dst+0x4"]}
+    ],
+    "memory": [{"addr": "@val", "type": "int"}]
+  }
+}

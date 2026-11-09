@@ -1,0 +1,104 @@
+{
+  "function": "BoxDrawHashTable403250_guess::InitializeBuckets_guess",
+  "original": "0x004032a1",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [
+    {
+      "name": "param_2",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "0x60000100"},
+        {"offset": "0x8", "u32": "@position"},
+        {"offset": "0x10", "u32": "0xA5A55A5A"}
+      ]
+    },
+    "position": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0040119e": {
+      "name": "next_prime_guess",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 7
+    },
+    "0x004011ca": {
+      "name": "ReserveBufferCapacity_guess",
+      "conv": "thiscall",
+      "args": ["u32"]
+    },
+    "0x004032dc": {
+      "name": "FUN_004032dc",
+      "conv": "thiscall",
+      "args": ["ptr", "u32", "mem:4"]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero request still calls both helpers then clears field",
+      "args": [0],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 0}}
+    },
+    {
+      "name": "first bucket boundary and zeroed stack value",
+      "args": [1],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 1}},
+      "memory": [
+        {"addr": "@self", "offset": "0x10", "u32": "0xFFFFFFFF"}
+      ]
+    },
+    {
+      "name": "prime result differs from requested count",
+      "args": [15],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 17}}
+    },
+    {
+      "name": "large request saturates through prime helper",
+      "args": ["0xFFFFFFFF"],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": "0xFFFFFFFB"}},
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "argument and vector position are independent",
+      "args": ["0x80000000"],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 29}},
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": "0x60000200"},
+        {"addr": "@self", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "stale nonzero registers leave the trace and writes unchanged",
+      "args": [5],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 5}},
+      "regs": {"eax": "0x5a5a5a5a", "ebx": "0x5b5b5b5b", "edx": "0x5d5d5d5d", "esi": "0x5e5e5e5e", "edi": "0x5f5f5f5f"}
+    }
+  ],
+  "fuzz": {
+    "seed": 4207265,
+    "count": 40,
+    "args": [
+      {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x8", "type": "u32", "choices": [0, "@position", "0x60000300", "0xFFFFFFFF"]},
+      {"addr": "@self", "offset": "0x10", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "function": "t3dGetTrackDefinitionDefaultInstance",
+  "original": "0x1001d0ba",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@list_a"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@list_b"
+        }
+      ]
+    },
+    "list_a": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "list_b": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "primary list at +0x14 wins over +0x18",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "@list_a"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@list_b"},
+        {"addr": "@list_a", "offset": "0x8", "u32": "0x11111111"},
+        {"addr": "@list_b", "offset": "0x8", "u32": "0x22222222"}
+      ],
+      "expect": {
+        "ret": "0x11111111"
+      }
+    },
+    {
+      "name": "null +0x14 falls back to +0x18 (@list_b)",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0x18", "u32": "@list_b"},
+        {"addr": "@list_a", "offset": "0x8", "u32": "0x33333333"},
+        {"addr": "@list_b", "offset": "0x8", "u32": "0x44444444"}
+      ],
+      "expect": {
+        "ret": "0x44444444"
+      }
+    },
+    {
+      "name": "null +0x14 falls back to +0x18 (@list_a)",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0x18", "u32": "@list_a"},
+        {"addr": "@list_a", "offset": "0x8", "u32": "0x44444444"},
+        {"addr": "@list_b", "offset": "0x8", "u32": "0x33333333"}
+      ],
+      "expect": {
+        "ret": "0x44444444"
+      }
+    },
+    {
+      "name": "both set: +0x14 is read, not +0x18",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "@list_b"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@list_a"},
+        {"addr": "@list_a", "offset": "0x8", "u32": "0x66666666"},
+        {"addr": "@list_b", "offset": "0x8", "u32": "0x55555555"}
+      ],
+      "expect": {
+        "ret": "0x55555555"
+      }
+    },
+    {
+      "name": "zero default instance",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "@list_a"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@list_b"},
+        {"addr": "@list_a", "offset": "0x8", "u32": 0},
+        {"addr": "@list_b", "offset": "0x8", "u32": "0x55555555"}
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "high bit set",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "@list_a"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@list_b"},
+        {"addr": "@list_a", "offset": "0x8", "u32": "0x80000000"},
+        {"addr": "@list_b", "offset": "0x8", "u32": "0x7fffffff"}
+      ],
+      "expect": {
+        "ret": "0x80000000"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 118970,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": [0, "@list_a", "@list_b"]},
+      {"addr": "@definition", "offset": "0x18", "type": "ptr", "choices": ["@list_a", "@list_b"]},
+      {"addr": "@list_a", "offset": "0x8", "type": "u32"},
+      {"addr": "@list_b", "offset": "0x8", "type": "u32"}
+    ]
+  }
+}

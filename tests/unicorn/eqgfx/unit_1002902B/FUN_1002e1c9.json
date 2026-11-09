@@ -1,0 +1,214 @@
+{
+  "function": "_t3dPostActorCreate_guess",
+  "original": "0x1002e1c9",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedArg",
+      "type": "u32"
+    },
+    {
+      "name": "appendToList",
+      "type": "int"
+    },
+    {
+      "name": "action",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@world"}
+      ]
+    },
+    "actor": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "world": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000a72e": {
+      "name": "t3dSetActorCurrentAction",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x10008f98": {
+      "name": "t3dAppendActorToActiveList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: set succeeds, list add succeeds",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeros: set succeeds, no list add",
+      "args": ["@parser", "@actor", 0, 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "set returns 1: logs the set error, returns 1, no list add",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x1000a72e": {"name": "t3dSetActorCurrentAction", "conv": "cdecl", "args": ["ptr", "int"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "set returns -1: any non-zero is a failure",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x1000a72e": {"name": "t3dSetActorCurrentAction", "conv": "cdecl", "args": ["ptr", "int"], "ret": -1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "set returns INT_MIN: any non-zero is a failure",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x1000a72e": {"name": "t3dSetActorCurrentAction", "conv": "cdecl", "args": ["ptr", "int"], "ret": -2147483648}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "set fails with append 0: returns 1",
+      "args": ["@parser", "@actor", 0, 0, 0],
+      "callees": {
+        "0x1000a72e": {"name": "t3dSetActorCurrentAction", "conv": "cdecl", "args": ["ptr", "int"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "append 0 never calls the list add (a failing list add is ignored)",
+      "args": ["@parser", "@actor", 1, 0, 1],
+      "callees": {
+        "0x10008f98": {"name": "FUN_10008f98", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "append -1 is non-zero: the list add is called",
+      "args": ["@parser", "@actor", 1, -1, 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list add returns -1: logs the append error, returns 1",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x10008f98": {"name": "FUN_10008f98", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "list add returns INT_MIN: logs the append error, returns 1",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x10008f98": {"name": "FUN_10008f98", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -2147483648}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "list add returns 1: success (only negative fails)",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x10008f98": {"name": "FUN_10008f98", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list add returns INT_MAX: success",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "callees": {
+        "0x10008f98": {"name": "FUN_10008f98", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 2147483647}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "world is read before the set call (set overwrites parser->world with 0)",
+      "args": ["@parser", "@parser", 1, 1, 1],
+      "callees": {
+        "0x1000a72e": {"name": "t3dSetActorCurrentAction", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0,
+                       "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null world is passed to the list add",
+      "args": ["@parser", "@actor", 1, 1, 1],
+      "memory": [{"addr": "@parser", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null actor is passed through, not dereferenced",
+      "args": ["@parser", 0, 1, 1, 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "action value passes through to the set call",
+      "args": ["@parser", "@actor", 1, 1, -7],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unusedArg is ignored",
+      "args": ["@parser", "@actor", 3735928559, 1, 1],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 188873,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@parser"]
+      },
+      {
+        "choices": ["@actor", 0]
+      },
+      {},
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "@parser", "offset": "0x0", "type": "u32", "choices": ["@world", "@world", 0]}
+    ]
+  }
+}

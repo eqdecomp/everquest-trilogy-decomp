@@ -1,0 +1,69 @@
+{
+  "function": "GetRawTextLine_owner_guess::GetRawTextLine",
+  "original": "0x0048d0c4",
+  "sources": ["src/EverQuest/EQ_TextIO.cpp"],
+  "conv": "thiscall",
+  "this": "@getrawtextline_owner",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "getrawtextline_owner": {"size": "0x4", "fill": "zero"},
+    "param_2": {"size": "0x4", "fill": "zero"},
+    "param_3": {"size": "0x4", "fill": "zero"},
+    "buffer": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e20cc", "u32": "@buffer+0x10"},
+    {"addr": "0x006e20d4", "u32": "@buffer+0x50"},
+    {"addr": "0x006e20d8", "u32": "@buffer+0x20"},
+    {"addr": "0x006e20dc", "u32": "@buffer+0x20"}
+  ],
+  "callees": {
+    "0x004c1703": {"name": "FUN_004c1703", "conv": "cdecl", "args": ["cstr"]},
+    "0x004a3d01": {"name": "EQTRACE_guess", "conv": "cdecl", "args": ["cstr"]}
+  },
+  "cases": [
+    {"name": "null-buffer", "args": [0, "@param_2", "@param_3"], "memory": [{"addr": "0x006e20cc", "u32": 0}]},
+    {"name": "null-start-read-below-buffer", "args": [0, "@param_2", "@param_3"], "memory": [{"addr": "0x006e20d8", "u32": "@buffer+0x10"}, {"addr": "@buffer+0x10", "u32": "0x11223344"}]},
+    {"name": "null-start-read-above-end", "args": [0, "@param_2", "@param_3"], "memory": [{"addr": "0x006e20d8", "u32": "@buffer+0x50"}, {"addr": "@buffer+0x10", "u32": "0x55667788"}]},
+    {"name": "null-start-read-exactly-end-minus-two", "args": [0, "@param_2", "@param_3"], "memory": [{"addr": "0x006e20d8", "u32": "@buffer+0x4e"}, {"addr": "0x006e20dc", "u32": "@buffer+0x30"}, {"addr": "@buffer+0x10", "u32": "0x11223344"}, {"addr": "@buffer+0x4a", "u32": "0x778899aa"}, {"addr": "@buffer+0x4e", "u8": 65}]},
+    {"name": "null-start-empty-and-caught-up", "args": [0, "@param_2", "@param_3"]},
+    {"name": "null-start-nonzero-byte", "args": [0, "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x1c", "u32": "0xa1b2c3d4"}, {"addr": "@buffer+0x20", "u8": 65}]},
+    {"name": "null-start-different-read-write", "args": [0, "@param_2", "@param_3"], "memory": [{"addr": "0x006e20dc", "u32": "@buffer+0x24"}, {"addr": "@buffer+0x1c", "u32": "0xdeadbeef"}]},
+    {"name": "param-below-buffer", "args": ["@buffer+0xc", "@param_2", "@param_3"]},
+    {"name": "param-at-buffer", "args": ["@buffer+0x10", "@param_2", "@param_3"]},
+    {"name": "param-at-end-minus-two", "args": ["@buffer+0x4e", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x10", "u32": "0x01020304"}]},
+    {"name": "param-end-minus-three-zero-not-tilde", "args": ["@buffer+0x4d", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x4d", "hex": "0058"}, {"addr": "@buffer+0x10", "u32": "0x01020304"}, {"addr": "@buffer+0x4e", "u32": "0x778899aa"}]},
+    {"name": "param-end-minus-three-zero-tilde", "args": ["@buffer+0x4d", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x4d", "hex": "007e"}], "expect": {"ret": 0}},
+    {"name": "param-end-minus-two-zero-tilde", "args": ["@buffer+0x4e", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x4e", "hex": "007e"}], "expect": {"ret": 1}},
+    {"name": "param-last-scannable-byte", "args": ["@buffer+0x4d", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x4d", "u8": 65}]},
+    {"name": "param-above-end-minus-two", "args": ["@buffer+0x4f", "@param_2", "@param_3"]},
+    {"name": "zero-delimiter-not-tilde", "args": ["@buffer+0x14", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x14", "hex": "41420058778899aa"}]},
+    {"name": "zero-followed-by-tilde-read-not-written", "args": ["@buffer+0x14", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x14", "hex": "007e"}, {"addr": "0x006e20d8", "u32": "@buffer+0x20"}, {"addr": "0x006e20dc", "u32": "@buffer+0x30"}]},
+    {"name": "tilde-line-at-read-pointer", "args": ["@buffer+0x18", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x18", "hex": "007e"}, {"addr": "0x006e20d8", "u32": "@buffer+0x18"}, {"addr": "0x006e20dc", "u32": "@buffer+0x14"}]},
+    {"name": "tilde-line-after-read-pointer", "args": ["@buffer+0x24", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x10", "u32": "0xcafebabe"}, {"addr": "@buffer+0x24", "hex": "007e"}, {"addr": "0x006e20d8", "u32": "@buffer+0x20"}, {"addr": "0x006e20dc", "u32": "@buffer+0x18"}]},
+    {"name": "scan-through-text-before-zero", "args": ["@buffer+0x14", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x14", "hex": "4142434445005a11223344"}]},
+    {"name": "scan-nonzero-to-loop-boundary", "args": ["@buffer+0x40", "@param_2", "@param_3"], "memory": [{"addr": "@buffer+0x40", "size": 16, "fill": "random"}]},
+    {"name": "custom-end-pointer-upper-reject", "args": ["@buffer+0x4e", "@param_2", "@param_3"], "memory": [{"addr": "0x006e20d4", "u32": "@buffer+0x30"}]}
+  ],
+  "fuzz": {
+    "seed": 4772036,
+    "count": 40,
+    "args": [
+      {"choices": [0, "@buffer+0xc", "@buffer+0x10", "@buffer+0x11", "@buffer+0x14", "@buffer+0x18", "@buffer+0x20", "@buffer+0x30", "@buffer+0x4c", "@buffer+0x4d", "@buffer+0x4e", "@buffer+0x4f", "@buffer+0x50", "@buffer+0x51"]},
+      {"choices": ["@param_2"]},
+      {"choices": ["@param_3"]}
+    ],
+    "memory": [
+      {"addr": "0x006e20cc", "type": "u32", "choices": [0, "@buffer+0x10"]},
+      {"addr": "0x006e20d4", "type": "u32", "choices": ["@buffer+0x4e", "@buffer+0x4f", "@buffer+0x50", "@buffer+0x51"]},
+      {"addr": "0x006e20d8", "type": "u32", "choices": ["@buffer+0xc", "@buffer+0x10", "@buffer+0x14", "@buffer+0x18", "@buffer+0x20", "@buffer+0x30", "@buffer+0x4d", "@buffer+0x4e", "@buffer+0x4f", "@buffer+0x50", "@buffer+0x51"]},
+      {"addr": "0x006e20dc", "type": "u32", "choices": ["@buffer+0xc", "@buffer+0x10", "@buffer+0x14", "@buffer+0x18", "@buffer+0x20", "@buffer+0x30", "@buffer+0x4d", "@buffer+0x4e", "@buffer+0x4f", "@buffer+0x50", "@buffer+0x51"]},
+      {"addr": "@buffer", "type": "u8", "count": 96, "choices": [0, 0, 65, 126, 1, 255]}
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "function": "EQ_HSlider::AdjustSliderPosition_guess",
+  "original": "0x004866e1",
+  "sources": ["src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@slider",
+  "args": [{"name": "delta", "type": "short"}],
+  "ret": "void",
+  "_mutation_note": "24/29 mutants caught. Five equivalent survivors only repeat an assignment at an equality boundary: value<0 becomes <=0 or <1 (assigning 0 to 0), value>range becomes >=range, and the two rectangle clamps become inclusive. Each destination was already written before the conditional, so the extra equal-value store changes neither final memory nor the write set or call trace.",
+  "objects": {
+    "slider": {"size": "0x1dc", "fill": "random", "init": [
+      {"offset": "0xa8", "u32": 10},
+      {"offset": "0xb0", "u32": 76},
+      {"offset": "0x1c0", "u32": "@thumb"},
+      {"offset": "0x1d0", "u32": "@range"},
+      {"offset": "0x1d8", "u32": 50}
+    ]},
+    "thumb": {"size": 16, "fill": "random"},
+    "range": {"size": 4, "init": [{"offset": 0, "u32": 100}]}
+  },
+  "callees": {
+    "user32.dll!CopyRect": {"conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1}
+  },
+  "cases": [
+    {"name": "middle", "args": [0]},
+    {"name": "step right", "args": [1]},
+    {"name": "step left", "args": [-1]},
+    {"name": "exact lower bound", "args": [-50]},
+    {"name": "below lower bound", "args": [-51]},
+    {"name": "exact upper bound", "args": [50]},
+    {"name": "above upper bound", "args": [51]},
+    {"name": "minimum short", "args": [-32768]},
+    {"name": "maximum short", "args": [32767]},
+    {"name": "zero divisor", "args": [0], "memory": [{"addr": "@range", "u32": 0}]},
+    {"name": "negative range", "args": [0], "memory": [{"addr": "@range", "u32": "0xffffffff"}]},
+    {"name": "unit range", "args": [0], "memory": [{"addr": "@range", "u32": 1}]},
+    {"name": "narrow track", "args": [0], "memory": [{"addr": "@slider", "offset": "0xb0", "u32": 25}]},
+    {"name": "reversed track", "args": [0], "memory": [{"addr": "@slider", "offset": "0xb0", "u32": 5}]},
+    {"name": "negative track", "args": [0], "memory": [
+      {"addr": "@slider", "offset": "0xa8", "u32": "0xffffff9c"},
+      {"addr": "@slider", "offset": "0xb0", "u32": "0xffffffde"}
+    ]},
+    {"name": "position addition wraps", "args": [1], "memory": [
+      {"addr": "@slider", "offset": "0x1d8", "u32": "0x7fffffff"}
+    ]},
+    {"name": "negative addition wraps", "args": [-1], "memory": [
+      {"addr": "@slider", "offset": "0x1d8", "u32": "0x80000000"}
+    ]},
+    {"name": "multiplication wraps", "args": [0], "memory": [
+      {"addr": "@slider", "offset": "0x1d8", "u32": "0x7fffffff"},
+      {"addr": "@range", "u32": "0x7fffffff"}
+    ]},
+    {"name": "track right subtraction wraps", "args": [0], "memory": [
+      {"addr": "@slider", "offset": "0xb0", "u32": "0x80000000"}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4744929,
+    "count": 100,
+    "args": [{}],
+    "memory": [
+      {"addr": "@slider", "offset": "0x1d8", "type": "int"},
+      {"addr": "@range", "type": "int", "choices": [-2147483648, -100, -1, 0, 1, 2, 100, 100000, 2147483647]},
+      {"addr": "@slider", "offset": "0xa8", "type": "int", "choices": [-2147483648, -100, 0, 10, 2147483647]},
+      {"addr": "@slider", "offset": "0xb0", "type": "int", "choices": [-2147483648, -100, 0, 10, 66, 76, 2147483647]},
+      {"addr": "@thumb", "size": 16}
+    ]
+  }
+}

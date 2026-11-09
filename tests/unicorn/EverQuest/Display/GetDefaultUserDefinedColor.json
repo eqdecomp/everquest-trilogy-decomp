@@ -1,0 +1,60 @@
+{
+  "function": "GetDefaultUserDefinedColor",
+  "original": "0x0040BB6C",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "cdecl",
+  "args": ["int", "ptr", "ptr", "ptr"],
+  "ret": "void",
+  "objects": {
+    "profile2": {"size": 16, "fill": "zero"},
+    "profile1": {"size": 16, "fill": "zero"},
+    "outputs": {"size": 16, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x00534188", "u32": "@profile1"},
+    {"addr": "0x0053C5E8", "hex": "11223344aabbccdd01020304"},
+    {"addr": "0x0053C66C", "hex": "a1b2c3d4"}
+  ],
+  "callees": {
+    "0x005224FB": {"name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x005219C0": {"name": "strcpy", "conv": "cdecl", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x005219D0": {"name": "strcat", "conv": "cdecl", "args": ["ignore", "cstr"], "passthrough": true},
+    "@profile1": {
+      "name": "first cached profile writer",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "cstr"],
+      "ret": 1,
+      "writes": [
+        {"addr": "0x00534188", "hex": "00000060"},
+        {"addr": "@outputs+0x4", "hex": "78563412"},
+        {"addr": "@outputs+0x8", "hex": "efcdab90"}
+      ]
+    },
+    "@profile2": {
+      "name": "reloaded profile writer",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "cstr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {"name": "zero index reads output values again after writer mutates them and caches writer pointer", "args": [0, "@outputs", "@outputs+0x4", "@outputs+0x8"]},
+    {"name": "index one selects the next four-byte palette entry", "args": [1, "@outputs", "@outputs+0x4", "@outputs+0x8"], "callees": {"@profile1": {"name": "profile writer", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr"], "ret": 1}}},
+    {"name": "index two preserves palette byte stride", "args": [2, "@outputs", "@outputs+0x4", "@outputs+0x8"], "callees": {"@profile1": {"name": "profile writer", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr"], "ret": 1}}},
+    {"name": "last valid index 33", "args": [33, "@outputs", "@outputs+0x4", "@outputs+0x8"]},
+    {"name": "upper invalid index falls back to zero", "args": [34, "@outputs", "@outputs+0x4", "@outputs+0x8"]},
+    {"name": "negative index falls back to zero", "args": [-1, "@outputs", "@outputs+0x4", "@outputs+0x8"]},
+    {
+      "name": "partial output overlap changes values read for later channels",
+      "args": [0, "@outputs", "@outputs+0x2", "@outputs+0x4"],
+      "memory": [{"addr": "@outputs", "hex": "8877665544332211"}],
+      "callees": {"@profile1": {"name": "profile writer", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr"], "ret": 1}}
+    },
+    {
+      "name": "partial red output overlap mutates later table reads",
+      "args": [0, "0x0053C5E9", "@outputs", "@outputs+0x4"],
+      "callees": {"@profile1": {"name": "profile writer", "conv": "stdcall", "args": ["cstr", "cstr", "cstr", "cstr"], "ret": 1}}
+    }
+  ],
+  "fuzz": {"seed": 4116, "count": 30, "args": [{"range": [-3, 36]}, {"choices": ["@outputs", "@outputs+0x2"]}, {"choices": ["@outputs+0x4", "@outputs+0x6"]}, {"choices": ["@outputs+0x8", "@outputs+0xa"]}]}
+}

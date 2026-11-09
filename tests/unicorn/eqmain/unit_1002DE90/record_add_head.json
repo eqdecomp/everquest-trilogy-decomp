@@ -1,0 +1,278 @@
+{
+  "function": "record_add_head_guess",
+  "original": "0x1002ded0",
+  "sources": [
+    "src/eqmain/unit_1002DE90.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rec": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@pool"}
+      ]
+    },
+    "pool": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty record: node becomes head and tail",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": 0},
+          {"offset": "0x4", "u32": 0},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 0}
+        ]},
+        "pool": {"size": "0x200", "fill": "random"}
+      }
+    },
+    {
+      "name": "one node: head == tail",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0x80"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 1}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    },
+    {
+      "name": "two nodes: head and tail differ",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0xc0"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 2}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": "@pool+0xc0"},
+          {"offset": "0x84", "u32": 0},
+          {"offset": "0xc0", "u32": 0},
+          {"offset": "0xc4", "u32": "@pool+0x80"}
+        ]}
+      }
+    },
+    {
+      "name": "head set, tail NULL (inconsistent record)",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": 0},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 1}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    },
+    {
+      "name": "null node (offset 0) on an empty record: faults at address 4",
+      "args": ["@rec", 0],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": 0},
+          {"offset": "0x4", "u32": 0},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 0}
+        ]},
+        "pool": {"size": "0x200", "fill": "random"}
+      }
+    },
+    {
+      "name": "null node with stale mapped pool pointers in every register but EDX (offset 0 must not reuse a stale register)",
+      "args": ["@rec", 0],
+      "regs": {"eax": "@pool+0x40", "ebx": "@pool+0x40", "ecx": "@pool+0x40", "esi": "@pool+0x40", "edi": "@pool+0x40", "ebp": "@pool+0x40"},
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": 0},
+          {"offset": "0x4", "u32": 0},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 0}
+        ]},
+        "pool": {"size": "0x200", "fill": "random"}
+      }
+    },
+    {
+      "name": "null node with a stale EAX into the pool on a two-node record (offset 0)",
+      "args": ["@rec", 0],
+      "regs": {"eax": "@pool+0x40"},
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0xc0"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 2}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": "@pool+0xc0"},
+          {"offset": "0x84", "u32": 0},
+          {"offset": "0xc0", "u32": 0},
+          {"offset": "0xc4", "u32": "@pool+0x80"}
+        ]}
+      }
+    },
+    {
+      "name": "node is the old head (self-link, two nodes)",
+      "args": ["@rec", 128],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0xc0"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 2}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": "@pool+0xc0"},
+          {"offset": "0x84", "u32": 0},
+          {"offset": "0xc0", "u32": 0},
+          {"offset": "0xc4", "u32": "@pool+0x80"}
+        ]}
+      }
+    },
+    {
+      "name": "node is the old tail (two nodes)",
+      "args": ["@rec", 192],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0xc0"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 2}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": "@pool+0xc0"},
+          {"offset": "0x84", "u32": 0},
+          {"offset": "0xc0", "u32": 0},
+          {"offset": "0xc4", "u32": "@pool+0x80"}
+        ]}
+      }
+    },
+    {
+      "name": "node is the only node (head == tail == node)",
+      "args": ["@rec", 128],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0x80"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 1}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    },
+    {
+      "name": "lowest pool node (offset 4)",
+      "args": ["@rec", 4],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0x80"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 1}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    },
+    {
+      "name": "count 0xffffffff wraps to 0",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0x80"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 4294967295}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    },
+    {
+      "name": "count 0x7fffffff overflows to 0x80000000",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0x80"},
+          {"offset": "0x8", "u32": "@pool"},
+          {"offset": "0x10", "u32": 2147483647}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    },
+    {
+      "name": "base at pool+0x10 (node = base + offset)",
+      "args": ["@rec", 64],
+      "objects": {
+        "rec": {"size": "0x20", "fill": "random", "init": [
+          {"offset": "0x0", "u32": "@pool+0x80"},
+          {"offset": "0x4", "u32": "@pool+0x80"},
+          {"offset": "0x8", "u32": "@pool+0x10"},
+          {"offset": "0x10", "u32": 1}
+        ]},
+        "pool": {"size": "0x200", "fill": "random", "init": [
+          {"offset": "0x80", "u32": 0},
+          {"offset": "0x84", "u32": 0}
+        ]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 188112,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@rec"]
+      },
+      {
+        "choices": [4, 64, 128, 192, 256, 320]
+      }
+    ],
+    "memory": [
+      {"addr": "@rec", "offset": "0x0", "type": "ptr", "choices": ["@pool+0x40", "@pool+0x80", "@pool+0xc0", "@pool+0x100"]},
+      {"addr": "@rec", "offset": "0x4", "type": "ptr", "choices": ["@pool+0x40", "@pool+0x80", "@pool+0xc0", "@pool+0x100"]},
+      {"addr": "@rec", "offset": "0x10", "type": "int", "range": [-2, 40]}
+    ]
+  }
+}

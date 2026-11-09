@@ -1,0 +1,201 @@
+{
+  "function": "t3dIsRegionFoggy",
+  "original": "0x10019475",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x25"
+        },
+        {
+          "offset": "0x14",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "matching type returns zero",
+      "args": [
+        "@region"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "matching type returns one",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x14",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "matching type returns full integer",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x14",
+          "u32": "0x12345678"
+        }
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "type below boundary ignores fog flag",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x0",
+          "u32": "0x24"
+        },
+        {
+          "addr": "@state",
+          "offset": "0x14",
+          "u32": 99
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "matching type boundary",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x0",
+          "u32": "0x25"
+        },
+        {
+          "addr": "@state",
+          "offset": "0x14",
+          "u32": 17
+        }
+      ],
+      "expect": {
+        "ret": 17
+      }
+    },
+    {
+      "name": "type above boundary ignores fog flag",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x0",
+          "u32": "0x26"
+        },
+        {
+          "addr": "@state",
+          "offset": "0x14",
+          "u32": 99
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other type cannot expose negative fog field",
+      "args": [
+        "@region"
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x0",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@state",
+          "offset": "0x14",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 103541,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@state",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          80
+        ]
+      },
+      {
+        "addr": "@state",
+        "offset": "0x14",
+        "type": "u32",
+        "range": [
+          0,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

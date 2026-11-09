@@ -1,0 +1,151 @@
+{
+  "function": "t3dUndefineSimpleSprite",
+  "original": "0x1001b72e",
+  "sources": ["src/eqgfx/unit_1001A43D.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "renderer", "type": "int"},
+    {"name": "sprite", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "@array"},
+        {"offset": "0x1c", "u32": "@definition"}
+      ]
+    },
+    "definition": {"size": "0x14", "fill": "zero"},
+    "array": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@item0"},
+        {"offset": "0x4", "u32": "@item1"},
+        {"offset": "0x8", "u32": "@item2"},
+        {"offset": "0xc", "u32": "@item3"}
+      ]
+    },
+    "item0": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x700001"}]},
+    "item1": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x700002"}]},
+    "item2": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x700003"}]},
+    "item3": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x700004"}]}
+  },
+  "callees": {
+    "0x1000e334": {"name": "t3dRemoveEntryFromDictionary", "conv": "cdecl", "args": ["int", "ptr"]},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["int", "ptr"], "ret": [101, 202]},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x10017dad": {"name": "t3dUnshareObject", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {
+      "name": "sprite use count below one rejects",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 0},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ],
+      "expect": {"ret": "0xffff3d44"}
+    },
+    {
+      "name": "sprite use count above one rejects",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 2},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ],
+      "expect": {"ret": "0xffff3d44"}
+    },
+    {
+      "name": "definition still shared rejects",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 2}
+      ],
+      "expect": {"ret": "0xffff3d44"}
+    },
+    {
+      "name": "empty list with no flags frees sprite",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 1},
+        {"addr": "@sprite", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite", "offset": "0xc", "u8": 0},
+        {"addr": "@definition", "offset": "0x10", "u32": 1},
+        {"addr": "@definition", "offset": "0xc", "u8": 0}
+      ],
+      "expect": {"ret": 202}
+    },
+    {
+      "name": "dictionary flags call removals even for null keys",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 1},
+        {"addr": "@sprite", "offset": "0x14", "u32": 0},
+        {"addr": "@sprite", "offset": "0xc", "u8": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1},
+        {"addr": "@definition", "offset": "0xc", "u8": 1}
+      ],
+      "expect": {"ret": 202}
+    },
+    {
+      "name": "two child objects unshare in reverse order and free keys",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x8", "u32": "0x700020"},
+        {"addr": "@sprite", "offset": "0xc", "u8": 1},
+        {"addr": "@sprite", "offset": "0x10", "u32": 1},
+        {"addr": "@sprite", "offset": "0x14", "u32": 2},
+        {"addr": "@definition", "offset": "0x8", "u32": "0x700010"},
+        {"addr": "@definition", "offset": "0xc", "u8": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ],
+      "expect": {"ret": 202}
+    },
+    {
+      "name": "keep-memory flag suppresses sprite free",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0xc", "u8": 32},
+        {"addr": "@sprite", "offset": "0x10", "u32": 1},
+        {"addr": "@sprite", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ],
+      "expect": {"ret": 202}
+    },
+    {
+      "name": "combined dictionary and keep-memory flags",
+      "args": [9, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x8", "u32": "0x700021"},
+        {"addr": "@sprite", "offset": "0xc", "u8": 33},
+        {"addr": "@sprite", "offset": "0x10", "u32": 1},
+        {"addr": "@sprite", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x8", "u32": "0x700011"},
+        {"addr": "@definition", "offset": "0xc", "u8": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ],
+      "expect": {"ret": 202}
+    }
+  ],
+  "fuzz": {
+    "seed": 112430,
+    "count": 32,
+    "args": [
+      {"range": [-8, 64]},
+      {"choices": ["@sprite"]}
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x8", "type": "ptr", "choices": [0, "0x700020", "0x700021"]},
+      {"addr": "@sprite", "offset": "0xc", "type": "u8", "choices": [0, 1, 2, 32, 33, 255]},
+      {"addr": "@sprite", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 2, 2147483647]},
+      {"addr": "@sprite", "offset": "0x14", "type": "int", "choices": [-1, 0, 1, 2, 3, 4]},
+      {"addr": "@definition", "offset": "0x8", "type": "ptr", "choices": [0, "0x700010", "0x700011"]},
+      {"addr": "@definition", "offset": "0xc", "type": "u8", "choices": [0, 1, 2, 255]},
+      {"addr": "@definition", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 2, 2147483647]}
+    ]
+  }
+}

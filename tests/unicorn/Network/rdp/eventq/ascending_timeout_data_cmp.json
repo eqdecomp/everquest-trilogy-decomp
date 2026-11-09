@@ -1,0 +1,175 @@
+{
+  "function": "GetSerialQueueStallTime_guess",
+  "original": "0x004f7180",
+  "sources": [
+    "src/Network/rdp/eventq.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "q",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "q": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x38",
+          "u32": "@link"
+        }
+      ]
+    },
+    "link": {
+      "size": "0x10",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@item"
+        }
+      ]
+    },
+    "item": {
+      "size": "0x30",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": 576
+        },
+        {
+          "offset": "0x28",
+          "u32": 1000
+        }
+      ]
+    }
+  },
+  "callees": {
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1500
+    }
+  },
+  "cases": [
+    {
+      "name": "empty",
+      "args": [
+        "@q"
+      ],
+      "memory": [
+        {
+          "addr": "@q",
+          "offset": "0x38",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "link without data",
+      "args": [
+        "@q"
+      ],
+      "memory": [
+        {
+          "addr": "@link",
+          "offset": 8,
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "stalled",
+      "args": [
+        "@q"
+      ]
+    },
+    {
+      "name": "exactly at the limit",
+      "args": [
+        "@q"
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 1180
+        }
+      }
+    },
+    {
+      "name": "within",
+      "args": [
+        "@q"
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 1100
+        }
+      }
+    },
+    {
+      "name": "clock wrapped",
+      "args": [
+        "@q"
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 10
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 21,
+    "count": 100,
+    "args": [
+      {
+        "choices": [
+          "@q"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@item",
+        "offset": "0x24",
+        "type": "u32"
+      },
+      {
+        "addr": "@item",
+        "offset": "0x28",
+        "type": "u32",
+        "range": [
+          0,
+          3000
+        ]
+      }
+    ]
+  }
+}

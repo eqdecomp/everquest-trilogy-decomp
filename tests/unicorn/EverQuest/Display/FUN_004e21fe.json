@@ -1,0 +1,59 @@
+{
+  "function": "EqSoundManager_guess::FindPlayerIndex_guess",
+  "original": "0x004e21fe",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "value", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "obj": {"size": "0x400", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "match at index 0", "args": ["@obj", 0, 7],
+     "memory": [{"addr": "@obj", "offset": "0x2f0", "u32": "7"}], "expect": {"ret": 0}},
+    {"name": "match at index 7 (last)", "args": ["@obj", 0, 7],
+     "memory": [{"addr": "@obj", "offset": "0x2f0", "u32": "1"}, {"addr": "@obj", "offset": "0x2f4", "u32": "2"},
+                {"addr": "@obj", "offset": "0x2f8", "u32": "3"}, {"addr": "@obj", "offset": "0x2fc", "u32": "4"},
+                {"addr": "@obj", "offset": "0x300", "u32": "5"}, {"addr": "@obj", "offset": "0x304", "u32": "6"},
+                {"addr": "@obj", "offset": "0x308", "u32": "8"}, {"addr": "@obj", "offset": "0x30c", "u32": "7"}],
+     "expect": {"ret": 7}},
+    {"name": "match only at index 8 (beyond the table) is not found", "args": ["@obj", 0, 7],
+     "memory": [{"addr": "@obj", "offset": "0x2f0", "u32": "1"}, {"addr": "@obj", "offset": "0x2f4", "u32": "2"},
+                {"addr": "@obj", "offset": "0x2f8", "u32": "3"}, {"addr": "@obj", "offset": "0x2fc", "u32": "4"},
+                {"addr": "@obj", "offset": "0x300", "u32": "5"}, {"addr": "@obj", "offset": "0x304", "u32": "6"},
+                {"addr": "@obj", "offset": "0x308", "u32": "8"}, {"addr": "@obj", "offset": "0x30c", "u32": "9"},
+                {"addr": "@obj", "offset": "0x310", "u32": "7"}],
+     "expect": {"ret": -1}},
+    {"name": "first of two matches wins", "args": ["@obj", 0, 5],
+     "memory": [{"addr": "@obj", "offset": "0x2f0", "u32": "1"}, {"addr": "@obj", "offset": "0x2f4", "u32": "5"},
+                {"addr": "@obj", "offset": "0x2f8", "u32": "5"}],
+     "expect": {"ret": 1}},
+    {"name": "match at index 3", "args": ["@obj", 0, 4],
+     "memory": [{"addr": "@obj", "offset": "0x2f0", "u32": "1"}, {"addr": "@obj", "offset": "0x2f4", "u32": "2"},
+                {"addr": "@obj", "offset": "0x2f8", "u32": "3"}, {"addr": "@obj", "offset": "0x2fc", "u32": "4"}],
+     "expect": {"ret": 3}},
+    {"name": "value -1 matches a 0xFFFFFFFF entry", "args": ["@obj", 0, -1],
+     "memory": [{"addr": "@obj", "offset": "0x2f0", "u32": "0"}, {"addr": "@obj", "offset": "0x2f4", "u32": "0xFFFFFFFF"}],
+     "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 5120510,
+    "count": 40,
+    "args": [
+      {"choices": ["@obj"]},
+      {},
+      {"choices": [0, 1, 2, 3, 4, 5, 9]}
+    ],
+    "memory": [
+      {"addr": "@obj", "offset": "0x2f0", "type": "ptr", "count": 9, "choices": [0, 1, 2, 3, 4, 5, 6]}
+    ]
+  }
+}

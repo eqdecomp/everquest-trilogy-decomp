@@ -1,0 +1,303 @@
+{
+  "function": "EqfeCfgSaveClose_guess",
+  "original": "0x10020c50",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x18",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x08",
+          "u32": "@file"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@blk"
+        },
+        {
+          "offset": "0x14",
+          "u32": 64
+        }
+      ]
+    },
+    "file": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "blk": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100346a6": {
+      "name": "_rewind",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10034169": {
+      "name": "_fwrite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x100343b9": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: file and buffer objects, size 0x40 (rewind, fwrite(buf, 1, 0x40, file), fclose, free, buf = 0)",
+      "args": [
+        "@obj"
+      ]
+    },
+    {
+      "name": "size 1 (an empty file was loaded as size 1)",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x14",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "size 0: fwrite is still called with count 0",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "size -1 (0xffffffff as the fwrite count): passed through unchanged",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x14",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "null buffer: no check before fwrite and free(0)",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x0c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "null buffer and size 0 together",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x0c",
+          "u32": 0
+        },
+        {
+          "addr": "@obj",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "file 0 (open gave NULL): rewind, fwrite and fclose get 0",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x08",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "file -1 (the open-failed sentinel)",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x08",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "buffer inside the object (aliasing): free gets an interior pointer",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x0c",
+          "u32": "@obj+0x10"
+        }
+      ]
+    },
+    {
+      "name": "fclose fails (EOF): the result is ignored, free still runs",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "0x100343b9": {
+          "name": "_fclose",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "fwrite writes less than count: the result is ignored",
+      "args": [
+        "@obj"
+      ],
+      "callees": {
+        "0x10034169": {
+          "name": "_fwrite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 3
+        }
+      }
+    },
+    {
+      "name": "vtable already zero: overwritten with PTR_FUN_10041f70",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x00",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "largest positive size 0x7fffffff",
+      "args": [
+        "@obj"
+      ],
+      "memory": [
+        {
+          "addr": "@obj",
+          "offset": "0x14",
+          "u32": "0x7fffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 134224,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@obj",
+        "offset": "0x08",
+        "type": "ptr",
+        "choices": [
+          "@file",
+          "@file+0x10",
+          0,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@obj",
+        "offset": "0x0c",
+        "type": "ptr",
+        "choices": [
+          "@blk",
+          "@blk+0x40",
+          "@obj+0x10",
+          0
+        ]
+      },
+      {
+        "addr": "@obj",
+        "offset": "0x14",
+        "type": "i32",
+        "range": [
+          -4,
+          64
+        ]
+      }
+    ]
+  }
+}

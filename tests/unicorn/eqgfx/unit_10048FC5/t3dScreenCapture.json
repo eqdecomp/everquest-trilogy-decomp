@@ -1,0 +1,374 @@
+{
+  "function": "t3dScreenCapture",
+  "original": "0x10049ba7",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "path",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "pixels": {
+      "size": "0x1000",
+      "fill": "random"
+    },
+    "path": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "lock": {
+      "size": "0x10"
+    },
+    "unlock": {
+      "size": "0x10"
+    },
+    "grfinish": {
+      "size": "0x10"
+    },
+    "grlfb": {
+      "size": "0x10"
+    },
+    "file": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "surface": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x64",
+          "u32": "@lock"
+        },
+        {
+          "offset": "0x80",
+          "u32": "@unlock"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100fba44",
+      "u32": 4
+    },
+    {
+      "addr": "0x100fba40",
+      "u32": 4
+    },
+    {
+      "addr": "0x100fb8a8",
+      "u32": 1
+    },
+    {
+      "addr": "0x100fba38",
+      "u32": 16
+    },
+    {
+      "addr": "0x100fba3c",
+      "u32": 1
+    },
+    {
+      "addr": "0x100fba8c",
+      "u32": "@surface"
+    },
+    {
+      "addr": "0x100f3ef0",
+      "u32": "@grfinish"
+    },
+    {
+      "addr": "0x100f3f34",
+      "u32": "@grlfb"
+    }
+  ],
+  "callees": {
+    "0x10068412": {
+      "name": "openFileWithPath_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": "@file"
+    },
+    "0x10069a2a": {
+      "name": "_fwrite",
+      "conv": "cdecl",
+      "args": ["ignore", "int", "int", "ptr"],
+      "ret": 1
+    },
+    "0x10068328": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@lock": {
+      "name": "_surface_lock",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "ignore", "int", "ptr"],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 2,
+          "offset": 16,
+          "hex": "00010000"
+        },
+        {
+          "arg": 2,
+          "offset": 36,
+          "hex": "00000060"
+        }
+      ]
+    },
+    "@unlock": {
+      "name": "_surface_unlock",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "@grfinish": {
+      "name": "_grFinish",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0
+    },
+    "@grlfb": {
+      "name": "_grLfbReadRegion",
+      "conv": "stdcall",
+      "args": ["int", "int", "int", "int", "int", "int", "ignore"],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 6,
+          "offset": 0,
+          "hex": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "mode 1 565 4x4 (rows checked byte for byte)",
+      "args": ["@path"],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 555 4x3",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba44", "u32": 3},
+        {"addr": "0x100fba3c", "u32": 0}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 32-bit 4x2",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba44", "u32": 2},
+        {"addr": "0x100fba38", "u32": 32}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 24-bit depth takes the 32-bit path 4x1",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba44", "u32": 1},
+        {"addr": "0x100fba38", "u32": 24}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 565 pitch 0x40 4x3",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba44", "u32": 3}
+      ],
+      "callees": {
+        "@lock": {"name": "_surface_lock", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int", "ptr"], "ret": 0, "writes": [{"arg": 2, "offset": 16, "hex": "40000000"}, {"arg": 2, "offset": 36, "hex": "00000060"}]},
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 32-bit pitch 0x40 4x3",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba44", "u32": 3},
+        {"addr": "0x100fba38", "u32": 32}
+      ],
+      "callees": {
+        "@lock": {"name": "_surface_lock", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int", "ptr"], "ret": 0, "writes": [{"arg": 2, "offset": 16, "hex": "40000000"}, {"arg": 2, "offset": 36, "hex": "00000060"}]},
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 lock fails: header only",
+      "args": ["@path"],
+      "callees": {
+        "@lock": {"name": "_surface_lock", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int", "ptr"], "ret": 1},
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 zero height",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba44", "u32": 0}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 1 zero width",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba40", "u32": 0}
+      ]
+    },
+    {
+      "name": "mode 1 565 one pixel",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba40", "u32": 1},
+        {"addr": "0x100fba44", "u32": 1}
+      ]
+    },
+    {
+      "name": "mode 1 555 wide 14x2",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba40", "u32": 14},
+        {"addr": "0x100fba44", "u32": 2},
+        {"addr": "0x100fba3c", "u32": 0}
+      ]
+    },
+    {
+      "name": "mode 1 32-bit wide 16x3",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fba40", "u32": 16},
+        {"addr": "0x100fba44", "u32": 3},
+        {"addr": "0x100fba38", "u32": 32}
+      ]
+    },
+    {
+      "name": "mode 2 565 4x4 (rows checked byte for byte)",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 2 4x2 with the 565 flag clear",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba44", "u32": 2},
+        {"addr": "0x100fba3c", "u32": 0}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 2 zero height",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba44", "u32": 0}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 2 one pixel wide, two rows",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba40", "u32": 1},
+        {"addr": "0x100fba44", "u32": 2}
+      ]
+    },
+    {
+      "name": "mode 2 wide 16x3",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba40", "u32": 16},
+        {"addr": "0x100fba44", "u32": 3}
+      ]
+    },
+    {
+      "name": "mode 0 writes the header only",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 0}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "mode 3 writes the header only",
+      "args": ["@path"],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 3}
+      ],
+      "callees": {
+        "0x10069a2a": {"name": "_fwrite", "conv": "cdecl", "args": ["mem:12", "int", "int", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "file open fails",
+      "args": ["@path"],
+      "callees": {
+        "0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 301991,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@path"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x100fba44", "type": "u32", "range": [0, 6]},
+      {"addr": "0x100fba40", "type": "u32", "range": [0, 16]},
+      {"addr": "0x100fb8a8", "type": "u32", "choices": [0, 1, 2, 3]},
+      {"addr": "0x100fba38", "type": "u32", "choices": [16, 24, 32]},
+      {"addr": "0x100fba3c", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

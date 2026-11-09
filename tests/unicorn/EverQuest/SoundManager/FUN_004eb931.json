@@ -1,0 +1,129 @@
+{
+  "function": "ReserveSoundSlot_guess",
+  "original": "0x004eb931",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x44",
+      "fill": "zero"
+    },
+    "voice": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004ec55d": {
+      "name": "AcquireVoiceSlot_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": -1
+    },
+    "0x004ec713": {
+      "name": "EqDirectSoundSlots_guess::SetVolume_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004ec986": {
+      "name": "FUN_004ec986",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "no free slot returns sentinel",
+      "args": [
+        "@param_1"
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "first slot sets active and clears field",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x4", "u32": "@voice"},
+        {"addr": "@voice", "offset": "0x10", "u8": 0},
+        {"addr": "@voice", "offset": "0x14", "u32": "0x12345678"}
+      ],
+      "callees": {
+        "0x004ec55d": {"name": "FUN_004ec55d", "conv": "thiscall", "args": [], "ret": 0}
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "middle slot preserves call order and slot argument",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x20", "u32": "@voice"},
+        {"addr": "@voice", "offset": "0x10", "u8": 255},
+        {"addr": "@voice", "offset": "0x14", "u32": "0xffffffff"}
+      ],
+      "callees": {
+        "0x004ec55d": {"name": "FUN_004ec55d", "conv": "thiscall", "args": [], "ret": 7}
+      },
+      "expect": {
+        "ret": 7
+      }
+    },
+    {
+      "name": "last valid slot boundary",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x40", "u32": "@voice"},
+        {"addr": "@voice", "offset": "0x10", "u8": 17},
+        {"addr": "@voice", "offset": "0x14", "u32": "0x87654321"}
+      ],
+      "callees": {
+        "0x004ec55d": {"name": "FUN_004ec55d", "conv": "thiscall", "args": [], "ret": 15}
+      },
+      "expect": {
+        "ret": 15
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5159311,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x4", "type": "ptr", "choices": ["@voice"], "count": 16, "stride": 4},
+      {"addr": "@voice", "offset": "0x10", "type": "u8", "range": [0, 255]},
+      {"addr": "@voice", "offset": "0x14", "type": "u32", "choices": [0, 1, 305419896, 2147483648, 4294967295]}
+    ]
+  }
+}

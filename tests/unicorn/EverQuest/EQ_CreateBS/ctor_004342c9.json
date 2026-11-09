@@ -1,0 +1,205 @@
+{
+  "function": "EQ_CreateBS3::EQ_CreateBS3",
+  "original": "0x004342c9",
+  "sources": [
+    "src/EverQuest/EQ_CreateBS.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_createbs",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "eq_createbs": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "setrect": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00534248",
+      "u32": "@setrect"
+    },
+    {
+      "addr": "0x006E4DE0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450049": {
+      "name": "EQ_Overlay::EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": [],
+      "writes": [
+        {
+          "addr": "@eq_createbs+0x8",
+          "hex": "00000000"
+        },
+        {
+          "addr": "@eq_createbs+0x78",
+          "hex": "00000000"
+        }
+      ]
+    },
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "000000000000000080020000e0010000"
+        }
+      ]
+    },
+    "0x00450168": {
+      "name": "EQ_Overlay::load_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "zero selector chooses locblue",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0x88",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "positive selector chooses locnewb",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0x88",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "negative selector still chooses locnewb",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0x88",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "member boundary and ordering patterns",
+      "args": [],
+      "objects": {
+        "eq_createbs": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0xdeadbeef"
+            },
+            {
+              "offset": "0x8",
+              "u32": "0xa1a2a3a4"
+            },
+            {
+              "offset": "0x10",
+              "u32": "0xb1b2b3b4"
+            },
+            {
+              "offset": "0x14",
+              "hex": "0102030405060708090a0b0c0d0e0f10"
+            },
+            {
+              "offset": "0x24",
+              "hex": "1112131415161718191a1b1c1d1e1f20"
+            },
+            {
+              "offset": "0x34",
+              "hex": "cccccccccccccccccccccccccccccccc"
+            },
+            {
+              "offset": "0x52",
+              "hex": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            },
+            {
+              "offset": "0x70",
+              "u32": "0xc1c2c3c4"
+            },
+            {
+              "offset": "0x78",
+              "u32": "0xd1d2d3d4"
+            }
+          ]
+        },
+        "display": {
+          "size": "0x100",
+          "fill": "zero"
+        }
+      },
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0x88",
+          "u32": "0x7fffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4408009,
+    "count": 32,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@display",
+        "offset": "0x88",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0xffffffff",
+          "0x80000000"
+        ]
+      },
+      {
+        "addr": "@eq_createbs",
+        "size": "0x100"
+      }
+    ]
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "function": "EQMain_ProcessClassifiedString_guess",
+  "original": "0x10011c90",
+  "sources": [
+    "src/eqmain/unit_10011A50.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "rec": {"size": "0x40", "fill": "zero"},
+    "dup": {"size": "0x40", "fill": "zero"},
+    "str_out": {"size": "0x40", "fill": "zero"},
+    "thisobj": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004CEB8", "u32": 4096},
+    {"addr": "0x1004CF30", "u32": 1000},
+    {"addr": "0x1004CF34", "u32": 2000},
+    {"addr": "0x1004CF2C", "u32": 3000},
+    {"addr": "0x1004D1C8", "u32": 3},
+    {"addr": "0x1004D234", "u32": 46},
+    {"addr": "0x1004D224", "u32": 0},
+    {"addr": "0x1012C774", "u32": "@thisobj"}
+  ],
+  "callees": {
+    "0x10006c20": {"name": "FUN_10006c20", "conv": "cdecl", "args": ["int", "int", "int", "int", "int", "int", "int", "int", "u32"], "ret": 0},
+    "0x10011c30": {"name": "FUN_10011c30", "conv": "stdcall", "args": []},
+    "0x10025c00": {"name": "FUN_10025c00", "conv": "thiscall", "args": ["int"], "ret": 4660},
+    "0x10025950": {"name": "FUN_10025950", "conv": "fastcall", "args": ["int"], "ret": "@str_out"},
+    "0x10011970": {"name": "FUN_10011970", "conv": "cdecl", "args": ["int", "int", "cstr", "ptr", "u32", "cstr"]},
+    "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": "@dup"},
+    "0x10005fd0": {"name": "FUN_10005fd0", "conv": "cdecl", "args": ["int", "int", "int", "u8", "cstr", "int", "u8", "u8"], "ret": "@rec"},
+    "0x100061f0": {"name": "FUN_100061f0", "conv": "cdecl", "args": ["int", "cstr"], "ret": 7},
+    "0x10006510": {"name": "FUN_10006510", "conv": "cdecl", "args": ["ptr", "int", "int"]},
+    "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "result 0, empty copy: code 0x2D, param_1 becomes 0xD, FUN_10006510 gets 0, no FUN_100061f0",
+      "args": [5, 4369, 8738, ""],
+      "memory": [{"addr": "0x1004D1C8", "u32": 0}]
+    },
+    {
+      "name": "result 0, copy abc: FUN_100061f0's value is the third argument of FUN_10006510",
+      "args": [5, 4369, 8738, "abc"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 0}, {"addr": "@dup", "cstr": "abc"}]
+    },
+    {
+      "name": "result 0, copy abc, FUN_100061f0 returns 0",
+      "args": [5, 4369, 8738, "abc"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 0}, {"addr": "@dup", "cstr": "abc"}],
+      "callees": {"0x100061f0": {"name": "FUN_100061f0", "conv": "cdecl", "args": ["int", "cstr"], "ret": 0}}
+    },
+    {
+      "name": "result 0, one-char copy: the shortest non-empty copy",
+      "args": [5, 4369, 8738, "x"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 0}, {"addr": "@dup", "cstr": "x"}]
+    },
+    {
+      "name": "result 1, copy abc: code 0x2C, param_1 kept as the full dword 0x80001234",
+      "args": [-2147479500, 4369, 8738, "abc"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 1}, {"addr": "@dup", "cstr": "abc"}]
+    },
+    {
+      "name": "result 1, empty copy: FUN_10006510 gets param_1 and 0",
+      "args": [-2147479500, 4369, 8738, ""],
+      "memory": [{"addr": "0x1004D1C8", "u32": 1}]
+    },
+    {
+      "name": "result 2: code 5, FUN_10025c00 and FUN_10025950 feed FUN_10011970 with &DAT_1004D230 and 0x40, no strdup",
+      "args": [5, 4369, 8738, "abc"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 2}, {"addr": "@str_out", "cstr": "xyz"}]
+    },
+    {
+      "name": "result 2, empty string",
+      "args": [5, 4369, 8738, ""],
+      "memory": [{"addr": "0x1004D1C8", "u32": 2}, {"addr": "@str_out", "cstr": "xyz"}]
+    },
+    {
+      "name": "result 3 (default): code keeps its 0x2E, copy abc goes to FUN_10006510",
+      "args": [5, 4369, 8738, "abc"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 3}, {"addr": "@dup", "cstr": "abc"}]
+    },
+    {
+      "name": "result -1 (default, negative): empty copy, code keeps its 0x2E",
+      "args": [5, 4369, 8738, ""],
+      "memory": [{"addr": "0x1004D1C8", "u32": -1}]
+    },
+    {
+      "name": "result 3 (default): full-dword param_1 passes through to FUN_10006510",
+      "args": [-2147479500, 4369, 8738, "abc"],
+      "memory": [{"addr": "0x1004D1C8", "u32": 3}, {"addr": "@dup", "cstr": "abc"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 72848,
+    "count": 40,
+    "args": [{}, {}, {}, {}],
+    "memory": [
+      {"addr": "0x1004D1C8", "type": "int", "choices": [0, 1, 2, 3, -1]},
+      {"addr": "0x1004D234", "type": "u32", "choices": [46, 45, 44, 5]},
+      {"addr": "@dup", "type": "u8", "choices": [0, 65, 97]},
+      {"addr": "@str_out", "type": "u8", "choices": [0, 66]}
+    ]
+  }
+}

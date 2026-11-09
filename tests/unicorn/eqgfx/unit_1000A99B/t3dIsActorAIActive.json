@@ -1,0 +1,158 @@
+{
+  "function": "t3dIsActorAIActive",
+  "original": "0x1000acf5",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "ai active (1)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x5c",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "ai inactive (0)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x5c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "active value 2 must come back as 1, not 2",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x5c",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "all ones is nonzero (signed/unsigned has no say)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x5c",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "value 0x100 is active (dword read, not the low byte)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x5c",
+          "u32": "0x100"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero low byte at 0x5c with nonzero at 0x60 stays inactive",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x5c",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x60",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 44277,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x5c",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x5c",
+        "type": "u32",
+        "range": [
+          4294967000,
+          4294967295
+        ],
+        "p": 0.25
+      }
+    ]
+  }
+}

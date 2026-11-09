@@ -1,0 +1,272 @@
+{
+  "function": "t3dGetSkyRegionEndDistance",
+  "original": "0x1001967d",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "levelOfDetailIndex",
+      "type": "u32"
+    },
+    {
+      "name": "distanceIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "region": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x28"
+        },
+        {
+          "offset": "0x8",
+          "u32": "2"
+        },
+        {
+          "offset": "0xc",
+          "u32": "@lodData"
+        }
+      ]
+    },
+    "lodData": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "3"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@endDistances"
+        },
+        {
+          "offset": "0x8",
+          "u32": "2"
+        },
+        {
+          "offset": "0xc",
+          "u32": "@endDistances"
+        }
+      ]
+    },
+    "endDistances": {
+      "size": "0x400",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "f32": 9.5
+        },
+        {
+          "offset": "0x10",
+          "f32": 18.25
+        },
+        {
+          "offset": "0x1c",
+          "f32": -4.0
+        },
+        {
+          "offset": "0x28",
+          "f32": 7.125
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1004ef68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 12.5
+    }
+  },
+  "cases": [
+    {
+      "name": "first distance",
+      "args": [
+        "@region",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "last valid distance",
+      "args": [
+        "@region",
+        0,
+        2
+      ]
+    },
+    {
+      "name": "distance count boundary",
+      "args": [
+        "@region",
+        0,
+        3
+      ]
+    },
+    {
+      "name": "second level of detail",
+      "args": [
+        "@region",
+        1,
+        1
+      ]
+    },
+    {
+      "name": "level of detail count boundary",
+      "args": [
+        "@region",
+        2,
+        0
+      ]
+    },
+    {
+      "name": "wrong state type skips level data",
+      "args": [
+        "@region",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x0",
+          "u32": "0x27"
+        },
+        {
+          "addr": "@state",
+          "offset": "0xc",
+          "u32": "0xdead0000"
+        }
+      ]
+    },
+    {
+      "name": "level boundary skips level data",
+      "args": [
+        "@region",
+        2,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0xc",
+          "u32": "0xdead0000"
+        }
+      ]
+    },
+    {
+      "name": "unsigned distance boundary",
+      "args": [
+        "@region",
+        0,
+        "0xffffffff"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 104061,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      },
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@state",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          40,
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@state",
+        "offset": "0x8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@lodData",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@lodData",
+        "offset": "0x8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@endDistances",
+        "offset": "0x4",
+        "type": "float",
+        "count": 32,
+        "stride": 12,
+        "choices": [
+          -100.0,
+          -4.0,
+          0.0,
+          9.5,
+          100.0
+        ],
+        "p": 0.9
+      }
+    ]
+  }
+}

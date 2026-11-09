@@ -1,0 +1,144 @@
+{
+  "function": "StaticHeaderElement_guess::~StaticHeaderElement_guess",
+  "original": "0x00403e27",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "thiscall",
+  "this": "@staticheaderelement",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "staticheaderelement": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0c", "u32": "@staticheaderelement+0x180"},
+        {"offset": "0x10", "u32": "@staticheaderelement+0x180"},
+        {"offset": "0x14", "u32": "@staticheaderelement+0x180"},
+        {"offset": "0x84", "u32": 0},
+        {"offset": "0x100", "u32": "@staticheaderelement+0x110"},
+        {"offset": "0x104", "u32": "0x12345678"},
+        {"offset": "0x108", "u32": "0x87654321"},
+        {"offset": "0x110", "u32": 0},
+        {"offset": "0x114", "u32": "0x23456789"},
+        {"offset": "0x118", "u32": "0x76543210"},
+        {"offset": "0x190", "u32": "@staticheaderelement+0x194"},
+        {"offset": "0x194", "u32": "0x007f1000"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x0040429b": {"name": "buffer_erase_all_guess", "conv": "thiscall", "args": []},
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x00404343": {
+      "name": "buffer_find_nonzero_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "writes": [
+        {"arg": 0, "offset": 0, "hex": "00000000"},
+        {"arg": 0, "offset": 4, "hex": "00000000"}
+      ]
+    },
+    "0x0040451b": {"name": "chain_iter_next_bucket_guess", "conv": "thiscall", "args": [], "ret": 0},
+    "0x004042f6": {"name": "buffer_pair_call_guess", "conv": "thiscall", "args": ["ptr", "u32"]},
+    "0x0040345a": {"name": "chain_table_clear_guess", "conv": "thiscall", "args": []},
+    "0x00401167": {"name": "pool_free_guess", "conv": "thiscall", "args": []},
+    "0x004049ca": {"name": "gauge_control_destroy_guess", "conv": "thiscall", "args": []},
+    "0x007f1000": {"name": "StaticHeaderElement_child_dtor_guess", "conv": "thiscall", "args": ["u32"], "ret": 0}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "empty buffers and null owned pointer", "args": []},
+    {
+      "name": "one null child slot",
+      "args": [],
+      "memory": [
+        {"addr": "@staticheaderelement", "offset": "0x10", "u32": "@staticheaderelement+0x184"},
+        {"addr": "@staticheaderelement", "offset": "0x180", "u32": 0},
+        {"addr": "@staticheaderelement", "offset": "0x84", "u32": "0x60000200"}
+      ]
+    },
+    {
+      "name": "ignore the slot at the end pointer",
+      "args": [],
+      "memory": [
+        {"addr": "@staticheaderelement", "offset": "0x10", "u32": "@staticheaderelement+0x184"},
+        {"addr": "@staticheaderelement", "offset": "0x180", "u32": 0},
+        {"addr": "@staticheaderelement", "offset": "0x184", "u32": "@staticheaderelement+0x190"}
+      ]
+    },
+    {
+      "name": "one live child slot",
+      "args": [],
+      "memory": [
+        {"addr": "@staticheaderelement", "offset": "0x10", "u32": "@staticheaderelement+0x184"},
+        {"addr": "@staticheaderelement", "offset": "0x180", "u32": "@staticheaderelement+0x190"}
+      ]
+    },
+    {
+      "name": "two child slots preserve iteration order",
+      "args": [],
+      "memory": [
+        {"addr": "@staticheaderelement", "offset": "0x10", "u32": "@staticheaderelement+0x188"},
+        {"addr": "@staticheaderelement", "offset": "0x180", "u32": "@staticheaderelement+0x190"},
+        {"addr": "@staticheaderelement", "offset": "0x184", "u32": 0}
+      ]
+    },
+    {
+      "name": "chain head with no next link",
+      "args": [],
+      "callees": {
+        "0x00404343": {
+          "name": "buffer_find_nonzero_guess", "conv": "thiscall", "args": ["ptr"],
+          "writes": [
+            {"arg": 0, "offset": 0, "hex": "00010060"},
+            {"arg": 0, "offset": 4, "hex": "34120000"}
+          ]
+        }
+      },
+      "memory": [{"addr": "@staticheaderelement", "offset": "0x100", "u32": 0}]
+    },
+    {
+      "name": "chain successor then bucket end",
+      "args": [],
+      "callees": {
+        "0x00404343": {
+          "name": "buffer_find_nonzero_guess", "conv": "thiscall", "args": ["ptr"],
+          "writes": [
+            {"arg": 0, "offset": 0, "hex": "00010060"},
+            {"arg": 0, "offset": 4, "hex": "34120000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero payload pointers are still passed to delete",
+      "args": [],
+      "callees": {
+        "0x00404343": {
+          "name": "buffer_find_nonzero_guess", "conv": "thiscall", "args": ["ptr"],
+          "writes": [
+            {"arg": 0, "offset": 0, "hex": "00010060"},
+            {"arg": 0, "offset": 4, "hex": "34120000"}
+          ]
+        }
+      },
+      "memory": [
+        {"addr": "@staticheaderelement", "offset": "0x100", "u32": 0},
+        {"addr": "@staticheaderelement", "offset": "0x104", "u32": 0},
+        {"addr": "@staticheaderelement", "offset": "0x108", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4210215,
+    "count": 28,
+    "args": [],
+    "memory": [
+      {"addr": "@staticheaderelement", "offset": "0x4", "type": "u32", "choices": [0, 1, 4294967295]},
+      {"addr": "@staticheaderelement", "offset": "0x8", "type": "u32", "choices": [0, 2, 4294967295]},
+      {"addr": "@staticheaderelement", "offset": "0x84", "type": "u32", "choices": [0, "0x60000200", "0x60000204"]}
+    ]
+  }
+}

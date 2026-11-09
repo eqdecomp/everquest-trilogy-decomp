@@ -1,0 +1,260 @@
+{
+  "function": "t3dGetPolyhedronDefinitionEdgeList",
+  "original": "0x10018e91",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "polyhedron", "type": "ptr"},
+    {"name": "edgeCount", "type": "ptr"},
+    {"name": "edgeList", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "polyhedron": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": 3},
+        {"offset": "0x1c", "u32": "@elements"}
+      ]
+    },
+    "elements": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "u32": "@edges0"},
+        {"offset": "0x28", "u32": "@edges1"},
+        {"offset": "0x48", "u32": "@edges2"}
+      ]
+    },
+    "edges0": {"size": "0x50", "fill": "zero"},
+    "edges1": {"size": "0x50", "fill": "zero"},
+    "edges2": {"size": "0x50", "fill": "zero"},
+    "vertices": {"size": "0x48", "fill": "random"},
+    "keys": {"size": "0x200", "fill": "random"},
+    "edgeOut": {"size": "0x200", "fill": "random"},
+    "edgecount": {"size": "0x10", "fill": "random"},
+    "edgelist": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@keys", "@edgeOut"]
+    },
+    "0x10068aa4": {
+      "name": "_qsort",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "u32", "ptr"],
+      "passthrough": true
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "no elements",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one element without edges",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one edge, first vertex below second",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one edge, first vertex above second",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0xc"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0x0"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same edge twice in one element, reversed the second time",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 2},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"},
+        {"addr": "@edges0", "offset": "0x18", "u32": "@vertices+0xc"},
+        {"addr": "@edges0", "offset": "0x1c", "u32": "@vertices+0x0"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same edge in two elements",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 2},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@elements", "offset": "0x24", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"},
+        {"addr": "@edges1", "offset": "0x4", "u32": "@vertices+0xc"},
+        {"addr": "@edges1", "offset": "0x8", "u32": "@vertices+0x0"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two edges sharing a first vertex",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 2},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"},
+        {"addr": "@edges0", "offset": "0x18", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x1c", "u32": "@vertices+0x18"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null first vertex is sorted first and not copied",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": 0},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null second vertex",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0xc"},
+        {"addr": "@edges0", "offset": "0x8", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "several elements, sorted and duplicated",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 3},
+        {"addr": "@elements", "offset": "0x4", "u32": 2},
+        {"addr": "@elements", "offset": "0x24", "u32": 3},
+        {"addr": "@elements", "offset": "0x44", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x18"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x18", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x1c", "u32": "@vertices+0x18"},
+        {"addr": "@edges1", "offset": "0x4", "u32": "@vertices+0xc"},
+        {"addr": "@edges1", "offset": "0x8", "u32": "@vertices+0x24"},
+        {"addr": "@edges1", "offset": "0x18", "u32": "@vertices+0x30"},
+        {"addr": "@edges1", "offset": "0x1c", "u32": "@vertices+0x3c"},
+        {"addr": "@edges1", "offset": "0x2c", "u32": "@vertices+0xc"},
+        {"addr": "@edges1", "offset": "0x30", "u32": "@vertices+0x24"},
+        {"addr": "@edges2", "offset": "0x4", "u32": "@vertices+0x0"},
+        {"addr": "@edges2", "offset": "0x8", "u32": "@vertices+0xc"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "element without edges between two with one edge each",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 3},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@elements", "offset": "0x24", "u32": 0},
+        {"addr": "@elements", "offset": "0x44", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x24"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"},
+        {"addr": "@edges2", "offset": "0x4", "u32": "@vertices+0xc"},
+        {"addr": "@edges2", "offset": "0x8", "u32": "@vertices+0x24"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "only the last element has edges",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 3},
+        {"addr": "@elements", "offset": "0x4", "u32": 0},
+        {"addr": "@elements", "offset": "0x24", "u32": 0},
+        {"addr": "@elements", "offset": "0x44", "u32": 2},
+        {"addr": "@edges2", "offset": "0x4", "u32": "@vertices+0x18"},
+        {"addr": "@edges2", "offset": "0x8", "u32": "@vertices+0x30"},
+        {"addr": "@edges2", "offset": "0x18", "u32": "@vertices+0x3c"},
+        {"addr": "@edges2", "offset": "0x1c", "u32": "@vertices+0x0"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first allocation fails",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 1},
+        {"addr": "@elements", "offset": "0x4", "u32": 1},
+        {"addr": "@edges0", "offset": "0x4", "u32": "@vertices+0x0"},
+        {"addr": "@edges0", "offset": "0x8", "u32": "@vertices+0xc"}
+      ],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "output allocation returns null with no edges",
+      "args": ["@polyhedron", "@edgecount", "@edgelist"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@keys", 0]}
+      },
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x18", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 1001802,
+    "count": 40,
+    "args": [
+      {"choices": ["@polyhedron"]},
+      {"choices": ["@edgecount"]},
+      {"choices": ["@edgelist"]}
+    ],
+    "memory": [
+      {"addr": "@polyhedron", "offset": "0x18", "type": "u32", "range": [0, 3]},
+      {"addr": "@elements", "offset": "0x4", "type": "u32", "range": [0, 4], "count": 3, "stride": 32},
+      {"addr": "@edges0", "offset": "0x4", "type": "ptr", "count": 4, "stride": 20, "choices": ["@vertices+0x0", "@vertices+0xc", "@vertices+0x18", "@vertices+0x24", "@vertices+0x30", "@vertices+0x3c", 0]},
+      {"addr": "@edges0", "offset": "0x8", "type": "ptr", "count": 4, "stride": 20, "choices": ["@vertices+0x0", "@vertices+0xc", "@vertices+0x18", "@vertices+0x24", "@vertices+0x30", "@vertices+0x3c", 0]},
+      {"addr": "@edges1", "offset": "0x4", "type": "ptr", "count": 4, "stride": 20, "choices": ["@vertices+0x0", "@vertices+0xc", "@vertices+0x18", "@vertices+0x24", "@vertices+0x30", "@vertices+0x3c", 0]},
+      {"addr": "@edges1", "offset": "0x8", "type": "ptr", "count": 4, "stride": 20, "choices": ["@vertices+0x0", "@vertices+0xc", "@vertices+0x18", "@vertices+0x24", "@vertices+0x30", "@vertices+0x3c", 0]},
+      {"addr": "@edges2", "offset": "0x4", "type": "ptr", "count": 4, "stride": 20, "choices": ["@vertices+0x0", "@vertices+0xc", "@vertices+0x18", "@vertices+0x24", "@vertices+0x30", "@vertices+0x3c", 0]},
+      {"addr": "@edges2", "offset": "0x8", "type": "ptr", "count": 4, "stride": 20, "choices": ["@vertices+0x0", "@vertices+0xc", "@vertices+0x18", "@vertices+0x24", "@vertices+0x30", "@vertices+0x3c", 0]}
+    ]
+  }
+}

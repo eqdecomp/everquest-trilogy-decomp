@@ -1,0 +1,186 @@
+{
+  "function": "EQPlayer__EQPlayer2__EQMissile_guess",
+  "original": "0x004b4570",
+  "sources": [
+    "src/EverQuest/EQMissile.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "player",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "player": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {"offset": "0x80", "u32": 77}
+      ]
+    },
+    "other": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "m0": {
+      "size": "0x48",
+      "fill": "random",
+      "init": [
+        {"offset": "0x08", "u32": "@m1"},
+        {"offset": "0x3c", "u32": "@a0"},
+        {"offset": "0x40", "u32": 77},
+        {"offset": "0x44", "u32": 77}
+      ]
+    },
+    "m1": {
+      "size": "0x48",
+      "fill": "random",
+      "init": [
+        {"offset": "0x08", "u32": "@m2"},
+        {"offset": "0x3c", "u32": "@a1"},
+        {"offset": "0x40", "u32": 78},
+        {"offset": "0x44", "u32": 76}
+      ]
+    },
+    "m2": {
+      "size": "0x48",
+      "fill": "random",
+      "init": [
+        {"offset": "0x08", "u32": 0},
+        {"offset": "0x3c", "u32": 0},
+        {"offset": "0x40", "u32": 77},
+        {"offset": "0x44", "u32": 78}
+      ]
+    },
+    "a0": {
+      "size": "0x2a8",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2a4", "u32": "@player"}
+      ]
+    },
+    "a1": {
+      "size": "0x2a8",
+      "fill": "random",
+      "init": [
+        {"offset": "0x2a4", "u32": "@other"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4d64", "u32": "@m0"}
+  ],
+  "callees": {
+    "0x004acead": {
+      "name": "EQMissile::~EQMissile_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "all actions in order, with a later missile still visited after deletion",
+      "args": ["@player"]
+    },
+    {
+      "name": "empty global list",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "0x006e4d64", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero spawn id matches exact zero fields",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "@player", "offset": "0x80", "u32": 0},
+        {"addr": "0x006e4d64", "u32": "@m0"},
+        {"addr": "@m0", "offset": "0x40", "u32": 0},
+        {"addr": "@m0", "offset": "0x44", "u32": 0},
+        {"addr": "@a0", "offset": "0x2a4", "u32": "@player"}
+      ]
+    },
+    {
+      "name": "clear actor reference only",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "0x006e4d64", "u32": "@m0"},
+        {"addr": "@m0", "offset": "0x40", "u32": 78},
+        {"addr": "@m0", "offset": "0x44", "u32": 76},
+        {"addr": "@a0", "offset": "0x2a4", "u32": "@player"}
+      ]
+    },
+    {
+      "name": "clear missile owner id only",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "0x006e4d64", "u32": "@m0"},
+        {"addr": "@m0", "offset": "0x40", "u32": 78},
+        {"addr": "@m0", "offset": "0x44", "u32": 77},
+        {"addr": "@a0", "offset": "0x2a4", "u32": "@other"}
+      ]
+    },
+    {
+      "name": "destroy missile only",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "0x006e4d64", "u32": "@m0"},
+        {"addr": "@m0", "offset": "0x40", "u32": 77},
+        {"addr": "@m0", "offset": "0x44", "u32": 78},
+        {"addr": "@m0", "offset": "0x3c", "u32": 0}
+      ]
+    },
+    {
+      "name": "non-null actor reference to a different player and no id matches",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "0x006e4d64", "u32": "@m1"},
+        {"addr": "@m1", "offset": "0x40", "u32": 78},
+        {"addr": "@m1", "offset": "0x44", "u32": 76},
+        {"addr": "@a1", "offset": "0x2a4", "u32": "@other"}
+      ]
+    },
+    {
+      "name": "single null-actor-info tail missile",
+      "args": ["@player"],
+      "memory": [
+        {"addr": "0x006e4d64", "u32": "@m2"},
+        {"addr": "@m2", "offset": "0x40", "u32": 78},
+        {"addr": "@m2", "offset": "0x44", "u32": 76}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4932976,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@player"]
+      }
+    ],
+    "memory": [
+      {"addr": "0x006e4d64", "type": "u32", "choices": ["@m0", "@m1", "@m2", 0]},
+      {"addr": "@player", "offset": "0x80", "type": "u32", "choices": [0, 1, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m0", "offset": "0x40", "type": "u32", "choices": [0, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m0", "offset": "0x44", "type": "u32", "choices": [0, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m0", "offset": "0x3c", "type": "u32", "choices": ["@a0", "@a1", 0]},
+      {"addr": "@a0", "offset": "0x2a4", "type": "u32", "choices": ["@player", "@other", 0]},
+      {"addr": "@a1", "offset": "0x2a4", "type": "u32", "choices": ["@player", "@other", 0]},
+      {"addr": "@m1", "offset": "0x40", "type": "u32", "choices": [0, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m1", "offset": "0x44", "type": "u32", "choices": [0, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m1", "offset": "0x3c", "type": "u32", "choices": ["@a0", "@a1", 0]},
+      {"addr": "@m2", "offset": "0x40", "type": "u32", "choices": [0, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m2", "offset": "0x44", "type": "u32", "choices": [0, 76, 77, 78, "0xffffffff"]},
+      {"addr": "@m2", "offset": "0x3c", "type": "u32", "choices": ["@a0", "@a1", 0]}
+    ]
+  }
+}

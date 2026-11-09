@@ -1,0 +1,156 @@
+{
+  "function": "tx_init_guess",
+  "original": "0x004f24d0",
+  "sources": [
+    "src/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "param_1", "type": "ptr" },
+    { "name": "param_2", "type": "ptr" },
+    { "name": "param_3", "type": "ptr" }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": { "size": "0x7c0", "fill": "random" },
+    "param_2": { "size": "0x48", "fill": "random" },
+    "param_3": { "size": "0x10", "fill": "random" }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [1000, 2000, 3000]
+    },
+    "0x00522ea0": {
+      "name": "srand_guess",
+      "conv": "cdecl",
+      "args": ["u32"]
+    },
+    "0x00500380": {
+      "name": "ntohs",
+      "conv": "stdcall",
+      "args": ["u16"],
+      "ret": "0x3412"
+    },
+    "0x005003b0": {
+      "name": "htons",
+      "conv": "stdcall",
+      "args": ["u16"],
+      "ret": "0x12b4"
+    },
+    "wsock32.dll!ntohs": {
+      "conv": "stdcall",
+      "args": ["u16"],
+      "ret": "0x3412"
+    },
+    "wsock32.dll!htons": {
+      "conv": "stdcall",
+      "args": ["u16"],
+      "ret": "0x12b4"
+    },
+    "0x00522ead": {
+      "name": "_rand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 32767
+    },
+    "0x004f7c70": {
+      "name": "bitarray_clear_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{ "arg": 0, "offset": 0, "hex": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" }]
+    },
+    "0x004f5440": {
+      "name": "list_init_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{ "arg": 0, "offset": 0, "hex": "0000000000000000000000000000000000000000" }]
+    },
+    "0x004f7b30": {
+      "name": "bandwidth_init_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{ "arg": 0, "offset": 0, "hex": "000000000000000000000000" }]
+    },
+    "0x004f7930": {
+      "name": "InitializeRttStats_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int"],
+      "writes": [{ "arg": 0, "offset": 0, "hex": "f401000001000000" }]
+    }
+  },
+  "cases": [
+    {
+      "name": "family 2 copies and flags",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        { "addr": "@param_3", "hex": "0200341233445566778899aabbccdde0" },
+        { "addr": "@param_2", "offset": "0x4", "u32": "0x12345678" },
+        { "addr": "@param_2", "offset": "0xc", "u32": "0xabcdef01" },
+        { "addr": "@param_2", "offset": "0x10", "u32": "0x76543210" },
+        { "addr": "@param_2", "offset": "0x44", "u32": "0xdeadbeef" }
+      ]
+    },
+    {
+      "name": "family 2 with high flag already present and rand zero",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        { "addr": "@param_3", "hex": "020092340102030405060708090a0b0c" }
+      ],
+      "callees": {
+        "0x00522ead": { "name": "_rand", "conv": "cdecl", "args": [], "ret": 0 },
+        "wsock32.dll!ntohs": { "conv": "stdcall", "args": ["u16"], "ret": "0x9234" },
+        "wsock32.dll!htons": { "conv": "stdcall", "args": ["u16"], "ret": "0x3492" }
+      }
+    },
+    {
+      "name": "family 6",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        { "addr": "@param_3", "hex": "0600aabbccddeeff0011223344556677" }
+      ]
+    },
+    {
+      "name": "family 0x45",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        { "addr": "@param_3", "hex": "4500123456789abcdef00123456789ab" }
+      ]
+    },
+    {
+      "name": "other family",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        { "addr": "@param_3", "hex": "0100ffffffffffffffffffffffffffff" }
+      ]
+    },
+    {
+      "name": "signed negative family",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        { "addr": "@param_3", "hex": "ffff0000000000000000000000000000" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5186768,
+    "count": 32,
+    "args": [
+      { "choices": ["@param_1"] },
+      { "choices": ["@param_2"] },
+      { "choices": ["@param_3"] }
+    ],
+    "memory": [
+      { "addr": "@param_3", "type": "short", "choices": [2, 6, 69, -1, 1, 0, 32767] },
+      { "addr": "@param_3", "offset": "0x2", "type": "u16", "choices": ["0x1234"] },
+      { "addr": "@param_2", "offset": "0x4", "type": "u32" },
+      { "addr": "@param_2", "offset": "0xc", "type": "u32" },
+      { "addr": "@param_2", "offset": "0x10", "type": "u32" },
+      { "addr": "@param_2", "offset": "0x44", "type": "u32" },
+      { "addr": "@param_1", "offset": "0x7aa", "type": "u16" }
+    ]
+  }
+}

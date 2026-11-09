@@ -1,0 +1,311 @@
+{
+  "function": "t3dGet3DSpriteDefinitionNormalList",
+  "original": "0x100083e3",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "normals",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 8
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ]
+    },
+    "normal_data": {
+      "size": "0x300",
+      "fill": "random"
+    },
+    "normals": {
+      "size": "0x300",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: four 12-byte normals copied",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 4
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count zero at the bottom edge (nothing copied)",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one normal (0xc bytes)",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 1
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "two normals: size is count*0xc, not count*3 or count",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 2
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count 64 fills both 0x300-byte buffers exactly",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 64
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count 63, one entry short of the buffer end",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 63
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null list with count 4: error, destination untouched",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 4
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "null list with count 0: the list check still wins",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "null destination with count 0 (never dereferenced)",
+      "args": [
+        "@definition",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count 7 through the same definition buffer",
+      "args": [
+        "@definition",
+        "@normals"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 7
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x1c",
+          "u32": "@normal_data"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 100083,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "choices": [
+          "@normals"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x14",
+        "type": "u32",
+        "range": [0, 64]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x1c",
+        "type": "ptr",
+        "choices": [
+          "@normal_data",
+          0
+        ]
+      }
+    ]
+  }
+}

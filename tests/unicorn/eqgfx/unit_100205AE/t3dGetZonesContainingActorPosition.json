@@ -1,0 +1,373 @@
+{
+  "function": "t3dGetZonesContainingActorPosition",
+  "original": "0x1002074b",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x28",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@zones"
+        }
+      ]
+    },
+    "position": {
+      "size": "0x54",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": 1
+        }
+      ]
+    },
+    "zones": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@zone0"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@zone1"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@zone2"
+        },
+        {
+          "offset": "0x3c",
+          "u32": "@zone3"
+        }
+      ]
+    },
+    "zones2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@zone3"
+        }
+      ]
+    },
+    "zone0": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "zone1": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "zone2": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "zone3": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100207ae": {
+      "name": "t3dGetZonesContainingRegion",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "index1 zones[1] callee ok",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index0 zones[0]",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index2 zones[2]",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index15 last entry",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 15
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index3 null zone entry",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "second table via actor pointer",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x24",
+          "u32": "@zones2"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero region, callee ok",
+      "args": [
+        "@actor",
+        "@position",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative region, callee ok",
+      "args": [
+        "@actor",
+        "@position",
+        -1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee returns 1 maps to 0xFFFF3D3E",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x100207ae": {
+          "name": "t3dGetZonesContainingRegion",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 4294917438
+      }
+    },
+    {
+      "name": "callee returns -1 (nonzero, negative) maps to 0xFFFF3D3E",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x100207ae": {
+          "name": "t3dGetZonesContainingRegion",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 4294917438
+      }
+    },
+    {
+      "name": "callee returns 0 for null zone entry",
+      "args": [
+        "@actor",
+        "@position",
+        30
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x100207ae": {
+          "name": "t3dGetZonesContainingRegion",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 132939,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@position"
+        ]
+      },
+      {
+        "range": [
+          -4,
+          30
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x24",
+        "type": "ptr",
+        "choices": [
+          "@zones",
+          "@zones2"
+        ]
+      },
+      {
+        "addr": "@position",
+        "offset": "0x28",
+        "type": "int",
+        "range": [
+          0,
+          15
+        ]
+      },
+      {
+        "addr": "@zones",
+        "type": "ptr",
+        "count": 16,
+        "choices": [
+          "@zone0",
+          "@zone1",
+          "@zone2",
+          "@zone3",
+          "0x0"
+        ]
+      },
+      {
+        "addr": "@zones2",
+        "type": "ptr",
+        "count": 16,
+        "choices": [
+          "@zone0",
+          "@zone1",
+          "@zone2",
+          "@zone3",
+          "0x0"
+        ]
+      }
+    ]
+  }
+}

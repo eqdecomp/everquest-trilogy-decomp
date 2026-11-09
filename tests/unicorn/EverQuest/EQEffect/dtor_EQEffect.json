@@ -1,0 +1,63 @@
+{
+  "function": "EQEffect_guess::~EQEffect_guess",
+  "original": "0x00490ef4",
+  "sources": [
+    "src/EverQuest/EQEffect.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@blk+0x10",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "blk": {"size": "0x110", "fill": "random"},
+    "prev": {"size": "0x100", "fill": "random"},
+    "next": {"size": "0x100", "fill": "random"},
+    "display": {"size": "0x100", "fill": "zero"},
+    "actor": {"size": 16, "fill": "zero"},
+    "light": {"size": 16, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E4DE0", "u32": "@display"},
+    {"addr": "0x006E4D74", "u32": "0x11223344"},
+    {"addr": "@blk+0x60", "u32": "@prev"},
+    {"addr": "@blk+0x64", "u32": "@next"},
+    {"addr": "@blk+0x70", "u32": "@actor"},
+    {"addr": "@blk+0x74", "u32": "@light"}
+  ],
+  "callees": {
+    "0x00410970": {"name": "CDisplay::DeleteLight", "conv": "thiscall", "args": ["ptr"]},
+    "0x00411715": {"name": "CDisplay::DeleteActor", "conv": "thiscall", "args": ["ptr"]}
+  },
+  "cases": [
+    {"name": "middle of list: prev and next linked to each other, head untouched", "args": []},
+    {"name": "head of list: next->prev cleared, head = next", "args": [], "memory": [{"addr": "@blk+0x60", "u32": 0}]},
+    {"name": "tail of list: prev->next cleared", "args": [], "memory": [{"addr": "@blk+0x64", "u32": 0}]},
+    {"name": "only element: own links and head cleared", "args": [], "memory": [{"addr": "@blk+0x60", "u32": 0}, {"addr": "@blk+0x64", "u32": 0}]},
+    {"name": "light null: only actor deleted", "args": [], "memory": [{"addr": "@blk+0x74", "u32": 0}]},
+    {"name": "actor null: only light deleted", "args": [], "memory": [{"addr": "@blk+0x70", "u32": 0}]},
+    {"name": "both null: nothing deleted", "args": [], "memory": [{"addr": "@blk+0x70", "u32": 0}, {"addr": "@blk+0x74", "u32": 0}]},
+    {"name": "only element with no light/actor", "args": [], "memory": [{"addr": "@blk+0x60", "u32": 0}, {"addr": "@blk+0x64", "u32": 0}, {"addr": "@blk+0x70", "u32": 0}, {"addr": "@blk+0x74", "u32": 0}]},
+    {"name": "alias: prev->next overlaps this->prev, next->prev reads it back", "args": [], "memory": [{"addr": "@blk+0x60", "u32": "@blk+0xc"}]},
+    {"name": "alias: prev->next overlaps this->next", "args": [], "memory": [{"addr": "@blk+0x60", "u32": "@blk+0x10"}]},
+    {"name": "alias: next->prev overlaps this->next, head reloads it", "args": [], "memory": [{"addr": "@blk+0x60", "u32": 0}, {"addr": "@blk+0x64", "u32": "@blk+0x14"}]},
+    {"name": "alias: next->prev overlaps this->prev in middle case", "args": [], "memory": [{"addr": "@blk+0x64", "u32": "@blk+0x10"}]},
+    {"name": "alias: prev->next overwrites light field before it is read", "args": [], "memory": [{"addr": "@blk+0x64", "u32": 0}, {"addr": "@blk+0x60", "u32": "@blk+0x20"}]},
+    {"name": "alias: next->prev overwrites actor field before it is read", "args": [], "memory": [{"addr": "@blk+0x60", "u32": 0}, {"addr": "@blk+0x64", "u32": "@blk+0x20"}]},
+    {"name": "alias: middle, next->prev overwrites light", "args": [], "memory": [{"addr": "@blk+0x64", "u32": "@blk+0x24"}]},
+    {"name": "display is a different object", "args": [], "memory": [{"addr": "0x006E4DE0", "u32": "@light"}]},
+    {"name": "high-bit pointers count as non-null", "args": [], "memory": [{"addr": "@blk+0x70", "u32": 2147483648}, {"addr": "@blk+0x74", "u32": 1}]}
+  ],
+  "fuzz": {
+    "seed": 4787956,
+    "count": 50,
+    "args": [],
+    "memory": [
+      {"addr": "@blk+0x60", "type": "u32", "choices": [0, "@prev", "@prev", "@blk+0xc", "@blk+0x10", "@blk+0x20"]},
+      {"addr": "@blk+0x64", "type": "u32", "choices": [0, "@next", "@next", "@blk+0x14", "@blk+0x10", "@blk+0x20", "@blk+0x24"]},
+      {"addr": "@blk+0x70", "type": "u32", "choices": [0, "@actor", 2147483648]},
+      {"addr": "@blk+0x74", "type": "u32", "choices": [0, "@light", 1]},
+      {"addr": "0x006E4D74", "type": "u32", "choices": [0, "@blk+0x10", 305419896]},
+      {"addr": "0x006E4DE0", "type": "u32", "choices": ["@display", "@light"]}
+    ]
+  }
+}

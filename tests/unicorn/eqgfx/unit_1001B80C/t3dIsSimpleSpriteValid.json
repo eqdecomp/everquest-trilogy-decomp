@@ -1,0 +1,124 @@
+{
+  "function": "t3dIsSimpleSpriteValid",
+  "original": "0x1001b997",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 6},
+        {"offset": "0x28", "u32": "@owner"}
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 5}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "valid sprite and owner",
+      "args": ["@sprite"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null sprite",
+      "args": [0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null owner",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x28", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeroed sprite",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "size": "0x2c", "fill": "zero"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner tag 4",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@owner", "offset": "0x0", "u32": 4}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner tag 6 (the sprite's value)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@owner", "offset": "0x0", "u32": 6}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner tag 0x105 (low byte 5)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@owner", "offset": "0x0", "u32": 261}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner tag 0x80000005 (high bit)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@owner", "offset": "0x0", "u32": 2147483653}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 5",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 5}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 7",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 7}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 0x80000006 (high bit)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 2147483654}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite and owner tags swapped",
+      "args": ["@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "u32": 5},
+        {"addr": "@owner", "offset": "0x0", "u32": 6}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 113047,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@sprite", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x0", "type": "u32", "choices": [6, 5, 0, 7, 2147483654], "p": 0.5},
+      {"addr": "@sprite", "offset": "0x28", "type": "ptr", "choices": ["@owner", 0], "p": 0.5},
+      {"addr": "@owner", "offset": "0x0", "type": "u32", "choices": [5, 4, 0, 6, 261, 2147483653], "p": 0.5}
+    ]
+  },
+  "defaults": true
+}

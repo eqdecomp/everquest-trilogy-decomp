@@ -1,0 +1,343 @@
+{
+  "function": "t3dSetPCloudBlitsprite",
+  "original": "0x1004042e",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "instance",
+      "type": "ptr"
+    },
+    {
+      "name": "spriteDesc",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "instance": {
+      "size": "0x120",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x110",
+          "u32": 0
+        }
+      ]
+    },
+    "spritedesc": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "oldSprite": {
+      "size": "0x70",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x68",
+          "u32": "@source"
+        }
+      ]
+    },
+    "source": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "0x14141414"
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@buffer"
+        }
+      ]
+    },
+    "buffer": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "0x18181818"
+        },
+        {
+          "offset": "0x1c",
+          "u32": "0x1c1c1c1c"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000d06a": {
+      "name": "t3dDestroyBlitSprite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1000cfbf": {
+      "name": "t3dCreateBlitSprite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@sprite"
+    }
+  },
+  "cases": [
+    {
+      "name": "fresh instance: create succeeds, the definition's +0x14 and the buffer's +0x1C/+0x18 are copied",
+      "args": [
+        "@dictionary",
+        "@instance",
+        "@spritedesc"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "replaces an existing sprite: the old one is destroyed before the create",
+      "args": [
+        "@dictionary",
+        "@instance",
+        "@spritedesc"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x110",
+          "u32": "@oldSprite"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "create fails over an old sprite: destroy still ran, slot cleared, bind error",
+      "args": [
+        "@dictionary",
+        "@instance",
+        "@spritedesc"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x110",
+          "u32": "@oldSprite"
+        }
+      ],
+      "callees": {
+        "0x1000cfbf": {
+          "name": "t3dCreateBlitSprite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "create fails with no old sprite: no destroy, slot stays null, bind error",
+      "args": [
+        "@dictionary",
+        "@instance",
+        "@spritedesc"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x110",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1000cfbf": {
+          "name": "t3dCreateBlitSprite",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "null dictionary and null description are passed on, never dereferenced",
+      "args": [
+        0,
+        "@instance",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x110",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "old sprite destroyed when the new description is null",
+      "args": [
+        "@dictionary",
+        "@instance",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x110",
+          "u32": "@oldSprite"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "boundary: all-ones and high-bit dwords copied unchanged (no sign or width change)",
+      "args": [
+        "@dictionary",
+        "@instance",
+        "@spritedesc"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x18",
+          "u32": "0x00000000"
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x1c",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero dwords in the definition and buffer are copied as zeros",
+      "args": [
+        "@dictionary",
+        "@instance",
+        "@spritedesc"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x18",
+          "u32": 0
+        },
+        {
+          "addr": "@buffer",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 263214,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@instance"
+        ]
+      },
+      {
+        "choices": [
+          "@spritedesc"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@instance",
+        "offset": "0x110",
+        "type": "ptr",
+        "choices": [
+          "@oldSprite",
+          0
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x14",
+        "type": "u32"
+      },
+      {
+        "addr": "@buffer",
+        "offset": "0x18",
+        "type": "u32"
+      },
+      {
+        "addr": "@buffer",
+        "offset": "0x1c",
+        "type": "u32"
+      }
+    ]
+  }
+}

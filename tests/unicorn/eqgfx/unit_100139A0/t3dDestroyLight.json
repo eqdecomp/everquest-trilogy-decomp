@@ -1,0 +1,307 @@
+{
+  "function": "t3dDestroyLight",
+  "original": "0x100141a6",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderer",
+      "type": "int"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@key"
+        },
+        {
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "offset": "0x24",
+          "u32": "@counter"
+        }
+      ]
+    },
+    "counter": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 4
+        }
+      ]
+    },
+    "key": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 324508639
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "pending destroy returns error without touching count",
+      "args": [
+        10,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@counter",
+          "offset": "0x10",
+          "u32": 17
+        }
+      ]
+    },
+    {
+      "name": "unflagged key gets freed without dictionary removal",
+      "args": [
+        20,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@counter",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "dictionary removal then key and light frees",
+      "args": [
+        30,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@counter",
+          "offset": "0x10",
+          "u32": 9
+        }
+      ]
+    },
+    {
+      "name": "other flags do not remove key from dictionary",
+      "args": [
+        40,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "flag removes null key but does not free it",
+      "args": [
+        50,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "count zero wraps on decrement",
+      "args": [
+        60,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@counter",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "minimum signed count wraps",
+      "args": [
+        70,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@counter",
+          "offset": "0x10",
+          "u32": 2147483648
+        }
+      ]
+    },
+    {
+      "name": "negative pending value is still blocked",
+      "args": [
+        80,
+        "@light"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@counter",
+          "offset": "0x10",
+          "u32": 3
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 82342,
+    "count": 35,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@light"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@light",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@key"
+        ]
+      },
+      {
+        "addr": "@light",
+        "offset": "0xc",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x10",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          -1,
+          2147483647,
+          -2147483648
+        ]
+      },
+      {
+        "addr": "@counter",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -8,
+          8
+        ]
+      }
+    ]
+  }
+}

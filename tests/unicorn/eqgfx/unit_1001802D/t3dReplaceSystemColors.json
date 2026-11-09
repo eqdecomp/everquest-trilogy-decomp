@@ -1,0 +1,145 @@
+{
+  "function": "t3dReplaceSystemColors",
+  "original": "0x1001822b",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {"addr": "0x100AADD0", "u32": 0},
+    {"addr": "0x100AADCC", "u32": 0},
+    {"addr": "0x10086D0C", "size": 76, "fill": "random"},
+    {"addr": "0x10086D58", "size": 76, "fill": "random"},
+    {"addr": "0x100AAD80", "size": 76, "fill": "zero"}
+  ],
+  "callees": {
+    "user32.dll!GetDC": {
+      "name": "GetDC",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 4660
+    },
+    "gdi32.dll!GetSystemPaletteUse": {
+      "name": "GetSystemPaletteUse",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "gdi32.dll!GetDeviceCaps": {
+      "name": "GetDeviceCaps",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": [8, 1]
+    },
+    "user32.dll!GetSysColor": {
+      "name": "GetSysColor",
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": [1000, 1037, 1074, 1111, 1148, 1185, 1222, 1259, 1296, 1333, 1370, 1407, 1444, 1481, 1518, 1555, 1592, 1629, 1666]
+    },
+    "gdi32.dll!SetSystemPaletteUse": {
+      "name": "SetSystemPaletteUse",
+      "conv": "stdcall",
+      "args": ["ptr", "uint"],
+      "ret": 1
+    },
+    "user32.dll!SetSysColors": {
+      "name": "SetSysColors",
+      "conv": "stdcall",
+      "args": ["int", "mem:76", "mem:76"],
+      "ret": 1
+    },
+    "user32.dll!ReleaseDC": {
+      "name": "ReleaseDC",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "8 bpp, static palette, colours not yet captured",
+      "args": []
+    },
+    {
+      "name": "colours already captured: loop skipped",
+      "args": [],
+      "memory": [{"addr": "0x100AADD0", "u32": 1}]
+    },
+    {
+      "name": "saved flag already set",
+      "args": [],
+      "memory": [{"addr": "0x100AADCC", "u32": 1}]
+    },
+    {
+      "name": "palette use is not static: nothing replaced",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetSystemPaletteUse": {"name": "GetSystemPaletteUse", "conv": "stdcall", "args": ["ptr"], "ret": 2}
+      }
+    },
+    {
+      "name": "palette use error (0): nothing replaced",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetSystemPaletteUse": {"name": "GetSystemPaletteUse", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "16 bpp x 1 plane: product not 8",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetDeviceCaps": {"name": "GetDeviceCaps", "conv": "stdcall", "args": ["ptr", "int"], "ret": [16, 1]}
+      }
+    },
+    {
+      "name": "4 bpp x 2 planes: product 8",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetDeviceCaps": {"name": "GetDeviceCaps", "conv": "stdcall", "args": ["ptr", "int"], "ret": [4, 2]}
+      }
+    },
+    {
+      "name": "negative factors: product 8",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetDeviceCaps": {"name": "GetDeviceCaps", "conv": "stdcall", "args": ["ptr", "int"], "ret": [-2, -4]}
+      }
+    },
+    {
+      "name": "product wraps to 8 in 32 bits",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetDeviceCaps": {"name": "GetDeviceCaps", "conv": "stdcall", "args": ["ptr", "int"], "ret": [1073741825, 8]}
+      }
+    },
+    {
+      "name": "zero planes: product 0",
+      "args": [],
+      "callees": {
+        "gdi32.dll!GetDeviceCaps": {"name": "GetDeviceCaps", "conv": "stdcall", "args": ["ptr", "int"], "ret": [8, 0]}
+      }
+    },
+    {
+      "name": "null DC, static palette",
+      "args": [],
+      "callees": {
+        "user32.dll!GetDC": {"name": "GetDC", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 98859,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x100AADD0", "type": "int", "choices": [0, 1, -1]},
+      {"addr": "0x100AADCC", "type": "int", "choices": [0, 1, 7]},
+      {"addr": "0x10086D0C", "type": "int", "count": 19, "range": [-2, 30]},
+      {"addr": "0x10086D58", "size": 76}
+    ]
+  }
+}

@@ -1,0 +1,567 @@
+{
+  "function": "EQ_HSlider_AutoHelp_guess",
+  "original": "0x00485ff4",
+  "sources": [
+    "src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "rewrite": "EQ_HSlider_AutoHelp_guess",
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "slider",
+      "type": "ptr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "slider": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "ui": {
+      "size": "0xf00",
+      "fill": "zero"
+    },
+    "node1": {
+      "size": "0x24",
+      "fill": "zero"
+    },
+    "node2": {
+      "size": "0x24",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006b6864",
+      "u32": 1
+    },
+    {
+      "addr": "0x006e4e44",
+      "u32": "@ui"
+    },
+    {
+      "addr": "@ui",
+      "offset": "0xebc",
+      "u16": 99
+    },
+    {
+      "addr": "@ui",
+      "offset": "0xec2",
+      "u16": 4
+    },
+    {
+      "addr": "0x006b6414",
+      "u16": 10
+    },
+    {
+      "addr": "0x006b6416",
+      "u16": 10
+    },
+    {
+      "addr": "@slider",
+      "offset": "0x10",
+      "u32": 1
+    },
+    {
+      "addr": "@slider",
+      "offset": "0x70",
+      "u32": "@node1"
+    },
+    {
+      "addr": "@node1",
+      "offset": "0x4",
+      "hex": "00000000000000001400000014000000"
+    },
+    {
+      "addr": "@node1",
+      "offset": "0x14",
+      "u16": 1
+    },
+    {
+      "addr": "@node1",
+      "offset": "0x20",
+      "u32": "@node2"
+    },
+    {
+      "addr": "@node2",
+      "offset": "0x4",
+      "hex": "00000000000000001400000014000000"
+    },
+    {
+      "addr": "@node2",
+      "offset": "0x14",
+      "u16": 2
+    },
+    {
+      "addr": "@node2",
+      "offset": "0x20",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "user32.dll!PtInRect": {
+      "name": "PtInRect",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": [
+        0
+      ]
+    },
+    "0x0046d4da": {
+      "name": "EQ_Main::DisplayAutoHelpText_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int",
+        "cstr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "global help off short-circuits null pointers",
+      "args": [
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x006b6864",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4e44",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "level exactly two is below the help threshold",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xec2",
+          "u16": 2
+        }
+      ]
+    },
+    {
+      "name": "level four reaches slider gate",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xec2",
+          "u16": 3
+        },
+        {
+          "addr": "@slider",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "level three passes the slider gate",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xec2",
+          "u16": 3
+        },
+        {
+          "addr": "@slider",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "byte before the slider flag does not enable the slider",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@slider",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@slider",
+          "offset": "0xf",
+          "hex": "01"
+        },
+        {
+          "addr": "@slider",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "enabled slider with no nodes stores minus one",
+      "args": [
+        "@slider",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@slider",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "first hit chooses finish-selection text",
+      "args": [
+        "@slider",
+        1
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "miss first rectangle then hit second chooses decrease text",
+      "args": [
+        "@slider",
+        1
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "no rectangle hit stores minus one",
+      "args": [
+        "@slider",
+        1
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "selected increase action",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 3
+        }
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "selected drag action with signed coordinate edges",
+      "args": [
+        "@slider",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "0x006b6414",
+          "u16": 32768
+        },
+        {
+          "addr": "0x006b6416",
+          "u16": 32767
+        },
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 4
+        }
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "unsupported selected action is stored then reset",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 5
+        }
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "selected zero action resets selector",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 0
+        }
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "selected minus one does not display",
+      "args": [
+        "@slider",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 65535
+        }
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4743156,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@slider"
+        ]
+      },
+      {
+        "range": [
+          -2,
+          2
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006b6864",
+        "type": "u32",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@ui",
+        "offset": "0xec2",
+        "type": "short",
+        "range": [
+          -2,
+          6
+        ]
+      },
+      {
+        "addr": "@ui",
+        "offset": "0xebc",
+        "type": "short",
+        "range": [
+          -2,
+          6
+        ]
+      },
+      {
+        "addr": "0x006b6414",
+        "type": "short",
+        "range": [
+          -32768,
+          32767
+        ]
+      },
+      {
+        "addr": "0x006b6416",
+        "type": "short",
+        "range": [
+          -32768,
+          32767
+        ]
+      },
+      {
+        "addr": "@slider",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@slider",
+        "offset": "0x70",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@node1"
+        ]
+      },
+      {
+        "addr": "@node1",
+        "offset": "0x14",
+        "type": "short",
+        "range": [
+          -1,
+          7
+        ]
+      },
+      {
+        "addr": "@node1",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@node2"
+        ]
+      },
+      {
+        "addr": "@node2",
+        "offset": "0x14",
+        "type": "short",
+        "range": [
+          -1,
+          7
+        ]
+      },
+      {
+        "addr": "@node2",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          0
+        ]
+      }
+    ]
+  }
+}

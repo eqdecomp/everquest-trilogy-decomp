@@ -1,0 +1,179 @@
+{
+  "function": "MovePrevious_guess",
+  "original": "0x004ef04f",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": 4,
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@target" }
+      ]
+    },
+    "target": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@sentinel" },
+        { "offset": 4, "u32": "@parent_a" },
+        { "offset": 8, "u32": "@right_leaf" },
+        { "offset": "0x14", "u32": 1 }
+      ]
+    },
+    "parent_a": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@target" },
+        { "offset": 4, "u32": "@parent_b" }
+      ]
+    },
+    "parent_b": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@right_leaf" },
+        { "offset": 4, "u32": "@sentinel" }
+      ]
+    },
+    "parent_c": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@right_leaf" },
+        { "offset": 4, "u32": "@sentinel" }
+      ]
+    },
+    "left1": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 8, "u32": "@right_mid" }
+      ]
+    },
+    "right_mid": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 8, "u32": "@right_leaf" }
+      ]
+    },
+    "right_leaf": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 8, "u32": "@sentinel" }
+      ]
+    },
+    "sentinel": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": 0, "u32": "@sentinel" },
+        { "offset": 4, "u32": "@sentinel" },
+        { "offset": 8, "u32": "@sentinel" }
+      ]
+    }
+  },
+  "memory": [
+    { "addr": "0x006efeb4", "u32": "@sentinel" }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero flag ignores preceding payload byte",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": "0x10", "u32": "0x01000000" },
+        { "addr": "@target", "offset": "0x14", "u32": 0 },
+        { "addr": "@parent_a", "offset": 4, "u32": "@target" }
+      ]
+    },
+    {
+      "name": "flag zero with parent parent back-link: take right",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": "0x14", "u32": 0 },
+        { "addr": "@parent_a", "offset": 4, "u32": "@target" }
+      ]
+    },
+    {
+      "name": "left sentinel: climb one parent and stop",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": 0, "u32": "@sentinel" },
+        { "addr": "@target", "offset": "0x14", "u32": 1 },
+        { "addr": "@parent_a", "offset": 0, "u32": "@target" },
+        { "addr": "@parent_a", "offset": 4, "u32": "@parent_b" },
+        { "addr": "@parent_b", "offset": 0, "u32": "@right_leaf" }
+      ]
+    },
+    {
+      "name": "left child with sentinel right: use left child",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": 0, "u32": "@left1" },
+        { "addr": "@target", "offset": "0x14", "u32": 1 },
+        { "addr": "@left1", "offset": 8, "u32": "@sentinel" }
+      ]
+    },
+    {
+      "name": "left subtree rightmost: follow two right links",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": 0, "u32": "@left1" },
+        { "addr": "@target", "offset": "0x14", "u32": 1 },
+        { "addr": "@left1", "offset": 8, "u32": "@right_mid" },
+        { "addr": "@right_mid", "offset": 8, "u32": "@right_leaf" },
+        { "addr": "@right_leaf", "offset": 8, "u32": "@sentinel" }
+      ]
+    },
+    {
+      "name": "left sentinel: climb two parents",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": 0, "u32": "@sentinel" },
+        { "addr": "@parent_a", "offset": 0, "u32": "@target" },
+        { "addr": "@parent_a", "offset": 4, "u32": "@parent_b" },
+        { "addr": "@parent_b", "offset": 0, "u32": "@parent_a" },
+        { "addr": "@parent_b", "offset": 4, "u32": "@parent_c" },
+        { "addr": "@parent_c", "offset": 0, "u32": "@right_leaf" }
+      ]
+    },
+    {
+      "name": "left sentinel: stop at immediate parent",
+      "args": ["@param_1"],
+      "memory": [
+        { "addr": "@target", "offset": 0, "u32": "@sentinel" },
+        { "addr": "@parent_a", "offset": 0, "u32": "@right_leaf" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5173327,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      { "addr": "@target", "offset": "0x14", "type": "u32", "choices": [0, 1] },
+      { "addr": "@target", "offset": 0, "type": "ptr", "choices": ["@sentinel", "@left1"] },
+      { "addr": "@parent_a", "offset": 0, "type": "ptr", "choices": ["@target", "@right_leaf"] },
+      { "addr": "@parent_a", "offset": 4, "type": "ptr", "choices": ["@target", "@parent_b"] }
+    ]
+  }
+}

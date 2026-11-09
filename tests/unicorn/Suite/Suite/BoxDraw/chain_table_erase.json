@@ -1,0 +1,100 @@
+{
+  "function": "chain_table_erase_guess",
+  "original": "0x004045d3",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "t", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "pos", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "t": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "@bk"},
+      {"offset": "0x8", "u32": "@bk+0x10"},
+      {"offset": "0x10", "u32": 5}
+    ]},
+    "pos": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@n1"}
+    ]},
+    "bk": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@n3"},
+      {"offset": "0x4", "u32": "@n0"},
+      {"offset": "0x8", "u32": 0},
+      {"offset": "0xc", "u32": "@n4"},
+      {"offset": "0x10", "u32": "@n4"}
+    ]},
+    "n0": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@n1"}]},
+    "n1": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@n2"}]},
+    "n2": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": 0}]},
+    "n3": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": 0}]},
+    "n4": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": 0}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x004037d4": {"name": "hash_string_nocase_guess", "conv": "thiscall", "args": ["ptr"], "ret": 1},
+    "0x0040139f": {"name": "pool_push_list8_guess", "conv": "thiscall", "args": ["ptr"]}
+  },
+  "cases": [
+    {"name": "middle of chain (n1): prev n0 relinked to n2", "args": ["@t", 1, "@pos"]},
+    {"name": "head of chain (n0): bucket gets n1", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@pos", "u32": "@n0"}]},
+    {"name": "tail of chain (n2): n1 link cleared", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@pos", "u32": "@n2"}]},
+    {"name": "null node: nothing, no call", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@pos", "u32": 0}]},
+    {"name": "node not in chain: nothing freed, count kept", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@pos", "u32": "@n3"}]},
+    {"name": "empty bucket 2 (hash 2): head null != node, loop never runs", "args": ["@t", 0, "@pos"],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 2}}},
+    {"name": "hash 4 mod 4 = 0: single-node bucket head n3", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@pos", "u32": "@n3"}],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 4}}},
+    {"name": "hash 0xFFFFFFFD unsigned mod 4 = 1", "args": ["@t", 0, "@pos"],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": "0xFFFFFFFD"}}},
+    {"name": "hash 0x80000001 unsigned mod 3 = 0", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@t+0x8", "u32": "@bk+0xc"}, {"addr": "@pos", "u32": "@n3"}],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": "0x80000001"}}},
+    {"name": "hash 5 mod 3 = 2 (n4 not found in empty bucket)", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@t+0x8", "u32": "@bk+0xc"}, {"addr": "@pos", "u32": "@n4"}],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 5}}},
+    {"name": "hash 7 mod 4 = 3: n4 head of bucket 3", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@pos", "u32": "@n4"}],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 7}}},
+    {"name": "7 byte span: one bucket (SAR 2)", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@t+0x8", "u32": "@bk+0x7"}, {"addr": "@pos", "u32": "@n3"}],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 9}}},
+    {"name": "callee changes last: modulus taken before the call", "args": ["@t", 0, "@pos"],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 5,
+       "writes": [{"addr": "@t+0x8", "hex": "00000000"}]}}},
+    {"name": "callee cuts n0 link: chain read after the call, n1 not found", "args": ["@t", 0, "@pos"],
+     "callees": {"0x004037d4": {"name": "Draw_guess", "conv": "thiscall", "args": ["ptr"], "ret": 1,
+       "writes": [{"addr": "@n0", "hex": "00000000"}]}}},
+    {"name": "count 0 wraps", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@t+0x10", "u32": 0}]},
+    {"name": "cycle containing node: found on later lap", "args": ["@t", 0, "@pos"],
+     "memory": [{"addr": "@n2", "u32": "@n0"}, {"addr": "@pos", "u32": "@n2"}]}
+  ],
+  "fuzz": {
+    "seed": 4212179,
+    "count": 40,
+    "args": [
+      {"choices": ["@t"]},
+      {},
+      {"choices": ["@pos"]}
+    ],
+    "memory": [
+      {"addr": "@pos", "type": "u32", "choices": [0, "@n0", "@n1", "@n2", "@n3", "@n4"]},
+      {"addr": "@t+0x8", "type": "u32", "choices": ["@bk+0x4", "@bk+0x8", "@bk+0xc", "@bk+0x10", "@bk+0x13"]},
+      {"addr": "@t+0x10", "type": "u32", "choices": [0, 1, 7]},
+      {"addr": "@bk", "type": "u32", "choices": [0, "@n0", "@n3"]},
+      {"addr": "@bk+0x4", "type": "u32", "choices": [0, "@n0", "@n1", "@n4"]},
+      {"addr": "@n0", "type": "u32", "choices": [0, "@n1", "@n2", "@n4"]},
+      {"addr": "@n1", "type": "u32", "choices": [0, "@n2", "@n3"]},
+      {"addr": "@n3", "type": "u32", "choices": [0, "@n4"]}
+    ]
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "function": "QueueUnitCreate_guess",
+  "original": "0x1000a460",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rec",
+      "type": "ptr"
+    },
+    {
+      "name": "beginFn",
+      "type": "int"
+    },
+    {
+      "name": "size",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "rec": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": "@alloc"
+        },
+        {
+          "offset": "0x24",
+          "u32": "@cb"
+        },
+        {
+          "offset": "0x28",
+          "u32": 4660
+        }
+      ]
+    },
+    "unit": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "buf9": {
+      "size": "0x5a0",
+      "fill": "random"
+    },
+    "buf10": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "alloc": {
+      "size": "0x10"
+    },
+    "cb": {
+      "size": "0x10"
+    },
+    "begin": {
+      "size": "0x10",
+      "init": [
+        {
+          "offset": "0",
+          "hex": "b807000000c3"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000a3e0": {
+      "name": "FUN_1000a3e0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "@alloc": {
+      "name": "alloc",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "u32",
+        "u32"
+      ],
+      "ret": [
+        "@unit",
+        "@buf9",
+        "@buf10"
+      ]
+    },
+    "@cb": {
+      "name": "free",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@begin": {
+      "name": "begin",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 7
+    }
+  },
+  "cases": [
+    {
+      "name": "typical, no begin function",
+      "args": [
+        "@rec",
+        0,
+        32
+      ]
+    },
+    {
+      "name": "begin function runs in the reset",
+      "args": [
+        "@rec",
+        "@begin",
+        64
+      ]
+    },
+    {
+      "name": "zero size",
+      "args": [
+        "@rec",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "negative size",
+      "args": [
+        "@rec",
+        "@begin",
+        -8
+      ]
+    },
+    {
+      "name": "unit alloc fails",
+      "args": [
+        "@rec",
+        "@begin",
+        32
+      ],
+      "callees": {
+        "@alloc": {
+          "name": "alloc",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "0x5a0 buffer alloc fails",
+      "args": [
+        "@rec",
+        "@begin",
+        32
+      ],
+      "callees": {
+        "@alloc": {
+          "name": "alloc",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "u32"
+          ],
+          "ret": [
+            "@unit",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "size buffer alloc fails",
+      "args": [
+        "@rec",
+        "@begin",
+        32
+      ],
+      "callees": {
+        "@alloc": {
+          "name": "alloc",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "u32",
+            "u32"
+          ],
+          "ret": [
+            "@unit",
+            "@buf9",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 42081,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rec"
+        ]
+      },
+      {
+        "choices": [
+          0
+        ]
+      },
+      {
+        "range": [
+          -8,
+          256
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rec",
+        "offset": "0x28",
+        "type": "u32"
+      }
+    ]
+  }
+}

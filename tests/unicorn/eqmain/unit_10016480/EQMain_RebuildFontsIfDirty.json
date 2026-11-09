@@ -1,0 +1,85 @@
+{
+  "function": "EQMain_RebuildFontsIfDirty_guess",
+  "original": "0x100179c0",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "text": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "Arial"}]
+    },
+    "text2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "Times"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x1004F88C", "u8": 1},
+    {"addr": "0x1005596C", "u32": "@text"}
+  ],
+  "callees": {
+    "0x10020ae0": {
+      "name": "FUN_10020ae0",
+      "conv": "cdecl",
+      "args": ["cstr"]
+    },
+    "0x100216f0": {
+      "name": "CleanupSetup_guess",
+      "conv": "cdecl",
+      "args": []
+    },
+    "0x10021ac0": {
+      "name": "FUN_10021ac0",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "flag clear: nothing called, the object is untouched", "args": ["@param_1"], "memory": [{"addr": "0x1004F88C", "u8": 0}]},
+    {"name": "flag clear with null param_1: nothing touched, no fault", "args": [0], "memory": [{"addr": "0x1004F88C", "u8": 0}]},
+    {"name": "status 1: no write, flag cleared", "args": ["@param_1"], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}}},
+    {"name": "status 0: word 0 becomes 7 (default)", "args": ["@param_1"]},
+    {"name": "status 0x100: low byte 0 still writes 7", "args": ["@param_1"], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 256}}},
+    {"name": "status 0x80000000: low byte 0 still writes 7", "args": ["@param_1"], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 2147483648}}},
+    {"name": "status 0x101: low byte 1 does not write", "args": ["@param_1"], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 257}}},
+    {"name": "status 0xFF: low byte set does not write", "args": ["@param_1"], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 255}}},
+    {"name": "status 0xFFFFFF00: low byte 0 writes 7", "args": ["@param_1"], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 4294967040}}},
+    {"name": "flag 2 counts as set", "args": ["@param_1"], "memory": [{"addr": "0x1004F88C", "u8": 2}], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}}},
+    {"name": "flag 0x80 counts as set", "args": ["@param_1"], "memory": [{"addr": "0x1004F88C", "u8": 128}]},
+    {"name": "flag 0xFF counts as set", "args": ["@param_1"], "memory": [{"addr": "0x1004F88C", "u8": 255}]},
+    {"name": "DAT_1005596c points to the second string", "args": ["@param_1"], "memory": [{"addr": "0x1005596C", "u32": "@text2"}]},
+    {"name": "zeroed param_1: only word 0 changes", "args": ["@param_1"], "objects": {"param_1": {"size": "0x100", "fill": "zero"}}},
+    {"name": "null param_1, status 1: no write, no fault", "args": [0], "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}}}
+  ],
+  "fuzz": {
+    "seed": 96704,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x1004F88C", "type": "u8", "choices": [0, 1, 2, 128, 255]},
+      {"addr": "0x1005596C", "type": "u32", "choices": ["@text", "@text2"]}
+    ]
+  }
+}

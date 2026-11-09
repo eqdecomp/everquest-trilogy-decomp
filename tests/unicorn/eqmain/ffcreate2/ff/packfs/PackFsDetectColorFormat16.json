@@ -1,0 +1,227 @@
+{
+  "function": "PackFsDetectColorFormat16_guess",
+  "original": "0x10007d10",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    },
+    {
+      "name": "layout",
+      "type": "ptr"
+    }
+  ],
+  "ret": "char",
+  "objects": {
+    "owner": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@surface"
+        }
+      ]
+    },
+    "surface": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtbl"
+        }
+      ]
+    },
+    "vtbl": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x58",
+          "u32": "@gd_565"
+        }
+      ]
+    },
+    "layout": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "gd_555": {"size": "0x10", "fill": "zero"},
+    "gd_565": {"size": "0x10", "fill": "zero"},
+    "gd_556": {"size": "0x10", "fill": "zero"},
+    "gd_566": {"size": "0x10", "fill": "zero"},
+    "gd_r6": {"size": "0x10", "fill": "zero"},
+    "gd_other": {"size": "0x10", "fill": "zero"},
+    "gd_wide": {"size": "0x10", "fill": "zero"},
+    "gd_r0": {"size": "0x10", "fill": "zero"},
+    "gd_fail": {"size": "0x10", "fill": "zero"},
+    "errstr": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "packfs: GetSurfaceDesc failed"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055aac",
+      "u32": "@errstr"
+    },
+    {
+      "addr": "0x1004cea0",
+      "u32": 7
+    }
+  ],
+  "callees": {
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "@gd_555": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "007c0000e00300001f000000"}]
+    },
+    "@gd_565": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "00f80000e00700001f000000"}]
+    },
+    "@gd_556": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "00f80000c00700003f000000"}]
+    },
+    "@gd_566": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "00001f0000fc00003f000000"}]
+    },
+    "@gd_r6": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "00fc0000e00300001f000000"}]
+    },
+    "@gd_other": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "0000ff0000ff0000ff000000"}]
+    },
+    "@gd_wide": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "0000007ce02300001f000000"}]
+    },
+    "@gd_r0": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 88, "hex": "1f000000e0030000007c0000"}]
+    },
+    "@gd_fail": {
+      "conv": "stdcall",
+      "args": ["ptr", "mem:8"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "5-6-5 green has six bits",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_565"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "5-5-5 returns from the first test",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_555"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "5-5-6 blue has six bits",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_556"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "5-6-6 fails the blue test after the green test passes",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_566"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "six-bit red",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_r6"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "24-bit masks, counts above 8",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_other"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "green class tests the whole shifted value, not its low byte",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_wide"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "red mask at bit 0",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_r0"}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "GetSurfaceDesc fails: report and return 0, layout and format global untouched",
+      "args": ["@owner", "@layout"],
+      "memory": [{"addr": "@vtbl", "offset": "0x58", "u32": "@gd_fail"}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 10007,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@owner"]
+      },
+      {
+        "choices": ["@layout"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@vtbl",
+        "offset": "0x58",
+        "type": "ptr",
+        "choices": ["@gd_555", "@gd_565", "@gd_556", "@gd_566", "@gd_r6", "@gd_other", "@gd_wide", "@gd_r0", "@gd_fail"]
+      },
+      {
+        "addr": "0x1004cea0",
+        "type": "int",
+        "range": [-2, 5]
+      }
+    ]
+  }
+}

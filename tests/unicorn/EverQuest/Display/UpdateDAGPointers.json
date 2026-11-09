@@ -1,0 +1,119 @@
+{
+  "function": "UpdateDAGPointers",
+  "original": "0x00410116",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "player", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x100", "fill": "zero"},
+    "player": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x70", "u32": "@actor"}]},
+    "actor": {"size": "0x2A0", "fill": "zero", "init": [{"offset": "0x178", "u32": "@animset"}, {"offset": "0x250", "u32": "0xABCD0250"}]},
+    "animset": {"size": "0x3A0", "fill": "zero", "init": [{"offset": "0x39C", "u8": 1}]},
+    "dagfn": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E52C8", "u32": "@dagfn"}
+  ],
+  "callees": {
+    "0x004b156c": {"name": "EQPlayer::GetActorTag_guess", "conv": "thiscall", "args": ["ignore"], "writes": [{"arg": 0, "offset": 0, "hex": "454c4d4600"}]},
+    "0x00406a12": {"name": "CDisplay::FindDefaultEyeMaterialIndexes", "conv": "thiscall", "args": ["ptr"]},
+    "0x005224fb": {"name": "sprintf", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 4096}
+  },
+  "cases": [
+    {"name": "male, every lookup succeeds, stale handles are cleared, equipment slots empty",
+     "args": ["@self", 0, "@player"],
+     "memory": [
+       {"addr": "@actor", "offset": "0x254", "u32": "0x5A5A0254"},
+       {"addr": "@actor", "offset": "0x258", "u32": "0x5A5A0258"},
+       {"addr": "@actor", "offset": "0x25C", "u32": "0x5A5A025C"},
+       {"addr": "@actor", "offset": "0x260", "u32": "0x5A5A0260"},
+       {"addr": "@actor", "offset": "0x264", "u32": "0x5A5A0264"},
+       {"addr": "@actor", "offset": "0x268", "u32": "0x5A5A0268"},
+       {"addr": "@actor", "offset": "0x26C", "u32": "0x5A5A026C"}
+     ]},
+    {"name": "female, every lookup succeeds",
+     "args": ["@self", 0, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x9C", "u8": 1}]},
+    {"name": "head tag name missing: the HE tag name fills the head slot",
+     "args": ["@self", 0, "@player"],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [0, 8192, 12288]}}},
+    {"name": "both tag names missing: male race names fill the head slot and the 258 slot",
+     "args": ["@self", 0, "@player"],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [0, 0, 16384, 0, 20480, 24576]}}},
+    {"name": "both tag names missing: female race names fill the head slot and the 258 slot",
+     "args": ["@self", 0, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x9C", "u8": 1}],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [0, 0, 16384, 0, 20480, 24576]}}},
+    {"name": "gender 2 is not female: male race names",
+     "args": ["@self", 0, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x9C", "u8": 2}],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [0, 0, 16384, 0, 20480, 24576]}}},
+    {"name": "258 slot tag name and race name both missing: the 258 slot stays zero",
+     "args": ["@self", 0, "@player"],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [4096, 0, 0, 28672]}}},
+    {"name": "every lookup fails",
+     "args": ["@self", 0, "@player"],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [0]}}},
+    {"name": "equipment lookups fail while the others succeed",
+     "args": ["@self", 0, "@player"],
+     "callees": {"@dagfn": {"name": "t3dGetHierarchicalSpriteDagByName", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": [4096, 4096, 4096, 4096, 4096, 4096, 0]}}},
+    {"name": "hier sprite null: only the zeroing runs, equipment slot is untouched",
+     "args": ["@self", 0, "@player"],
+     "memory": [
+       {"addr": "@actor", "offset": "0x254", "u32": "0x5A5A0254"},
+       {"addr": "@actor", "offset": "0x258", "u32": "0x5A5A0258"},
+       {"addr": "@actor", "offset": "0x25C", "u32": "0x5A5A025C"},
+       {"addr": "@actor", "offset": "0x260", "u32": "0x5A5A0260"},
+       {"addr": "@actor", "offset": "0x264", "u32": "0x5A5A0264"},
+       {"addr": "@actor", "offset": "0x268", "u32": "0x5A5A0268"},
+       {"addr": "@actor", "offset": "0x26C", "u32": "0x5A5A026C"},
+       {"addr": "@actor", "offset": "0x250", "u32": 0},
+       {"addr": "@actor", "offset": "0x270", "u32": 28672}
+     ]},
+    {"name": "anim set flag 0: no equipment and no eye material pass",
+     "args": ["@self", 0, "@player"],
+     "memory": [{"addr": "@animset", "offset": "0x39C", "u8": 0}]},
+    {"name": "anim set flag 2 is not the flag value: no equipment",
+     "args": ["@self", 0, "@player"],
+     "memory": [{"addr": "@animset", "offset": "0x39C", "u8": 2}]},
+    {"name": "no anim set pointer: no equipment",
+     "args": ["@self", 0, "@player"],
+     "memory": [{"addr": "@actor", "offset": "0x178", "u32": 0}]},
+    {"name": "equipment slots already set are kept",
+     "args": ["@self", 0, "@player"],
+     "memory": [
+       {"addr": "@actor", "offset": "0x270", "u32": 28672},
+       {"addr": "@actor", "offset": "0x278", "u32": 28680},
+       {"addr": "@actor", "offset": "0x284", "u32": 28688},
+       {"addr": "@actor", "offset": "0x290", "u32": 28696}
+     ]},
+    {"name": "empty spawn tag: the names have no prefix",
+     "args": ["@self", 0, "@player"],
+     "callees": {"0x004b156c": {"name": "EQPlayer::GetActorTag_guess", "conv": "thiscall", "args": ["ignore"], "writes": [{"arg": 0, "offset": 0, "hex": "00"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4260118,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": ["@player"]}
+    ],
+    "memory": [
+      {"addr": "@player", "offset": "0x9C", "type": "u8", "choices": [0, 1, 2]},
+      {"addr": "@actor", "offset": "0x178", "type": "ptr", "choices": [0, "@animset"]},
+      {"addr": "@animset", "offset": "0x39C", "type": "u8", "choices": [0, 1, 2]},
+      {"addr": "@actor", "offset": "0x250", "type": "u32", "choices": [0, 4096]},
+      {"addr": "@actor", "offset": "0x254", "type": "u32", "count": 7, "stride": 4, "choices": [0, 4096, 8192]},
+      {"addr": "@actor", "offset": "0x270", "type": "u32", "count": 10, "stride": 4, "choices": [0, 28672], "p": 0.5}
+    ]
+  }
+}

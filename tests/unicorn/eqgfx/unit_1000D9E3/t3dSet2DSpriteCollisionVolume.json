@@ -1,0 +1,273 @@
+{
+  "function": "t3dSet2DSpriteCollisionVolume",
+  "original": "0x1000da80",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceVolume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@old_volume"
+        }
+      ]
+    },
+    "source_volume": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "old_volume": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "new_volume": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@new_volume"
+    },
+    "0x1001d5a1": {
+      "name": "t3dDestroyVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "duplicate succeeds: destroy old, store new",
+      "args": [
+        "@context",
+        "@sprite",
+        "@source_volume"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "duplicate fails: sprite keeps old volume",
+      "args": [
+        "@context",
+        "@sprite",
+        "@source_volume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    },
+    {
+      "name": "duplicate fails with null old volume",
+      "args": [
+        "@context",
+        "@sprite",
+        "@source_volume"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    },
+    {
+      "name": "null old volume: destroy gets null",
+      "args": [
+        "@context",
+        "@sprite",
+        "@source_volume"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeroed sprite",
+      "args": [
+        "@context",
+        "@sprite",
+        "@source_volume"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "size": 32,
+          "fill": "zero"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "old volume is the source volume",
+      "args": [
+        "@context",
+        "@sprite",
+        "@old_volume"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "duplicate returns the old volume",
+      "args": [
+        "@context",
+        "@sprite",
+        "@source_volume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@old_volume"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null context",
+      "args": [
+        0,
+        "@sprite",
+        "@source_volume"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null source volume, duplicate fails",
+      "args": [
+        "@context",
+        "@sprite",
+        0
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d41"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 7741,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          "0x0"
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@source_volume",
+          "@old_volume",
+          "0x0"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          "@old_volume",
+          "@source_volume",
+          "0x0"
+        ]
+      }
+    ]
+  }
+}

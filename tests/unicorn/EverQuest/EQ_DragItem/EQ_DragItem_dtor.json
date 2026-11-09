@@ -1,0 +1,415 @@
+{
+  "function": "EQ_DragItem_dtor_guess",
+  "original": "0x004301b1",
+  "sources": [
+    "src/EverQuest/EQ_DragItem.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_ignored",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "zeroed object and zero edx",
+      "args": [
+        "@self",
+        0
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "overwrite alternate vtable and low edx boundary",
+      "args": [
+        "@self",
+        -2147483648
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0xdeadbeef"
+            },
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "already target vtable and high edx boundary",
+      "args": [
+        "@self",
+        2147483647
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0x005353c4"
+            },
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "live overlay element reaches DelButtons cleanup",
+      "args": [
+        "@self",
+        1
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": "@buttons"
+            }
+          ]
+        },
+        "buttons": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x20",
+              "u32": "@button_array"
+            },
+            {
+              "offset": "0x24",
+              "u32": "@button_array+0x4"
+            }
+          ]
+        },
+        "button_array": {
+          "size": "0x10",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "@element"
+            }
+          ]
+        },
+        "element": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0x005353c4"
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x00450463": {
+          "name": "EQ_Overlay::DelButtons",
+          "conv": "thiscall",
+          "args": [],
+          "passthrough": true
+        },
+        "0x0045005d": {
+          "name": "EQ_Overlay::~EQ_Overlay_guess",
+          "conv": "thiscall",
+          "args": [],
+          "passthrough": true
+        },
+        "kernel32.dll!HeapFree": {
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "ordered callees: overlay destructor overwrites DelButtons marker",
+      "args": [
+        "@self",
+        0
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": 0
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x00450463": {
+          "name": "EQ_Overlay::DelButtons_guess",
+          "conv": "fastcall",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "addr": "@self",
+              "offset": 252,
+              "hex": "11"
+            }
+          ]
+        },
+        "0x0045005d": {
+          "name": "EQ_Overlay::~EQ_Overlay_guess",
+          "conv": "fastcall",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "addr": "@self",
+              "offset": 252,
+              "hex": "22"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "vtable assignment is visible to DelButtons and its call is observable",
+      "args": [
+        "@self",
+        0
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": 0
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x00450463": {
+          "name": "EQ_Overlay::DelButtons_guess",
+          "conv": "fastcall",
+          "args": [
+            "mem:4"
+          ],
+          "writes": [
+            {
+              "addr": "@self",
+              "offset": 252,
+              "hex": "11"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero EDX dummy slots passed to both thiscall callees",
+      "args": [
+        "@self",
+        0
+      ],
+      "objects": {
+        "self": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x70",
+              "u32": 0
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x00450463": {
+          "name": "EQ_Overlay::DelButtons_guess",
+          "conv": "fastcall",
+          "args": [
+            "ptr",
+            "int"
+          ]
+        },
+        "0x0045005d": {
+          "name": "EQ_Overlay::~EQ_Overlay_guess",
+          "conv": "fastcall",
+          "args": [
+            "ptr",
+            "ignore"
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative one edx",
+      "args": [
+        "@self",
+        -1
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4391345,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x005353c4",
+          "0xdeadbeef",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@self",
+        "offset": "0x4",
+        "type": "u32",
+        "choices": [
+          0
+        ]
+      },
+      {
+        "addr": "@self",
+        "offset": "0x70",
+        "type": "u32",
+        "choices": [
+          0
+        ]
+      }
+    ]
+  },
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450463": {
+      "name": "EQ_Overlay::DelButtons_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0,
+      "writes": [
+        {
+          "addr": "0x600000f0",
+          "hex": "11"
+        }
+      ]
+    },
+    "0x0045005d": {
+      "name": "EQ_Overlay::~EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0,
+      "writes": [
+        {
+          "addr": "0x600000f1",
+          "hex": "22"
+        }
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  }
+}

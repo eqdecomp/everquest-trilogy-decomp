@@ -1,0 +1,358 @@
+{
+  "function": "createNetworkConnection_guess",
+  "original": "0x1002aad0",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    },
+    {
+      "name": "addr",
+      "type": "ptr"
+    },
+    {
+      "name": "flags",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rdp": {
+      "size": "0x1d8",
+      "fill": "random",
+      "init": [
+        {"offset": "0x138", "u32": 0},
+        {"offset": "0x13c", "u32": 4}
+      ]
+    },
+    "out": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "addr": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "conn": {
+      "size": "0x740",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@rdp"},
+        {"offset": "0x478", "u16": 2},
+        {"offset": "0x47a", "u16": 13330},
+        {"offset": "0x47c", "u32": 134348992},
+        {"offset": "0x484", "u16": 4660}
+      ]
+    },
+    "enter_cs": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "leave_cs": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "ip": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0", "cstr": "192.0.2.8"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1004014c", "u32": "@enter_cs"},
+    {"addr": "0x10040148", "u32": "@leave_cs"}
+  ],
+  "callees": {
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@conn"
+    },
+    "0x1002d180": {
+      "name": "FUN_1002d180",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x1002d1f0": {
+      "name": "initializeNetworkConnectionResources_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x100322ba": {
+      "name": "ntohs",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": 2882352146
+    },
+    "0x100322b4": {
+      "name": "inet_ntoa",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": "@ip"
+    },
+    "0x10034117": {
+      "name": "_sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "@enter_cs": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@leave_cs": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e260": {
+      "name": "heapInsertElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002e770": {
+      "name": "addConnectionToHashTable_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1002e6e0": {
+      "name": "connhash_lock_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002d210": {
+      "name": "NetworkConnection_CleanupNetworkConnectionResources_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e",
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {
+      "name": "AF_INET, port 0x3412 through ntohs (only the low 16 bits are kept)",
+      "args": ["@rdp", "@out", "@addr", 0]
+    },
+    {
+      "name": "AF_IPX, flags 1 (the two %s are uninitialised locals)",
+      "args": ["@rdp", "@out", "@addr", 1],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 6}
+      ]
+    },
+    {
+      "name": "AF_COMPORT negative port (signed short)",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 69},
+        {"addr": "@conn", "offset": "0x47a", "u16": 65534}
+      ]
+    },
+    {
+      "name": "AF_COMPORT positive signed boundary",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 69},
+        {"addr": "@conn", "offset": "0x47a", "u16": 32767}
+      ]
+    },
+    {
+      "name": "AF_COMPORT negative signed boundary",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 69},
+        {"addr": "@conn", "offset": "0x47a", "u16": 32768}
+      ]
+    },
+    {
+      "name": "family 0x44 is unknown (one below AF_COMPORT)",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 68}
+      ]
+    },
+    {
+      "name": "family 0x46 is unknown (one above AF_COMPORT)",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 70}
+      ]
+    },
+    {
+      "name": "unknown family 32",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x478", "u16": 32}
+      ]
+    },
+    {
+      "name": "count one below the limit is counted up to the limit",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@rdp", "offset": "0x138", "u32": 3}
+      ]
+    },
+    {
+      "name": "count at the limit is refused with 0xd",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@rdp", "offset": "0x138", "u32": 4}
+      ]
+    },
+    {
+      "name": "count 0x80000000 is above the limit as unsigned",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@rdp", "offset": "0x138", "u32": 2147483648}
+      ]
+    },
+    {
+      "name": "limit 0 refuses the first connection",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "memory": [
+        {"addr": "@rdp", "offset": "0x13c", "u32": 0}
+      ]
+    },
+    {
+      "name": "flags 2 rejected with 6",
+      "args": ["@rdp", "@out", "@addr", 2]
+    },
+    {
+      "name": "flags 0xFFFFFFFF rejected with 6",
+      "args": ["@rdp", "@out", "@addr", 4294967295]
+    },
+    {
+      "name": "malloc fails: 2, nothing else touched",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "callees": {
+        "0x1003342e": {
+          "name": "_malloc",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "resources fail with 7: connection cleaned up and freed",
+      "args": ["@rdp", "@out", "@addr", 0],
+      "callees": {
+        "0x1002d1f0": {
+          "name": "initializeNetworkConnectionResources_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 7
+        }
+      }
+    },
+    {
+      "name": "resources fail with -1: returned as is",
+      "args": ["@rdp", "@out", "@addr", 1],
+      "callees": {
+        "0x1002d1f0": {
+          "name": "initializeNetworkConnectionResources_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 174800,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rdp"
+        ]
+      },
+      {
+        "choices": [
+          "@out"
+        ]
+      },
+      {
+        "choices": [
+          "@addr"
+        ]
+      },
+      {
+        "choices": [0, 1, 1, 0, 2, 3, 4294967294, 2147483648, 4294967295]
+      }
+    ],
+    "memory": [
+      {"addr": "@rdp", "offset": "0x138", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 2147483647, 2147483648, 4294967295], "p": 1},
+      {"addr": "@rdp", "offset": "0x13c", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 2147483647, 2147483648, 4294967295], "p": 1},
+      {"addr": "@conn", "offset": "0x478", "type": "u16", "choices": [0, 1, 2, 3, 6, 32, 68, 69, 70, 65535], "p": 1},
+      {"addr": "@conn", "offset": "0x47a", "type": "u16", "choices": [0, 1, 13330, 32767, 32768, 65534, 65535], "p": 1},
+      {"addr": "@conn", "offset": "0x47c", "type": "u32", "range": [0, 4294967295], "p": 1},
+      {"addr": "@conn", "offset": "0x484", "type": "u16", "range": [0, 65535], "p": 1}
+    ]
+  }
+}

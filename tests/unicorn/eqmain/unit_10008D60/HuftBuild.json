@@ -1,0 +1,180 @@
+{
+  "function": "HuftBuild_guess",
+  "original": "0x1000c490",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "codeLens", "type": "ptr"},
+    {"name": "numCodes", "type": "u32"},
+    {"name": "simpleCount", "type": "u32"},
+    {"name": "baseVals", "type": "int"},
+    {"name": "extraVals", "type": "int"},
+    {"name": "result", "type": "ptr"},
+    {"name": "bitsOut", "type": "ptr"},
+    {"name": "space", "type": "int"},
+    {"name": "spaceUsed", "type": "ptr"},
+    {"name": "work", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "codelens": {"size": "0x800", "fill": "zero"},
+    "result": {"size": "0x10", "fill": "zero"},
+    "bitsout": {"size": "0x10", "fill": "zero", "init": [{"offset": 0, "u32": 1}]},
+    "spaceused": {"size": "0x10", "fill": "zero"},
+    "work": {"size": "0x800", "fill": "zero"},
+    "space": {"size": "0x2d00", "fill": "zero"},
+    "base": {"size": "0x100", "fill": "random"},
+    "extra": {"size": "0x100", "fill": "random"}
+  },
+  "callees": {},
+  "cases": [
+    {
+      "name": "symbol 256 under a simple count of 257",
+      "args": ["@codelens", 258, 257, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 1024, "u32": 1}, {"addr": "@bitsout", "offset": 0, "u32": 1}]
+    },
+    {
+      "name": "all zero lengths",
+      "args": ["@codelens", 3, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"]
+    },
+    {
+      "name": "one one-bit code",
+      "args": ["@codelens", 1, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}]
+    },
+    {
+      "name": "three one-bit codes over-subscribed",
+      "args": ["@codelens", 3, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 1}, {"addr": "@codelens", "offset": 8, "u32": 1}]
+    },
+    {
+      "name": "one-bit and two-bit incomplete",
+      "args": ["@codelens", 2, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2}]
+    },
+    {
+      "name": "complete 1-2-2 with two lookup bits",
+      "args": ["@codelens", 3, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 8, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "complete 1..8,8 with three lookup bits",
+      "args": ["@codelens", 9, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [
+        {"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2},
+        {"addr": "@codelens", "offset": 8, "u32": 3}, {"addr": "@codelens", "offset": 12, "u32": 4},
+        {"addr": "@codelens", "offset": 16, "u32": 5}, {"addr": "@codelens", "offset": 20, "u32": 6},
+        {"addr": "@codelens", "offset": 24, "u32": 7}, {"addr": "@codelens", "offset": 28, "u32": 8},
+        {"addr": "@codelens", "offset": 32, "u32": 8}, {"addr": "@bitsout", "offset": 0, "u32": 3}
+      ]
+    },
+    {
+      "name": "complete 1..8,8 with simple symbols below three",
+      "args": ["@codelens", 9, 3, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [
+        {"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2},
+        {"addr": "@codelens", "offset": 8, "u32": 3}, {"addr": "@codelens", "offset": 12, "u32": 4},
+        {"addr": "@codelens", "offset": 16, "u32": 5}, {"addr": "@codelens", "offset": 20, "u32": 6},
+        {"addr": "@codelens", "offset": 24, "u32": 7}, {"addr": "@codelens", "offset": 28, "u32": 8},
+        {"addr": "@codelens", "offset": 32, "u32": 8}, {"addr": "@bitsout", "offset": 0, "u32": 3}
+      ]
+    },
+    {
+      "name": "table space runs out at 0x59f used",
+      "args": ["@codelens", 9, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [
+        {"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2},
+        {"addr": "@codelens", "offset": 8, "u32": 3}, {"addr": "@codelens", "offset": 12, "u32": 4},
+        {"addr": "@codelens", "offset": 16, "u32": 5}, {"addr": "@codelens", "offset": 20, "u32": 6},
+        {"addr": "@codelens", "offset": 24, "u32": 7}, {"addr": "@codelens", "offset": 28, "u32": 8},
+        {"addr": "@codelens", "offset": 32, "u32": 8}, {"addr": "@bitsout", "offset": 0, "u32": 3},
+        {"addr": "@spaceused", "offset": 0, "u32": 1439}
+      ]
+    },
+    {
+      "name": "table space offset by 32 entries",
+      "args": ["@codelens", 9, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [
+        {"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2},
+        {"addr": "@codelens", "offset": 8, "u32": 3}, {"addr": "@codelens", "offset": 12, "u32": 4},
+        {"addr": "@codelens", "offset": 16, "u32": 5}, {"addr": "@codelens", "offset": 20, "u32": 6},
+        {"addr": "@codelens", "offset": 24, "u32": 7}, {"addr": "@codelens", "offset": 28, "u32": 8},
+        {"addr": "@codelens", "offset": 32, "u32": 8}, {"addr": "@bitsout", "offset": 0, "u32": 3},
+        {"addr": "@spaceused", "offset": 0, "u32": 32}
+      ]
+    },
+    {
+      "name": "zero lookup bits",
+      "args": ["@codelens", 3, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 8, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 0}]
+    },
+    {
+      "name": "lookup bits above the longest code",
+      "args": ["@codelens", 3, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 8, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 15}]
+    },
+    {
+      "name": "one 15-bit code",
+      "args": ["@codelens", 1, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 15}, {"addr": "@bitsout", "offset": 0, "u32": 15}]
+    },
+    {
+      "name": "four 2-bit codes",
+      "args": ["@codelens", 4, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 2}, {"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 8, "u32": 2}, {"addr": "@codelens", "offset": 12, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "fill-in entries under two lookup bits",
+      "args": ["@codelens", 5, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 3}, {"addr": "@codelens", "offset": 8, "u32": 3}, {"addr": "@codelens", "offset": 12, "u32": 3}, {"addr": "@codelens", "offset": 16, "u32": 3}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "incomplete 2-3-3 with two lookup bits",
+      "args": ["@codelens", 3, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 2}, {"addr": "@codelens", "offset": 4, "u32": 3}, {"addr": "@codelens", "offset": 8, "u32": 3}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "single 2-bit code",
+      "args": ["@codelens", 1, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "zero-length symbols in a complete code",
+      "args": ["@codelens", 6, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 12, "u32": 2}, {"addr": "@codelens", "offset": 16, "u32": 2}, {"addr": "@codelens", "offset": 20, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "zero-length symbols in an incomplete code",
+      "args": ["@codelens", 5, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 12, "u32": 2}, {"addr": "@codelens", "offset": 16, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    },
+    {
+      "name": "over-subscribed 1-2-2-2",
+      "args": ["@codelens", 4, 0, "@base", "@extra", "@result", "@bitsout", "@space", "@spaceused", "@work"],
+      "memory": [{"addr": "@codelens", "offset": 0, "u32": 1}, {"addr": "@codelens", "offset": 4, "u32": 2}, {"addr": "@codelens", "offset": 8, "u32": 2}, {"addr": "@codelens", "offset": 12, "u32": 2}, {"addr": "@bitsout", "offset": 0, "u32": 2}]
+    }
+  ],
+  "fuzz": {
+    "seed": 50320,
+    "count": 50,
+    "args": [
+      {"choices": ["@codelens"]},
+      {"range": [1, 64]},
+      {"range": [0, 8]},
+      {"choices": ["@base"]},
+      {"choices": ["@extra"]},
+      {"choices": ["@result"]},
+      {"choices": ["@bitsout"]},
+      {"choices": ["@space"]},
+      {"choices": ["@spaceused"]},
+      {"choices": ["@work"]}
+    ],
+    "memory": [
+      {"addr": "@codelens", "type": "u32", "range": [0, 15], "count": 64, "stride": 4},
+      {"addr": "@bitsout", "type": "u32", "range": [0, 15]},
+      {"addr": "@spaceused", "type": "u32", "choices": [0, 0, 0, 16, 100, 1000, 1436, 1439, 1440]}
+    ]
+  }
+}

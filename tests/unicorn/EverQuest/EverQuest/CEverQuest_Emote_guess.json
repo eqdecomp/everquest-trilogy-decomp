@@ -1,0 +1,66 @@
+{
+  "function": "CEverQuest_Emote_guess_guess",
+  "original": "0x004d0952",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "ignored_edx", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0xc00", "fill": "zero"},
+    "pcname": {"size": 16, "fill": "zero"},
+    "connection": {"size": 4, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006b6465", "u8": 0},
+    {"addr": "0x00558564", "cstr": "%s"},
+    {"addr": "0x006b3194", "u32": "@connection"},
+    {"addr": "0x006e4da8", "u32": "@pcname"},
+    {"addr": "@pcname", "cstr": "You"},
+    {"addr": "@self", "offset": "0xba8", "cstr": "waves"}
+  ],
+  "callees": {
+    "0x004d061a": {
+      "name": "FUN_004d061a",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": 0
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "cstr", "u32", "int"],
+      "ret": 0
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "usual emote", "args": ["@self", 0]},
+    {"name": "ignored EDX nonzero", "args": ["@self", 305419896]},
+    {"name": "empty emote text", "args": ["@self", 0], "memory": [{"addr": "@self", "offset": "0xba8", "cstr": ""}]},
+    {"name": "one byte text boundary", "args": ["@self", 1], "memory": [{"addr": "@self", "offset": "0xba8", "cstr": "x"}]},
+    {"name": "percent sequences stay data", "args": ["@self", -1], "memory": [{"addr": "@self", "offset": "0xba8", "cstr": "%s %n 100%"}]},
+    {"name": "punctuation and spaces", "args": ["@self", 17], "memory": [{"addr": "@self", "offset": "0xba8", "cstr": "waves at you!"}]},
+    {"name": "global gate one skips all calls", "args": ["@self", 0], "memory": [{"addr": "0x006b6465", "u8": 1}]},
+    {"name": "global gate high nonzero skips all calls", "args": ["@self", 0], "memory": [{"addr": "0x006b6465", "u8": 255}]},
+    {"name": "zero gate sends updated text", "args": ["@self", 0], "memory": [{"addr": "0x006b6465", "u8": 0}, {"addr": "@self", "offset": "0xba8", "cstr": "bows"}]}
+  ],
+  "fuzz": {
+    "seed": 5048652,
+    "count": 30,
+    "args": [
+      {"choices": ["@self"]},
+      {"choices": [-2147483648, -1, 0, 1, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "0x006b6465", "type": "u8", "choices": [0, 1, 255]}
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "function": "createBlitSpriteFromFileContext_guess",
+  "original": "0x100230f2",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@dictionary"},
+        {"offset": "0x38", "u32": 512},
+        {"offset": "0x8044", "u32": "@fileContext"},
+        {"offset": "0x804c", "u32": "@pointerTable"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "fileContext": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": 0}
+      ]
+    },
+    "dictionary": {"size": "0x40", "fill": "zero"},
+    "pointerTable": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@input0"},
+        {"offset": "0x4", "u32": "@input1"},
+        {"offset": "0x8", "u32": "@input2"},
+        {"offset": "0xc", "u32": "@input0"},
+        {"offset": "0x10", "u32": "@input1"},
+        {"offset": "0x14", "u32": "@input2"},
+        {"offset": "0x18", "u32": "@input0"},
+        {"offset": "0x1c", "u32": "@input1"}
+      ]
+    },
+    "input0": {"size": "0x20", "fill": "zero"},
+    "input1": {"size": "0x20", "fill": "zero"},
+    "input2": {"size": "0x20", "fill": "zero"},
+    "blitSprite": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 20},
+        {"offset": "0xc", "u32": 5}
+      ]
+    }
+  },
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@input2"
+    },
+    "0x1000cfbf": {
+      "name": "t3dCreateBlitSprite",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": "@blitSprite"
+    },
+    "0x100174b8": {
+      "name": "t3dSetObjectTag",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 1
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "positive pointer index and no tag",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 0},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": 0},
+        {"addr": "@blitSprite", "offset": "0xc", "u32": 3}
+      ]
+    },
+    {
+      "name": "negative pointer and tag offsets, tag failure adds entry",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 4294967288},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 4294967292},
+        {"addr": "@context", "offset": "0x8064", "u32": 1},
+        {"addr": "@blitSprite", "offset": "0xc", "u32": 5}
+      ],
+      "callees": {"0x100174b8": {"ret": 0}}
+    },
+    {
+      "name": "positive tag becomes zero and setter succeeds",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 7},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 2}
+      ]
+    },
+    {
+      "name": "negative tag converted and setter succeeds",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 4294967293},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero tag skips setter but context flag is set",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 0},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 3},
+        {"addr": "@context", "offset": "0x8064", "u32": 2},
+        {"addr": "@blitSprite", "offset": "0xc", "u32": 37}
+      ]
+    },
+    {
+      "name": "tag failure result prevents dictionary insertion",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 1},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 0}
+      ],
+      "callees": {"0x100174b8": {"ret": 4}}
+    },
+    {
+      "name": "null created sprite skips tag and flag paths",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 4294967295},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 4294967295},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {"0x1000cfbf": {"ret": 0}}
+    },
+    {
+      "name": "minimum signed pointer and tag offsets",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 2147483648},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 2147483648},
+        {"addr": "@context", "offset": "0x38", "u32": 17}
+      ],
+      "callees": {"0x100174b8": {"ret": 0}}
+    },
+    {
+      "name": "largest positive tag is normalized to zero",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 2147483647},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 2147483647}
+      ]
+    },
+    {
+      "name": "positive tag normalized to null for real setter",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileContext", "u32": 1},
+        {"addr": "@fileContext", "offset": "0x4", "u32": 0},
+        {"addr": "@blitSprite", "offset": "0xc", "u32": 4}
+      ],
+      "callees": {
+        "0x100174b8": {
+          "name": "t3dSetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "passthrough": true
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 143602,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]}
+    ],
+    "memory": [
+      {"addr": "@fileContext", "offset": "0x4", "type": "int", "range": [-6, 6]},
+      {"addr": "@fileContext", "type": "int", "range": [-8, 8]},
+      {"addr": "@context", "offset": "0x38", "type": "int", "range": [0, 512]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "range": [0, 2]},
+      {"addr": "@blitSprite", "offset": "0xc", "type": "u32", "range": [0, 255]}
+    ]
+  }
+}

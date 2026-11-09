@@ -1,0 +1,544 @@
+{
+  "function": "CheckNewsChecksum_guess",
+  "original": "0x1001d9f0",
+  "sources": [
+    "src/eqmain/unit_1001D7B0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "bool",
+  "objects": {
+    "filebuf": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "fp": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "newsobj": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055530",
+      "size": 64,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x10055700",
+      "u32": "@newsobj"
+    },
+    {
+      "addr": "0x100f1d20",
+      "u8": 0
+    }
+  ],
+  "callees": {
+    "0x10035c00": {
+      "name": "__strlwr",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10035fd0": {
+      "name": "_strstr",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x100210f0": {
+      "name": "FUN_100210f0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x100239d0": {
+      "name": "FUN_100239d0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@filebuf"
+    },
+    "0x100239c0": {
+      "name": "flex_unit_guess::~flex_unit_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1003407f": {
+      "name": "FUN_1003407f",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@fp"
+    },
+    "0x100342a2": {
+      "name": "_fread",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "int",
+        "int",
+        "ptr"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "3000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "0x1003507e": {
+      "name": "_atoi",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x100343b9": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1001d7b0": {
+      "name": "FUN_1001d7b0",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "ptr",
+        "cstr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x10035089": {
+      "name": "__itoa",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ignore",
+        "int"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "3000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "0x10034169": {
+      "name": "_fwrite",
+      "conv": "cdecl",
+      "args": [
+        "mem:32",
+        "int",
+        "int",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "unchanged: file sum equals stored sum (AB = 131)",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1003507e": {
+          "ret": 131
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "unchanged: nonzero incoming registers do not leak into the bool result",
+      "regs": {"eax": 1, "ebx": 123, "ecx": 5, "edx": 7, "esi": 9, "edi": 11, "ebp": 13},
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1003507e": {
+          "ret": 131
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "changed: news screen accepts",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "changed: news screen declined",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "news result is AL only: 0x100 leaves AL 0",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 256
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "news result 0x80 (negative char, nonzero)",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 128
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "path has test: testeqnews.txt, news accepts",
+      "memory": [
+        {
+          "addr": "0x10055530",
+          "cstr": "C:\\Test\\EQNews"
+        },
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "test alone, unchanged (found, no news)",
+      "memory": [
+        {
+          "addr": "0x10055530",
+          "cstr": "test"
+        },
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1003507e": {
+          "ret": 131
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "path ends in upper-case TEST, news declined",
+      "memory": [
+        {
+          "addr": "0x10055530",
+          "cstr": "EQ/TEST"
+        },
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "near miss te5t is not test",
+      "memory": [
+        {
+          "addr": "0x10055530",
+          "cstr": "te5t"
+        },
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "empty path is not test",
+      "memory": [
+        {
+          "addr": "0x10055530",
+          "cstr": ""
+        },
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "file load fails: returns false before the sum",
+      "callees": {
+        "0x100239d0": {
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "read open fails, empty file: 0 == 0, no write",
+      "callees": {
+        "0x1003407f": {
+          "ret": [
+            0,
+            "@fp"
+          ]
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "read open fails, file not empty: news and write",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1003407f": {
+          "ret": [
+            0,
+            "@fp"
+          ]
+        },
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "write open fails: no write, news result returned",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        }
+      ],
+      "callees": {
+        "0x1003407f": {
+          "ret": [
+            "@fp",
+            0
+          ]
+        },
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "signed bytes: FF FF 7F sums to 125 (unsigned would be 637)",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "hex": "FFFF7F"
+        }
+      ],
+      "callees": {
+        "0x1003507e": {
+          "ret": 125
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "sum stops at the first NUL (41 00 42 sums to 65)",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "hex": "410042"
+        }
+      ],
+      "callees": {
+        "0x1003507e": {
+          "ret": 65
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "negative sum equal to stored (80 sums to -128)",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "hex": "80"
+        }
+      ],
+      "callees": {
+        "0x1003507e": {
+          "ret": -128
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "news pointer is null",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": "AB"
+        },
+        {
+          "addr": "0x10055700",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1001d7b0": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "empty file, stored 0: equal zero sums",
+      "memory": [
+        {
+          "addr": "@filebuf",
+          "cstr": ""
+        }
+      ],
+      "expect": {
+        "ret": false
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4242,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x10055530",
+        "type": "u8",
+        "choices": [
+          116,
+          101,
+          115
+        ],
+        "count": 12
+      },
+      {
+        "addr": "@filebuf",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ],
+        "count": 24
+      }
+    ]
+  }
+}

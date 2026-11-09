@@ -1,0 +1,110 @@
+{
+  "function": "t3dUndefineLight",
+  "original": "0x10013f01",
+  "sources": ["src/eqgfx/unit_100139A0.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "renderer", "type": "int"},
+    {"name": "light", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [{"offset": "0x20", "u32": "@definition"}]
+    },
+    "definition": {"size": "0x14", "fill": "zero"}
+  },
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": ["int", "ptr"]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": ["int", "ptr"],
+      "ret": [17, 23]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "not pending destruction",
+      "args": [7, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0x10", "u32": 0},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ]
+    },
+    {
+      "name": "shared definition",
+      "args": [7, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0x10", "u32": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "eligible without optional fields",
+      "args": [7, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0x10", "u32": 1},
+        {"addr": "@light", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ]
+    },
+    {
+      "name": "all flagged cleanup and non-null frees",
+      "args": [7, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0x8", "u32": "0x700023"},
+        {"addr": "@light", "offset": "0xc", "u8": 1},
+        {"addr": "@light", "offset": "0x10", "u32": 1},
+        {"addr": "@light", "offset": "0x14", "u32": 0},
+        {"addr": "@light", "offset": "0x18", "u32": "0x700021"},
+        {"addr": "@light", "offset": "0x1c", "u32": "0x700022"},
+        {"addr": "@definition", "offset": "0x8", "u32": "0x700024"},
+        {"addr": "@definition", "offset": "0xc", "u8": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ]
+    },
+    {
+      "name": "zero key skips dictionary removal and free",
+      "args": [7, "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0x8", "u32": 0},
+        {"addr": "@light", "offset": "0xc", "u8": 1},
+        {"addr": "@light", "offset": "0x10", "u32": 1},
+        {"addr": "@light", "offset": "0x14", "u32": 0},
+        {"addr": "@light", "offset": "0x18", "u32": 0},
+        {"addr": "@light", "offset": "0x1c", "u32": 0},
+        {"addr": "@definition", "offset": "0x8", "u32": 0},
+        {"addr": "@definition", "offset": "0xc", "u8": 1},
+        {"addr": "@definition", "offset": "0x10", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 13267521,
+    "count": 36,
+    "args": [{"choices": [0, 1, 7, "0x7fffffff"]}, {"choices": ["@light"]}],
+    "memory": [
+      {"addr": "@light", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 2, 2147483647]},
+      {"addr": "@light", "offset": "0xc", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@light", "offset": "0x14", "type": "int", "choices": [-1, 0, 1, 2]},
+      {"addr": "@light", "offset": "0x8", "type": "ptr", "choices": [0, "0x700023", "0x700030"]},
+      {"addr": "@light", "offset": "0x18", "type": "ptr", "choices": [0, "0x700021", "0x700031"]},
+      {"addr": "@light", "offset": "0x1c", "type": "ptr", "choices": [0, "0x700022", "0x700032"]},
+      {"addr": "@definition", "offset": "0xc", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@definition", "offset": "0x8", "type": "ptr", "choices": [0, "0x700024", "0x700034"]},
+      {"addr": "@definition", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 2, 2147483647]}
+    ]
+  }
+}

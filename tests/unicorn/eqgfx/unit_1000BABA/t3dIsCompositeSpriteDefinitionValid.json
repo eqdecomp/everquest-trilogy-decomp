@@ -1,0 +1,126 @@
+{
+  "function": "t3dIsCompositeSpriteDefinitionValid",
+  "original": "0x1000d79f",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 17
+        },
+        {
+          "offset": "0x24",
+          "u32": "@sprite"
+        }
+      ]
+    },
+    "sprite": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 18
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "valid exact tags",
+      "args": ["@definition"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null outer pointer",
+      "args": [0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null nested pointer",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x24", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "outer tag below expected",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": 16}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "outer tag above expected",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": 18}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nested tag below expected",
+      "args": ["@definition"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 17}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nested tag above expected",
+      "args": ["@definition"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 19}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "outer mismatch short circuits invalid nested address",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "u32": 16},
+        {"addr": "@definition", "offset": "0x24", "u32": "0x41414141"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 55199,
+    "count": 35,
+    "args": [
+      {
+        "choices": [
+          "@definition",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [16, 17, 18]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x24",
+        "type": "ptr",
+        "choices": ["@sprite", 0]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [17, 18, 19]
+      }
+    ]
+  }
+}

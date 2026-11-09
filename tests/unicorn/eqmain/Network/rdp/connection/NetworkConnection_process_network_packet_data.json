@@ -1,0 +1,406 @@
+{
+  "function": "NetworkConnection_process_network_packet_data_guess",
+  "original": "0x1002d660",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    },
+    {
+      "name": "param_3",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x6d4", "u32": 0},
+        {"offset": "0x6d8", "u32": 0}
+      ]
+    },
+    "param_2": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u16": 0},
+        {"offset": 8, "u16": 0},
+        {"offset": "0x12", "u16": 0},
+        {"offset": "0x14", "u16": 0}
+      ]
+    },
+    "param_3": {
+      "size": 4,
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": "0xdeadbeef"}
+      ]
+    },
+    "stats": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100498b4", "u32": "@stats"}
+  ],
+  "callees": {
+    "0x1002ebc0": {
+      "name": "NetworkConnection_update_connection_last_activity_time_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x1002c5b0": {
+      "name": "NetworkConnection_Disconnect_guess",
+      "conv": "cdecl",
+      "args": ["int", "int"]
+    },
+    "0x1002c830": {
+      "name": "NetworkConnection_handle_disconnect_request_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x1002ebd0": {
+      "name": "rx_record_seqnum_arrival_guess",
+      "conv": "cdecl",
+      "args": ["int", "ptr"]
+    },
+    "0x1002b7b0": {
+      "name": "tx_record_ack_arrival_guess",
+      "conv": "cdecl",
+      "args": ["int", "ptr"]
+    },
+    "0x1002f170": {
+      "name": "NetworkConnection_process_sequence_number_guess",
+      "conv": "cdecl",
+      "args": ["int", "u16"],
+      "ret": 0
+    },
+    "0x1002c900": {
+      "name": "tx_set_delayed_ack_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "unsequenced payload counts the 0x40 bucket and the tail",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": 8, "u16": "0x1234"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 3},
+        {"addr": "@param_2", "offset": "0x14", "u16": 9}
+      ]
+    },
+    {
+      "name": "unsequenced zero-length payload skips the 0x40 bucket",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 4},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0}
+      ]
+    },
+    {
+      "name": "unsequenced one-byte payload is the smallest counted payload",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": 1}
+      ]
+    },
+    {
+      "name": "unsequenced max payload carries 0x40-0x48 counters into the high word",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": "0xffff"},
+        {"addr": "@stats", "offset": "0x48", "u32": "0xfffffff0"},
+        {"addr": "@stats", "offset": "0x4c", "u32": 0},
+        {"addr": "@param_1", "offset": "0x84", "u32": "0xfffffffe"}
+      ]
+    },
+    {
+      "name": "sequenced payload with nonzero result counts the 0x60 bucket",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": 8, "u16": "0x42"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": 9}
+      ]
+    },
+    {
+      "name": "sequenced payload with zero result counts the 0x50 bucket",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": 9}
+      ]
+    },
+    {
+      "name": "sequenced result 0x100 is nonzero although its low byte is zero",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 256
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 2}
+      ]
+    },
+    {
+      "name": "sequenced result -1 is nonzero",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": -1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0}
+      ]
+    },
+    {
+      "name": "sequenced zero-length payload still counts the packet",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0}
+      ]
+    },
+    {
+      "name": "sequenced max lengths: tail carries the 0x70 counter into the high word",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x12", "u16": "0xffff"},
+        {"addr": "@param_2", "offset": "0x14", "u16": "0xffff"},
+        {"addr": "@stats", "offset": "0x70", "u32": "0xfffffff0"},
+        {"addr": "@stats", "offset": "0x74", "u32": 0}
+      ]
+    },
+    {
+      "name": "sequenced payload carries the 0x60 and 0x68 counters from the low word",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 3},
+        {"addr": "@stats", "offset": "0x60", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x64", "u32": 0},
+        {"addr": "@stats", "offset": "0x68", "u32": "0xfffffffe"},
+        {"addr": "@stats", "offset": "0x6c", "u32": 0}
+      ]
+    },
+    {
+      "name": "unsequenced payload wraps the 0x70 tail counter to zero in both words",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 1},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0},
+        {"addr": "@stats", "offset": "0x70", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x74", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x98", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "sequenced u32 byte counter wraps past 0xffffffff",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": "0x10"},
+        {"addr": "@param_1", "offset": "0x94", "u32": "0xfffffffe"}
+      ]
+    },
+    {
+      "name": "sequenced int packet counter wraps at INT_MAX",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0},
+        {"addr": "@param_1", "offset": "0x90", "u32": "0x7fffffff"}
+      ]
+    },
+    {
+      "name": "remote disconnect with connected state exits before the recorders",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 9},
+        {"addr": "@param_1", "offset": "0x6d4", "u32": 1}
+      ]
+    },
+    {
+      "name": "remote disconnect with a high-bit connected value still exits",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"},
+        {"addr": "@param_1", "offset": "0x6d4", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "remote disconnect flag ignored while disconnected",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 9},
+        {"addr": "@param_1", "offset": "0x6d4", "u32": 0}
+      ]
+    },
+    {
+      "name": "remote disconnect beats the disconnect request",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x8400"},
+        {"addr": "@param_1", "offset": "0x6d4", "u32": 1},
+        {"addr": "@param_1", "offset": "0x6d8", "u32": 0}
+      ]
+    },
+    {
+      "name": "disconnect request with no request state",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0400"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0},
+        {"addr": "@param_1", "offset": "0x6d8", "u32": 0}
+      ]
+    },
+    {
+      "name": "disconnect request suppressed by nonzero request state",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0400"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 5},
+        {"addr": "@param_1", "offset": "0x6d8", "u32": 1}
+      ]
+    },
+    {
+      "name": "disconnect request and sequenced flags with zero result",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0600"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 5},
+        {"addr": "@param_1", "offset": "0x6d8", "u32": 0}
+      ]
+    },
+    {
+      "name": "all flags set while connected flag is clear takes every branch",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "callees": {
+        "0x1002f170": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0xffff"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 7},
+        {"addr": "@param_2", "offset": "0x14", "u16": 11},
+        {"addr": "@param_1", "offset": "0x6d4", "u32": 0},
+        {"addr": "@param_1", "offset": "0x6d8", "u32": 0}
+      ]
+    },
+    {
+      "name": "unsequenced max payload with request state set suppresses the request",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x7dff"},
+        {"addr": "@param_2", "offset": "0x14", "u16": "0xffff"},
+        {"addr": "@param_1", "offset": "0x6d8", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002660,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1"]},
+      {"choices": ["@param_2"]},
+      {"choices": ["@param_3"]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x6d4", "type": "u32", "choices": [0, 1, 2147483648]},
+      {"addr": "@param_1", "offset": "0x6d8", "type": "u32", "choices": [0, 1]},
+      {"addr": "@param_1", "offset": "0x80", "size": 32},
+      {"addr": "@param_2", "offset": 0, "type": "u16"},
+      {"addr": "@param_2", "offset": 8, "type": "u16"},
+      {"addr": "@param_2", "offset": "0x12", "type": "u16"},
+      {"addr": "@param_2", "offset": "0x14", "type": "u16"},
+      {"addr": "@stats", "offset": "0x40", "size": 64}
+    ]
+  }
+}

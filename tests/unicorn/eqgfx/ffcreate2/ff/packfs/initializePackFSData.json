@@ -1,0 +1,137 @@
+{
+  "function": "initializePackFSData_guess",
+  "original": "0x10021938",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "object", "type": "ptr"},
+    {"name": "edx_dummy", "type": "int"},
+    {"name": "name", "type": "cstr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "object": {
+      "size": "0x8",
+      "fill": "zero"
+    },
+    "heap": {
+      "size": "0x4000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100FC014", "u32": 0},
+    {"addr": "0x7f0f0000", "u32": "0x12345678"}
+  ],
+  "callees": {
+    "0x10069058": {
+      "name": "setupExceptionHandler_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    },
+    "0x100219be": {
+      "name": "PackFSData_PackFSData_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x10021af3": {
+      "name": "PackFsRefHandle_guess::incrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x1002190d": {
+      "name": "decrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x10068160": {
+      "name": "strlen_guess",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "passthrough": true
+    },
+    "kernel32.dll!GetProcessHeap": {
+      "conv": "stdcall",
+      "ret": "0x70000000"
+    },
+    "kernel32.dll!GetLocalTime": {
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 0, "offset": 0, "hex": "00000000000000000000000000000000"}
+      ]
+    },
+    "kernel32.dll!GetSystemTime": {
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 0, "offset": 0, "hex": "00000000000000000000000000000000"}
+      ]
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": [
+        "@heap", "@heap+0x100", "@heap+0x200", "@heap+0x300",
+        "@heap+0x400", "@heap+0x500", "@heap+0x600", "@heap+0x700",
+        "@heap+0x800", "@heap+0x900", "@heap+0xA00", "@heap+0xB00",
+        "@heap+0xC00", "@heap+0xD00", "@heap+0xE00", "@heap+0xF00",
+        "@heap+0x1000", "@heap+0x1100", "@heap+0x1200", "@heap+0x1300",
+        "@heap+0x1400", "@heap+0x1500", "@heap+0x1600", "@heap+0x1700",
+        "@heap+0x1800", "@heap+0x1900", "@heap+0x1A00", "@heap+0x1B00",
+        "@heap+0x1C00", "@heap+0x1D00", "@heap+0x1E00", "@heap+0x1F00"
+      ]
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {"name": "null_name", "args": ["@object", 0, 0]},
+    {"name": "empty_name", "args": ["@object", 1, ""]},
+    {"name": "one_character", "args": ["@object", 0, "x"]},
+    {"name": "even_length", "args": ["@object", -1, "pack"]},
+    {"name": "odd_length", "args": ["@object", 7, "packfs"]},
+    {"name": "path", "args": ["@object", 2147483647, "data\\zone\\file.pfs"]},
+    {"name": "single_space", "args": ["@object", -2147483648, " "]},
+    {"name": "long_name", "args": ["@object", 3, "eqgfx/packfs/sound-resource-name"]},
+    {"name": "low_non_null_pointer_faults", "args": ["@object", 0, "0x1"]},
+    {
+      "name": "second_allocation_failure",
+      "args": ["@object", 0, "x"],
+      "callees": {
+        "kernel32.dll!HeapAlloc": {
+          "conv": "stdcall",
+          "args": ["ptr", "u32", "u32"],
+          "ret": ["@heap", 0]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 137528,
+    "count": 32,
+    "args": [
+      {"choices": ["@object"]},
+      {"range": [-4, 4]},
+      {"choices": [0, "", "a", "ab", "abc", "pack", "resource/file.pfs", "ambient sound bank"]}
+    ],
+    "memory": []
+  }
+}

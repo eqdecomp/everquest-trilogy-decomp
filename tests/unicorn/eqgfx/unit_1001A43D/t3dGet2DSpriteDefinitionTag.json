@@ -1,0 +1,266 @@
+{
+  "function": "t3dGet2DSpriteDefinitionTag",
+  "original": "0x1001b098",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "tagOut",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "def": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "tagout": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "tEmpty": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tA": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tAbc": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tLong": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "tSpaces": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@tEmpty",
+      "cstr": ""
+    },
+    {
+      "addr": "@tA",
+      "cstr": "a"
+    },
+    {
+      "addr": "@tAbc",
+      "cstr": "abc"
+    },
+    {
+      "addr": "@tLong",
+      "cstr": "hello world 12345"
+    },
+    {
+      "addr": "@tSpaces",
+      "cstr": "   "
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "null tag zeroes first byte",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty tag copies terminator",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": "@tEmpty"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "single char",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": "@tA"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "three chars",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": "@tAbc"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "longer tag with spaces and digits",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": "@tLong"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "spaces only",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": "@tSpaces"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "surrounding bytes nonzero do not affect +0x8 read",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x0",
+          "u32": 3735928559
+        },
+        {
+          "addr": "@def",
+          "offset": "0x4",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": "@tAbc"
+        },
+        {
+          "addr": "@def",
+          "offset": "0xc",
+          "u32": 3235820544
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null tag with surrounding bytes nonzero",
+      "args": [
+        "@def",
+        "@tagout"
+      ],
+      "memory": [
+        {
+          "addr": "@def",
+          "offset": "0x0",
+          "u32": 3735928559
+        },
+        {
+          "addr": "@def",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@def",
+          "offset": "0xc",
+          "u32": 3235820544
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 110744,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@def"
+        ]
+      },
+      {
+        "choices": [
+          "@tagout"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@def",
+        "offset": "0x8",
+        "type": "u32",
+        "choices": [
+          0,
+          "@tEmpty",
+          "@tA",
+          "@tAbc",
+          "@tLong",
+          "@tSpaces"
+        ]
+      }
+    ]
+  }
+}

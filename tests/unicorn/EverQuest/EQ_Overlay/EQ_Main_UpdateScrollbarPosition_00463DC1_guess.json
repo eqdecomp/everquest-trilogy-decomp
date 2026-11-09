@@ -1,0 +1,75 @@
+{
+  "function": "EQ_Main::EQ_Main_UpdateScrollbarPosition_guess",
+  "original": "0x00463DC1",
+  "rewrite": "?EQ_Main_UpdateScrollbarPosition_guess@EQ_Main@@QAEXHF@Z",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [{"name": "unused", "type": "int"}, {"name": "mode", "type": "short"}],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x100000", "fill": "random"},
+    "thumb": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "@self", "offset": "0x6c5d4", "u32": "@thumb"},
+    {"addr": "@self", "offset": "0x6c5d8", "u32": "@thumb"},
+    {"addr": "@self", "offset": "0x6ab5c", "hex": "a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4"},
+    {"addr": "@self", "offset": "0x6ca5c", "hex": "11223322445566778899aabbccddeeff"},
+    {"addr": "@self", "offset": "0x6e35c", "hex": "01020304112233445566778899aabbcc"},
+    {"addr": "@self", "offset": "0x6ab6c", "hex": "102030405060708090a0b0c0d0e0f000"},
+    {"addr": "@self", "offset": "0x6ca6c", "hex": "aabbccddeeff00112233445566778899"},
+    {"addr": "@self", "offset": "0x6e36c", "hex": "99887766554433221100ffeeddccbbaa"}
+  ],
+  "callees": {
+    "user32.dll!CopyRect": {
+      "name": "CopyRect",
+      "conv": "stdcall",
+      "args": ["ptr", "mem:16"],
+      "ret": 1,
+      "writes": [
+        {"arg": 0, "hex": "11000000220000003300000044000000"},
+        {"addr": "@self+0xeb8", "hex": "efbeadde"}
+      ]
+    }
+  },
+  "cases": [
+    {"name": "mode zero ordinary in-range", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 100}, {"addr": "@self", "offset": "0x685cc", "u16": 5}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x12345678"}, {"addr": "@thumb", "hex": "0500000007000000090000000b000000"}]},
+    {"name": "mode zero lower clamp", "args": [1, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 7}, {"addr": "@self", "offset": "0x685cc", "u16": 65535}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x87654321"}, {"addr": "@thumb", "hex": "f6ffffffecffffff64000000c8000000"}]},
+    {"name": "mode zero upper clamp", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 283}, {"addr": "@self", "offset": "0x685cc", "u16": 32767}, {"addr": "@self", "offset": "0xfe0", "u8": 1}, {"addr": "@self", "offset": "0xeb8", "u32": "0x89abcdef"}, {"addr": "@thumb", "hex": "01000000020000000300000004000000"}]},
+    {"name": "mode zero equality at upper boundary", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 283}, {"addr": "@self", "offset": "0x685cc", "u16": 278}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x10203040"}, {"addr": "@thumb", "hex": "01000000020000000300000004000000"}]},
+    {"name": "mode zero equality at lower boundary", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 283}, {"addr": "@self", "offset": "0x685cc", "u16": 0}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x10203040"}, {"addr": "@thumb", "hex": "01000000020000000300000004000000"}]},
+    {"name": "mode zero denominator exactly one continues", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 6}, {"addr": "@self", "offset": "0x685cc", "u16": 0}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x10203040"}, {"addr": "@thumb", "hex": "01000000020000000300000004000000"}]},
+    {"name": "mode zero position just above upper threshold", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 283}, {"addr": "@self", "offset": "0x685cc", "u16": 279}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x10203040"}, {"addr": "@thumb", "hex": "01000000020000000300000004000000"}]},
+    {"name": "mode zero position just below lower threshold with zero left", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 283}, {"addr": "@self", "offset": "0x685cc", "u16": 65535}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x10203040"}, {"addr": "@thumb", "hex": "00000000000000000000000000000000"}]},
+    {"name": "mode nonzero ordinary in-range", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 100}, {"addr": "@self", "offset": "0x685d0", "u16": 10}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x89abcdef"}, {"addr": "@thumb", "hex": "0102030405060708090a0b0c0d0e0f10"}]},
+    {"name": "mode nonzero lower clamp", "args": [0, -1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 7}, {"addr": "@self", "offset": "0x685d0", "u16": 65535}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x89abcdef"}, {"addr": "@thumb", "hex": "0102030405060708090a0b0c0d0e0f10"}]},
+    {"name": "mode nonzero upper clamp", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 283}, {"addr": "@self", "offset": "0x685d0", "u16": 32767}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x12345678"}, {"addr": "@thumb", "hex": "0102030405060708090a0b0c0d0e0f10"}]},
+    {"name": "mode nonzero equality at upper boundary", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 283}, {"addr": "@self", "offset": "0x685d0", "u16": 3941}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x12345678"}, {"addr": "@thumb", "hex": "0102030405060708090a0b0c0d0e0f10"}]},
+    {"name": "mode nonzero equality at lower boundary", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 283}, {"addr": "@self", "offset": "0x685d0", "u16": 0}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x12345678"}, {"addr": "@thumb", "hex": "0102030405060708090a0b0c0d0e0f10"}]},
+    {"name": "mode nonzero position just above upper threshold", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 283}, {"addr": "@self", "offset": "0x685d0", "u16": 279}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x12345678"}, {"addr": "@thumb", "hex": "0102030405060708090a0b0c0d0e0f10"}]},
+    {"name": "mode nonzero position just below lower threshold with zero left", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 283}, {"addr": "@self", "offset": "0x685d0", "u16": 65535}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": "0x12345678"}, {"addr": "@thumb", "hex": "00000000000000000000000000000000"}]},
+    {"name": "mode zero early return preserves dirty", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 5}, {"addr": "@self", "offset": "0xeb8", "u32": "0x87654321"}]},
+    {"name": "mode nonzero early return preserves dirty", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 4}, {"addr": "@self", "offset": "0xeb8", "u32": "0x87654321"}]},
+    {"name": "mode zero signed panel minus 128 address", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 100}, {"addr": "@self", "offset": "0x685cc", "u16": 5}, {"addr": "@self", "offset": "0xfe0", "u8": 128}, {"addr": "@self", "offset": "0xeb8", "u32": 0}], "callees": {"user32.dll!CopyRect": {"conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1}}},
+    {"name": "mode nonzero signed panel plus 127 address", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 100}, {"addr": "@self", "offset": "0x685d0", "u16": 5}, {"addr": "@self", "offset": "0xfe0", "u8": 127}, {"addr": "@self", "offset": "0xeb8", "u32": 0}], "callees": {"user32.dll!CopyRect": {"conv": "stdcall", "args": ["ptr", "mem:16"], "ret": 1}}},
+    {"name": "mode zero top aliases pointer slot and reload faults at changed pointer", "args": [0, 0], "memory": [{"addr": "@self", "offset": "0x685c0", "u32": 100}, {"addr": "@self", "offset": "0x685cc", "u16": 0}, {"addr": "@self", "offset": "0x6c5d4", "u32": "@self+0x6c5d0"}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": 0}], "callees": {"user32.dll!CopyRect": {"conv": "stdcall", "args": ["ptr", "ptr"], "ret": 1}}},
+    {"name": "mode nonzero top aliases pointer slot and reload faults at changed pointer", "args": [0, 1], "memory": [{"addr": "@self", "offset": "0x685c4", "u32": 100}, {"addr": "@self", "offset": "0x685d0", "u16": 0}, {"addr": "@self", "offset": "0x6c5d8", "u32": "@self+0x6c5d4"}, {"addr": "@self", "offset": "0xfe0", "u8": 0}, {"addr": "@self", "offset": "0xeb8", "u32": 0}], "callees": {"user32.dll!CopyRect": {"conv": "stdcall", "args": ["ptr", "ptr"], "ret": 1}}}
+  ],
+  "fuzz": {
+    "seed": 463361,
+    "count": 30,
+    "args": [{"choices": [0, 1, -1, "0x10000"]}, {"choices": [-32768, -1, 0, 1, 32767]}],
+    "memory": [
+      {"addr": "@self", "offset": "0x685c0", "type": "int", "choices": [-2147483648, 5, 6, 7, 100, 283, 2147483647]},
+      {"addr": "@self", "offset": "0x685c4", "type": "int", "choices": [-2147483648, 4, 5, 6, 7, 100, 283, 2147483647]},
+      {"addr": "@self", "offset": "0x685cc", "type": "short", "range": [-32768, 32767]},
+      {"addr": "@self", "offset": "0x685d0", "type": "short", "range": [-32768, 32767]},
+      {"addr": "@self", "offset": "0xfe0", "type": "char", "choices": [-1, 0, 1]},
+      {"addr": "@self", "offset": "0x6c5d4", "type": "ptr", "choices": ["@thumb", "@self+0x6c5d0"]},
+      {"addr": "@self", "offset": "0x6c5d8", "type": "ptr", "choices": ["@thumb", "@self+0x6c5d4"]},
+      {"addr": "@self", "offset": "0xeb8", "type": "u32", "choices": [0, 1, "0x12345678"]},
+      {"addr": "@thumb", "size": 16}
+    ]
+  }
+}

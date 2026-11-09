@@ -1,0 +1,87 @@
+{
+  "function": "ReallocateAndInsertFillBuffer_guess",
+  "original": "0x004013b7",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "thiscall",
+  "this": "@buffer",
+  "args": [
+    {"name": "source", "type": "ptr"},
+    {"name": "value", "type": "ptr"},
+    {"name": "count", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "buffer": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@old"},
+      {"offset": "0x4", "u32": "@old+0xc"},
+      {"offset": "0x8", "u32": "@old+0x10"}
+    ]},
+    "old": {"size": "0x200", "fill": "random"},
+    "value": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "0x5a5a1234"}
+    ]},
+    "newblock": {"size": "0x1000", "fill": "zero"},
+    "scratch": {"size": "0x1000", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x0058fb58", "size": 64, "fill": "zero"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x00401366": {"name": "pool_alloc_guess", "conv": "cdecl", "args": ["u32"], "passthrough": true},
+    "0x004016c4": {"name": "copy_dwords_guess", "conv": "cdecl", "args": ["ptr", "ptr", "ptr", "u32", "u32"], "passthrough": true},
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x005218c6": {"name": "operator_new_guess", "conv": "cdecl", "args": ["u32"], "ret": "@scratch"},
+    "kernel32.dll!HeapAlloc": {"conv": "stdcall", "args": ["ptr", "u32", "u32"], "ret": "@scratch"},
+    "kernel32.dll!HeapFree": {"conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": 1}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "one inserted between prefix and tail", "args": ["@old+4", "@value", 1]},
+    {"name": "zero insert still reallocates and copies tail", "args": ["@old+4", "@value", 0]},
+    {"name": "count equals current length", "args": ["@old+4", "@value", 3]},
+    {"name": "count exceeds current length", "args": ["@old", "@value", 4]},
+    {"name": "count exceeds capacity", "args": ["@old+8", "@value", 5]},
+    {"name": "empty buffer and zero count", "args": [0, "@value", 0], "memory": [
+      {"addr": "@buffer", "offset": "0x0", "u32": 0},
+      {"addr": "@buffer", "offset": "0x4", "u32": 0},
+      {"addr": "@buffer", "offset": "0x8", "u32": 0}
+    ]},
+    {"name": "zero current length but allocated old block and zero count", "args": ["@old", "@value", 0], "memory": [
+      {"addr": "@buffer", "offset": "0x4", "u32": "@old"},
+      {"addr": "@buffer", "offset": "0x8", "u32": "@old+0x10"}
+    ]},
+    {"name": "source at old end", "args": ["@old+0xc", "@value", 1]},
+    {"name": "source after old end skips negative tail", "args": ["@old+0x10", "@value", 1]},
+    {"name": "old block 8 bytes uses class zero", "args": ["@old+4", "@value", 1], "memory": [
+      {"addr": "@buffer", "offset": "0x4", "u32": "@old+8"},
+      {"addr": "@buffer", "offset": "0x8", "u32": "@old+8"}
+    ]},
+    {"name": "old block 12 bytes uses class one", "args": ["@old+4", "@value", 1], "memory": [
+      {"addr": "@buffer", "offset": "0x4", "u32": "@old+8"},
+      {"addr": "@buffer", "offset": "0x8", "u32": "@old+0xc"}
+    ]},
+    {"name": "old block 128 bytes uses class fifteen", "args": ["@old+4", "@value", 1], "memory": [
+      {"addr": "@buffer", "offset": "0x4", "u32": "@old+8"},
+      {"addr": "@buffer", "offset": "0x8", "u32": "@old+0x80"}
+    ]},
+    {"name": "old block 132 bytes is deleted", "args": ["@old+4", "@value", 1], "memory": [
+      {"addr": "@buffer", "offset": "0x4", "u32": "@old+8"},
+      {"addr": "@buffer", "offset": "0x8", "u32": "@old+0x84"}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4199351,
+    "count": 40,
+    "args": [
+      {"choices": ["@old", "@old+4", "@old+8", "@old+0xc", "@old+0x10"]},
+      {"choices": ["@value"]},
+      {"range": [0, 4]}
+    ],
+    "memory": [
+      {"addr": "@buffer", "offset": "0x4", "type": "ptr", "choices": ["@old+4", "@old+8", "@old+0xc", "@old+0x10"]},
+      {"addr": "@buffer", "offset": "0x8", "type": "ptr", "choices": ["@old+0x10", "@old+0x20", "@old+0x40", "@old+0x80"]},
+      {"addr": "@old", "type": "u32", "count": 16, "range": [-100, 100]}
+    ]
+  }
+}

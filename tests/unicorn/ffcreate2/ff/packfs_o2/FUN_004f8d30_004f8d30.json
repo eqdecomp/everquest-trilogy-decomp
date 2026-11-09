@@ -1,0 +1,138 @@
+{
+  "function": "readFileBuffer_guess",
+  "original": "0x004f8d30",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "reader",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "reader": {
+      "size": "0x2008",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 3}
+      ]
+    }
+  },
+  "callees": {
+    "0x00525270": {
+      "name": "__read",
+      "conv": "cdecl",
+      "args": ["int", "ptr", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "fd 3, full buffer read return",
+      "args": ["@reader"],
+      "callees": {
+        "0x00525270": {
+          "name": "__read",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "u32"],
+          "ret": 8192
+        }
+      }
+    },
+    {
+      "name": "fd 0, empty read",
+      "args": ["@reader"],
+      "memory": [
+        {"addr": "@reader", "offset": "0x4", "u32": 0}
+      ],
+      "callees": {
+        "0x00525270": {
+          "name": "__read",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "fd -1, failed read",
+      "args": ["@reader"],
+      "memory": [
+        {"addr": "@reader", "offset": "0x4", "u32": 4294967295}
+      ],
+      "callees": {
+        "0x00525270": {
+          "name": "__read",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "u32"],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "large fd, nonstandard result",
+      "args": ["@reader"],
+      "memory": [
+        {"addr": "@reader", "offset": "0x4", "u32": 305419896}
+      ],
+      "callees": {
+        "0x00525270": {
+          "name": "__read",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "u32"],
+          "ret": 17
+        }
+      }
+    },
+    {
+      "name": "minimum signed fd",
+      "args": ["@reader"],
+      "memory": [
+        {"addr": "@reader", "offset": "0x4", "u32": 2147483648}
+      ],
+      "callees": {
+        "0x00525270": {
+          "name": "__read",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "u32"],
+          "ret": -2147483648
+        }
+      }
+    },
+    {
+      "name": "maximum signed fd",
+      "args": ["@reader"],
+      "memory": [
+        {"addr": "@reader", "offset": "0x4", "u32": 2147483647}
+      ],
+      "callees": {
+        "0x00525270": {
+          "name": "__read",
+          "conv": "cdecl",
+          "args": ["int", "ptr", "u32"],
+          "ret": 2147483647
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5213488,
+    "count": 30,
+    "args": [
+      {
+        "choices": ["@reader"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@reader",
+        "offset": "0x4",
+        "type": "int",
+        "range": [-2147483648, 2147483647]
+      }
+    ]
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "function": "EQ_CharacterCreationOverlay_guess::EQ_CharacterCreationOverlay_guess",
+  "original": "0x00428686",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@overlay",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "overlay": {
+      "size": "0x1c00",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "setrect": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00534248",
+      "u32": "@setrect"
+    },
+    {
+      "addr": "0x006E4DE0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450049": {
+      "name": "EQ_Overlay::EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 1
+    },
+    "0x00450168": {
+      "name": "EQ_Overlay::load_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x00429571": {
+      "name": "InitializeCharacterCreationRectangles_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004292ce": {
+      "name": "EQ_Overlay_InitializeCharacterCreationButtons_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "neither flag: ccreate.bmp, plain layout",
+      "args": [],
+      "memory": [
+        {"addr": "@display", "offset": "0x88", "u32": 0},
+        {"addr": "@display", "offset": "0x94", "u32": 0}
+      ]
+    },
+    {
+      "name": "0x88 set only: ccreate1b.bmp layout",
+      "args": [],
+      "memory": [
+        {"addr": "@display", "offset": "0x88", "u32": 1},
+        {"addr": "@display", "offset": "0x94", "u32": 0}
+      ]
+    },
+    {
+      "name": "0x94 set only: ccreate1l.bmp layout with loops",
+      "args": [],
+      "memory": [
+        {"addr": "@display", "offset": "0x88", "u32": 0},
+        {"addr": "@display", "offset": "0x94", "u32": 1}
+      ],
+      "objects": {
+        "overlay": {
+          "size": "0x1c00",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x60c", "u32": 100},
+            {"offset": "0x61c", "u32": 200},
+            {"offset": "0x62c", "u32": 300}
+          ]
+        }
+      }
+    },
+    {
+      "name": "both set: 0x94 wins",
+      "args": [],
+      "memory": [
+        {"addr": "@display", "offset": "0x88", "u32": 7},
+        {"addr": "@display", "offset": "0x94", "u32": "0x80000000"}
+      ],
+      "objects": {
+        "overlay": {
+          "size": "0x1c00",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x60c", "u32": "0xffffffff"},
+            {"offset": "0x61c", "u32": "0x7fffffff"},
+            {"offset": "0x62c", "u32": 0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative 0x88 counts as set",
+      "args": [],
+      "memory": [
+        {"addr": "@display", "offset": "0x88", "u32": "0xffffffff"},
+        {"addr": "@display", "offset": "0x94", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4359814,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@overlay",
+        "size": "0x1c00"
+      },
+      {
+        "addr": "@display",
+        "offset": "0x88",
+        "type": "u32",
+        "choices": [0, 1, "0xffffffff", "0x80000000", 5]
+      },
+      {
+        "addr": "@display",
+        "offset": "0x94",
+        "type": "u32",
+        "choices": [0, 1, "0xffffffff", "0x80000000", 9]
+      },
+      {
+        "addr": "@overlay",
+        "offset": "0x60c",
+        "type": "int",
+        "range": [-1000, 1000]
+      },
+      {
+        "addr": "@overlay",
+        "offset": "0x61c",
+        "type": "int",
+        "range": [-1000, 1000]
+      },
+      {
+        "addr": "@overlay",
+        "offset": "0x62c",
+        "type": "int",
+        "range": [-1000, 1000]
+      }
+    ]
+  }
+}

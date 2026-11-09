@@ -1,0 +1,200 @@
+{
+  "function": "NormalizeFilePathOwner_guess::normalizeFilePath_guess",
+  "original": "0x10021d55",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@normalizefilepathowner",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "normalizefilepathowner": {
+      "size": "0x8",
+      "fill": "zero"
+    },
+    "source": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@input_object"}
+      ]
+    },
+    "input_object": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@input_buffer"},
+        {"offset": "0xc", "u32": 10}
+      ]
+    },
+    "input_buffer": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "AbC\\///xZ"}
+      ]
+    },
+    "heap": {
+      "size": "0x4000",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10069058": {
+      "name": "setupExceptionHandler_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    },
+    "0x10021938": {
+      "name": "initializePackFSData_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": 0,
+      "passthrough": true
+    },
+    "0x10021e78": {
+      "name": "getStringLength_guess",
+      "conv": "fastcall",
+      "args": ["ptr"],
+      "ret": 0,
+      "passthrough": true
+    },
+    "0x100219be": {
+      "name": "PackFSData_PackFSData_guess",
+      "conv": "thiscall",
+      "args": ["u32"],
+      "passthrough": true
+    },
+    "0x10021c94": {
+      "name": "PackFsStringReference_guess::copyStringReference_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "ret": 0,
+      "passthrough": true
+    },
+    "0x1002190d": {
+      "name": "decrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": [
+        "@heap+0x000", "@heap+0x200", "@heap+0x400", "@heap+0x600",
+        "@heap+0x800", "@heap+0xa00", "@heap+0xc00", "@heap+0xe00",
+        "@heap+0x1000", "@heap+0x1200", "@heap+0x1400", "@heap+0x1600",
+        "@heap+0x1800", "@heap+0x1a00", "@heap+0x1c00", "@heap+0x1e00",
+        "@heap+0x2000", "@heap+0x2200", "@heap+0x2400", "@heap+0x2600",
+        "@heap+0x2800", "@heap+0x2a00", "@heap+0x2c00", "@heap+0x2e00",
+        "@heap+0x3000", "@heap+0x3200", "@heap+0x3400", "@heap+0x3600",
+        "@heap+0x3800", "@heap+0x3a00", "@heap+0x3c00", "@heap+0x3e00"
+      ]
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x10069058"
+  },
+  "cases": [
+    {
+      "name": "mixed_case_and_repeated_separators",
+      "args": ["@source"],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "null_source_object",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "zero_stored_length",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_object", "offset": "0xc", "u32": 0}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "one_character",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_buffer", "cstr": "Q"},
+        {"addr": "@input_object", "offset": "0xc", "u32": 2}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "letter_boundaries",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_buffer", "cstr": "AZaz"},
+        {"addr": "@input_object", "offset": "0xc", "u32": 5}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "outside_letter_boundaries",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_buffer", "cstr": "@A[Z"},
+        {"addr": "@input_object", "offset": "0xc", "u32": 5}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "leading_trailing_and_mixed_separators",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_buffer", "cstr": "\\\\//A\\\\B///"},
+        {"addr": "@input_object", "offset": "0xc", "u32": 13}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "embedded_null_is_processed_by_stored_length",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_buffer", "hex": "41004200"},
+        {"addr": "@input_object", "offset": "0xc", "u32": 4}
+      ],
+      "expect": {"ret": "0x60000000"}
+    },
+    {
+      "name": "signed_high_bytes_pass_through",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@input_buffer", "hex": "8041ff00"},
+        {"addr": "@input_object", "offset": "0xc", "u32": 4}
+      ],
+      "expect": {"ret": "0x60000000"}
+    }
+  ],
+  "fuzz": {
+    "seed": 138581,
+    "count": 32,
+    "args": [
+      {"choices": ["@source"]}
+    ],
+    "memory": [
+      {"addr": "@input_object", "offset": "0xc", "type": "u32", "range": [0, 64]},
+      {"addr": "@input_buffer", "size": 64}
+    ]
+  }
+}

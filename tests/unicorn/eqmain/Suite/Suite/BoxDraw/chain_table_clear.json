@@ -1,0 +1,162 @@
+{
+  "function": "chain_table_free_guess",
+  "original": "0x10008ce0",
+  "sources": [
+    "src/eqmain/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "t": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x1c", "u32": "@o1"},
+      {"offset": "0x20", "u32": "@o3"},
+      {"offset": "0x24", "u32": 3},
+      {"offset": "0x30", "u32": "@x"}
+    ]},
+    "x": {"size": "0x10", "fill": "random"},
+    "o1": {"size": "0xc", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0},
+      {"offset": "0x4", "u32": "@ea"},
+      {"offset": "0x8", "u32": "@o2"}
+    ]},
+    "o2": {"size": "0xc", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@o1"},
+      {"offset": "0x4", "u32": "@eb"},
+      {"offset": "0x8", "u32": "@o3"}
+    ]},
+    "o3": {"size": "0xc", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@o2"},
+      {"offset": "0x4", "u32": "@ec"},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "ea": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0xc", "u32": "@s1"},
+      {"offset": "0x10", "u32": "@s2"},
+      {"offset": "0x14", "u32": 2}
+    ]},
+    "eb": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0xc", "u32": 0},
+      {"offset": "0x10", "u32": 0},
+      {"offset": "0x14", "u32": 0}
+    ]},
+    "ec": {"size": "0x20", "fill": "random", "init": [
+      {"offset": "0xc", "u32": "@s3"},
+      {"offset": "0x10", "u32": "@s3"},
+      {"offset": "0x14", "u32": 1}
+    ]},
+    "s1": {"size": "0xc", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0},
+      {"offset": "0x4", "u32": "@sa"},
+      {"offset": "0x8", "u32": "@s2"}
+    ]},
+    "s2": {"size": "0xc", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@s1"},
+      {"offset": "0x4", "u32": "@sb"},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "s3": {"size": "0xc", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0},
+      {"offset": "0x4", "u32": "@sc"},
+      {"offset": "0x8", "u32": 0}
+    ]},
+    "sa": {"size": "0xc", "fill": "random", "init": [{"offset": "0x8", "u32": "@ba"}]},
+    "sb": {"size": "0xc", "fill": "random", "init": [{"offset": "0x8", "u32": "@bb"}]},
+    "sc": {"size": "0xc", "fill": "random", "init": [{"offset": "0x8", "u32": 0}]},
+    "ba": {"size": "0x10", "fill": "random"},
+    "bb": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10007a80": {
+      "name": "FUN_10007a80",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10028430": {
+      "name": "list3_unlink_free_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["u32", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {"name": "typical: 3 outer entries; the first has 2 sub-entries, the second none, the third 1 with a null block",
+     "args": ["@t"]},
+    {"name": "empty table: head 0, only the extra and the table are freed",
+     "args": ["@t"],
+     "memory": [{"addr": "@t+0x1c", "u32": 0}]},
+    {"name": "one outer entry without sub-entries: the walk ends at the cut next link",
+     "args": ["@t"],
+     "memory": [{"addr": "@o1+0x8", "u32": 0}, {"addr": "@ea+0xc", "u32": 0}]},
+    {"name": "first outer entry with one sub-entry: its sub-list stops after one",
+     "args": ["@t"],
+     "memory": [{"addr": "@s1+0x8", "u32": 0}]},
+    {"name": "no sub-lists anywhere that are read: each outer entry freed on its own",
+     "args": ["@t"],
+     "memory": [{"addr": "@ea+0xc", "u32": 0}, {"addr": "@ec+0xc", "u32": 0}]},
+    {"name": "null extra: FUN_10007a80 still called, with 0",
+     "args": ["@t"],
+     "memory": [{"addr": "@t+0x30", "u32": 0}]},
+    {"name": "null block of a sub-entry: _free(0) still called before the entry",
+     "args": ["@t"],
+     "memory": [{"addr": "@sa+0x8", "u32": 0}]},
+    {"name": "FUN_10007a80 empties the outer list: the head is read after the call",
+     "args": ["@t"],
+     "callees": {"0x10007a80": {"name": "FUN_10007a80", "conv": "cdecl", "args": ["ptr"],
+       "writes": [{"addr": "@t+0x1c", "hex": "00000000"}]}}},
+    {"name": "FUN_10007a80 empties the third entry's sub-list: sub-lists read per entry",
+     "args": ["@t"],
+     "callees": {"0x10007a80": {"name": "FUN_10007a80", "conv": "cdecl", "args": ["ptr"],
+       "writes": [{"addr": "@ec+0xc", "hex": "00000000"}]}}}
+  ],
+  "fuzz": {
+    "seed": 36064,
+    "count": 40,
+    "args": [
+      {"choices": ["@t"]}
+    ],
+    "memory": [
+      {"addr": "@t+0x1c", "type": "ptr", "choices": [0, "@o1"], "p": 0.8},
+      {"addr": "@t+0x30", "type": "ptr", "choices": [0, "@x"], "p": 0.5},
+      {"addr": "@o1+0x8", "type": "ptr", "choices": [0, "@o2"]},
+      {"addr": "@o2+0x8", "type": "ptr", "choices": [0, "@o3"]},
+      {"addr": "@o1+0x4", "type": "ptr", "choices": ["@ea", "@eb", "@ec"]},
+      {"addr": "@o2+0x4", "type": "ptr", "choices": ["@ea", "@eb", "@ec"]},
+      {"addr": "@o3+0x4", "type": "ptr", "choices": ["@ea", "@eb", "@ec"]},
+      {"addr": "@ea+0xc", "type": "ptr", "choices": [0, "@s1"]},
+      {"addr": "@ec+0xc", "type": "ptr", "choices": [0, "@s3"]},
+      {"addr": "@s1+0x8", "type": "ptr", "choices": [0, "@s2"]},
+      {"addr": "@s1+0x4", "type": "ptr", "choices": ["@sa", "@sc"]},
+      {"addr": "@s2+0x4", "type": "ptr", "choices": ["@sb", "@sc"]},
+      {"addr": "@sa+0x8", "type": "ptr", "choices": [0, "@ba", "@bb"]},
+      {"addr": "@sb+0x8", "type": "ptr", "choices": [0, "@ba", "@bb"]}
+    ]
+  }
+}

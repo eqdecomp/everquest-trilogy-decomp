@@ -1,0 +1,189 @@
+{
+  "function": "Tree_guess::Erase_guess",
+  "original": "0x1001a0f7",
+  "sources": [
+    "src/eqgfx/Win32 Goodies/Win32WinUser.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@tree",
+  "args": [
+    {
+      "name": "node",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "tree": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "nil": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "a": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "b": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "c": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "d": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100AADDC", "u32": "@nil"}
+  ],
+  "callees": {
+    "0x1001a0f7": {
+      "name": "Tree_guess::Erase_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "node is nil: nothing is freed",
+      "args": [
+        "@nil"
+      ]
+    },
+    {
+      "name": "single node, both links nil",
+      "args": [
+        "@a"
+      ]
+    },
+    {
+      "name": "single node, right child set, left nil",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x8", "u32": "@b"}
+      ]
+    },
+    {
+      "name": "single node, left child set, right nil",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"}
+      ]
+    },
+    {
+      "name": "left chain of three, distinct right subtrees, nil right in the middle",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"},
+        {"addr": "@a", "offset": "0x8", "u32": "@d"},
+        {"addr": "@b", "offset": "0x0", "u32": "@c"},
+        {"addr": "@b", "offset": "0x8", "u32": "@nil"},
+        {"addr": "@c", "offset": "0x0", "u32": "@nil"},
+        {"addr": "@c", "offset": "0x8", "u32": "@d"}
+      ]
+    },
+    {
+      "name": "left chain of two, right before delete ordering",
+      "args": [
+        "@b"
+      ],
+      "memory": [
+        {"addr": "@b", "offset": "0x0", "u32": "@c"},
+        {"addr": "@b", "offset": "0x8", "u32": "@d"},
+        {"addr": "@c", "offset": "0x0", "u32": "@nil"},
+        {"addr": "@c", "offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    {
+      "name": "three-node left chain with nil right children",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"},
+        {"addr": "@b", "offset": "0x0", "u32": "@c"}
+      ]
+    },
+    {
+      "name": "left chain of two, right subtree on the root: recursion walks current's right, not node's",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"},
+        {"addr": "@a", "offset": "0x8", "u32": "@d"},
+        {"addr": "@b", "offset": "0x0", "u32": "@nil"},
+        {"addr": "@b", "offset": "0x8", "u32": "@c"}
+      ]
+    },
+    {
+      "name": "right subtree is itself a chain, nested recursion frees it first",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x8", "u32": "@b"},
+        {"addr": "@b", "offset": "0x0", "u32": "@c"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 106743,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@a",
+          "@b",
+          "@c",
+          "@nil"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@a", "offset": 0, "type": "ptr", "choices": ["@b", "@c", "@nil"]},
+      {"addr": "@a", "offset": 8, "type": "ptr", "choices": ["@nil", "@b", "@c", "@d"]},
+      {"addr": "@b", "offset": 0, "type": "ptr", "choices": ["@c", "@nil"]},
+      {"addr": "@b", "offset": 8, "type": "ptr", "choices": ["@nil", "@c", "@d"]},
+      {"addr": "@c", "offset": 0, "type": "ptr", "choices": ["@nil"]},
+      {"addr": "@c", "offset": 8, "type": "ptr", "choices": ["@nil", "@d"]}
+    ]
+  }
+}

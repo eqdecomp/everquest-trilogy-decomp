@@ -1,0 +1,206 @@
+{
+  "function": "t3dSetRegionBoundingSphere",
+  "original": "0x10019415",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "boundingSphere",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "boundingsphere": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "distinct buffers",
+      "args": [
+        "@region",
+        "@boundingsphere"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero source",
+      "args": [
+        "@region",
+        "@boundingsphere"
+      ],
+      "memory": [
+        {
+          "addr": "@boundingsphere",
+          "size": 20,
+          "fill": "zero"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "exact self copy",
+      "args": [
+        "@region",
+        "@region+0x10"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "forward overlap propagates first word",
+      "args": [
+        "@region",
+        "@region+0xc"
+      ],
+      "memory": [
+        {
+          "addr": "@region",
+          "offset": "0xc",
+          "u32": "0x11111111"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x10",
+          "u32": "0x22222222"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x14",
+          "u32": "0x33333333"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x18",
+          "u32": "0x44444444"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x1c",
+          "u32": "0x55555555"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x20",
+          "u32": "0x66666666"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "backward overlap preserves forward copy order",
+      "args": [
+        "@region",
+        "@region+0x14"
+      ],
+      "memory": [
+        {
+          "addr": "@region",
+          "offset": "0x14",
+          "u32": "0x33333333"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x18",
+          "u32": "0x44444444"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x1c",
+          "u32": "0x55555555"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x20",
+          "u32": "0x66666666"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x24",
+          "u32": "0x77777777"
+        },
+        {
+          "addr": "@region",
+          "offset": "0x28",
+          "u32": "0x88888888"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unaligned destination and source",
+      "args": [
+        "@region+0x1",
+        "@boundingsphere+0x1"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "source ends at buffer boundary",
+      "args": [
+        "@region",
+        "@region+0x6c"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 103445,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@region",
+          "@region+0x1"
+        ]
+      },
+      {
+        "choices": [
+          "@boundingsphere",
+          "@boundingsphere+0x1",
+          "@region+0xc",
+          "@region+0x10",
+          "@region+0x14",
+          "@region+0x6c"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@region",
+        "size": 128
+      },
+      {
+        "addr": "@boundingsphere",
+        "size": 64
+      }
+    ]
+  }
+}

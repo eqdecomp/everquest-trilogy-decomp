@@ -1,0 +1,700 @@
+{
+  "function": "t3dClipPolygonFrustumRGB_guess",
+  "original": "0x10030620",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "clip",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    },
+    {
+      "name": "outVerts",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "clip": {
+      "size": "0x540",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1a0",
+          "f32": -10.0
+        },
+        {
+          "offset": "0x1a8",
+          "f32": 10.0
+        },
+        {
+          "offset": "0x2bc",
+          "u32": 32
+        },
+        {
+          "offset": "0x2c0",
+          "u32": "@distances"
+        },
+        {
+          "offset": "0x2c4",
+          "u32": "@verts_a"
+        },
+        {
+          "offset": "0x2c8",
+          "u32": "@verts_b"
+        },
+        {
+          "offset": "0x400",
+          "u32": 63
+        }
+      ]
+    },
+    "outverts": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "distances": {
+      "size": "0x400",
+      "fill": "zero"
+    },
+    "verts_a": {
+      "size": "0x8000",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "f32": 0.0
+        },
+        {
+          "offset": "0x4",
+          "f32": -1.0
+        },
+        {
+          "offset": "0x8",
+          "f32": 2.0
+        },
+        {
+          "offset": "0x30",
+          "f32": 1.0
+        },
+        {
+          "offset": "0x34",
+          "f32": 1.0
+        },
+        {
+          "offset": "0x38",
+          "f32": 2.0
+        },
+        {
+          "offset": "0x60",
+          "f32": -1.0
+        },
+        {
+          "offset": "0x64",
+          "f32": 1.0
+        },
+        {
+          "offset": "0x68",
+          "f32": 2.0
+        }
+      ]
+    },
+    "verts_b": {
+      "size": "0x8000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076284",
+      "f32": 0.0
+    },
+    {
+      "addr": "0x100762e4",
+      "from_image": "0x100762E4",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "kernel32.dll!DebugBreak": {
+      "name": "DebugBreak",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0
+    },
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__ftol": "0x1004ec36"
+  },
+  "coverage_ok": {
+    "100306BA-100306C5": "switch default: planeIndex only takes 0..5, so DebugBreak is unreachable",
+    "1003081A-10030827": "switch default: planeIndex only takes 0..5, so DebugBreak is unreachable"
+  },
+  "cases": [
+    {
+      "name": "triangle inside all six planes",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "expect": {
+        "ret": 3
+      }
+    },
+    {
+      "name": "count 0 returns 0",
+      "args": [
+        "@clip",
+        0,
+        "@outverts"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count 1 returns 0",
+      "args": [
+        "@clip",
+        1,
+        "@outverts"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count 2 returns 0",
+      "args": [
+        "@clip",
+        2,
+        "@outverts"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no planes: count unchanged, clamp only",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 3
+      }
+    },
+    {
+      "name": "clamp: 0x200 and 0x100 clamp to 0xff, negative kept",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x24",
+          "u32": 512
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x58",
+          "u32": 4294967280
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x8c",
+          "u32": 256
+        }
+      ],
+      "expect": {
+        "ret": 3
+      }
+    },
+    {
+      "name": "plane 0 (y+z): vertex 0 outside",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 1
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x4",
+          "f32": -3.0
+        }
+      ],
+      "expect": {
+        "ret": 4
+      }
+    },
+    {
+      "name": "plane 1 (z-y): vertex 0 outside",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 2
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x4",
+          "f32": 3.0
+        }
+      ],
+      "expect": {
+        "ret": 4
+      }
+    },
+    {
+      "name": "plane 2 (x+z): vertex 0 outside",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 4
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x0",
+          "f32": -3.0
+        }
+      ],
+      "expect": {
+        "ret": 4
+      }
+    },
+    {
+      "name": "plane 3 (z-x): vertex 0 outside",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 8
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x0",
+          "f32": 3.0
+        }
+      ],
+      "expect": {
+        "ret": 4
+      }
+    },
+    {
+      "name": "plane 4 (z-near): vertex 0 outside",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 16
+        },
+        {
+          "addr": "@clip",
+          "offset": "0x1a0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x8",
+          "f32": 0.5
+        }
+      ],
+      "expect": {
+        "ret": 4
+      }
+    },
+    {
+      "name": "plane 5 (far-z): vertex 0 outside",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 32
+        },
+        {
+          "addr": "@clip",
+          "offset": "0x1a8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x8",
+          "f32": 4.0
+        }
+      ],
+      "expect": {
+        "ret": 4
+      }
+    },
+    {
+      "name": "plane 0: every vertex outside, empty output",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 1
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x4",
+          "f32": -3.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x34",
+          "f32": -3.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x64",
+          "f32": -3.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "plane 3: every vertex outside, empty output",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 8
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x0",
+          "f32": 3.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x30",
+          "f32": 3.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x60",
+          "f32": 3.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "plane 4: near above every vertex, empty output",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 16
+        },
+        {
+          "addr": "@clip",
+          "offset": "0x1a0",
+          "f32": 3.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "plane 5: far below every vertex, empty output",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 32
+        },
+        {
+          "addr": "@clip",
+          "offset": "0x1a8",
+          "f32": 1.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "four vertices with a zero fourth vertex",
+      "args": [
+        "@clip",
+        4,
+        "@outverts"
+      ]
+    },
+    {
+      "name": "NaN x on vertex 1 with all planes",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@verts_a",
+          "offset": "0x30",
+          "u32": 2143289344
+        }
+      ]
+    },
+    {
+      "name": "all planes: vertex 0 outside plane 0 only",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@verts_a",
+          "offset": "0x4",
+          "f32": -3.0
+        }
+      ]
+    },
+    {
+      "name": "planes 0 and 5 together",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 33
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x4",
+          "f32": -3.0
+        },
+        {
+          "addr": "@verts_a",
+          "offset": "0x68",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "mask bit 6 is never tested",
+      "args": [
+        "@clip",
+        3,
+        "@outverts"
+      ],
+      "memory": [
+        {
+          "addr": "@clip",
+          "offset": "0x400",
+          "u32": 64
+        }
+      ],
+      "expect": {
+        "ret": 3
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 198176,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@clip"
+        ]
+      },
+      {
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "choices": [
+          "@outverts"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@clip",
+        "offset": "0x400",
+        "type": "u32",
+        "range": [
+          0,
+          63
+        ]
+      },
+      {
+        "addr": "@clip",
+        "offset": "0x1a0",
+        "type": "float",
+        "range": [
+          -3,
+          3
+        ]
+      },
+      {
+        "addr": "@clip",
+        "offset": "0x1a8",
+        "type": "float",
+        "range": [
+          -3,
+          3
+        ]
+      },
+      {
+        "addr": "@verts_a",
+        "offset": "0x0",
+        "type": "float",
+        "range": [
+          -4,
+          4
+        ],
+        "count": 8,
+        "stride": 48
+      },
+      {
+        "addr": "@verts_a",
+        "offset": "0x4",
+        "type": "float",
+        "range": [
+          -4,
+          4
+        ],
+        "count": 8,
+        "stride": 48
+      },
+      {
+        "addr": "@verts_a",
+        "offset": "0x8",
+        "type": "float",
+        "range": [
+          -4,
+          4
+        ],
+        "count": 8,
+        "stride": 48
+      },
+      {
+        "addr": "@verts_a",
+        "offset": "0x24",
+        "type": "int",
+        "range": [
+          -64,
+          320
+        ],
+        "count": 8,
+        "stride": 48
+      },
+      {
+        "addr": "@verts_a",
+        "offset": "0x28",
+        "type": "int",
+        "range": [
+          -64,
+          320
+        ],
+        "count": 8,
+        "stride": 48
+      },
+      {
+        "addr": "@verts_a",
+        "offset": "0x2c",
+        "type": "int",
+        "range": [
+          -64,
+          320
+        ],
+        "count": 8,
+        "stride": 48
+      }
+    ]
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "function": "t3dFindReferenceInSortedList",
+  "original": "0x100190b6",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "reference",
+      "type": "u32"
+    },
+    {
+      "name": "list",
+      "type": "ptr"
+    },
+    {
+      "name": "index_out",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "refs": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 5},
+        {"offset": "0x4", "u32": 10},
+        {"offset": "0x8", "u32": 15},
+        {"offset": "0xc", "u32": 20},
+        {"offset": "0x10", "u32": 25},
+        {"offset": "0x14", "u32": 30},
+        {"offset": "0x18", "u32": 35},
+        {"offset": "0x1c", "u32": 40},
+        {"offset": "0x20", "u32": 45},
+        {"offset": "0x24", "u32": 50},
+        {"offset": "0x28", "u32": 55},
+        {"offset": "0x2c", "u32": 60}
+      ]
+    },
+    "list": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 12},
+        {"offset": "0xc", "u32": "@refs"}
+      ]
+    },
+    "index_out": {
+      "size": 4,
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty list",
+      "args": [5, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "negative count",
+      "args": [5, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "single element found (first compare)",
+      "args": [5, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "single element below",
+      "args": [1, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "single element above",
+      "args": [9, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "found first",
+      "args": [5, "@list", "@index_out"]
+    },
+    {
+      "name": "found last",
+      "args": [60, "@list", "@index_out"]
+    },
+    {
+      "name": "found middle, even count",
+      "args": [25, "@list", "@index_out"]
+    },
+    {
+      "name": "found middle, odd count (first compare)",
+      "args": [25, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 9}]
+    },
+    {
+      "name": "below all",
+      "args": [0, "@list", "@index_out"]
+    },
+    {
+      "name": "above all",
+      "args": [99, "@list", "@index_out"]
+    },
+    {
+      "name": "between, even count",
+      "args": [27, "@list", "@index_out"]
+    },
+    {
+      "name": "between, odd count",
+      "args": [27, "@list", "@index_out"],
+      "memory": [{"addr": "@list", "offset": "0x4", "u32": 9}]
+    },
+    {
+      "name": "duplicates: returns the middle hit",
+      "args": [5, "@list", "@index_out"],
+      "memory": [
+        {"addr": "@list", "offset": "0x4", "u32": 6},
+        {"addr": "@refs", "offset": "0x4", "u32": 5},
+        {"addr": "@refs", "offset": "0x8", "u32": 5},
+        {"addr": "@refs", "offset": "0xc", "u32": 10},
+        {"addr": "@refs", "offset": "0x10", "u32": 10},
+        {"addr": "@refs", "offset": "0x14", "u32": 20}
+      ]
+    },
+    {
+      "name": "unsigned compare: reference below a huge element",
+      "args": [1, "@list", "@index_out"],
+      "memory": [
+        {"addr": "@list", "offset": "0x4", "u32": 1},
+        {"addr": "@refs", "offset": "0x0", "u32": "0x80000000"}
+      ]
+    },
+    {
+      "name": "unsigned compare: reference above a small element",
+      "args": ["0x80000000", "@list", "@index_out"],
+      "memory": [
+        {"addr": "@list", "offset": "0x4", "u32": 1},
+        {"addr": "@refs", "offset": "0x0", "u32": 1}
+      ]
+    },
+    {
+      "name": "unsigned compare: found at the top",
+      "args": ["0xffffffff", "@list", "@index_out"],
+      "memory": [
+        {"addr": "@list", "offset": "0x4", "u32": 4},
+        {"addr": "@refs", "offset": "0x0", "u32": 1},
+        {"addr": "@refs", "offset": "0x4", "u32": "0x7fffffff"},
+        {"addr": "@refs", "offset": "0x8", "u32": "0x80000000"},
+        {"addr": "@refs", "offset": "0xc", "u32": "0xffffffff"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 102582,
+    "count": 40,
+    "args": [
+      {"range": [0, 70]},
+      {"choices": ["@list"]},
+      {"choices": ["@index_out"]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x4", "type": "int", "range": [-1, 12]},
+      {"addr": "@refs", "offset": "0x0", "type": "u32", "choices": [5, 2147483648, 4294967295, 0], "p": 0.4},
+      {"addr": "@refs", "offset": "0x4", "type": "u32", "choices": [10, 2147483647, 4294967294, 1], "p": 0.4},
+      {"addr": "@refs", "offset": "0x28", "type": "u32", "choices": [55, 2147483648, 4294967295, 50], "p": 0.4}
+    ]
+  }
+}

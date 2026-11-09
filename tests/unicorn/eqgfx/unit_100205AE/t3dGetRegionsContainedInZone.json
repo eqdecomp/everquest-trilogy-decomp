@@ -1,0 +1,299 @@
+{
+  "function": "t3dGetRegionsContainedInZone",
+  "original": "0x10020885",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "zone",
+      "type": "ptr"
+    },
+    {
+      "name": "referenceList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "zone": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 3
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@regions"
+        }
+      ]
+    },
+    "regions": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 3
+        },
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": 7
+        }
+      ]
+    },
+    "referencelist": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001905a": {
+      "name": "t3dClearReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10019065": {
+      "name": "t3dAddReferenceToList",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: three regions, all added",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero as the unused argument",
+      "args": [
+        0,
+        "@zone",
+        "@referencelist"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no regions: clear only, nothing added",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one region: added",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative count: loop never entered",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "memory": [
+        {
+          "addr": "@zone",
+          "offset": "0x14",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "add fails on the first region: stop",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "callees": {
+        "0x10019065": {
+          "name": "t3dAddReferenceToList",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "add fails on the second region: third not added",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "callees": {
+        "0x10019065": {
+          "name": "t3dAddReferenceToList",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "ret": [
+            0,
+            1,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "add fails on the last region",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "callees": {
+        "0x10019065": {
+          "name": "t3dAddReferenceToList",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "add returns 2: any non-zero is a failure",
+      "args": [
+        1,
+        "@zone",
+        "@referencelist"
+      ],
+      "callees": {
+        "0x10019065": {
+          "name": "t3dAddReferenceToList",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "ret": 2
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 10020885,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@zone"
+        ]
+      },
+      {
+        "choices": [
+          "@referencelist"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@zone",
+        "offset": "0x14",
+        "type": "int",
+        "range": [
+          -2,
+          6
+        ]
+      },
+      {
+        "addr": "@zone",
+        "offset": "0x1c",
+        "type": "ptr",
+        "choices": [
+          "@regions"
+        ]
+      },
+      {
+        "addr": "@regions",
+        "type": "int",
+        "count": 8,
+        "range": [
+          -4,
+          40
+        ]
+      }
+    ]
+  }
+}

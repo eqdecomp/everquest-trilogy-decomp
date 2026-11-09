@@ -1,0 +1,624 @@
+{
+  "function": "InitUnitRecord_guess",
+  "original": "0x1000be80",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rec",
+      "type": "ptr"
+    },
+    {
+      "name": "bits",
+      "type": "int"
+    },
+    {
+      "name": "version",
+      "type": "cstr"
+    },
+    {
+      "name": "size",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rec": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": 0
+        },
+        {
+          "offset": "0x24",
+          "u32": 0
+        },
+        {
+          "offset": "0x28",
+          "u32": 0
+        }
+      ]
+    },
+    "state": {
+      "size": "0x18",
+      "fill": "random"
+    },
+    "window": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "altalloc": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004660C",
+      "from_image": "0x1004660C",
+      "image_size": 6
+    }
+  ],
+  "callees": {
+    "0x1000e580": {
+      "name": "CallocCallback_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": "@state"
+    },
+    "0x1000a460": {
+      "name": "FUN_1000a460",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": "@window"
+    },
+    "0x1000be30": {
+      "name": "FUN_1000be30",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000bde0": {
+      "name": "FUN_1000bde0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@altalloc": {
+      "name": "altalloc",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": "@state"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: bits 8, unit and window set, reset, 0",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bits 15 (top of the range)",
+      "args": [
+        "@rec",
+        15,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bits -8: negated, flag set, window check is 0",
+      "args": [
+        "@rec",
+        -8,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bits -15: negated to the top of the range",
+      "args": [
+        "@rec",
+        -15,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocator kept, callback null: fn set, arg kept",
+      "args": [
+        "@rec",
+        9,
+        "1.1.2",
+        56
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x20",
+          "u32": "@altalloc"
+        },
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": 77
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocator null, callback kept: alloc set, fn kept",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        56
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": 305419896
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocator null with arg 77: arg cleared before the first allocation",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        56
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": 77
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bits 7 (below the range): released, -2",
+      "args": [
+        "@rec",
+        7,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "bits 16 (above the range): released, -2",
+      "args": [
+        "@rec",
+        16,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "bits -7: negated below the range, -2",
+      "args": [
+        "@rec",
+        -7,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "bits -16: negated above the range, -2",
+      "args": [
+        "@rec",
+        -16,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "bits INT_MIN: negation stays negative, -2",
+      "args": [
+        "@rec",
+        -2147483648,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "bits 0: -2",
+      "args": [
+        "@rec",
+        0,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "bits INT_MAX: -2",
+      "args": [
+        "@rec",
+        2147483647,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "window null, bits 9: released, -4",
+      "args": [
+        "@rec",
+        9,
+        "1.1.2",
+        56
+      ],
+      "callees": {
+        "0x1000a460": {
+          "name": "FUN_1000a460",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -4
+      }
+    },
+    {
+      "name": "window null, bits -12: released with flag set, -4",
+      "args": [
+        "@rec",
+        -12,
+        "1.1.2",
+        56
+      ],
+      "callees": {
+        "0x1000a460": {
+          "name": "FUN_1000a460",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -4
+      }
+    },
+    {
+      "name": "unit null, bits 8: -4 with nothing released",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        56
+      ],
+      "callees": {
+        "0x1000e580": {
+          "name": "CallocCallback_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -4
+      }
+    },
+    {
+      "name": "unit null, bits 3: allocation comes before the range check, -4",
+      "args": [
+        "@rec",
+        3,
+        "1.1.2",
+        56
+      ],
+      "callees": {
+        "0x1000e580": {
+          "name": "CallocCallback_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -4
+      }
+    },
+    {
+      "name": "rec null: -2",
+      "args": [
+        0,
+        8,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "rec null and bits 99: -2 before the range check",
+      "args": [
+        0,
+        99,
+        "1.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "version null: -6",
+      "args": [
+        "@rec",
+        8,
+        0,
+        56
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "version 2.1.2: -6",
+      "args": [
+        "@rec",
+        8,
+        "2.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "version 0.1.2: -6",
+      "args": [
+        "@rec",
+        8,
+        "0.1.2",
+        56
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "version empty: -6",
+      "args": [
+        "@rec",
+        8,
+        "",
+        56
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "version '1' alone (first byte only is checked): 0",
+      "args": [
+        "@rec",
+        8,
+        "1",
+        56
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "size 55 (0x37): -6",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        55
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "size 57 (0x39): -6",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        57
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "size 0: -6",
+      "args": [
+        "@rec",
+        8,
+        "1.1.2",
+        0
+      ],
+      "expect": {
+        "ret": -6
+      }
+    },
+    {
+      "name": "version null, rec null, bits bad: -6 (version checked first)",
+      "args": [
+        0,
+        99,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": -6
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 48768,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rec",
+          0
+        ]
+      },
+      {
+        "choices": [
+          -17,
+          -16,
+          -15,
+          -9,
+          -8,
+          -7,
+          -1,
+          0,
+          1,
+          7,
+          8,
+          9,
+          14,
+          15,
+          16,
+          17,
+          2147483647,
+          -2147483648
+        ]
+      },
+      {
+        "choices": [
+          "1.1.2",
+          "1.1.2",
+          "1.1.2",
+          "1",
+          "2.1.2",
+          "0.1.2",
+          "",
+          0
+        ]
+      },
+      {
+        "choices": [
+          56,
+          56,
+          56,
+          55,
+          57,
+          0,
+          -1
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rec",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@altalloc"
+        ]
+      },
+      {
+        "addr": "@rec",
+        "offset": "0x24",
+        "type": "ptr",
+        "choices": [
+          0,
+          305419896
+        ]
+      },
+      {
+        "addr": "@rec",
+        "offset": "0x28",
+        "type": "int",
+        "range": [
+          -5,
+          5
+        ]
+      }
+    ]
+  }
+}

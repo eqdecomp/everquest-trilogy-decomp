@@ -1,0 +1,75 @@
+{
+  "function": "Camp_guess",
+  "original": "0x004ab01f",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "command",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4e8c", "u32": 0},
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x00565650", "hex": "4142434400"},
+    {"addr": "0x00565648", "hex": "5758595a00"}
+  ],
+  "callees": {
+    "0x004a49bd": {
+      "name": "allowslashcommand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 1
+    },
+    "0x004cb72d": {
+      "name": "CEverQuest::PrepareToCamp_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {"name": "slash disabled leaves zero mode unchanged", "args": [0, "ABCD"], "memory": [{"addr": "0x006e4e8c", "u32": 0}], "callees": {"0x004a49bd": {"name": "allowslashcommand_guess", "conv": "cdecl", "args": [], "ret": 0}}},
+    {"name": "slash disabled preserves arbitrary dword", "args": [-1, "WXYZ"], "memory": [{"addr": "0x006e4e8c", "u32": 4294967295}], "callees": {"0x004a49bd": {"name": "allowslashcommand_guess", "conv": "cdecl", "args": [], "ret": 0}}},
+    {"name": "first prefix selects one", "args": [1, "ABCD"], "memory": [{"addr": "0x006e4e8c", "u32": 4294967295}]},
+    {"name": "first prefix is case insensitive", "args": [0, "abcd"]},
+    {"name": "mixed case first prefix", "args": [17, "AbCd-tail"]},
+    {"name": "first prefix requires all four bytes", "args": [0, "ABCx"]},
+    {"name": "first prefix ignores bytes after four", "args": [0, "ABCDx"]},
+    {"name": "second prefix selects two", "args": [0, "WXYZ"], "memory": [{"addr": "0x006e4e8c", "u32": 1}]},
+    {"name": "second prefix is case insensitive", "args": [0, "wxyz"]},
+    {"name": "mixed case second prefix", "args": [99, "WxYz-tail"]},
+    {"name": "second prefix requires all four bytes", "args": [0, "WXYx"]},
+    {"name": "second prefix ignores bytes after four", "args": [0, "WXYZx"]},
+    {"name": "no matching prefix clears prior mode", "args": [0, "nope"], "memory": [{"addr": "0x006e4e8c", "u32": 2}]},
+    {"name": "short first prefix does not match", "args": [0, "ABC"]},
+    {"name": "short second prefix does not match", "args": [0, "WXY"]},
+    {"name": "empty command clears prior mode", "args": [0, ""], "memory": [{"addr": "0x006e4e8c", "u32": 4294967295}]},
+    {"name": "argument points at first constant", "args": [0, "0x00565650"]},
+    {"name": "argument points at second constant", "args": [0, "0x00565648"]}
+  ],
+  "fuzz": {
+    "seed": 4894751,
+    "count": 40,
+    "args": [
+      {"range": [-2147483648, 2147483647]},
+      {"choices": ["", "ABCD", "abcd", "AbCd", "ABCx", "ABC", "ABCDx", "WXYZ", "wxyz", "WxYz", "WXYx", "WXY", "WXYZx", "nope", "ABCE", "XYZW"]}
+    ],
+    "memory": [
+      {"addr": "0x006e4e8c", "type": "u32", "choices": [0, 1, 2, 3, 4294967295]}
+    ]
+  }
+}

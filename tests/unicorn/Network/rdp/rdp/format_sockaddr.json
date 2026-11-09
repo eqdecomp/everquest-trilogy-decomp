@@ -1,0 +1,64 @@
+{
+  "function": "format_sockaddr",
+  "original": "0x004f1230",
+  "sources": [
+    "src/Network/rdp/rdp.c",
+    "src/Network/rdp/eventq.c",
+    "src/Network/rdp/connhash.c",
+    "src/Network/rdp/uevent.c",
+    "src/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "out", "type": "ptr"},
+    {"name": "addr", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "out": {"size": "0x100", "fill": "zero"},
+    "addr": {"size": "0x10", "fill": "zero"},
+    "ip": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "192.0.2.8"}]}
+  },
+  "callees": {
+    "0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 0},
+    "0x00500386": {"name": "inet_ntoa", "conv": "stdcall", "args": ["u32"], "ret": "@ip"}
+  },
+  "cases": [
+    {"name": "AF_INET", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 2}, {"addr": "@addr", "offset": "0x2", "u16": 13330},
+      {"addr": "@addr", "offset": "0x4", "u32": 134348992}
+    ]},
+    {"name": "AF_INET truncates ntohs high word", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 2}, {"addr": "@addr", "offset": "0x2", "u16": 1}
+    ], "callees": {"0x00500380": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 2882352146}}},
+    {"name": "AF_IPX", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 6}, {"addr": "@addr", "offset": "0xc", "u16": 4660}
+    ]},
+    {"name": "AF_COMPORT signed port", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 69}, {"addr": "@addr", "offset": "0x2", "u16": 65534}
+    ]},
+    {"name": "AF_COMPORT positive signed boundary", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 69}, {"addr": "@addr", "offset": "0x2", "u16": 32767}
+    ]},
+    {"name": "AF_COMPORT negative signed boundary", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 69}, {"addr": "@addr", "offset": "0x2", "u16": 32768}
+    ]},
+    {"name": "unknown family", "args": ["@out", "@addr"], "memory": [
+      {"addr": "@addr", "u16": 65535}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 5182000,
+    "count": 100,
+    "args": [
+      {"choices": ["@out"]},
+      {"choices": ["@addr"]}
+    ],
+    "memory": [
+      {"addr": "@addr", "type": "u16", "choices": [0, 1, 2, 3, 5, 6, 7, 68, 69, 70, 32767, 32768, 65535], "p": 1},
+      {"addr": "@addr", "offset": "0x2", "type": "u16", "choices": [0, 1, 32767, 32768, 65534, 65535], "p": 1},
+      {"addr": "@addr", "offset": "0x4", "type": "u32", "range": [0, 4294967295], "p": 1},
+      {"addr": "@addr", "offset": "0xc", "type": "u16", "choices": [0, 1, 32767, 32768, 65534, 65535], "p": 1}
+    ]
+  }
+}

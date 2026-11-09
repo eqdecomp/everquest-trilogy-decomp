@@ -1,0 +1,136 @@
+{
+  "function": "t3dDestroyDictionary",
+  "original": "0x1000dbbe",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x30", "u32": "@dict"}
+      ]
+    },
+    "dict": {
+      "size": "0x38",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 1},
+        {"offset": "0xc", "u32": "@buckets"},
+        {"offset": "0x24", "u32": 3},
+        {"offset": "0x2c", "u32": "@blocks"}
+      ]
+    },
+    "buckets": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0xb0c70001"}
+      ]
+    },
+    "blocks": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@block0"},
+        {"offset": "0x4", "u32": "@block1"},
+        {"offset": "0x8", "u32": "@block2"},
+        {"offset": "0xc", "u32": "@block3"},
+        {"offset": "0x10", "u32": "@block4"},
+        {"offset": "0x14", "u32": "@block5"},
+        {"offset": "0x18", "u32": "@block6"},
+        {"offset": "0x1c", "u32": "@block7"}
+      ]
+    },
+    "block0": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0000"}]},
+    "block1": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0001"}]},
+    "block2": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0002"}]},
+    "block3": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0003"}]},
+    "block4": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0004"}]},
+    "block5": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0005"}]},
+    "block6": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0006"}]},
+    "block7": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xb10c0007"}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["mem:4"]
+    }
+  },
+  "cases": [
+    {
+      "name": "three blocks (typical)",
+      "args": ["@world"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no dictionary",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@world", "offset": "0x30", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no blocks",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x24", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one block",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x24", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "eight blocks (array end)",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x24", "u32": 8}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "blocks reversed (free order)",
+      "args": ["@world"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x24", "u32": 4},
+        {"addr": "@blocks", "offset": "0x0", "u32": "@block3"},
+        {"addr": "@blocks", "offset": "0x4", "u32": "@block2"},
+        {"addr": "@blocks", "offset": "0x8", "u32": "@block1"},
+        {"addr": "@blocks", "offset": "0xc", "u32": "@block0"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 5017550,
+    "count": 40,
+    "args": [
+      {"choices": ["@world"]}
+    ],
+    "memory": [
+      {"addr": "@world", "offset": "0x30", "type": "ptr", "choices": ["@dict", 0]},
+      {"addr": "@dict", "offset": "0x24", "type": "u32", "range": [0, 8]},
+      {"addr": "@dict", "offset": "0xc", "type": "ptr", "choices": ["@buckets"]},
+      {"addr": "@dict", "offset": "0x2c", "type": "ptr", "choices": ["@blocks"]},
+      {"addr": "@blocks", "type": "ptr", "count": 8, "choices": ["@block0", "@block1", "@block2", "@block3", "@block4", "@block5", "@block6", "@block7"]}
+    ]
+  }
+}

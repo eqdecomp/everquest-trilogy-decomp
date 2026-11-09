@@ -1,0 +1,348 @@
+{
+  "function": "find_and_remove_packet_by_sequence_guess",
+  "original": "0x10030ED0",
+  "sources": [
+    "src/eqmain/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "list",
+      "type": "ptr"
+    },
+    {
+      "name": "seq",
+      "type": "short"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "list": {
+      "size": "0x18",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 3
+        },
+        {
+          "offset": "0x18",
+          "u32": 1000
+        }
+      ]
+    },
+    "a": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x12",
+          "u16": 5
+        },
+        {
+          "offset": "0x20",
+          "u32": 100
+        }
+      ]
+    },
+    "b": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x12",
+          "u16": 6
+        },
+        {
+          "offset": "0x20",
+          "u32": 200
+        }
+      ]
+    },
+    "c": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x12",
+          "u16": "0xfffb"
+        },
+        {
+          "offset": "0x20",
+          "u32": 300
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e130": {
+      "name": "list_remove_head_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@a"
+    },
+    "0x1002df20": {
+      "name": "list_add_tail_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty list returns null, no calls",
+      "args": [
+        "@list",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "one item, match",
+      "args": [
+        "@list",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a"
+          ]
+        }
+      }
+    },
+    {
+      "name": "one item, no match goes back to tail",
+      "args": [
+        "@list",
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a"
+          ]
+        }
+      }
+    },
+    {
+      "name": "three items, middle matches",
+      "args": [
+        "@list",
+        6
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a",
+            "@b",
+            "@c"
+          ]
+        }
+      }
+    },
+    {
+      "name": "two matches: last one returned, both subtracted",
+      "args": [
+        "@list",
+        5
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a",
+            "@b",
+            "@a"
+          ]
+        }
+      }
+    },
+    {
+      "name": "first matches only",
+      "args": [
+        "@list",
+        5
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a",
+            "@b",
+            "@b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative short seq (sign) matches 0xfffb",
+      "args": [
+        "@list",
+        -5
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@b",
+            "@c",
+            "@a"
+          ]
+        }
+      }
+    },
+    {
+      "name": "no match among three",
+      "args": [
+        "@list",
+        7
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a",
+            "@b",
+            "@c"
+          ]
+        }
+      }
+    },
+    {
+      "name": "byte counter underflows",
+      "args": [
+        "@list",
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x18",
+          "u32": 50
+        }
+      ],
+      "callees": {
+        "0x1002e130": {
+          "name": "list_remove_head_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            "@a",
+            "@b",
+            "@c"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5209584,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@list"
+        ]
+      },
+      {
+        "choices": [
+          5,
+          6,
+          -5,
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@list",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@list",
+        "offset": "0x18",
+        "type": "u32"
+      },
+      {
+        "addr": "@a",
+        "offset": "0x12",
+        "type": "u16",
+        "choices": [
+          5,
+          6,
+          65531,
+          0
+        ]
+      },
+      {
+        "addr": "@a",
+        "offset": "0x20",
+        "type": "u32"
+      }
+    ]
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "function": "readBinaryDataWithErrorHandling_guess",
+  "original": "0x10028d14",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    },
+    {
+      "name": "buffer",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@source"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "source": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "buffer": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002645c": {
+      "name": "t3dReadSourceBytes_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "full read returns 0",
+      "args": [
+        "@parser",
+        "@buffer",
+        16
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 16
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero bytes incomplete token",
+      "args": [
+        "@parser",
+        "@buffer",
+        16
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "partial read error",
+      "args": [
+        "@parser",
+        "@buffer",
+        16
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 8
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero count success",
+      "args": [
+        "@parser",
+        "@buffer",
+        0
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one byte short of count",
+      "args": [
+        "@parser",
+        "@buffer",
+        16
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 15
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "single byte ok",
+      "args": [
+        "@parser",
+        "@buffer",
+        1
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "single byte incomplete",
+      "args": [
+        "@parser",
+        "@buffer",
+        1
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "overshoot counts as error",
+      "args": [
+        "@parser",
+        "@buffer",
+        16
+      ],
+      "callees": {
+        "0x1002645c": {
+          "ret": 17
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 167188,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@parser"
+        ]
+      },
+      {
+        "choices": [
+          "@buffer"
+        ]
+      },
+      {
+        "range": [
+          0,
+          32
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

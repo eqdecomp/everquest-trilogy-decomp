@@ -1,0 +1,255 @@
+{
+  "function": "eqmain_load_string_table_guess",
+  "original": "0x10001230",
+  "sources": [
+    "src/eqmain/unit_10001000.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "ent0": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "ent1": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "ent2": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "str0": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "str1": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "str2": {
+      "size": "0x80",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004cd74",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x100250a0": {
+      "name": "FUN_100250a0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10025120": {
+      "name": "FUN_10025120",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 2
+    },
+    "0x10025150": {
+      "name": "FUN_10025150",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        "@ent0",
+        "@ent1",
+        "@ent2"
+      ]
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": [
+        "@str0",
+        "@str1",
+        "@str2"
+      ]
+    },
+    "0x10033330": {
+      "name": "_strncpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:128",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty: count 0, no copies",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x10025120": {
+          "name": "FUN_10025120",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "one entry",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x10025120": {
+          "name": "FUN_10025120",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "two, copy zeroes the count (loop stops after 2)",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@str1",
+          "offset": 36,
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "two, copy keeps the count at 2",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@str1",
+          "offset": 36,
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "two, copy raises the count to 3 (third copy runs)",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@str1",
+          "offset": 36,
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "three, copy lowers the count to 1 (bound re-read)",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x10025120": {
+          "name": "FUN_10025120",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 3
+        }
+      },
+      "memory": [
+        {
+          "addr": "@str1",
+          "offset": 36,
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "three, count kept at 3",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x10025120": {
+          "name": "FUN_10025120",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 3
+        }
+      },
+      "memory": [
+        {
+          "addr": "@str1",
+          "offset": 36,
+          "u32": 3
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4656,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1004ccd0",
+        "size": 512
+      },
+      {
+        "addr": "@str0",
+        "size": 128
+      },
+      {
+        "addr": "@str1",
+        "size": 128
+      },
+      {
+        "addr": "@str1",
+        "offset": 36,
+        "type": "u32",
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@str2",
+        "size": 128
+      },
+      {
+        "addr": "0x1004cd74",
+        "type": "u32",
+        "range": [
+          0,
+          3
+        ]
+      }
+    ]
+  }
+}

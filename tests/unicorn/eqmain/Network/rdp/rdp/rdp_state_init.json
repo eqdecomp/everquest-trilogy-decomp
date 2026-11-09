@@ -1,0 +1,101 @@
+{
+  "function": "rdp_state_init_guess",
+  "original": "0x1002a360",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002fae0": {
+      "name": "FUN_1002fae0",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x1002e550": {
+      "name": "initializeCounter_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{ "arg": 0, "offset": 8, "hex": "ffffffff" }, { "arg": 0, "offset": 52, "hex": "eeeeeeee" }]
+    },
+    "0x10030500": {
+      "name": "uevent_init_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1002dea0": {
+      "name": "FUN_1002dea0",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int", "int"]
+    },
+    "kernel32.dll!InitializeCriticalSection": {
+      "name": "InitializeCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 305419896
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@rdp"]
+    },
+    {
+      "name": "tick zero",
+      "args": ["@rdp"],
+      "callees": {
+        "0x1002f9f0": { "name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 0 }
+      }
+    },
+    {
+      "name": "tick all bits set",
+      "args": ["@rdp"],
+      "callees": {
+        "0x1002f9f0": { "name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 4294967295 }
+      }
+    },
+    {
+      "name": "tick high bit set",
+      "args": ["@rdp"],
+      "callees": {
+        "0x1002f9f0": { "name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 2147483648 }
+      }
+    },
+    {
+      "name": "zeroed object",
+      "args": ["@rdp"],
+      "objects": {
+        "rdp": { "size": "0x200", "fill": "zero" }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 172896,
+    "count": 40,
+    "args": [
+      { "choices": ["@rdp"] }
+    ],
+    "memory": [
+      { "addr": "@rdp", "size": 512 }
+    ]
+  }
+}

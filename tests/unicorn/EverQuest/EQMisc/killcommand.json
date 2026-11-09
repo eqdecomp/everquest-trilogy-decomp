@@ -1,0 +1,371 @@
+{
+  "function": "killcommand_guess",
+  "original": "0x004a51d6",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "player_list": {
+      "size": "0x8",
+      "fill": "zero"
+    },
+    "local_player": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "found": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "connection": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0058fba4",
+      "cstr": ""
+    },
+    {
+      "addr": "0x0055c560",
+      "from_image": "0x0055C560",
+      "image_size": 12
+    },
+    {
+      "addr": "0x006e4d58",
+      "u32": "@player_list"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@local_player"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": "@connection"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    },
+    {
+      "addr": "@local_player",
+      "offset": "0x1",
+      "cstr": "Localname"
+    },
+    {
+      "addr": "@target",
+      "offset": "0x1",
+      "cstr": "Victim"
+    },
+    {
+      "addr": "@found",
+      "offset": "0x1",
+      "cstr": "Bob"
+    }
+  ],
+  "callees": {
+    "0x00522920": {
+      "name": "_strcmp",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "_sprintf",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004b1435": {
+      "name": "EQPlayer::get_player_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@found"
+    },
+    "0x004d5629": {
+      "name": "ConfirmKill_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr",
+        "cstr"
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:61",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty name on a player target confirms the target",
+      "args": [
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "empty name on an NPC target sends the kill and echoes the target",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x98",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "empty name on a PC corpse target takes the kill path",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x98",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "empty name with no target returns before anything else",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "a nonzero byte just past the target pointer does not make a target",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4db0",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "named player confirms with the typed name and the local name",
+      "args": [
+        0,
+        "Bob"
+      ]
+    },
+    {
+      "name": "named NPC sends the kill and echoes the typed name",
+      "args": [
+        0,
+        "Gnoll"
+      ],
+      "memory": [
+        {
+          "addr": "@found",
+          "offset": "0x98",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "named spawn not found sends the kill with the typed name",
+      "args": [
+        0,
+        "Nobody"
+      ],
+      "callees": {
+        "0x004b1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "the literal word target is a spawn name, not the target",
+      "args": [
+        0,
+        "target"
+      ],
+      "callees": {
+        "0x004b1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "a 40-character name overflows the 30-byte victim buffer into the packet",
+      "args": [
+        0,
+        "abcdefghijklmnopqrstuvwxyz0123456789ABCD"
+      ],
+      "memory": [
+        {
+          "addr": "@found",
+          "offset": "0x98",
+          "u8": 1
+        }
+      ],
+      "callees": {
+        "0x004b1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "this": "ptr",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@found"
+        }
+      }
+    },
+    {
+      "name": "the first argument is ignored",
+      "args": [
+        -1,
+        "Bob"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4870614,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -4,
+          30
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "",
+          "",
+          "",
+          "Bob",
+          "Gnoll",
+          "target",
+          "a",
+          "Orc Pawn",
+          "A Name With Spaces",
+          "abcdefghijklmnopqrstuvwxyz123"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4dac",
+        "type": "u32",
+        "choices": [
+          0,
+          "@target"
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x98",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "addr": "@found",
+        "offset": "0x98",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    ]
+  }
+}

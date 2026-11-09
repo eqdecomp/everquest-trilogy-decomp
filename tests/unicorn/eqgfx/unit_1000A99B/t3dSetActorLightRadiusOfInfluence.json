@@ -1,0 +1,167 @@
+{
+  "function": "t3dSetActorLightRadiusOfInfluence",
+  "original": "0x1000ad96",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "radiusOfInfluence",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "light": {
+      "size": "0x30",
+      "fill": "random"
+    },
+    "actor": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x54",
+          "u32": "@light"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100145f5": {
+      "name": "t3dSetPointLightRadiusOfInfluence",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "float"
+      ],
+      "ret": 4660
+    }
+  },
+  "cases": [
+    {
+      "name": "light set: context, light and radius forwarded; callee result returned",
+      "args": [
+        "@context",
+        "@actor",
+        1.5
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "no light (+0x54 null): 0xffff3d3e, callee not called",
+      "args": [
+        "@context",
+        "@actor",
+        1.5
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x54", "u32": 0}
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "null context is forwarded unchanged",
+      "args": [
+        0,
+        "@actor",
+        1.5
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "zero radius is forwarded",
+      "args": [
+        "@context",
+        "@actor",
+        0.0
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "negative radius is forwarded",
+      "args": [
+        "@context",
+        "@actor",
+        -2.25
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "light with zero fields still counts as a light",
+      "args": [
+        "@context",
+        "@actor",
+        1.5
+      ],
+      "memory": [
+        {"addr": "@light", "offset": "0x10", "u32": 0},
+        {"addr": "@light", "offset": "0x20", "f32": 0.0}
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "non-null +0x50 does not stand in for the light at +0x54",
+      "args": [
+        "@context",
+        "@actor",
+        1.5
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x50", "u32": "@light"},
+        {"addr": "@actor", "offset": "0x54", "u32": 0}
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 44438,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x54", "type": "ptr", "choices": [0, "@light"]}
+    ]
+  }
+}

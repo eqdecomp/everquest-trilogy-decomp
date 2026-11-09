@@ -1,0 +1,99 @@
+{
+  "function": "DisplayAutoHelpText",
+  "original": "0x0046d4da",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "unusedThis", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "param_1", "type": "short"},
+    {"name": "param_2", "type": "short"},
+    {"name": "param_3", "type": "cstr"},
+    {"name": "param_4", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "unusedthis": {"size": "0x100", "fill": "random"},
+    "lut": {"size": "0x400", "fill": "zero", "init": [{"offset": 260, "u16": 8}, {"offset": 264, "u16": 16}, {"offset": 268, "u16": 24}]},
+    "eqobject": {"size": "0x20", "fill": "zero", "init": [{"offset": 4, "u32": "0x12345678"}]},
+    "overlay": {"size": "0x100", "fill": "zero"},
+    "textobject": {"size": "0x20", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006b63fc", "u32": 160},
+    {"addr": "0x006b6400", "u32": 120},
+    {"addr": "0x006efde4", "u32": "@lut"},
+    {"addr": "0x006e4e40", "u32": "@eqobject"},
+    {"addr": "0x006b341c", "u32": "@overlay"},
+    {"addr": "0x006efe00", "u32": "0x00ff00ff"},
+    {"addr": "0x006e4e68", "u32": "@textobject"}
+  ],
+  "callees": {
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x004384b2": {
+      "name": "EQ_Image::draw_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int"]
+    },
+    "0x0048d21a": {
+      "name": "EQ_TextO::WriteTextHD_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int", "int", "int", "int", "int"]
+    }
+  },
+  "cases": [
+    {"name": "empty text leaves measured width at zero", "args": ["@unusedthis", 17, 20, 30, "", 71]},
+    {"name": "positive text starts the weight sum from zero", "args": ["@unusedthis", 0, 20, 30, "A", 14], "regs": {"ebx": 256}},
+    {"name": "empty text still has zero weight with nonzero entry EBX", "args": ["@unusedthis", 0, 20, 30, "", 15], "regs": {"ebx": 4096}},
+    {
+      "name": "NUL table entry is tested when strlen includes the terminator",
+      "args": ["@unusedthis", 0, 20, 30, "", 16],
+      "callees": {"0x005223d0": {"name": "strlen", "conv": "cdecl", "args": ["cstr"], "ret": 1}},
+      "memory": [{"addr": "@lut", "offset": 0, "u16": 64}]
+    },
+    {
+      "name": "sum initialization with every entry register seeded",
+      "args": ["@unusedthis", 0, 20, 30, "A", 17],
+      "regs": {"eax": 4096, "ebx": 4096, "ecx": 4096, "edx": 4096, "esi": 4096, "edi": 4096}
+    },
+    {"name": "one tile and text call argument order", "args": ["@unusedthis", 3, 40, 30, "A", 91]},
+    {"name": "multiple interior tiles", "args": ["@unusedthis", -1, 24, 33, "ABC", -2147483648]},
+    {"name": "fractional width sum truncates by signed division", "args": ["@unusedthis", 0, 24, 33, "AB", 2147483647]},
+    {"name": "negative total width clamps to zero", "args": ["@unusedthis", 0, 40, 30, "A", 5], "memory": [{"addr": "@lut", "offset": 260, "u16": 65520}]},
+    {"name": "x boundary equality does not clamp", "args": ["@unusedthis", 0, 126, 30, "A", 6]},
+    {"name": "x boundary overrun clamps", "args": ["@unusedthis", 0, 127, 30, "A", 7]},
+    {"name": "y boundary equality does not clamp", "args": ["@unusedthis", 0, 30, 94, "", 8]},
+    {"name": "y boundary overrun clamps", "args": ["@unusedthis", 0, 30, 95, "", 9]},
+    {"name": "negative x clamps after right edge check", "args": ["@unusedthis", 0, -32768, 10, "ABC", 10]},
+    {"name": "negative y is retained", "args": ["@unusedthis", 0, 5, -30, "A", 11]},
+    {"name": "custom screen edges", "args": ["@unusedthis", 0, 40, 40, "ABC", 12], "memory": [{"addr": "0x006b63fc", "u32": 72}, {"addr": "0x006b6400", "u32": 58}]},
+    {
+      "name": "SetRect may replace overlay pointer between calls",
+      "args": ["@unusedthis", 0, 20, 20, "A", 13],
+      "callees": {"user32.dll!SetRect": {"name": "SetRect", "conv": "stdcall", "args": ["ptr", "int", "int", "int", "int"], "ret": 1, "writes": [{"addr": "0x006b341c", "hex": "00646b00"}]}},
+      "memory": [{"addr": "0x006b341c", "u32": "@overlay"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4642010,
+    "count": 40,
+    "args": [
+      {"choices": ["@unusedthis"]},
+      {},
+      {"range": [-32768, 32767]},
+      {"range": [-32768, 32767]},
+      {"choices": ["", "A", "AA", "AB", "ABC", "BA", "C", "AAB"]},
+      {}
+    ],
+    "memory": [
+      {"addr": "0x006b63fc", "type": "u32", "range": [-32, 512]},
+      {"addr": "0x006b6400", "type": "u32", "range": [-32, 512]},
+      {"addr": "@lut", "offset": 260, "type": "short", "count": 3, "stride": 4, "range": [-64, 64]}
+    ]
+  }
+}

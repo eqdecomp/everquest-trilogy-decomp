@@ -1,0 +1,213 @@
+{
+  "function": "t3dSetSphylinderRadius",
+  "original": "0x1001d482",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sphere",
+      "type": "ptr"
+    },
+    {
+      "name": "radius",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sphere": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 24
+        },
+        {
+          "offset": "0xf",
+          "u8": 5
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "matching type sets flag and preserves other bits",
+      "args": [
+        "@sphere",
+        1.5
+      ]
+    },
+    {
+      "name": "null definition skips type read",
+      "args": [
+        "@sphere",
+        0.0
+      ],
+      "memory": [
+        {
+          "addr": "@sphere",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "type immediately below match",
+      "args": [
+        "@sphere",
+        -1.25
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x0",
+          "u32": 23
+        },
+        {
+          "addr": "@definition",
+          "offset": "0xf",
+          "u8": 165
+        }
+      ]
+    },
+    {
+      "name": "type immediately above match",
+      "args": [
+        "@sphere",
+        2.25
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x0",
+          "u32": 25
+        },
+        {
+          "addr": "@definition",
+          "offset": "0xf",
+          "u8": 165
+        }
+      ]
+    },
+    {
+      "name": "already-set flag remains set",
+      "args": [
+        "@sphere",
+        0.0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x0",
+          "u32": 24
+        },
+        {
+          "addr": "@definition",
+          "offset": "0xf",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "radius store precedes aliased type check",
+      "args": [
+        "@sphere",
+        3.363116314379561e-44
+      ],
+      "memory": [
+        {
+          "addr": "@sphere",
+          "offset": "0x4",
+          "u32": "@sphere+0xc"
+        },
+        {
+          "addr": "@sphere",
+          "offset": "0x1b",
+          "u8": 5
+        }
+      ]
+    },
+    {
+      "name": "zero radius",
+      "args": [
+        "@sphere",
+        0.0
+      ]
+    },
+    {
+      "name": "negative radius",
+      "args": [
+        "@sphere",
+        -3.5
+      ]
+    },
+    {
+      "name": "null sphere faults on both images",
+      "args": [
+        0,
+        1.5
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 119938,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sphere"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sphere",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@definition"
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          23,
+          24,
+          25,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0xf",
+        "type": "u8",
+        "choices": [
+          0,
+          31,
+          32,
+          255
+        ]
+      }
+    ]
+  }
+}

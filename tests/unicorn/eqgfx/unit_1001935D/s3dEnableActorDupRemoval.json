@@ -1,0 +1,169 @@
+{
+  "function": "s3dEnableActorDupRemoval",
+  "original": "0x10019b79",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "enableValue",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "table": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100aadd4",
+      "u32": "0x0badf00d"
+    }
+  ],
+  "callees": {
+    "0x10068c72": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@table"
+    },
+    "0x1001a12d": {
+      "name": "Initialize_guess",
+      "conv": "fastcall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: high byte 1",
+      "args": [
+        "0x01000000"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "all ones",
+      "args": [
+        "0xffffffff"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "high byte 0xff, low bits set (a >> 23 or >> 16 would differ)",
+      "args": [
+        "0xff123456"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "high byte clear, low three bytes set",
+      "args": [
+        "0x00ffffff"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "sign bit only",
+      "args": [
+        "0x80000000"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bit 23 set, high byte clear",
+      "args": [
+        "0x00800000"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "high byte 0x7f",
+      "args": [
+        "0x7f000000"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails: no table, no callee, returns -1",
+      "args": [
+        "0x01000000"
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "allocation fails, high byte 0xab",
+      "args": [
+        "0xab123456"
+      ],
+      "callees": {
+        "0x10068c72": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 105337,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@table",
+        "size": 16
+      }
+    ]
+  }
+}

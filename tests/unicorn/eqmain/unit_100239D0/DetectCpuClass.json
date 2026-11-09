@@ -1,0 +1,221 @@
+{
+  "function": "DetectCpuClass_guess",
+  "original": "0x100244c0",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u32",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x101258f4",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x10024490": {
+      "name": "FUN_10024490",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x00000001"
+    },
+    "0x10024700": {
+      "name": "FUN_10024700",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x12340001"
+    },
+    "0x100245d0": {
+      "name": "FUN_100245d0",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x12345679"
+    },
+    "0x10024610": {
+      "name": "Check8086_guess",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x00000000"
+    },
+    "0x10024660": {
+      "name": "FUN_10024660",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x00000000"
+    },
+    "0x100246b0": {
+      "name": "FUN_100246b0",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x00000000"
+    }
+  },
+  "cases": [
+    {
+      "name": "cpuid, DAT zero: CPU path, no bit 15",
+      "args": [],
+      "expect": {"ret": "0x12340001"}
+    },
+    {
+      "name": "cpuid, DAT 1 sets bit 15",
+      "args": [],
+      "memory": [{"addr": "0x101258f4", "u32": 1}],
+      "expect": {"ret": "0x12348001"}
+    },
+    {
+      "name": "cpuid, DAT 2 sets bit 15 (nonzero, not 1)",
+      "args": [],
+      "memory": [{"addr": "0x101258f4", "u32": 2}],
+      "expect": {"ret": "0x12348001"}
+    },
+    {
+      "name": "cpuid, DAT 0x10000 sets bit 15 (full 32-bit test)",
+      "args": [],
+      "memory": [{"addr": "0x101258f4", "u32": 65536}],
+      "expect": {"ret": "0x12348001"}
+    },
+    {
+      "name": "cpuid, AX 0x8000 is still the CPU path",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00008000"}
+      },
+      "expect": {"ret": "0x12340001"}
+    },
+    {
+      "name": "cpuid AX 0 with high half set: no-CPUID path, 10610 stops",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00010000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0xDEAD0000"}
+      },
+      "expect": {"ret": "0xDEAD8000"}
+    },
+    {
+      "name": "no cpuid, 245d0 high half dropped by AND 0xffff",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x100245d0": {"name": "FUN_100245d0", "conv": "stdcall", "args": [], "ret": "0x00010000"}
+      },
+      "expect": {"ret": "0x0"}
+    },
+    {
+      "name": "no cpuid, 10660 AX 2 with high half set stops",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00010002"}
+      },
+      "expect": {"ret": "0x00018002"}
+    },
+    {
+      "name": "no cpuid, 100246b0 AX 3 with high half set stops",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000005"},
+        "0x100246b0": {"name": "FUN_100246b0", "conv": "stdcall", "args": [], "ret": "0x00010003"}
+      },
+      "expect": {"ret": "0x00018003"}
+    },
+    {
+      "name": "no cpuid, 100246b0 AX 3 stops (DAT set)",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000005"},
+        "0x100246b0": {"name": "FUN_100246b0", "conv": "stdcall", "args": [], "ret": "0x00030003"}
+      },
+      "expect": {"ret": "0x00038003"}
+    },
+    {
+      "name": "no cpuid, chain runs out at 100246b0 (AX 7): 4 with DAT set",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000005"},
+        "0x100246b0": {"name": "FUN_100246b0", "conv": "stdcall", "args": [], "ret": "0x00000007"}
+      },
+      "expect": {"ret": "0x8004"}
+    },
+    {
+      "name": "no cpuid, chain runs out with DAT zero: 4",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x100245d0": {"name": "FUN_100245d0", "conv": "stdcall", "args": [], "ret": "0xABCD0000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000005"},
+        "0x100246b0": {"name": "FUN_100246b0", "conv": "stdcall", "args": [], "ret": "0x00000007"}
+      },
+      "expect": {"ret": "0x4"}
+    },
+    {
+      "name": "no cpuid, 10660 AX 0 does not stop (next is 100246b0)",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x100246b0": {"name": "FUN_100246b0", "conv": "stdcall", "args": [], "ret": "0x00000000"}
+      },
+      "expect": {"ret": "0x8004"}
+    },
+    {
+      "name": "no cpuid, 10610 AX 0x8000 does not stop (signed compare witness)",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00008000"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000002"}
+      },
+      "expect": {"ret": "0x8002"}
+    },
+    {
+      "name": "no cpuid, stop at 10660 (AX 2) with DAT zero: no bit 15",
+      "args": [],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x100245d0": {"name": "FUN_100245d0", "conv": "stdcall", "args": [], "ret": "0xABCD0000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000001"},
+        "0x10024660": {"name": "FUN_10024660", "conv": "stdcall", "args": [], "ret": "0x00000002"}
+      },
+      "expect": {"ret": "0x2"}
+    },
+    {
+      "name": "no cpuid, the store replaces an old DAT of 1",
+      "args": [],
+      "memory": [{"addr": "0x101258f4", "u32": 1}],
+      "callees": {
+        "0x10024490": {"name": "FUN_10024490", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x100245d0": {"name": "FUN_100245d0", "conv": "stdcall", "args": [], "ret": "0x00000000"},
+        "0x10024610": {"name": "FUN_10024610", "conv": "stdcall", "args": [], "ret": "0x00000000"}
+      },
+      "expect": {"ret": "0x0"}
+    },
+    {
+      "name": "cpuid, result already has bit 15 (OR, not XOR)",
+      "args": [],
+      "memory": [{"addr": "0x101258f4", "u32": 1}],
+      "callees": {
+        "0x10024700": {"name": "FUN_10024700", "conv": "stdcall", "args": [], "ret": "0x1234ABCD"}
+      },
+      "expect": {"ret": "0x1234ABCD"}
+    }
+  ],
+  "fuzz": {
+    "seed": 148672,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x101258f4", "type": "u32", "choices": [0, 1, 2, 32768, 65536, 4294967295, 305419896]}
+    ]
+  }
+}

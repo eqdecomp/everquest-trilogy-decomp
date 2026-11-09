@@ -1,0 +1,220 @@
+{
+  "function": "GetPlayerName",
+  "original": "0x004e041f",
+  "sources": [
+    "src/EverQuest/login.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "message": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "packet": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u16": 32769
+        },
+        {
+          "offset": "0x2",
+          "cstr": "Ranger"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004e04d1": {
+      "name": "wait_message",
+      "conv": "cdecl",
+      "args": [],
+      "ret": "@message"
+    },
+    "kernel32.dll!Sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x004c1703": {
+      "name": "DbgLog_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "varargs": "printf"
+    },
+    "0x004f4c90": {
+      "name": "msg_arrival_get_data",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@packet"
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "valid message immediately",
+      "args": [
+        "original-name"
+      ],
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "unexpected message type",
+      "args": [
+        "untouched"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "offset": "0x0",
+          "u16": 32768
+        }
+      ],
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "success on first poll",
+      "args": [
+        "first-poll"
+      ],
+      "callees": {
+        "0x004e04d1": {
+          "name": "wait_message_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            0,
+            "@message"
+          ]
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "success on sixth poll after five sleeps",
+      "args": [
+        "last-poll"
+      ],
+      "callees": {
+        "0x004e04d1": {
+          "name": "wait_message_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            "@message"
+          ]
+        }
+      },
+      "expect": {
+        "ret": true
+      }
+    },
+    {
+      "name": "timeout after six sleeps",
+      "args": [
+        "unchanged"
+      ],
+      "callees": {
+        "0x004e04d1": {
+          "name": "wait_message_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    },
+    {
+      "name": "unexpected message after polling",
+      "args": [
+        "untouched-after-poll"
+      ],
+      "memory": [
+        {
+          "addr": "@packet",
+          "offset": "0x0",
+          "u16": 32770
+        }
+      ],
+      "callees": {
+        "0x004e04d1": {
+          "name": "wait_message_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": [
+            0,
+            "@message"
+          ]
+        }
+      },
+      "expect": {
+        "ret": false
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5112863,
+    "count": 30,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@packet",
+        "offset": "0x0",
+        "type": "u16",
+        "choices": [
+          32769,
+          32768,
+          32770,
+          0,
+          65535
+        ]
+      }
+    ]
+  }
+}

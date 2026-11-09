@@ -1,0 +1,147 @@
+{
+  "function": "SetTextIOLayout_guess",
+  "original": "0x0048acad",
+  "sources": ["src/EverQuest/EQ_TextIO.cpp"],
+  "conv": "fastcall",
+  "args": [{"name": "self", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "profile": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x7e", "u8": 0},
+        {"offset": "0x7f", "u8": 1},
+        {"offset": "0x80", "u8": 255},
+        {"offset": "0x9c", "u8": 1},
+        {"offset": "0x9d", "u8": 1}
+      ]
+    },
+    "render": {
+      "size": "0x90100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x900e4", "u32": 30},
+        {"offset": "0x900e8", "u32": 40},
+        {"offset": "0x900ec", "u32": 150},
+        {"offset": "0x900f0", "u32": 220}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006ef000", "size": "0x240", "fill": "zero"},
+    {"addr": "0x006ef400", "size": "0x40", "fill": "zero"},
+    {"addr": "0x006ef414", "u16": 2},
+    {"addr": "0x006ef070", "u32": 0},
+    {"addr": "0x006efc70", "u8": 0},
+    {"addr": "0x0058fc6c", "u32": 1},
+    {"addr": "0x006b6508", "u32": 0},
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006e4e44", "u32": "@render"},
+    {"addr": "0x006e0fea", "u16": 20},
+    {"addr": "0x006d6fdc", "u32": 2}
+  ],
+  "callees": {
+    "0x00450463": {"name": "EQ_Overlay::DelButtons", "conv": "thiscall", "args": []},
+    "0x004503be": {
+      "name": "EQ_Overlay_AddButton_guess",
+      "conv": "thiscall",
+      "args": ["int", "ptr", "int", "int", "int", "int"],
+      "writes": [{"addr": "0x006ef070", "hex": "00f46e00"}]
+    },
+    "user32.dll!SetRect": {"name": "SetRect", "conv": "stdcall", "args": ["ptr", "int", "int", "int", "int"], "ret": 1},
+    "user32.dll!CopyRect": {"name": "CopyRect", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 1}
+  },
+  "cases": [
+    {
+      "name": "init guard returns before writes",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006efc70", "u8": 1},
+        {"addr": "0x0058fc6c", "u32": 2}
+      ]
+    },
+    {
+      "name": "alternate layout mode one with sparse languages",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006ef1f1", "u8": 1},
+        {"addr": "0x0058fc6c", "u32": 1}
+      ]
+    },
+    {
+      "name": "alternate layout mode two",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006ef1f1", "u8": 255},
+        {"addr": "0x0058fc6c", "u32": 2}
+      ]
+    },
+    {
+      "name": "static layout with null profile and scroll bounds",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006ef1f1", "u8": 0},
+        {"addr": "0x006ef1f0", "u8": 1},
+        {"addr": "0x006ef0b8", "u16": 10},
+        {"addr": "0x006ef0c0", "u16": 80},
+        {"addr": "0x006ef0d0", "u16": 10},
+        {"addr": "0x006ef0d8", "u16": 20},
+        {"addr": "0x006e4da8", "u32": 0},
+        {"addr": "0x0058fc6c", "u32": 1},
+        {"addr": "0x006d6fdc", "u32": 2}
+      ]
+    },
+    {
+      "name": "dynamic layout and profile",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006ef1f1", "u8": 0},
+        {"addr": "0x006ef0b8", "u16": 10},
+        {"addr": "0x006ef0c0", "u16": 80},
+        {"addr": "0x006ef0d0", "u16": 10},
+        {"addr": "0x006ef0d8", "u16": 20},
+        {"addr": "0x0058fc6c", "u32": 2},
+        {"addr": "0x006d6fdc", "u32": 4}
+      ]
+    },
+    {
+      "name": "no-profile static layout",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006ef1f1", "u8": 0},
+        {"addr": "0x006e4da8", "u32": 0},
+        {"addr": "0x0058fc6c", "u32": 0}
+      ]
+    },
+    {
+      "name": "fixed layout with a language at index 0x20 and a stale render flag",
+      "args": ["0x006ef000"],
+      "memory": [
+        {"addr": "0x006ef1f1", "u8": 1},
+        {"addr": "0x0058fc6c", "u32": 1},
+        {"addr": "@profile+0x9e", "u8": 1},
+        {"addr": "@render+0x900f4", "u32": 5}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4762797,
+    "count": 40,
+    "args": [{"choices": ["0x006ef000"]}],
+    "memory": [
+      {"addr": "0x006efc70", "type": "u8", "choices": [0, 1, 2]},
+      {"addr": "0x0058fc6c", "type": "int", "choices": [0, 1, 2, 3]},
+      {"addr": "0x006ef1f1", "type": "u8", "choices": [0, 0, 1, 255]},
+      {"addr": "0x006ef1f0", "type": "u8", "choices": [0, 1, 255]},
+      {"addr": "0x006ef0b8", "type": "short", "range": [-100, 100]},
+      {"addr": "0x006ef0c0", "type": "short", "range": [-100, 100]},
+      {"addr": "0x006ef0d0", "type": "short", "range": [-100, 100]},
+      {"addr": "0x006ef0d8", "type": "short", "range": [-100, 100]},
+      {"addr": "0x006e0fea", "type": "u16", "range": [0, 100]},
+      {"addr": "0x006d6fdc", "type": "int", "range": [-100, 100]},
+      {"addr": "@profile+0x7e", "type": "u8", "count": 32, "range": [0, 255]},
+      {"addr": "@render+0x900e4", "type": "int", "count": 4, "range": [-500, 500]}
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "function": "Init_EQGfx_Dx8_freememory_guess",
+  "original": "0x004dfe0a",
+  "sources": [
+    "src/EverQuest/Win.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "free_library": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e547c", "u32": 305419896},
+    {"addr": "0x0053403c", "u32": "@free_library"}
+  ],
+  "callees": {
+    "0x004dd9a0": {
+      "name": "Init_EQGfx_Dx8_turnoff_guess",
+      "conv": "cdecl",
+      "args": []
+    },
+    "@free_library": {
+      "name": "FreeLibrary",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "nonzero handle is freed and cleared",
+      "args": [],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero handle skips FreeLibrary",
+      "args": [],
+      "memory": [{"addr": "0x006e547c", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "high-bit handle is still nonzero",
+      "args": [],
+      "memory": [{"addr": "0x006e547c", "u32": 2147483648}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "FreeLibrary failure still clears handle",
+      "args": [],
+      "memory": [{"addr": "0x006e547c", "u32": 4294967295}],
+      "callees": {
+        "@free_library": {"name": "FreeLibrary", "conv": "stdcall", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "turnoff runs before handle is read and clear follows FreeLibrary",
+      "args": [],
+      "memory": [{"addr": "0x006e547c", "u32": 0}],
+      "callees": {
+        "0x004dd9a0": {
+          "name": "Init_EQGfx_Dx8_turnoff_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": 0,
+          "writes": [{"addr": "0x006e547c", "hex": "40302010"}]
+        },
+        "@free_library": {
+          "name": "FreeLibrary",
+          "conv": "stdcall",
+          "args": ["u32"],
+          "ret": 0,
+          "writes": [{"addr": "0x006e547c", "hex": "88776655"}]
+        }
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 5111306,
+    "count": 32,
+    "args": [],
+    "memory": [
+      {"addr": "0x006e547c", "type": "u32"}
+    ]
+  }
+}

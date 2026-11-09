@@ -1,0 +1,195 @@
+{
+  "function": "t3dSetObjectTag",
+  "original": "0x100174b8",
+  "sources": [
+    "src/eqgfx/unit_10014F27.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "object",
+      "type": "ptr"
+    },
+    {
+      "name": "tag",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "object": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "offset": "0xc",
+          "u32": 0
+        }
+      ]
+    },
+    "old_tag": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "old"
+        }
+      ]
+    },
+    "allocated_tag": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocated_tag"
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "low accepted type, replacement frees old tag without dictionary flag",
+      "args": ["@dictionary", "@object", "low-tag"],
+      "memory": [
+        {"addr": "@object", "offset": "0x0", "u32": 1},
+        {"addr": "@object", "offset": "0x8", "u32": "@old_tag"}
+      ]
+    },
+    {
+      "name": "null tag removes the dictionary entry and frees old tag",
+      "args": ["@dictionary", "@object", 0],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 1},
+        {"addr": "@object", "offset": "0x8", "u32": "@old_tag"}
+      ]
+    },
+    {
+      "name": "allocation failure preserves current tag and returns error",
+      "args": ["@dictionary", "@object", "allocation-failure"],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 1},
+        {"addr": "@object", "offset": "0x8", "u32": "@old_tag"}
+      ],
+      "callees": {
+        "0x10050c48": {"ret": 0}
+      }
+    },
+    {
+      "name": "flags bit 0 removes then looks up and adds missing key",
+      "args": ["@dictionary", "@object", "replacement"],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 1},
+        {"addr": "@object", "offset": "0x8", "u32": "@old_tag"}
+      ]
+    },
+    {
+      "name": "existing dictionary key skips add",
+      "args": ["@dictionary", "@object", "present"],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 1}
+      ],
+      "callees": {
+        "0x1000e7fe": {"ret": "0x70000000"}
+      }
+    },
+    {
+      "name": "flags bit 1 alone does not remove or add dictionary entries",
+      "args": ["@dictionary", "@object", "keep"],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 2}
+      ]
+    },
+    {"name": "type 0 rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": 0}]},
+    {"name": "low switch default type 0xd rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0xd"}]},
+    {"name": "low switch default type 0x10 rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x10"}]},
+    {"name": "low switch type 0x11 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x11"}]},
+    {"name": "low type 0x1a accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x1a"}]},
+    {"name": "middle type 0x1b accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x1b"}]},
+    {"name": "middle type 0x1c accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x1c"}]},
+    {"name": "middle type 0x1d accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x1d"}]},
+    {"name": "middle type 0x1f accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x1f"}]},
+    {"name": "middle gap type 0x20 rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x20"}]},
+    {"name": "middle type 0x23 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x23"}]},
+    {"name": "middle type 0x24 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x24"}]},
+    {"name": "middle gap type 0x25 rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x25"}]},
+    {"name": "middle type 0x44 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x44"}]},
+    {"name": "middle type 0x46 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x46"}]},
+    {"name": "boundary type 0x47 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x47"}]},
+    {"name": "high table type 0x48 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x48"}]},
+    {"name": "high table type 0x4a accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x4a"}]},
+    {"name": "high table hole type 0x4b rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x4b"}]},
+    {"name": "high table type 0x4c accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x4c"}]},
+    {"name": "high table type 0x51 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x51"}]},
+    {"name": "high table hole type 0x52 rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x52"}]},
+    {"name": "high table type 0x53 accepted", "args": ["@dictionary", "@object", "tag"], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x53"}]},
+    {"name": "high default type 0x54 rejected", "args": ["@dictionary", "@object", 0], "memory": [{"addr": "@object", "offset": "0x0", "u32": "0x54"}]}
+  ],
+  "fuzz": {
+    "seed": 95416,
+    "count": 40,
+    "args": [
+      {"choices": ["@dictionary"]},
+      {"choices": ["@object"]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@object", "offset": "0x0", "type": "int", "range": [-1, 96]},
+      {"addr": "@object", "offset": "0xc", "type": "u32", "choices": [0, 1, 2, 3, 32]}
+    ]
+  }
+}

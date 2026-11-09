@@ -1,0 +1,111 @@
+{
+  "function": "connection_get_remote_addr_guess",
+  "original": "0x1000f3b0",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 0}
+      ],
+      "expect": {"ret": 12}
+    },
+    {
+      "name": "small positive",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 16}
+      ],
+      "expect": {"ret": 28}
+    },
+    {
+      "name": "minus twelve wraps to zero",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 4294967284}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "minus one",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 4294967295}
+      ],
+      "expect": {"ret": 11}
+    },
+    {
+      "name": "signed max overflows to negative",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 2147483647}
+      ],
+      "expect": {"ret": -2147483637}
+    },
+    {
+      "name": "signed min",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 2147483648}
+      ],
+      "expect": {"ret": -2147483636}
+    },
+    {
+      "name": "reads the first dword, not the second",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "u32": 7},
+        {"addr": "@param_1", "offset": "0x4", "u32": 1000}
+      ],
+      "expect": {"ret": 19}
+    }
+  ],
+  "fuzz": {
+    "seed": 62384,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@param_1", "type": "u32"},
+      {"addr": "@param_1", "offset": "0x4", "type": "u32"}
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "function": "EQ_Overlay::~EQ_Overlay",
+  "original": "0x0045005D",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "rewrite": "EQ_Overlay::~EQ_Overlay",
+  "conv": "thiscall",
+  "this": "@overlay",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "overlay": {"size": "0x90", "fill": "zero"},
+    "displayA": {"size": "0x10", "fill": "zero"},
+    "displayB": {"size": "0x10", "fill": "zero"}
+  },
+  "callees": {
+    "0x00450463": {"name": "DelButtons", "conv": "thiscall", "args": []},
+    "0x0040B173": {"name": "CloseOverlay_guess", "conv": "thiscall", "args": ["ptr"]}
+  },
+  "memory": [{"addr": "0x006E4DE0", "u32": "@displayA"}],
+  "cases": [
+    {"name": "flag clear still deletes buttons", "memory": [{"addr": "@overlay", "offset": "0x0", "u32": "0xDEADBEEF"}, {"addr": "@overlay", "offset": "0x4", "u32": "0x11112222"}, {"addr": "@overlay", "offset": "0x7C", "u32": 0}]},
+    {"name": "preceding byte does not set flag", "memory": [{"addr": "@overlay", "offset": "0x7B", "u8": 1}, {"addr": "@overlay", "offset": "0x7C", "u32": 0}]},
+    {"name": "helper clears flag before check", "memory": [{"addr": "@overlay", "offset": "0x4", "u32": "0x11112222"}, {"addr": "@overlay", "offset": "0x7C", "u32": 1}], "callees": {"0x00450463": {"name": "DelButtons_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@overlay", "offset": 124, "hex": "00000000"}]}}},
+    {"name": "helper overwrites prior vtable store", "memory": [{"addr": "@overlay", "offset": "0x0", "u32": "0xDEADBEEF"}, {"addr": "@overlay", "offset": "0x7C", "u32": 0}], "callees": {"0x00450463": {"name": "DelButtons_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@overlay", "offset": 0, "hex": "efbeadde"}]}}},
+    {"name": "helper sets flag and changes overlay and display before check", "memory": [{"addr": "@overlay", "offset": "0x4", "u32": "0x11112222"}, {"addr": "@overlay", "offset": "0x7C", "u32": 0}], "callees": {"0x00450463": {"name": "DelButtons_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@overlay", "offset": 4, "hex": "33334444"}, {"addr": "@overlay", "offset": 124, "hex": "01000000"}, {"addr": "0x006E4DE0", "hex": "00000000"}]}}},
+    {"name": "helper changes flag handle and display target", "memory": [{"addr": "@overlay", "offset": "0x4", "u32": "0x11112222"}, {"addr": "@overlay", "offset": "0x7C", "u32": 1}], "callees": {"0x00450463": {"name": "DelButtons_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@overlay", "offset": 4, "hex": "33334444"}, {"addr": "0x006E4DE0", "hex": "00000000"}]}}}
+  ],
+  "fuzz": {"seed": 45005, "count": 30, "memory": [{"addr": "@overlay", "offset": "0x4", "type": "u32", "range": [0, 4294967295]}, {"addr": "@overlay", "offset": "0x7C", "type": "u32", "range": [0, 4294967295]}]}
+}

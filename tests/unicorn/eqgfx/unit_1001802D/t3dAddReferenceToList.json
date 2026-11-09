@@ -1,0 +1,418 @@
+{
+  "function": "t3dAddReferenceToList",
+  "original": "0x10019065",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "reference",
+      "type": "u32"
+    },
+    {
+      "name": "list",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "list": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 3
+        },
+        {
+          "offset": "0x8",
+          "u32": 4
+        },
+        {
+          "offset": "0xc",
+          "u32": "@refs"
+        }
+      ]
+    },
+    "refs": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "grown": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": "@grown"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 3 of 4 used, reference lands in slot 3, no reallocation",
+      "args": [
+        17,
+        "@list"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty list with room: reference lands in slot 0",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "reference 0xffffffff stored as-is in a free slot",
+      "args": [
+        "0xffffffff",
+        "@list"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "reference 0 stored in a free slot, realloc never called (callee would fail)",
+      "args": [
+        0,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "full list grows: 4 of 4 reallocates to 6 slots (24 bytes)",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 4
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity 5 full: quarter is 1, grows to 7 slots",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 5
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 5
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity 8 full: 8 + 2 + 1 = 11 slots (44 bytes)",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 8
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 8
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity 3 full: quarter is 0, grows to 4 slots",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 3
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity 1 full: grows to 2 slots",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "capacity 0 (count 0): grows to 1 slot (4 bytes)",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count above capacity (6 of 4): one growth to 6 slots, then slot 6 written",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 6
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "large full list: 40 + 10 + 1 = 51 slots (204 bytes)",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 40
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 40
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "reallocation fails on a full list: 0xFFFF3D3E, list unchanged",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 4
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "reallocation fails with capacity 0: 0xFFFF3D3E, nothing stored",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "reallocation fails with count above capacity (9 of 8)",
+      "args": [
+        17,
+        "@list"
+      ],
+      "memory": [
+        {
+          "addr": "@list",
+          "offset": "0x4",
+          "u32": 9
+        },
+        {
+          "addr": "@list",
+          "offset": "0x8",
+          "u32": 8
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 102501,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@list"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@list",
+        "offset": "0x4",
+        "type": "u32",
+        "range": [
+          0,
+          10
+        ]
+      },
+      {
+        "addr": "@list",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      }
+    ]
+  }
+}

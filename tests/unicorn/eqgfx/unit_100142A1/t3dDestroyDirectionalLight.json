@@ -1,0 +1,221 @@
+{
+  "function": "t3dDestroyDirectionalLight",
+  "original": "0x10014c1b",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 5}
+      ]
+    },
+    "dictKey": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "block": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "light": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x08", "u32": "@dictKey"},
+        {"offset": "0x0c", "u8": 0},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0x14", "u32": "@owner"},
+        {"offset": "0x2c", "u32": "@block"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000121b": {
+      "name": "_t3dRemoveFromLitRegions_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: no uses, flag clear: key and block freed, light freed",
+      "args": ["@context", "@light"]
+    },
+    {
+      "name": "one use left: error code, nothing touched",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0x10", "u32": 1}]
+    },
+    {
+      "name": "use count with the top bit set (unsigned compare): still in use",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0x10", "u32": 2147483648}]
+    },
+    {
+      "name": "use count 0xffffffff: still in use",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0x10", "u32": 4294967295}]
+    },
+    {
+      "name": "dictionary flag 0x01: entry removed with the key, then freed",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0xc", "u8": 1}]
+    },
+    {
+      "name": "flags 0xfe: bit 0 clear, no removal",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0xc", "u8": 254}]
+    },
+    {
+      "name": "flags 0x20: another bit only, no removal",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0xc", "u8": 32}]
+    },
+    {
+      "name": "flag 0x01 with no key: removal called with null, key not freed",
+      "args": ["@context", "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0xc", "u8": 1},
+        {"addr": "@light", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "no key, flag clear: key not freed",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "no owned block: block free still called, with null",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@light", "offset": "0x2c", "u32": 0}]
+    },
+    {
+      "name": "no key and no block: only FUN_10015d81 and the light's free remain",
+      "args": ["@context", "@light"],
+      "memory": [
+        {"addr": "@light", "offset": "0x8", "u32": 0},
+        {"addr": "@light", "offset": "0x2c", "u32": 0}
+      ]
+    },
+    {
+      "name": "owner count 0: decrement wraps to 0xffffffff",
+      "args": ["@context", "@light"],
+      "memory": [{"addr": "@owner", "offset": "0x10", "u32": 0}]
+    },
+    {
+      "name": "owner count 1 and flags 0x03: count 0, entry removed, freed",
+      "args": ["@context", "@light"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x10", "u32": 1},
+        {"addr": "@light", "offset": "0xc", "u8": 3}
+      ]
+    },
+    {
+      "name": "owner count 3, flag 0x01, no owned block",
+      "args": ["@context", "@light"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x10", "u32": 3},
+        {"addr": "@light", "offset": "0xc", "u8": 1},
+        {"addr": "@light", "offset": "0x2c", "u32": 0}
+      ]
+    },
+    {
+      "name": "FUN_1000121b sets the flag byte to 0x01: flag read after that call",
+      "args": ["@context", "@light"],
+      "callees": {
+        "0x1000121b": {"name": "FUN_1000121b", "conv": "cdecl", "args": ["ptr", "ptr"], "writes": [{"arg": 1, "offset": 12, "hex": "01"}]}
+      }
+    },
+    {
+      "name": "FUN_10015d81 clears the key: no key free after it",
+      "args": ["@context", "@light"],
+      "callees": {
+        "0x10015d81": {"name": "FUN_10015d81", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 305419896, "writes": [{"arg": 1, "offset": 8, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "FUN_10015d81 clears the owned block: block free gets null",
+      "args": ["@context", "@light"],
+      "callees": {
+        "0x10015d81": {"name": "FUN_10015d81", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 305419896, "writes": [{"arg": 1, "offset": 44, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "FUN_10015d81 returns -7: returned as the result",
+      "args": ["@context", "@light"],
+      "callees": {
+        "0x10015d81": {"name": "FUN_10015d81", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -7}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 40417,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@light"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@light", "offset": "0x10", "type": "u32", "choices": [0, 0, 0, 0, 1, 2, 2147483648, 4294967295]},
+      {"addr": "@light", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@light", "offset": "0x8", "type": "u32", "choices": [0, "@dictKey"]},
+      {"addr": "@light", "offset": "0x2c", "type": "u32", "choices": [0, "@block"]},
+      {"addr": "@owner", "offset": "0x10", "type": "u32", "choices": [0, 1, 2, 7, 4294967295]}
+    ]
+  }
+}

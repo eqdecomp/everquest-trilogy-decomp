@@ -1,0 +1,54 @@
+{
+  "function": "ReplyToTell_guess",
+  "original": "0x004a82b8",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "tellText", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {"size": "0x4", "fill": "zero"},
+    "otherEverquest": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E1E0C", "size": 32, "fill": "zero"},
+    {"addr": "0x006EFE2C", "u32": "@everquest"}
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": 0
+    },
+    "0x004cf180": {
+      "name": "CEverQuest::send_tell_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "cstr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "zero first tell byte prints no-tells message", "args": [0, "hello"], "memory": [{"addr": "0x006E1E0C", "u8": 0}]},
+    {"name": "one first tell byte sends tell", "args": [1, "hello"], "memory": [{"addr": "0x006E1E0C", "u8": 1}]},
+    {"name": "high-bit first tell byte also sends tell", "args": [-1, "target text"], "memory": [{"addr": "0x006E1E0C", "u8": 128}]},
+    {"name": "empty second argument is forwarded", "args": [2147483647, ""], "memory": [{"addr": "0x006E1E0C", "u8": 2}]},
+    {"name": "negative unused argument has no effect", "args": [-2147483648, "a message"], "memory": [{"addr": "0x006E1E0C", "u8": 255}]},
+    {"name": "empty branch ignores alternate receiver", "this": "0x13572468", "args": [42, "text"], "memory": [{"addr": "0x006E1E0C", "u8": 0}, {"addr": "0x006EFE2C", "u32": "@otherEverquest"}]},
+    {"name": "send branch reloads alternate receiver", "this": "0x24681357", "args": [42, "forward me"], "memory": [{"addr": "0x006E1E0C", "u8": 65}, {"addr": "0x006EFE2C", "u32": "@otherEverquest"}]}
+  ],
+  "fuzz": {
+    "seed": 4883128,
+    "count": 30,
+    "args": [
+      {"range": [-2147483648, 2147483647]},
+      {"choices": ["", "x", "tell", "a slightly longer message"]}
+    ],
+    "memory": [
+      {"addr": "0x006E1E0C", "type": "u8", "range": [0, 255]},
+      {"addr": "0x006EFE2C", "type": "ptr", "choices": ["@everquest", "@otherEverquest", 0]}
+    ]
+  }
+}

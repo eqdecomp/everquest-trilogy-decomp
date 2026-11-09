@@ -1,0 +1,278 @@
+{
+  "function": "decryptResourceBuffer_guess",
+  "original": "0x100228d8",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {
+      "size": "0x8048",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@resource_data"
+        },
+        {
+          "offset": "0x8044",
+          "u32": "@encrypted_memory"
+        }
+      ]
+    },
+    "resource_data": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@old_data"
+        }
+      ]
+    },
+    "encrypted_memory": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 8
+        },
+        {
+          "offset": "0x4",
+          "hex": "1122334455667788"
+        }
+      ]
+    },
+    "old_data": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "new_data": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "alternate_data": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@new_data"
+    },
+    "0x100223f5": {
+      "name": "decryptData_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "successful allocation replaces old data",
+      "args": [
+        "@owner"
+      ]
+    },
+    {
+      "name": "successful allocation with no old data",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@resource_data",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "allocation failure retains old data",
+      "args": [
+        "@owner"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "allocation failure with no old data",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@resource_data",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zero size still decrypts and replaces",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encrypted_memory",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "one byte size",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encrypted_memory",
+          "offset": "0x0",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "maximum unsigned size",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@encrypted_memory",
+          "offset": "0x0",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "existing allocation equals replacement",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@resource_data",
+          "offset": "0x14",
+          "u32": "@new_data"
+        }
+      ]
+    },
+    {
+      "name": "allocator returns alternate pointer",
+      "args": [
+        "@owner"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@alternate_data"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 141528,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@owner"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x4",
+        "type": "u32",
+        "choices": [
+          "@resource_data"
+        ]
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x8044",
+        "type": "u32",
+        "choices": [
+          "@encrypted_memory"
+        ]
+      },
+      {
+        "addr": "@resource_data",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [
+          0,
+          "@old_data",
+          "@new_data"
+        ]
+      },
+      {
+        "addr": "@encrypted_memory",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          7,
+          8,
+          31,
+          255,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

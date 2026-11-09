@@ -1,0 +1,276 @@
+{
+  "function": "t3dQuaternionToEulerDeg",
+  "original": "0x1004fccb",
+  "sources": [
+    "src/eqgfx/unit_1004F9A2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "quat",
+      "type": "ptr"
+    },
+    {
+      "name": "pitch",
+      "type": "ptr"
+    },
+    {
+      "name": "roll",
+      "type": "ptr"
+    },
+    {
+      "name": "heading",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "quat": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "pitch": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "roll": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "heading": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "sqrt_table": {
+      "size": "0x10000",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100F3FF4", "u32": "@sqrt_table"}
+  ],
+  "callees": {
+    "0x1004fbeb": {
+      "name": "t3dQuaternionToEuler",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ignore",
+        "ignore",
+        "ignore"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: 45 degrees about y",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "identity quaternion (w=1): every angle zero",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 1.0},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.0},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "all-zero quaternion",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "size": 16, "fill": "zero"}
+      ]
+    },
+    {
+      "name": "pure x rotation (w=0, x=1)",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x4", "f32": 1.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.0},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "pure z rotation (w = z = 0.7071068)",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.7071068},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.0},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.7071068}
+      ]
+    },
+    {
+      "name": "negative zero, +infinity and -infinity components",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "u32": 2147483648},
+        {"addr": "@quat", "offset": "0x4", "u32": 2139095040},
+        {"addr": "@quat", "offset": "0x8", "u32": 4286578688},
+        {"addr": "@quat", "offset": "0xc", "u32": 1065353216}
+      ]
+    },
+    {
+      "name": "signalling NaN in x (both sides carry the same bits through the x87)",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "u32": 1065353216},
+        {"addr": "@quat", "offset": "0x4", "u32": 2139095041},
+        {"addr": "@quat", "offset": "0x8", "u32": 0},
+        {"addr": "@quat", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "denormal components",
+      "args": ["@quat", "@pitch", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "u32": 1},
+        {"addr": "@quat", "offset": "0x4", "u32": 0},
+        {"addr": "@quat", "offset": "0x8", "u32": 1},
+        {"addr": "@quat", "offset": "0xc", "u32": 1065353216}
+      ]
+    },
+    {
+      "name": "roll overlaps pitch by two bytes (roll's store lands in pitch's bytes)",
+      "args": ["@quat", "@pitch", "@pitch+0x2", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "pitch and roll are the same float (roll stored last)",
+      "args": ["@quat", "@pitch", "@pitch", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "pitch and heading are the same float (heading stored last)",
+      "args": ["@quat", "@pitch", "@roll", "@pitch"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "roll and heading are the same float (heading stored last)",
+      "args": ["@quat", "@pitch", "@heading", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "pitch aliases quat[0] (the callee reads quat before the store)",
+      "args": ["@quat", "@quat", "@roll", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "all three outputs alias quat[0] (heading stored last)",
+      "args": ["@quat", "@quat", "@quat", "@quat"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "heading aliases quat[3] (the last component)",
+      "args": ["@quat", "@pitch", "@roll", "@quat+0xc"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "roll aliases quat[1] (an input the callee has already read)",
+      "args": ["@quat", "@pitch", "@quat+0x4", "@heading"],
+      "memory": [
+        {"addr": "@quat", "offset": "0x0", "f32": 0.9238795},
+        {"addr": "@quat", "offset": "0x4", "f32": 0.0},
+        {"addr": "@quat", "offset": "0x8", "f32": 0.3826834},
+        {"addr": "@quat", "offset": "0xc", "f32": 0.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1004951,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@quat"
+        ]
+      },
+      {
+        "choices": [
+          "@pitch",
+          "@roll",
+          "@heading",
+          "@quat",
+          "@quat+0x4",
+          "@pitch+0x2"
+        ]
+      },
+      {
+        "choices": [
+          "@pitch",
+          "@roll",
+          "@heading",
+          "@quat",
+          "@roll+0x2"
+        ]
+      },
+      {
+        "choices": [
+          "@pitch",
+          "@roll",
+          "@heading",
+          "@quat",
+          "@heading+0x2"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@quat",
+        "type": "float",
+        "count": 4
+      },
+      {
+        "addr": "@quat",
+        "type": "float",
+        "count": 4,
+        "p": 0.25
+      }
+    ]
+  }
+}

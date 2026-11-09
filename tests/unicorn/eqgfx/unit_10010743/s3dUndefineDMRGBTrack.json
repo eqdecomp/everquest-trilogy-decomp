@@ -1,0 +1,326 @@
+{
+  "function": "s3dUndefineDMRGBTrack",
+  "original": "0x10010d88",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "zero"
+    },
+    "owned_data": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "allocation": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "dictionary_key": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1193046
+    }
+  },
+  "cases": [
+    {
+      "name": "use count one rejects cleanup even when every resource is set",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary_key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0x1c",
+          "u32": "@owned_data"
+        },
+        {
+          "addr": "@owned_data",
+          "u32": "@allocation"
+        }
+      ]
+    },
+    {
+      "name": "negative use count also rejects",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 255
+        },
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary_key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0x1c",
+          "u32": "@owned_data"
+        },
+        {
+          "addr": "@owned_data",
+          "u32": "@allocation"
+        }
+      ]
+    },
+    {
+      "name": "zero count with no resources calls the helper then frees the track",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "non-null owned data frees its null first pointer, then the block; other flag bits do not unlink",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 2
+        },
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary_key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0x1c",
+          "u32": "@owned_data"
+        }
+      ]
+    },
+    {
+      "name": "all cleanup steps run in assembly order and the helper return is preserved",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 255
+        },
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary_key"
+        },
+        {
+          "addr": "@track",
+          "offset": "0x1c",
+          "u32": "@owned_data"
+        },
+        {
+          "addr": "@owned_data",
+          "u32": "@allocation"
+        }
+      ]
+    },
+    {
+      "name": "dictionary bit with null key still unlinks and skips key free",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "whole dword use count 0x10000 is nonzero",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 65536
+        },
+        {
+          "addr": "@track",
+          "offset": "0x1c",
+          "u32": "@owned_data"
+        },
+        {
+          "addr": "@owned_data",
+          "u32": "@allocation"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 69000,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@track"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@track",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          -1,
+          65536
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0xc",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          255
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@dictionary_key"
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x1c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@owned_data"
+        ]
+      },
+      {
+        "addr": "@owned_data",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@allocation"
+        ]
+      }
+    ]
+  }
+}

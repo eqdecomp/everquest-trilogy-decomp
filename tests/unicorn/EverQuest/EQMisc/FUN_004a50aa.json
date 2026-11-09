@@ -1,0 +1,143 @@
+{
+  "function": "SendLocalSpawnIdMessage_guess",
+  "original": "0x004a50aa",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x80",
+          "u32": "0x13579bdf"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@player"
+    }
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null player skips send",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4d8c",
+          "u32": "0x0"
+        }
+      ]
+    },
+    {
+      "name": "null pointer with nonzero adjacent byte",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4d8c",
+          "u32": "0x0"
+        },
+        {
+          "addr": "0x006e4d90",
+          "u8": "0x1"
+        }
+      ]
+    },
+    {
+      "name": "zero spawn id",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x80",
+          "u32": "0x0"
+        }
+      ]
+    },
+    {
+      "name": "high bit spawn id",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x80",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "maximum spawn id",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x80",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "misaligned global address witness",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4d8c",
+          "u32": "@player"
+        },
+        {
+          "addr": "@player",
+          "offset": "0x80",
+          "u32": "0x11111111"
+        },
+        {
+          "addr": "0x00600080",
+          "u32": "0x22222222"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4870314,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x006e4d8c",
+        "type": "ptr",
+        "choices": [
+          "0x0",
+          "@player"
+        ]
+      },
+      {
+        "addr": "@player",
+        "offset": "0x80",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

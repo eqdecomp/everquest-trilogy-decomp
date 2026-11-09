@@ -1,0 +1,83 @@
+{
+  "function": "t3dInsertReferenceIntoList",
+  "original": "0x100190f9",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "reference", "type": "u32"},
+    {"name": "list", "type": "ptr"},
+    {"name": "index", "type": "u32"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "list": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 4},
+        {"offset": "0x8", "u32": 8},
+        {"offset": "0xc", "u32": "@references"}
+      ]
+    },
+    "references": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": 100},
+        {"offset": "0x04", "u32": 200},
+        {"offset": "0x08", "u32": 300},
+        {"offset": "0x0c", "u32": 400},
+        {"offset": "0x10", "u32": 500},
+        {"offset": "0x14", "u32": 600},
+        {"offset": "0x18", "u32": 700},
+        {"offset": "0x1c", "u32": 800},
+        {"offset": "0x20", "u32": 900},
+        {"offset": "0x24", "u32": 1000}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": "@references"
+    },
+    "0x100679f0": {
+      "name": "memcpy",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {"name": "append with spare capacity", "args": [1100, "@list", 4], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "insert at beginning", "args": [1100, "@list", 0], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "insert in middle", "args": [1100, "@list", 2], "memory": [{"addr": "@list", "offset": "0x4", "u32": 5}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "insert before last reference", "args": [1100, "@list", 3], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "insert at count appends", "args": [1100, "@list", 4], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "index past count appends", "args": [1100, "@list", 20], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "maximum index appends", "args": [1100, "@list", "0xffffffff"], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 8}]},
+    {"name": "capacity equality reallocates and inserts", "args": [1100, "@list", 2], "memory": [{"addr": "@list", "offset": "0x4", "u32": 4}, {"addr": "@list", "offset": "0x8", "u32": 4}]},
+    {"name": "zero capacity grows to one", "args": [1100, "@list", 0], "memory": [{"addr": "@list", "offset": "0x4", "u32": 0}, {"addr": "@list", "offset": "0x8", "u32": 0}]},
+    {"name": "count greater than capacity still grows", "args": [1100, "@list", 3], "memory": [{"addr": "@list", "offset": "0x4", "u32": 6}, {"addr": "@list", "offset": "0x8", "u32": 2}]},
+    {"name": "reallocation failure leaves list unchanged", "args": [1100, "@list", 1], "memory": [{"addr": "@list", "offset": "0x4", "u32": 2}, {"addr": "@list", "offset": "0x8", "u32": 2}], "callees": {"0x10050c8c": {"name": "t3dReallocateMemory", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}}, "expect": {"ret": "0xffff3d3e"}},
+    {"name": "empty list with spare capacity", "args": [1100, "@list", 0], "memory": [{"addr": "@list", "offset": "0x4", "u32": 0}, {"addr": "@list", "offset": "0x8", "u32": 1}]}
+  ],
+  "fuzz": {
+    "seed": 102649,
+    "count": 40,
+    "args": [
+      {"range": [-8, 2000]},
+      {"choices": ["@list"]},
+      {"range": [-2, 26]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x4", "type": "u32", "range": [0, 20]},
+      {"addr": "@list", "offset": "0x8", "type": "u32", "range": [0, 24]},
+      {"addr": "@references", "type": "u32", "count": 24}
+    ]
+  }
+}

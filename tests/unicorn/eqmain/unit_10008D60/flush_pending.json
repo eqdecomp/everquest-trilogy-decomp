@@ -1,0 +1,303 @@
+{
+  "function": "inflate_flush_guess",
+  "original": "0x1000cb20",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "ring", "type": "ptr"},
+    {"name": "strm", "type": "ptr"},
+    {"name": "flush", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "buf": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "ring": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x28", "u32": "@buf"},
+        {"offset": "0x2c", "u32": "@buf+0x40"},
+        {"offset": "0x30", "u32": "@buf"},
+        {"offset": "0x34", "u32": "@buf"},
+        {"offset": "0x38", "u32": "@fn"},
+        {"offset": "0x3c", "u32": "0x1000"}
+      ]
+    },
+    "fn": {
+      "size": "0x10"
+    },
+    "out": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "strm": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@out"},
+        {"offset": "0x10", "u32": 64},
+        {"offset": "0x14", "u32": "0x100"},
+        {"offset": "0x30", "u32": "0x7777"}
+      ]
+    }
+  },
+  "callees": {
+    "@fn": {
+      "name": "hook",
+      "conv": "cdecl",
+      "args": ["u32", "ptr", "uint"],
+      "ret": ["0x11111111", "0x22222222", "0x33333333"]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty ring (head == tail), flush -5: no bytes, -5 kept",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x10"}
+      ],
+      "expect": {"ret": -5}
+    },
+    {
+      "name": "one run, no wrap, flush 0",
+      "args": ["@ring", "@strm", 0],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one run, no wrap, flush -5 with bytes moved: becomes 0",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "run cut by avail_out (3 of 8)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"},
+        {"addr": "@strm", "offset": "0x10", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "run exactly avail_out (8)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"},
+        {"addr": "@strm", "offset": "0x10", "u32": 8}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "avail_out 0, flush -5: nothing moved, -5 kept",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"},
+        {"addr": "@strm", "offset": "0x10", "u32": 0}
+      ],
+      "expect": {"ret": -5}
+    },
+    {
+      "name": "one-byte run, flush -5: becomes 0",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x11"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one-byte run, flush -4: unchanged",
+      "args": ["@ring", "@strm", -4],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x11"}
+      ],
+      "expect": {"ret": -4}
+    },
+    {
+      "name": "flush 3 with bytes moved: unchanged",
+      "args": ["@ring", "@strm", 3],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"}
+      ],
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "wrap: tail behind head, both runs move",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x4"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "wrap: avail_out ends in the first run (second run empty)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x4"},
+        {"addr": "@strm", "offset": "0x10", "u32": 32}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "wrap: avail_out cut in the second run",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x8"},
+        {"addr": "@strm", "offset": "0x10", "u32": 34}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "wrap: tail at base (second run empty)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "wrap: tail at end, so the second run resets tail to base",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x40"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "full ring (head base, tail end)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x40"},
+        {"addr": "@strm", "offset": "0x10", "u32": 256}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "head at end, tail mid: first run empty, second from base",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x40"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x8"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "head and tail at end (empty): -5 kept, tail reset to base",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x40"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x40"}
+      ],
+      "expect": {"ret": -5}
+    },
+    {
+      "name": "hook null, no wrap",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0xc"},
+        {"addr": "@ring", "offset": "0x38", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "hook null, wrap",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x4"},
+        {"addr": "@ring", "offset": "0x38", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "wrap with avail_out 0: first run empty, no second run",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x4"},
+        {"addr": "@strm", "offset": "0x10", "u32": 0}
+      ],
+      "expect": {"ret": -5}
+    },
+    {
+      "name": "avail_out with the high bit set (unsigned compare)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x14"},
+        {"addr": "@strm", "offset": "0x10", "u32": "0x80000000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "head one before end, tail at 5 (one byte, then five)",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x3f"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x5"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "head one past tail, wrapping by one",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x21"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x20"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty ring, hook null, flush -5",
+      "args": ["@ring", "@strm", -5],
+      "memory": [
+        {"addr": "@ring", "offset": "0x30", "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": "0x34", "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": "0x38", "u32": 0}
+      ],
+      "expect": {"ret": -5}
+    }
+  ],
+  "fuzz": {
+    "seed": 52000,
+    "count": 40,
+    "args": [
+      {"choices": ["@ring"]},
+      {"choices": ["@strm"]},
+      {"choices": [-5, -5, -5, 0, 1, 2, 3, -4]}
+    ],
+    "memory": [
+      {"addr": "@ring", "offset": "0x30", "type": "ptr", "choices": ["@buf", "@buf+0x1", "@buf+0x7", "@buf+0x10", "@buf+0x20", "@buf+0x3f", "@buf+0x40"]},
+      {"addr": "@ring", "offset": "0x34", "type": "ptr", "choices": ["@buf", "@buf+0x1", "@buf+0x7", "@buf+0x10", "@buf+0x20", "@buf+0x3f", "@buf+0x40"]},
+      {"addr": "@ring", "offset": "0x38", "type": "ptr", "choices": [0], "p": 0.25},
+      {"addr": "@ring", "offset": "0x3c", "type": "u32"},
+      {"addr": "@strm", "offset": "0x10", "type": "u32", "range": [0, 96]},
+      {"addr": "@strm", "offset": "0x14", "type": "u32", "range": [0, 4096]}
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "function": "EQ_Overlay_AddButton_guess",
+  "original": "0x004503be",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "id", "type": "short"},
+    {"name": "rect", "type": "ptr"},
+    {"name": "left", "type": "short"},
+    {"name": "top", "type": "short"},
+    {"name": "visible", "type": "short"},
+    {"name": "buttonId", "type": "short"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x100", "fill": "random", "init": [{"offset": "0x70", "u32": 0}]},
+    "rect": {"size": "0x10", "fill": "random"},
+    "element": {"size": "0x24", "fill": "random", "init": [{"offset": "0x20", "u32": 0}]},
+    "node1": {"size": "0x24", "fill": "random", "init": [{"offset": "0x20", "u32": 0}]},
+    "node2": {"size": "0x24", "fill": "random", "init": [{"offset": "0x20", "u32": 0}]}
+  },
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": "@element"},
+    "0x00419572": {"name": "InitializeOverlayElement_guess", "conv": "thiscall", "args": [], "ret": "@element"},
+    "0x00419598": {"name": "OverlayElement_guess::SetOverlayElementRect_guess", "conv": "thiscall", "args": ["ptr"]},
+    "0x0041961e": {"name": "OverlayElement_SetOverlayElementVisibility_guess", "conv": "thiscall", "args": ["short", "short"]},
+    "kernel32.dll!HeapAlloc": {"conv": "stdcall", "args": ["ptr", "u32", "u32"], "ret": "@element"},
+    "user32.dll!CopyRect": {"conv": "stdcall", "args": ["mem:16", "mem:16"], "ret": 1}
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "empty list visible",
+      "args": ["@self", 0, 1, "@rect", 2, 3, 1, 4]
+    },
+    {
+      "name": "empty list hidden",
+      "args": ["@self", 7, 0, "@rect", -1, 0, 0, -1]
+    },
+    {
+      "name": "append one node",
+      "args": ["@self", 0, 12, "@rect", 34, 56, -1, 78],
+      "memory": [{"addr": "@self", "offset": "0x70", "u32": "@node1"}]
+    },
+    {
+      "name": "append after two nodes",
+      "args": ["@self", 0, -32768, "@rect", 32767, -2, 2, 32767],
+      "memory": [
+        {"addr": "@self", "offset": "0x70", "u32": "@node1"},
+        {"addr": "@node1", "offset": "0x20", "u32": "@node2"}
+      ]
+    },
+    {
+      "name": "signed short boundaries",
+      "args": ["@self", 0, 32767, "@rect", -32768, 32767, 0, -32768]
+    },
+    {
+      "name": "nonzero visibility boundary",
+      "args": ["@self", 0, -1, "@rect", 0, -1, -32768, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 4522942,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [-2, 2]},
+      {"range": [-32768, 32767]},
+      {"choices": ["@rect"]},
+      {"range": [-32768, 32767]},
+      {"range": [-32768, 32767]},
+      {"choices": [-32768, -1, 0, 1, 32767]},
+      {"range": [-32768, 32767]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x70", "type": "ptr", "choices": [0, "@node1"]}
+    ]
+  }
+}

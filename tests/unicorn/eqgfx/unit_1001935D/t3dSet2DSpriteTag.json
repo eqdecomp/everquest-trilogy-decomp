@@ -1,0 +1,567 @@
+{
+  "function": "t3dSet2DSpriteTag",
+  "original": "0x1001936b",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "tag",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "oldtag": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "tagbuf": {
+      "size": "0x400",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@tagbuf"
+    },
+    "0x10068160": {
+      "name": "_strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "clean sprite, null tag: nothing to free, the key stays null, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "clean sprite, null tag, old key: frees the old key and clears it",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered, null tag, old key: removes the entry, frees the key, clears it, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered, null tag, null key: removes the entry with a null key, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered, remove fails: returns its error at once, key and flags untouched",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1000e334": {
+          "name": "t3dRemoveEntryFromDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -49852
+        }
+      },
+      "expect": {
+        "ret": -49852
+      }
+    },
+    {
+      "name": "clean sprite, tag, no old key: copies the tag into a fresh allocation, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "clean sprite, tag, old key: frees the old key, copies the tag, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "clean sprite, empty tag: allocates one byte for the terminator",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "clean sprite, allocation fails: frees the old key, returns -1 with a null key",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "registered, allocation fails after a clean remove: returns -1, no re-add",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "registered, tag not in the dictionary: re-adds the sprite, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered, tag already in the dictionary: no re-add, returns 0",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1000e7fe": {
+          "name": "t3dGetPointerFromDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": 1234
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered, re-add fails: returns the add's result",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -49852
+        }
+      },
+      "expect": {
+        "ret": -49852
+      }
+    },
+    {
+      "name": "bit 1 alone is not the registered flag: no remove, no re-add",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "high flag bit alone is not the registered flag (the mask is 1, not the whole dword)",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 65536
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registered with high flag bits set: bit 0 still means registered",
+      "args": [
+        "@dictionary",
+        "@sprite",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": "@oldtag"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 65537
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 103275,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@oldtag"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0xc",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          65536,
+          65537,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

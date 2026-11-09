@@ -1,0 +1,258 @@
+{
+  "function": "NormalizeFilePathOwner_guess::normalizeFilePath_guess",
+  "original": "0x004c48cb",
+  "sources": ["src/ffcreate2/ff/packfs.cpp"],
+  "rewrite": "NormalizeFilePathOwner_guess::normalizeFilePath_guess",
+  "conv": "thiscall",
+  "this": "@owner",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "source": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@inputdata"
+        }
+      ]
+    },
+    "inputdata": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@inputbuffer"
+        },
+        {
+          "offset": "0xc",
+          "u32": 1
+        }
+      ]
+    },
+    "inputbuffer": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "h0": {"size": "0x100", "fill": "zero"},
+    "h1": {"size": "0x100", "fill": "zero"},
+    "h2": {"size": "0x100", "fill": "zero"},
+    "h3": {"size": "0x100", "fill": "zero"},
+    "h4": {"size": "0x100", "fill": "zero"},
+    "h5": {"size": "0x100", "fill": "zero"},
+    "h6": {"size": "0x100", "fill": "zero"},
+    "h7": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004c4823": {
+      "name": "initializePackFSData_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "0x004dd993": {
+      "name": "CXStr_getStringLength_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004dd808": {
+      "name": "PackFSData_PackFSData_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x004c489a": {
+      "name": "PackFsStringReference_guess::copyStringReference_guess",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x004c4813": {
+      "name": "decrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": ["@h0", "@h1", "@h2", "@h3", "@h4", "@h5", "@h6", "@h7"]
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "null input data object",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero length skips string helper",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 0},
+        {"addr": "@inputbuffer", "cstr": "Ignored"}
+      ]
+    },
+    {
+      "name": "empty string",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 1},
+        {"addr": "@inputbuffer", "cstr": ""}
+      ]
+    },
+    {
+      "name": "one uppercase character",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 2},
+        {"addr": "@inputbuffer", "cstr": "A"}
+      ]
+    },
+    {
+      "name": "one lowercase character",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 2},
+        {"addr": "@inputbuffer", "cstr": "z"}
+      ]
+    },
+    {
+      "name": "mixed case and repeated mixed separators",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 20},
+        {"addr": "@inputbuffer", "cstr": "C:\\Foo//BAR\\baz.TXT"}
+      ]
+    },
+    {
+      "name": "leading and trailing separator runs",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 18},
+        {"addr": "@inputbuffer", "cstr": "///Alpha\\\\\\Beta//"}
+      ]
+    },
+    {
+      "name": "separator-only string",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 5},
+        {"addr": "@inputbuffer", "cstr": "\\\\//"}
+      ]
+    },
+    {
+      "name": "separator collapse resets after characters",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 9},
+        {"addr": "@inputbuffer", "cstr": "A//b///C"}
+      ]
+    },
+    {
+      "name": "punctuation preserved around ASCII capitals",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 12},
+        {"addr": "@inputbuffer", "cstr": "AZ[az] _.-+"}
+      ]
+    },
+    {
+      "name": "non-ASCII bytes unchanged",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 4},
+        {"addr": "@inputbuffer", "cstr": "\u00c0Z"}
+      ]
+    },
+    {
+      "name": "tab retained",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 4},
+        {"addr": "@inputbuffer", "cstr": "A\tB"}
+      ]
+    },
+    {
+      "name": "single backslash",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 2},
+        {"addr": "@inputbuffer", "cstr": "\\"}
+      ]
+    },
+    {
+      "name": "single slash",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 2},
+        {"addr": "@inputbuffer", "cstr": "/"}
+      ]
+    },
+    {
+      "name": "length one yields no input characters",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 1},
+        {"addr": "@inputbuffer", "cstr": "not-read"}
+      ]
+    },
+    {
+      "name": "dot segments and spaces remain",
+      "args": ["@source"],
+      "memory": [
+        {"addr": "@inputdata", "offset": "0xc", "u32": 11},
+        {"addr": "@inputbuffer", "cstr": "A/../ My Dir"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4999371,
+    "count": 32,
+    "args": [
+      {
+        "choices": ["@source"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@inputdata",
+        "offset": "0xc",
+        "type": "u32",
+        "range": [0, 64]
+      },
+      {
+        "addr": "@inputbuffer",
+        "size": 64
+      }
+    ]
+  }
+}

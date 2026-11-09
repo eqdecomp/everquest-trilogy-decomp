@@ -1,0 +1,147 @@
+{
+  "function": "t3dAttachSharedMemoryPointer",
+  "original": "0x10050c00",
+  "sources": [
+    "src/eqgfx/unit_10050AA7.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "view",
+      "type": "ptr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "view": {
+      "size": "0x4",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!OpenFileMappingA": {
+      "name": "OpenFileMappingA",
+      "conv": "stdcall",
+      "args": ["dword", "int", "cstr"],
+      "ret": "0x1234"
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 2
+    },
+    "kernel32.dll!MapViewOfFile": {
+      "name": "MapViewOfFile",
+      "conv": "stdcall",
+      "args": ["ptr", "dword", "dword", "dword", "dword"],
+      "ret": "0xa00000"
+    },
+    "kernel32.dll!CloseHandle": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@view", "abc"]
+    },
+    {
+      "name": "zeros",
+      "args": ["@view", ""]
+    },
+    {
+      "name": "open fails",
+      "args": ["@view", "abc"],
+      "callees": {
+        "kernel32.dll!OpenFileMappingA": {
+          "name": "OpenFileMappingA",
+          "conv": "stdcall",
+          "args": ["dword", "int", "cstr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "open fails, empty name",
+      "args": ["@view", ""],
+      "callees": {
+        "kernel32.dll!OpenFileMappingA": {
+          "name": "OpenFileMappingA",
+          "conv": "stdcall",
+          "args": ["dword", "int", "cstr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "open fails, view null",
+      "args": [0, "abc"],
+      "callees": {
+        "kernel32.dll!OpenFileMappingA": {
+          "name": "OpenFileMappingA",
+          "conv": "stdcall",
+          "args": ["dword", "int", "cstr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "map fails",
+      "args": ["@view", "abc"],
+      "callees": {
+        "kernel32.dll!MapViewOfFile": {
+          "name": "MapViewOfFile",
+          "conv": "stdcall",
+          "args": ["ptr", "dword", "dword", "dword", "dword"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "handle with high bit set",
+      "args": ["@view", "abc"],
+      "callees": {
+        "kernel32.dll!OpenFileMappingA": {
+          "name": "OpenFileMappingA",
+          "conv": "stdcall",
+          "args": ["dword", "int", "cstr"],
+          "ret": "0xffffffff"
+        }
+      }
+    },
+    {
+      "name": "view with high bit set",
+      "args": ["@view", "abc"],
+      "callees": {
+        "kernel32.dll!MapViewOfFile": {
+          "name": "MapViewOfFile",
+          "conv": "stdcall",
+          "args": ["ptr", "dword", "dword", "dword", "dword"],
+          "ret": "0x80000000"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 330752,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@view"
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

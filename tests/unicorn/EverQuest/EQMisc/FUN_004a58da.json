@@ -1,0 +1,93 @@
+{
+  "function": "UpdateProfileTimeSummary_guess",
+  "original": "0x004a58da",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "profile": {
+      "size": "0x1044",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "Primary"},
+        {"offset": "0x103c", "u32": 305419896},
+        {"offset": "0x1040", "u32": 2271560481}
+      ]
+    },
+    "alternate": {
+      "size": "0x1044",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "Alternate"},
+        {"offset": "0x103c", "u32": 16909060},
+        {"offset": "0x1040", "u32": 84281096}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4DA8", "u32": "@profile"}
+  ],
+  "callees": {
+    "0x004a5713": {
+      "name": "PrintBirthdateAndPlayTime_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "distinct adjacent fields preserve pointer and argument order",
+      "args": []
+    },
+    {
+      "name": "all zero field values",
+      "args": [],
+      "memory": [
+        {"addr": "@profile", "offset": "0x103c", "u32": 0},
+        {"addr": "@profile", "offset": "0x1040", "u32": 0}
+      ]
+    },
+    {
+      "name": "signed time lower boundary and unsigned minutes upper boundary",
+      "args": [],
+      "memory": [
+        {"addr": "@profile", "offset": "0x103c", "u32": "0x80000000"},
+        {"addr": "@profile", "offset": "0x1040", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "signed time upper boundary and zero minutes",
+      "args": [],
+      "memory": [
+        {"addr": "@profile", "offset": "0x103c", "u32": "0x7fffffff"},
+        {"addr": "@profile", "offset": "0x1040", "u32": 0}
+      ]
+    },
+    {
+      "name": "reads alternate global profile",
+      "args": [],
+      "memory": [
+        {"addr": "0x006E4DA8", "u32": "@alternate"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4872410,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x006E4DA8", "type": "ptr", "choices": ["@profile", "@alternate"]},
+      {"addr": "@profile", "offset": "0x103c", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@profile", "offset": "0x1040", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@alternate", "offset": "0x103c", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@alternate", "offset": "0x1040", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

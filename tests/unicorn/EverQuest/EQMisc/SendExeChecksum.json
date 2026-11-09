@@ -1,0 +1,413 @@
+{
+  "function": "SendExeChecksum_guess",
+  "original": "0x004a4116",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "command": {
+      "size": 128,
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 0,
+          "cstr": "C:\\EverQuest\\eqgame.exe"
+        }
+      ]
+    },
+    "file": {
+      "size": 16,
+      "fill": "zero"
+    },
+    "data": {
+      "size": 4096,
+      "fill": "zero"
+    },
+    "get_command_line": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "global_alloc": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "global_free": {
+      "size": 4,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x005341a4",
+      "u32": "@get_command_line"
+    },
+    {
+      "addr": "0x005341a0",
+      "u32": "@global_alloc"
+    },
+    {
+      "addr": "0x00534038",
+      "u32": "@global_free"
+    },
+    {
+      "addr": "0x00562534",
+      "cstr": "%s"
+    },
+    {
+      "addr": "0x0053c2bc",
+      "from_image": "0x0053C2BC",
+      "image_size": 3
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": "0x12345678"
+    }
+  ],
+  "callees": {
+    "@get_command_line": {
+      "name": "GetCommandLineA",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "@command"
+    },
+    "@global_alloc": {
+      "name": "GlobalAlloc",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "u32"
+      ],
+      "ret": "@data"
+    },
+    "@global_free": {
+      "name": "GlobalFree",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x00523f0b": {
+      "name": "_sscanf",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x00523be0": {
+      "name": "__stat",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 20,
+          "hex": "40000000"
+        }
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005223bc": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x00522038": {
+      "name": "fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+        }
+      ]
+    },
+    "0x00521fbb": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004e04a2": {
+      "name": "crc32mem",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 305419896
+    },
+    "0x004a46f6": {
+      "name": "random_range_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": [
+        0,
+        1,
+        15,
+        7
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:2056",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "plain path, successful read and message",
+      "args": []
+    },
+    {
+      "name": "quoted path removes both quotes",
+      "args": [],
+      "objects": {
+        "command": {
+          "size": 128,
+          "fill": "zero",
+          "init": [
+            {
+              "offset": 0,
+              "cstr": "\"C:\\EverQuest\\eqgame.exe\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "quoted path ending in backslash retains it after quote removal",
+      "args": [],
+      "objects": {
+        "command": {
+          "size": 128,
+          "fill": "zero",
+          "init": [
+            {
+              "offset": 0,
+              "cstr": "\"C:\\EverQuest\\\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "unquoted trailing backslash is removed",
+      "args": [],
+      "objects": {
+        "command": {
+          "size": 128,
+          "fill": "zero",
+          "init": [
+            {
+              "offset": 0,
+              "cstr": "C:\\EverQuest\\"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "single backslash exercises length-one trailing slash trim",
+      "args": [],
+      "objects": {
+        "command": {
+          "size": 128,
+          "fill": "zero",
+          "init": [
+            {
+              "offset": 0,
+              "cstr": "\\"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "trailing slash trim exposes a quote for the next branch",
+      "args": [],
+      "objects": {
+        "command": {
+          "size": 128,
+          "fill": "zero",
+          "init": [
+            {
+              "offset": 0,
+              "cstr": "a\"\\"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "basename with no backslash",
+      "args": [],
+      "objects": {
+        "command": {
+          "size": 128,
+          "fill": "zero",
+          "init": [
+            {
+              "offset": 0,
+              "from_image": "0x0057D3E0",
+              "image_size": 11
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "stat failure returns immediately before allocation",
+      "args": [],
+      "callees": {
+        "0x00523be0": {
+          "name": "__stat_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "open failure frees allocated data",
+      "args": [],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_fail",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "short read closes file and frees data",
+      "args": [],
+      "callees": {
+        "0x00522038": {
+          "name": "fread_short",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "larger file size is copied into payload",
+      "args": [],
+      "callees": {
+        "0x00523be0": {
+          "name": "__stat_256",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 20,
+              "hex": "00010000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "random indices include first and last valid words",
+      "args": [],
+      "callees": {
+        "0x004a46f6": {
+          "name": "random_edges",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            15
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4866326,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@command",
+        "offset": 0,
+        "type": "u8",
+        "choices": [
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74
+        ],
+        "count": 4
+      }
+    ]
+  }
+}

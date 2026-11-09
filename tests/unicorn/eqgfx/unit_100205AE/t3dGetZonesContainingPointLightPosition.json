@@ -1,0 +1,229 @@
+{
+  "function": "t3dGetZonesContainingPointLightPosition",
+  "original": "0x10020f8c",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "int"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002077a": {
+      "name": "t3dGetZonesContainingWorldXYZPosition",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: callee returns 0, result 0",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros: world and region 0 still reach the callee",
+      "args": [
+        0,
+        "@light",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ordering: world, light+0x14, region reach the callee in that order",
+      "args": [
+        4660,
+        "@light",
+        22136
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "extreme world and region values pass through unchanged",
+      "args": [
+        -1,
+        "@light",
+        2147483647
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null light: no null check, the callee gets 0x14",
+      "args": [
+        1,
+        0,
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee returns 1: nonzero maps to 0xffff3d3e",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "callees": {
+        "0x1002077a": {
+          "name": "t3dGetZonesContainingWorldXYZPosition",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "callee returns -1: any nonzero, not only 1, maps to 0xffff3d3e",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "callees": {
+        "0x1002077a": {
+          "name": "t3dGetZonesContainingWorldXYZPosition",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "callee returns 0x7fffffff: large positive nonzero",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "callees": {
+        "0x1002077a": {
+          "name": "t3dGetZonesContainingWorldXYZPosition",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "int"
+          ],
+          "ret": 2147483647
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "callee returns 0x80000000: sign bit only, still nonzero",
+      "args": [
+        1,
+        "@light",
+        1
+      ],
+      "callees": {
+        "0x1002077a": {
+          "name": "t3dGetZonesContainingWorldXYZPosition",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "int"
+          ],
+          "ret": -2147483648
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "null light with a nonzero callee result still maps to 0xffff3d3e",
+      "args": [
+        1,
+        0,
+        1
+      ],
+      "callees": {
+        "0x1002077a": {
+          "name": "t3dGetZonesContainingWorldXYZPosition",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 135052,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@light",
+          0
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

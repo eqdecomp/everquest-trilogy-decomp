@@ -1,0 +1,119 @@
+{
+  "function": "s3dPackTrackTransformation_guess",
+  "original": "0x1001d009",
+  "sources": ["src/eqgfx/unit_1001B80C.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "packed_values", "type": "ptr"},
+    {"name": "position_scale", "type": "float"},
+    {"name": "angle_one", "type": "float"},
+    {"name": "angle_two", "type": "float"},
+    {"name": "angle_three", "type": "float"},
+    {"name": "position", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "packed_values": {"size": "0x10", "fill": "random"},
+    "position": {"size": "0xc", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x100762AC", "f32": 256.0},
+    {"addr": "0x100762A8", "f32": 128.0}
+  ],
+  "callees": {
+    "0x1004f89a": {
+      "name": "t3dEulerToQuaternion",
+      "conv": "cdecl",
+      "args": ["float", "float", "float", "ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 3, "offset": 0, "hex": "0000803e0000003f000040bf0000a03f"}
+      ]
+    },
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "asymmetric angles and position",
+      "args": ["@packed_values", 1.25, 13.25, -28.5, 42.75, "@position"],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "f32": 0.25},
+        {"addr": "@position", "offset": "0x4", "f32": -1.5},
+        {"addr": "@position", "offset": "0x8", "f32": 2.75}
+      ]
+    },
+    {
+      "name": "all zero values",
+      "args": ["@packed_values", 0.0, 0.0, 0.0, 0.0, "@position"],
+      "memory": [{"addr": "@position", "size": 12, "fill": "zero"}]
+    },
+    {
+      "name": "angle endpoints and signed position",
+      "args": ["@packed_values", -2.0, 0.0, 256.0, 512.0, "@position"],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "f32": -4.0},
+        {"addr": "@position", "offset": "0x4", "f32": 0.5},
+        {"addr": "@position", "offset": "0x8", "f32": 8.0}
+      ]
+    },
+    {
+      "name": "negative angles and reverse position scale",
+      "args": ["@packed_values", -0.75, -512.0, -128.0, -0.5, "@position"],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "f32": -0.125},
+        {"addr": "@position", "offset": "0x4", "f32": 1.25},
+        {"addr": "@position", "offset": "0x8", "f32": -3.0}
+      ]
+    },
+    {
+      "name": "fractional scaled values near rounding boundaries",
+      "args": ["@packed_values", 0.5, 127.999, 128.001, 255.5, "@position"],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "f32": 0.00390625},
+        {"addr": "@position", "offset": "0x4", "f32": -0.0078125},
+        {"addr": "@position", "offset": "0x8", "f32": 0.015625}
+      ]
+    },
+    {
+      "name": "position aliases the destination buffer",
+      "args": ["@packed_values", 1.0, 64.0, 192.0, 320.0, "@packed_values"],
+      "memory": [
+        {"addr": "@packed_values", "offset": "0x0", "f32": 1.25},
+        {"addr": "@packed_values", "offset": "0x4", "f32": -2.5},
+        {"addr": "@packed_values", "offset": "0x8", "f32": 3.75},
+        {"addr": "@packed_values", "offset": "0xc", "f32": -4.5}
+      ]
+    },
+    {
+      "name": "zero position scale with nonzero coordinates",
+      "args": ["@packed_values", 0.0, 511.0, 1.0, 255.0, "@position"],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "f32": 11.0},
+        {"addr": "@position", "offset": "0x4", "f32": -13.0},
+        {"addr": "@position", "offset": "0x8", "f32": 17.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 118793,
+    "count": 40,
+    "args": [
+      {"choices": ["@packed_values"]},
+      {"range": [-8, 8]},
+      {"range": [0, 64]},
+      {"range": [0, 64]},
+      {"range": [0, 64]},
+      {"choices": ["@position"]}
+    ],
+    "memory": [
+      {"addr": "@position", "type": "float", "count": 3, "range": [-32, 32]},
+      {"addr": "0x100762AC", "type": "float", "range": [-512, 512]},
+      {"addr": "0x100762A8", "type": "float", "range": [-512, 512]}
+    ]
+  }
+}

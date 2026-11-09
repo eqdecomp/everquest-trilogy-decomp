@@ -1,0 +1,122 @@
+{
+  "function": "UnlinkAndFreeRecord_guess",
+  "original": "0x10006130",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rec": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x08", "u32": "@owner"},
+      {"offset": "0x20", "u32": 0},
+      {"offset": "0x24", "u32": 0},
+      {"offset": "0x30", "u32": 0},
+      {"offset": "0x36", "u8": 0},
+      {"offset": "0x37", "u8": 0}
+    ]},
+    "owner": {"size": "0x40", "fill": "random", "init": [{"offset": "0x1c", "u32": 0}]},
+    "owner2": {"size": "0x40", "fill": "random", "init": [{"offset": "0x1c", "u32": 0}]},
+    "n1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x04", "u32": "@other"}, {"offset": "0x08", "u32": "@n2"}]},
+    "n2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x04", "u32": "@other"}, {"offset": "0x08", "u32": "@n3"}]},
+    "n3": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x04", "u32": "@other"}]},
+    "other": {"size": "0x40", "fill": "random"},
+    "sub20": {"size": "0x10", "fill": "random"},
+    "sub24": {"size": "0x10", "fill": "random"},
+    "fn": {"size": "0x10", "fill": "zero"},
+    "fn2": {"size": "0x10", "fill": "zero"},
+    "vtbl": {"size": "0x10", "fill": "random", "init": [{"offset": "0x00", "u32": "@fn"}, {"offset": "0x04", "u32": "@fn2"}]},
+    "dtor": {"size": "0x10", "fill": "random", "init": [{"offset": "0x00", "u32": "@vtbl"}]},
+    "msg": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x00", "cstr": "queue record: null"}]}
+  },
+  "memory": [
+    {"addr": "0x10055a88", "u32": "@msg"}
+  ],
+  "callees": {
+    "0x100278a0": {"name": "FUN_100278a0", "conv": "cdecl", "args": ["cstr"], "ret": 0},
+    "0x10007a80": {"name": "FUN_10007a80", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10028430": {"name": "FUN_10028430", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "@fn": {"name": "dtor_slot0_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+    "@fn2": {"name": "dtor_slot1_guess", "conv": "thiscall", "args": ["int"], "ret": 0}
+  },
+  "rewrite_aliases": {
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {"name": "null pointer: FUN_100278A0 gets DAT_10055A88, returns", "args": [0]},
+    {"name": "plain record: no subs, empty list, flag clear: _free only", "args": ["@rec"]},
+    {"name": "sub at +0x20 only", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x20", "u32": "@sub20"}]},
+    {"name": "sub at +0x24 only", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x24", "u32": "@sub24"}]},
+    {"name": "both subs: +0x20 released before +0x24", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x20", "u32": "@sub20"}, {"addr": "@rec", "offset": "0x24", "u32": "@sub24"}]},
+    {"name": "same pointer in both subs", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x20", "u32": "@sub20"}, {"addr": "@rec", "offset": "0x24", "u32": "@sub20"}]},
+    {"name": "record is the head node", "args": ["@rec"], "memory": [
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}, {"addr": "@n1", "offset": "0x04", "u32": "@rec"}]},
+    {"name": "record is the second node", "args": ["@rec"], "memory": [
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}, {"addr": "@n2", "offset": "0x04", "u32": "@rec"}]},
+    {"name": "record is the last node", "args": ["@rec"], "memory": [
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}, {"addr": "@n3", "offset": "0x04", "u32": "@rec"}]},
+    {"name": "list without the record: no unlink", "args": ["@rec"], "memory": [
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}]},
+    {"name": "match on +0 only, not +4: unlink the node whose +4 is the record", "args": ["@rec"], "memory": [
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}, {"addr": "@n1", "offset": "0x00", "u32": "@rec"},
+      {"addr": "@n2", "offset": "0x04", "u32": "@rec"}]},
+    {"name": "same record in two nodes: first unlinked, search stops", "args": ["@rec"], "memory": [
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}, {"addr": "@n1", "offset": "0x04", "u32": "@rec"},
+      {"addr": "@n2", "offset": "0x04", "u32": "@rec"}]},
+    {"name": "owner is owner2: the list at owner2 + 0x1c", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x08", "u32": "@owner2"}, {"addr": "@owner2", "offset": "0x1c", "u32": "@n1"},
+      {"addr": "@n1", "offset": "0x04", "u32": "@rec"}]},
+    {"name": "flag 1, dtor set: slot 0 called with 1", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x37", "u8": 1}, {"addr": "@rec", "offset": "0x30", "u32": "@dtor"}]},
+    {"name": "flag 1, dtor null: no call", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x37", "u8": 1}]},
+    {"name": "flag 0, dtor set: no call", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x30", "u32": "@dtor"}]},
+    {"name": "byte +0x36 set, +0x37 clear, dtor set: no call", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x36", "u8": 1}, {"addr": "@rec", "offset": "0x30", "u32": "@dtor"}]},
+    {"name": "flag 2 (nonzero, not 1): call", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x37", "u8": 2}, {"addr": "@rec", "offset": "0x30", "u32": "@dtor"}]},
+    {"name": "flag 0x80 (negative as char): call", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x37", "u8": 128}, {"addr": "@rec", "offset": "0x30", "u32": "@dtor"}]},
+    {"name": "all paths: subs, second node, flag, dtor", "args": ["@rec"], "memory": [
+      {"addr": "@rec", "offset": "0x20", "u32": "@sub20"}, {"addr": "@rec", "offset": "0x24", "u32": "@sub24"},
+      {"addr": "@owner", "offset": "0x1c", "u32": "@n1"}, {"addr": "@n2", "offset": "0x04", "u32": "@rec"},
+      {"addr": "@rec", "offset": "0x37", "u8": 1}, {"addr": "@rec", "offset": "0x30", "u32": "@dtor"}]}
+  ],
+  "fuzz": {
+    "seed": 24880,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rec"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@rec", "offset": "0x08", "type": "ptr", "choices": ["@owner", "@owner2"]},
+      {"addr": "@rec", "offset": "0x20", "type": "ptr", "choices": [0, "@sub20", "@sub24"]},
+      {"addr": "@rec", "offset": "0x24", "type": "ptr", "choices": [0, "@sub20", "@sub24"]},
+      {"addr": "@rec", "offset": "0x30", "type": "ptr", "choices": [0, "@dtor"]},
+      {"addr": "@rec", "offset": "0x36", "type": "u8", "choices": [0, 1]},
+      {"addr": "@rec", "offset": "0x37", "type": "u8", "choices": [0, 1, 2, 128, 255]},
+      {"addr": "@owner", "offset": "0x1c", "type": "ptr", "choices": [0, "@n1", "@n2", "@n3"]},
+      {"addr": "@owner2", "offset": "0x1c", "type": "ptr", "choices": [0, "@n1", "@n2"]},
+      {"addr": "@n1", "offset": "0x00", "type": "ptr", "choices": [0, "@rec"]},
+      {"addr": "@n1", "offset": "0x04", "type": "ptr", "choices": [0, "@rec", "@other"]},
+      {"addr": "@n2", "offset": "0x04", "type": "ptr", "choices": [0, "@rec", "@other"]},
+      {"addr": "@n3", "offset": "0x04", "type": "ptr", "choices": [0, "@rec", "@other"]}
+    ]
+  }
+}

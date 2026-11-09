@@ -1,0 +1,119 @@
+{
+  "function": "EqDirectSoundSlotsStop_guess::GetSlotStatus_guess",
+  "original": "0x004ecaef",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@slots",
+  "args": [
+    {
+      "name": "slot",
+      "type": "int"
+    },
+    {
+      "name": "status",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "slots": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": "@voice"},
+        {"offset": "0x08", "u32": "@voice"},
+        {"offset": "0x0c", "u32": "@voice"},
+        {"offset": "0x10", "u32": "@voice2"},
+        {"offset": "0x14", "u32": "@voice"},
+        {"offset": "0x18", "u32": 0},
+        {"offset": "0x1c", "u32": "@voice"},
+        {"offset": "0x20", "u32": "@voice"},
+        {"offset": "0x24", "u32": "@voice"},
+        {"offset": "0x28", "u32": "@voice"},
+        {"offset": "0x2c", "u32": "@voice"},
+        {"offset": "0x30", "u32": "@voice"},
+        {"offset": "0x34", "u32": "@voice"},
+        {"offset": "0x38", "u32": "@voice"},
+        {"offset": "0x3c", "u32": "@voice"},
+        {"offset": "0x40", "u32": "@voice2"},
+        {"offset": "0x44", "u32": "@voice"},
+        {"offset": "0x54", "u32": "@name"}
+      ]
+    },
+    "voice": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u8": 1}
+      ]
+    },
+    "voice2": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u8": 0}
+      ]
+    },
+    "name": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": 1953654102},
+        {"offset": 4, "u32": 7889253}
+      ]
+    },
+    "status": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!OutputDebugStringA": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x004ec004": {
+      "name": "EqDirectSoundVoice_guess::GetStatus_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 1234567
+    }
+  },
+  "cases": [
+    {"name": "slot 0 active -> status stored, true", "args": [0, "@status"]},
+    {"name": "slot 1 active, status 0", "args": [1, "@status"],
+     "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 0}}},
+    {"name": "slot 2 active, status 0xFFFFFFFF", "args": [2, "@status"],
+     "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 4294967295}}},
+    {"name": "slot 15 boundary, inactive -> log, false", "args": [15, "@status"]},
+    {"name": "slot 15 boundary, active flag 0x80 -> true", "args": [15, "@status"],
+     "memory": [{"addr": "@voice2", "offset": "0x10", "u8": 128}]},
+    {"name": "slot 3 inactive -> log, false", "args": [3, "@status"]},
+    {"name": "slot 5 null voice -> log, false", "args": [5, "@status"]},
+    {"name": "slot 16 out of range -> log, false", "args": [16, "@status"]},
+    {"name": "slot -1 out of range -> log, false", "args": [-1, "@status"]},
+    {"name": "slot 0x80000000 out of range", "args": [-2147483648, "@status"]},
+    {"name": "slot 0x7FFFFFFF out of range", "args": [2147483647, "@status"]},
+    {"name": "slot 14 active", "args": [14, "@status"],
+     "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 5}}},
+    {"name": "out of range with null status -> never written", "args": [20, 0]}
+  ],
+  "fuzz": {
+    "seed": 5163759,
+    "count": 40,
+    "args": [
+      {"choices": [-2, -1, 0, 1, 2, 3, 4, 5, 7, 12, 14, 15, 16, 17, 100]},
+      {"choices": ["@status"]}
+    ],
+    "memory": [
+      {"addr": "@voice", "offset": "0x10", "type": "u8", "choices": [0, 1, 2, 255]},
+      {"addr": "@voice2", "offset": "0x10", "type": "u8", "choices": [0, 1]},
+      {"addr": "@name", "offset": 0, "type": "u8", "choices": [0, 65, 122]}
+    ]
+  }
+}

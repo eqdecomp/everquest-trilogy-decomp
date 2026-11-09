@@ -1,0 +1,117 @@
+{
+  "function": "t3dIsHierarchicalSpriteValid",
+  "original": "0x100135c7",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 19}
+      ]
+    },
+    "sprite": {
+      "size": "0x128",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 20},
+        {"offset": "0x5c", "u32": "@definition"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: sprite tag 0x14, definition tag 0x13",
+      "args": ["@sprite"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null sprite",
+      "args": [0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 0x13",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 19}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 0x114 (low byte 0x14)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 276}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 0x80000014 (high bit set)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": "0x80000014"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 0 (zeroed)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sprite tag 0x13 with unmapped definition pointer (not read)",
+      "args": ["@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "u32": 19},
+        {"addr": "@sprite", "offset": "0x5c", "u32": "0xdead0000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition null",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@sprite", "offset": "0x5c", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x14",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": 20}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x114 (low byte 0x13)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": 275}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0 (zeroed)",
+      "args": ["@sprite"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 79303,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@sprite", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x0", "type": "int", "choices": [20, 20, 20, 19, 0, 276, -2147483628]},
+      {"addr": "@sprite", "offset": "0x5c", "type": "ptr", "choices": ["@definition", "@definition", 0]},
+      {"addr": "@definition", "offset": "0x0", "type": "int", "choices": [19, 19, 20, 0, 275]}
+    ]
+  }
+}

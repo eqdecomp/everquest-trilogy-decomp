@@ -1,0 +1,216 @@
+{
+  "function": "_verify",
+  "original": "0x004f8310",
+  "sources": [
+    "src/ffcreate2/ff/verify_o2.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "status",
+      "type": "char"
+    },
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "a2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "hook": {"size": "0x10", "fill": "zero"},
+    "names": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x000", "cstr": "zone/file.cpp"},
+        {"offset": "0x100", "cstr": "other.cpp"},
+        {"offset": "0x180", "cstr": "third"}
+      ]
+    }
+  },
+  "_exit_note": "__exit never returns, but the harness's shim does: both versions then run on (pop edi; dec [0x6f035c]; add esp,0x400; ret). The logError callee, the last call before __exit, writes the return slot at buffer+0x3fc (E-4) = 0x4f83d9, a scripted no-op callee just past the extent, so the final ret lands there and returns to the real caller.",
+  "memory": [
+    {"addr": "0x006f035c", "u32": 1},
+    {"addr": "0x006f0360", "u32": 0},
+    {"addr": "0x006eff50", "u32": "@names"},
+    {"addr": "0x006eff54", "u32": 3},
+    {"addr": "0x006eff58", "u32": "@names"},
+    {"addr": "0x006eff5c", "u32": 77},
+    {"addr": "0x006eff60", "u32": "@names+0x100"},
+    {"addr": "0x006eff64", "u32": 12345},
+    {"addr": "0x006eff68", "u32": "@names+0x180"},
+    {"addr": "0x006eff6c", "u32": -5}
+  ],
+  "callees": {
+    "0x00524174": {
+      "name": "_vsprintf",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr", "ignore"],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004f8220": {
+      "name": "fdebug",
+      "conv": "cdecl",
+      "args": ["mem:1024"],
+      "ret": 0
+    },
+    "0x004f83e0": {
+      "name": "logErrorToFileAndDebug_guess",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "writes": [
+        {"arg": 0, "offset": 1020, "hex": "d9834f00"}
+      ]
+    },
+    "0x00522dbe": {
+      "name": "__exit",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": 0
+    },
+    "0x004f83d9": {
+      "name": "after_exit_return",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 0
+    },
+    "@hook": {
+      "name": "hook",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "status set pops the stack",
+      "args": [1, "abc %d", 1]
+    },
+    {
+      "name": "status set, 0xff char",
+      "args": [255, "abc", 1],
+      "memory": [{"addr": "0x006f035c", "u32": 5}]
+    },
+    {
+      "name": "status set, counter zero wraps",
+      "args": [2, "abc", 1],
+      "memory": [{"addr": "0x006f035c", "u32": 0}]
+    },
+    {
+      "name": "status set, hook not called",
+      "args": [1, "abc", 1],
+      "memory": [{"addr": "0x006f0360", "u32": "@hook"}]
+    },
+    {
+      "name": "no format, no hook",
+      "regs": {"edi": 47818},
+      "args": [0,"0x0", 0],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}]
+    },
+    {
+      "name": "no format, hook called",
+      "regs": {"edi": 47818},
+      "args": [0,"0x0", 0],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}, {"addr": "0x006f0360", "u32": "@hook"}]
+    },
+    {
+      "name": "no format, entry 0",
+      "regs": {"edi": 47818},
+      "args": [0,"0x0", 0],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}, {"addr": "0x006f035c", "u32": 0}]
+    },
+    {
+      "name": "format with value",
+      "regs": {"edi": 47818},
+      "args": [0,"value %d!", 42],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}]
+    },
+    {
+      "name": "format with negative value, other entry",
+      "regs": {"edi": 47818},
+      "args": [0,"n=%d", -7],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}, {"addr": "0x006f035c", "u32": 2}]
+    },
+    {
+      "name": "empty format",
+      "regs": {"edi": 47818},
+      "args": [0,"", 9],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}, {"addr": "0x006f035c", "u32": 0}]
+    },
+    {
+      "name": "format without conversion",
+      "regs": {"edi": 47818},
+      "args": [0,"plain text", 9],
+      "memory": [{"addr": "0x004f83d9", "hex": "c3"}]
+    },
+    {
+      "name": "long file name",
+      "regs": {"edi": 47818},
+      "args": [0,"0x0", 3],
+      "memory": [
+        {"addr": "0x004f83d9", "hex": "c3"},
+        {"addr": "@names", "offset": "0x100", "cstr": "a_rather_long_file_name_to_cross_word_boundaries_0123456789.cpp"}
+      ]
+    },
+    {
+      "name": "very long file name, message ends near the buffer end",
+      "regs": {"edi": 47818},
+      "args": [0, "0x0", 3],
+      "objects": {
+        "longname": {
+          "size": "0x400",
+          "fill": "zero",
+          "init": [
+            {"offset": 0, "cstr": "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"}
+          ]
+        }
+      },
+      "memory": [
+        {"addr": "0x004f83d9", "hex": "c3"},
+        {"addr": "0x006eff60", "u32": "@longname"}
+      ]
+    },
+    {
+      "name": "file name one over a word",
+      "regs": {"edi": 47818},
+      "args": [0,"0x0", 3],
+      "memory": [
+        {"addr": "0x004f83d9", "hex": "c3"},
+        {"addr": "@names", "offset": "0x100", "cstr": "abcdefghijklmnopq"}
+      ]
+    },
+    {
+      "name": "hook and format",
+      "regs": {"edi": 47818},
+      "args": [0,"x%dy", 100000],
+      "memory": [
+        {"addr": "0x004f83d9", "hex": "c3"},
+        {"addr": "0x006f0360", "u32": "@hook"},
+        {"addr": "0x006f035c", "u32": 2}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5210896,
+    "count": 30,
+    "args": [
+      {"choices": [1, 2, -1, 127, 128, 255, 3]},
+      {"choices": ["0x0", "", "plain", "v=%d", "a %d b"]},
+      {}
+    ],
+    "memory": [
+      {"addr": "0x006f035c", "type": "u32", "range": [0, 2]},
+      {"addr": "0x006f0360", "type": "ptr", "choices": [0, "@hook"]}
+    ]
+  }
+}

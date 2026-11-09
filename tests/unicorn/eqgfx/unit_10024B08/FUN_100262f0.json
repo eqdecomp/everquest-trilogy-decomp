@@ -1,0 +1,285 @@
+{
+  "function": "_t3dParseFileOpen",
+  "original": "0x100262f0",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "path",
+      "type": "cstr"
+    },
+    {
+      "name": "archiveId",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "createFile": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076098",
+      "u32": "@createFile"
+    },
+    {
+      "addr": "0x30000000",
+      "size": 4096,
+      "fill": "zero"
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "0x30000000",
+        "0x30000100"
+      ]
+    },
+    "0x10021791": {
+      "name": "t3dFastFileOpen",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "cstr"
+      ],
+      "ret": "0x30000200"
+    },
+    "0x10021897": {
+      "name": "t3dFastFileSeek",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x1002191d": {
+      "name": "t3dFastFileTell",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 4660
+    },
+    "@createFile": {
+      "name": "CreateFileA",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "u32",
+        "u32",
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": "0x30000200"
+    },
+    "kernel32.dll!CreateFileA": {
+      "name": "CreateFileA",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "u32",
+        "u32",
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": "0x30000200"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure returns null",
+      "args": [
+        "world.eqg",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ordinary file rejects invalid handle",
+      "args": [
+        "world.eqg",
+        0
+      ],
+      "callees": {
+        "@createFile": {
+          "name": "CreateFileA",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "u32",
+            "u32",
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": -1
+        },
+        "kernel32.dll!CreateFileA": {
+          "name": "CreateFileA",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "u32",
+            "u32",
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ordinary file copies an empty path",
+      "args": [
+        "",
+        0
+      ],
+      "expect": {
+        "ret": "0x30000000"
+      }
+    },
+    {
+      "name": "ordinary file copies a nonempty path",
+      "args": [
+        "zones/toxxulia.eqg",
+        0
+      ],
+      "expect": {
+        "ret": "0x30000000"
+      }
+    },
+    {
+      "name": "ordinary file path allocation failure frees object",
+      "args": [
+        "world.eqg",
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": [
+            "0x30000000",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "archive open failure returns null",
+      "args": [
+        "world.eqg",
+        1
+      ],
+      "callees": {
+        "0x10021791": {
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "archive path allocation failure frees object",
+      "args": [
+        "world.eqg",
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": [
+            "0x30000000",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "archive zero offset is queried then reset",
+      "args": [
+        "zones/arena.eqg",
+        1
+      ],
+      "expect": {
+        "ret": "0x30000000"
+      }
+    },
+    {
+      "name": "negative archive id takes archive branch",
+      "args": [
+        "zones/arena.eqg",
+        -1
+      ],
+      "expect": {
+        "ret": "0x30000000"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 156400,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "",
+          "a",
+          "world.eqg",
+          "zones/arena.eqg",
+          "Upper Case Name",
+          "long/path/name.with.extension"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          -1,
+          2147483647
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

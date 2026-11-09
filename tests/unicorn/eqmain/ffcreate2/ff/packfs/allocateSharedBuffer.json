@@ -1,0 +1,282 @@
+{
+  "function": "allocateSharedBuffer_guess",
+  "original": "0x10007f70",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "size",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "old": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "data": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "obj": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@data",
+        "@obj"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "size_1_both_allocations_succeed",
+      "args": [
+        "@self",
+        0,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ]
+    },
+    {
+      "name": "size_16_both_allocations_succeed",
+      "args": [
+        "@self",
+        0,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ]
+    },
+    {
+      "name": "size_0_clears_stale_pointer",
+      "args": [
+        "@self",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ]
+    },
+    {
+      "name": "size_0_on_null_pointer",
+      "args": [
+        "@self",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "size_0xffffffff_is_not_signed",
+      "args": [
+        "@self",
+        0,
+        "0xffffffff"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ]
+    },
+    {
+      "name": "size_0x80000000_is_not_signed",
+      "args": [
+        "@self",
+        0,
+        "0x80000000"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ]
+    },
+    {
+      "name": "object_allocation_fails_null_count_read_faults",
+      "args": [
+        "@self",
+        0,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@data",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "buffer_allocation_fails_object_still_built",
+      "args": [
+        "@self",
+        0,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            0,
+            "@obj"
+          ]
+        }
+      }
+    },
+    {
+      "name": "both_allocations_fail_null_count_read_faults",
+      "args": [
+        "@self",
+        0,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "allocator_writes_self_so_null_store_matters",
+      "args": [
+        "@self",
+        0,
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": "@old"
+        }
+      ],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@data",
+            0
+          ],
+          "writes": [
+            {
+              "addr": "@self",
+              "hex": "01000000"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 32624,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {
+        "choices": [
+          0
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@old"
+        ]
+      }
+    ]
+  }
+}

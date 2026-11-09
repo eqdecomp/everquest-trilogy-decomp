@@ -1,0 +1,248 @@
+{
+  "function": "t3dSetRenderContextRGBModel",
+  "original": "0x100431c4",
+  "sources": [
+    "src/eqgfx/unit_10042A22.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "enabled",
+      "type": "int"
+    },
+    {
+      "name": "rgbModel",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "max_insns": 2000000,
+  "objects": {
+    "rendercontext": {
+      "size": "0x4bc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x138",
+          "u32": 0
+        }
+      ]
+    },
+    "rgbmodel": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "table": {
+      "size": "0x4000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076354",
+      "f32": 1.0
+    },
+    {
+      "addr": "0x10076350",
+      "f32": 1.0
+    },
+    {
+      "addr": "0x100762e8",
+      "f32": 1.0
+    },
+    {
+      "addr": "0x1007634c",
+      "f32": 3.0
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1004ec36": {
+      "name": "roundX87Value",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "disabled ignores a null model and stores zero",
+      "args": [
+        "@rendercontext",
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "enabled rejects a null model before touching the context",
+      "args": [
+        "@rendercontext",
+        1,
+        0
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "null context is safe when enabled model is null",
+      "args": [
+        0,
+        1,
+        0
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "reuse existing table and clear unknown4b8",
+      "args": [
+        "@rendercontext",
+        1,
+        "@rgbmodel"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x138",
+          "u32": "@table"
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x4b8",
+          "u32": 123
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation failure preserves enabled state",
+      "args": [
+        "@rendercontext",
+        7,
+        "@rgbmodel"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "successful allocation fills all 64 by 256 entries and clamps values",
+      "args": [
+        "@rendercontext",
+        1,
+        "@rgbmodel"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@table"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "nonzero enabled values are stored unchanged",
+      "args": [
+        "@rendercontext",
+        -1,
+        "@rgbmodel"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x138",
+          "u32": "@table"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 274884,
+    "count": 24,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      },
+      {
+        "range": [
+          -1,
+          1
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "@rgbmodel"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rendercontext",
+        "offset": "0x138",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@table"
+        ]
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x4b4",
+        "type": "int",
+        "range": [
+          -2,
+          2
+        ]
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x4b8",
+        "type": "int",
+        "range": [
+          -2,
+          2
+        ]
+      }
+    ]
+  }
+}

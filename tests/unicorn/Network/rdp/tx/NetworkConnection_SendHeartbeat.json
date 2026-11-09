@@ -1,0 +1,113 @@
+{
+  "function": "NetworkConnection_SendHeartbeat_guess",
+  "original": "0x004f33e0",
+  "sources": ["src/Network/rdp/tx.c"],
+  "conv": "cdecl",
+  "args": [{"name": "param_1", "type": "int"}],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x7a8", "hex": "0102030405060708090a0b0c0d0e0f10"},
+        {"offset": "0x7b8", "u32": 74565},
+        {"offset": "0x7bc", "u32": 287454020},
+        {"offset": "0x7c0", "u32": "@history"},
+        {"offset": "0x7c4", "u32": 0},
+        {"offset": "0x7c8", "u32": 0},
+        {"offset": "0x7d4", "u32": 3},
+        {"offset": "0x7d8", "u32": 8},
+        {"offset": "0x7dc", "u32": 4},
+        {"offset": "0x7e0", "u32": 0}
+      ]
+    },
+    "history": {"size": "0x80", "fill": "random"},
+    "conn_shift": {
+      "size": "0x840",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x7c8", "hex": "101112131415161718191a1b1c1d1e1f"},
+        {"offset": "0x7d8", "u32": 74565},
+        {"offset": "0x7dc", "u32": 287454020},
+        {"offset": "0x7e0", "u32": "@history_shift"},
+        {"offset": "0x7e4", "u32": 0},
+        {"offset": "0x7e8", "u32": 0},
+        {"offset": "0x7f4", "u32": 3},
+        {"offset": "0x7f8", "u32": 8},
+        {"offset": "0x7fc", "u32": 4},
+        {"offset": "0x800", "u32": 2}
+      ]
+    },
+    "history_shift": {"size": "0x80", "fill": "random"}
+  },
+  "callees": {
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [1111, 2222]},
+    "0x0050039e": {"name": "setsockopt", "conv": "stdcall", "args": ["int", "int", "int", "mem:4", "int"], "ret": [0, 0]},
+    "0x005003da": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": [10035, 10054]},
+    "0x004f73c0": {"name": "net_strerror", "conv": "cdecl", "args": ["int"], "ret": 0},
+    "0x00500392": {"name": "sendto", "conv": "stdcall", "args": ["int", "mem:1", "int", "int", "mem:16", "int"], "ret": 1}
+  },
+  "cases": [
+    {
+      "name": "first setsockopt fails",
+      "args": ["@conn"],
+      "callees": {"0x0050039e": {"name": "setsockopt", "conv": "stdcall", "args": ["int", "int", "int", "mem:4", "int"], "ret": [-1]}, "0x005003da": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10035}}
+    },
+    {
+      "name": "first setsockopt positive failure",
+      "args": ["@conn"],
+      "callees": {"0x0050039e": {"name": "setsockopt", "conv": "stdcall", "args": ["int", "int", "int", "mem:4", "int"], "ret": [1]}}
+    },
+    {
+      "name": "send success below limit",
+      "args": ["@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x7d4", "u32": 3}, {"addr": "@conn", "offset": "0x7d8", "u32": 4}, {"addr": "@conn", "offset": "0x7dc", "u32": 6}, {"addr": "@conn", "offset": "0x7e0", "u32": 1}]
+    },
+    {
+      "name": "nonzero low byte connection pointer",
+      "args": ["@conn_shift+0x20"]
+    },
+    {
+      "name": "send success at limit increments missed count",
+      "args": ["@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x7d4", "u32": 4}, {"addr": "@conn", "offset": "0x7d8", "u32": 4}, {"addr": "@conn", "offset": "0x7dc", "u32": 2}, {"addr": "@conn", "offset": "0x7e0", "u32": 2}]
+    },
+    {
+      "name": "packet counter wraps before unsigned limit check",
+      "args": ["@conn"],
+      "memory": [{"addr": "@conn", "offset": "0x7d4", "u32": 4294967295}, {"addr": "@conn", "offset": "0x7d8", "u32": 0}, {"addr": "@conn", "offset": "0x7dc", "u32": 17}, {"addr": "@conn", "offset": "0x7e0", "u32": 3}]
+    },
+    {
+      "name": "send returns zero and clears record",
+      "args": ["@conn"],
+      "callees": {"0x00500392": {"name": "sendto", "conv": "stdcall", "args": ["int", "mem:1", "int", "int", "mem:16", "int"], "ret": [0]}, "0x005003da": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10054}}
+    },
+    {
+      "name": "send returns negative and final setsockopt fails",
+      "args": ["@conn"],
+      "callees": {"0x00500392": {"name": "sendto", "conv": "stdcall", "args": ["int", "mem:1", "int", "int", "mem:16", "int"], "ret": [-1]}, "0x0050039e": {"name": "setsockopt", "conv": "stdcall", "args": ["int", "int", "int", "mem:4", "int"], "ret": [0, -1]}, "0x005003da": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10061}}
+    },
+    {
+      "name": "send positive non-one is failure",
+      "args": ["@conn"],
+      "callees": {"0x00500392": {"name": "sendto", "conv": "stdcall", "args": ["int", "mem:1", "int", "int", "mem:16", "int"], "ret": [2]}}
+    },
+    {
+      "name": "successful send then final setsockopt fails",
+      "args": ["@conn"],
+      "callees": {"0x0050039e": {"name": "setsockopt", "conv": "stdcall", "args": ["int", "int", "int", "mem:4", "int"], "ret": [0, -3]}, "0x005003da": {"name": "WSAGetLastError", "conv": "stdcall", "args": [], "ret": 10055}}
+    }
+  ],
+  "fuzz": {
+    "seed": 5190624,
+    "count": 30,
+    "args": [{"choices": ["@conn"]}],
+    "memory": [
+      {"addr": "@conn", "offset": "0x7d4", "type": "u32", "range": [0, 30]},
+      {"addr": "@conn", "offset": "0x7d8", "type": "u32", "range": [0, 30]},
+      {"addr": "@conn", "offset": "0x7dc", "type": "u32", "range": [0, 30]},
+      {"addr": "@conn", "offset": "0x7e0", "type": "u32", "range": [0, 3]}
+    ]
+  }
+}

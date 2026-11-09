@@ -1,0 +1,186 @@
+{
+  "function": "RemoveOwnedRecord_guess",
+  "original": "0x10005db0",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": "@n1"},
+        {"offset": "0x2c", "u32": 3}
+      ]
+    },
+    "n1": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@r1"},
+        {"offset": "0x8", "u32": "@n2"}
+      ]
+    },
+    "n2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@r2"},
+        {"offset": "0x8", "u32": "@n3"}
+      ]
+    },
+    "n3": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@r3"},
+        {"offset": "0x8", "u32": "@n4"}
+      ]
+    },
+    "n4": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@r4"},
+        {"offset": "0x8", "u32": 0}
+      ]
+    },
+    "r1": {"size": "0x20", "fill": "random", "init": [{"offset": "0x4", "u32": "0x6001"}]},
+    "r2": {"size": "0x20", "fill": "random", "init": [{"offset": "0x4", "u32": "0x6002"}]},
+    "r3": {"size": "0x20", "fill": "random", "init": [{"offset": "0x4", "u32": "0x6003"}]},
+    "r4": {"size": "0x20", "fill": "random", "init": [{"offset": "0x4", "u32": "0x6004"}]},
+    "r5": {"size": "0x20", "fill": "random", "init": [{"offset": "0x4", "u32": "0x6005"}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x10028430": {"name": "FUN_10028430", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "empty list: returns without reading the record",
+      "args": ["@owner", 0],
+      "memory": [{"addr": "@owner", "offset": "0x1c", "u32": 0}]
+    },
+    {
+      "name": "empty list with a live record: no calls",
+      "args": ["@owner", "@r1"],
+      "memory": [{"addr": "@owner", "offset": "0x1c", "u32": 0}]
+    },
+    {
+      "name": "head found, count 3 drops to 2",
+      "args": ["@owner", "@r1"]
+    },
+    {
+      "name": "second node found (index 1), count 3 drops to 2",
+      "args": ["@owner", "@r2"]
+    },
+    {
+      "name": "third node found (index 2), count 3 drops to 2",
+      "args": ["@owner", "@r3"]
+    },
+    {
+      "name": "last node found (index 3), count 3 drops to 2",
+      "args": ["@owner", "@r4"]
+    },
+    {
+      "name": "last node found, index above count 2: count kept",
+      "args": ["@owner", "@r4"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": 2}]
+    },
+    {
+      "name": "index equals count (2 == 2): drops to 1",
+      "args": ["@owner", "@r3"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": 2}]
+    },
+    {
+      "name": "index equals count (1 == 1): drops to 0",
+      "args": ["@owner", "@r2"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": 1}]
+    },
+    {
+      "name": "index 2 above count 1: count kept",
+      "args": ["@owner", "@r3"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": 1}]
+    },
+    {
+      "name": "head found, count 1 drops to 0",
+      "args": ["@owner", "@r1"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": 1}]
+    },
+    {
+      "name": "head found, count 0: kept (0 is not above 0)",
+      "args": ["@owner", "@r1"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": 0}]
+    },
+    {
+      "name": "head found, count -1: kept (signed)",
+      "args": ["@owner", "@r1"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "head found, count INT_MIN: kept (signed)",
+      "args": ["@owner", "@r1"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": "0x80000000"}]
+    },
+    {
+      "name": "last node found, count INT_MAX drops by one",
+      "args": ["@owner", "@r4"],
+      "memory": [{"addr": "@owner", "offset": "0x2c", "u32": "0x7fffffff"}]
+    },
+    {
+      "name": "not found: walks the whole list and returns",
+      "args": ["@owner", "@r5"]
+    },
+    {
+      "name": "not found from a mid-list head",
+      "args": ["@owner", "@r1"],
+      "memory": [{"addr": "@owner", "offset": "0x1c", "u32": "@n3"}]
+    },
+    {
+      "name": "found from a mid-list head at index 0",
+      "args": ["@owner", "@r3"],
+      "memory": [{"addr": "@owner", "offset": "0x1c", "u32": "@n3"}]
+    },
+    {
+      "name": "null record is not on the list: walks and returns",
+      "args": ["@owner", 0]
+    },
+    {
+      "name": "record with null string: _free(NULL) still runs",
+      "args": ["@owner", "@r2"],
+      "memory": [{"addr": "@r2", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "duplicate record: first match wins (index 1, count 1 drops to 0)",
+      "args": ["@owner", "@r2"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x2c", "u32": 1},
+        {"addr": "@n3", "offset": "0x4", "u32": "@r2"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5010001,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner"]},
+      {"choices": ["@r1", "@r2", "@r3", "@r4", "@r5", 0]}
+    ],
+    "memory": [
+      {"addr": "@owner", "offset": "0x1c", "type": "ptr", "choices": ["@n1", "@n1", "@n2", "@n3", "@n4", 0]},
+      {"addr": "@owner", "offset": "0x2c", "type": "int", "choices": [-2, -1, 0, 1, 2, 3, 4, 5, 2147483647, -2147483648]},
+      {"addr": "@n1", "offset": "0x4", "type": "ptr", "choices": ["@r1", "@r2", "@r3", "@r4", "@r5"]},
+      {"addr": "@n2", "offset": "0x4", "type": "ptr", "choices": ["@r1", "@r2", "@r3", "@r4", "@r5"]},
+      {"addr": "@n3", "offset": "0x4", "type": "ptr", "choices": ["@r1", "@r2", "@r3", "@r4", "@r5"]},
+      {"addr": "@n4", "offset": "0x4", "type": "ptr", "choices": ["@r1", "@r2", "@r3", "@r4", "@r5"]},
+      {"addr": "@r1", "offset": "0x4", "type": "ptr", "choices": [0, 4096, 24576]}
+    ]
+  }
+}

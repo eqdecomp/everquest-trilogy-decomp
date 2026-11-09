@@ -1,0 +1,65 @@
+{
+  "function": "PackFSData_guess::~PackFSData_guess",
+  "original": "0x10021aa6",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfsdata",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "packfsdata": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x8", "u32": "0x30001000"}
+      ]
+    }
+  },
+  "memory": [],
+  "rewrite_aliases": {"__EH_prolog": "0x10069058"},
+  "callees": {
+    "0x10069058": {"name": "setupExceptionHandler_guess", "conv": "cdecl", "args": [], "passthrough": true},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1002190d": {"name": "decrementReferenceCount_guess", "conv": "thiscall", "args": []}
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": []
+    },
+    {
+      "name": "null data",
+      "args": [],
+      "memory": [{"addr": "@packfsdata", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "data is the object: the free call reads back the vtable stored before it",
+      "args": [],
+      "memory": [{"addr": "@packfsdata", "offset": "0x8", "u32": "@packfsdata"}],
+      "callees": {"0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["mem:4"]}}
+    },
+    {
+      "name": "zeroed object",
+      "args": [],
+      "memory": [{"addr": "@packfsdata", "size": 16, "fill": "zero"}]
+    },
+    {
+      "name": "edge data",
+      "args": [],
+      "memory": [{"addr": "@packfsdata", "offset": "0x8", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 137894,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@packfsdata", "offset": "0x8", "type": "ptr", "choices": ["0x0", "0x30001000", "0x30002000", "0x7a0000", "0xffffffff"]},
+      {"addr": "@packfsdata", "offset": "0x4", "type": "int", "range": [-8, 64]},
+      {"addr": "@packfsdata", "offset": "0x0", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

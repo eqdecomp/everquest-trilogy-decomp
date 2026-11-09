@@ -1,0 +1,143 @@
+{
+  "function": "t3dSet3DSpritePolygonPen",
+  "original": "0x10008b53",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    },
+    {
+      "name": "pen",
+      "type": "u8"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "frames": {
+      "size": "0x280",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": "@frames"},
+        {"offset": "0x2c", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": 4}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000897d": {
+      "name": "t3dCopy3DSpriteDefinitionFrames_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 24, "hex": "00000060"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical, frame 1 of 4",
+      "args": ["@sprite", 1, 165],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "frame 0, pen 0",
+      "args": ["@sprite", 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last frame 3",
+      "args": ["@sprite", 3, 255],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "frame == count",
+      "args": ["@sprite", 4, 7],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "frame > count",
+      "args": ["@sprite", 5, 7]
+    },
+    {
+      "name": "frame 0xffffffff",
+      "args": ["@sprite", "0xffffffff", 7]
+    },
+    {
+      "name": "count 0",
+      "args": ["@sprite", 0, 7],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no frame array, build ok, frame 2",
+      "args": ["@sprite", 2, 66],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no frame array, build ok, last frame 3",
+      "args": ["@sprite", 3, 1],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no frame array, frame == count (build not reached)",
+      "args": ["@sprite", 4, 66],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no frame array, build returns 1",
+      "args": ["@sprite", 2, 66],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no frame array, build returns -1 (nonzero, not positive)",
+      "args": ["@sprite", 2, 66],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": -1}
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    }
+  ],
+  "fuzz": {
+    "seed": 35667,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {"range": [0, 8]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 8]},
+      {"addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": ["@frames", "0x0"], "p": 0.5}
+    ]
+  }
+}

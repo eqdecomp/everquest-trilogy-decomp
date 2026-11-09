@@ -1,0 +1,459 @@
+{
+  "function": "rdp_destroy_guess",
+  "original": "0x1002a950",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": 7
+        },
+        {
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        },
+        {
+          "offset": "0x14",
+          "hex": "02001122c0a801020000000000000000"
+        },
+        {
+          "offset": "0x34",
+          "hex": "020013880a0000050000000000000000"
+        },
+        {
+          "offset": "0x88",
+          "u32": 0
+        },
+        {
+          "offset": "0x8c",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "callees": {
+    "0x10032296": {
+      "name": "htonl",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": "0x0100007f"
+    },
+    "0x10032290": {
+      "name": "sendto",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "mem:4",
+        "int",
+        "int",
+        "mem:16",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x100304a0": {
+      "name": "waitForThreadAndGetExitCode_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1002e890": {
+      "name": "uevent_destroy_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "state 0 is not active: returns with nothing touched",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x8c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "state 2 is not active (param 0)",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x8c",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "state -1 is not active (param 1)",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x8c",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "param 0 sends to the loopback copy, clears state, nothing freed",
+      "args": [
+        "@rdp",
+        0
+      ]
+    },
+    {
+      "name": "param 1 sends, then waits for the thread, destroys the event, frees",
+      "args": [
+        "@rdp",
+        1
+      ]
+    },
+    {
+      "name": "param 2 stores 1 and frees like param 1",
+      "args": [
+        "@rdp",
+        2
+      ]
+    },
+    {
+      "name": "param -1 stores 1 and frees",
+      "args": [
+        "@rdp",
+        -1
+      ]
+    },
+    {
+      "name": "param 0x80000000 (negative, nonzero) stores 1 and frees",
+      "args": [
+        "@rdp",
+        -2147483648
+      ]
+    },
+    {
+      "name": "+0x88 cleared by param 0 (was 1)",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x88",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "+0x88 set by param 1 (was 0)",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x88",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "socket zero is a valid socket (not the -1 sentinel)",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "socket 0xfffffffe is not the sentinel either",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xfffffffe"
+        }
+      ]
+    },
+    {
+      "name": "socket 0x80000000 (large, unsigned) takes the loopback branch",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "socket -1 sends to +0x10 with the +0x34 address (14 bytes)",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": 42
+        }
+      ]
+    },
+    {
+      "name": "+0x10 0xfffffffe in the -1 branch is a real socket",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": "0xfffffffe"
+        }
+      ]
+    },
+    {
+      "name": "socket -1 and +0x10 -1: nothing sent, param 0 leaves the rest",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "socket -1 and +0x10 -1: nothing sent, param 1 still waits and frees",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "zero +0x10 is a valid socket in the -1 branch",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "address copy keeps the other words and replaces only the IP word",
+      "args": [
+        "@rdp",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x14",
+          "hex": "ffeeddccbbaa99887766554433221100"
+        }
+      ]
+    },
+    {
+      "name": "socket -1 path with distinct bytes at +0x34 and param 1",
+      "args": [
+        "@rdp",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0x4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x10",
+          "u32": 9
+        },
+        {
+          "addr": "@rdp",
+          "offset": "0x34",
+          "hex": "1122334455667788990aabbbccddeeff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002950,
+    "count": 48,
+    "args": [
+      {
+        "choices": [
+          "@rdp"
+        ]
+      },
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          -2147483648
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rdp",
+        "offset": "0x8c",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          1,
+          1,
+          2,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x4",
+        "type": "u32",
+        "choices": [
+          "0xffffffff",
+          "0xffffffff",
+          0,
+          1,
+          7,
+          "0xfffffffe"
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          "0xffffffff",
+          0,
+          42,
+          65536
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x88",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x14",
+        "size": 16
+      },
+      {
+        "addr": "@rdp",
+        "offset": "0x34",
+        "size": 16
+      }
+    ]
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "function": "EQ_Columns_guess::Activate_guess",
+  "original": "0x004323db",
+  "sources": [
+    "src/EverQuest/EQ_Columns.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_columns",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eq_columns": {
+      "size": "0xa00",
+      "fill": "random",
+      "init": [
+        { "offset": "0x90", "u32": 125 },
+        { "offset": "0x94", "u32": 10 },
+        { "offset": "0x98", "u32": 256 },
+        { "offset": "0x9c", "u32": 304 },
+        { "offset": "0xa8", "u32": 312 },
+        { "offset": "0xac", "u32": 304 }
+      ]
+    },
+    "background": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": 20 },
+        { "offset": "0x8", "u32": 15 },
+        { "offset": "0xc", "u32": 320 },
+        { "offset": "0x10", "u32": 255 }
+      ]
+    },
+    "element0": { "size": "0x20", "fill": "random" },
+    "element1": { "size": "0x20", "fill": "random" },
+    "element2": { "size": "0x20", "fill": "random" },
+    "setrectfn": { "size": "1", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x006b52b8", "u32": "@background" },
+    { "addr": "0x00534248", "u32": "@setrectfn" }
+  ],
+  "callees": {
+    "0x0045014c": {
+      "name": "EQ_Overlay::FindOverlayElementById_guess",
+      "conv": "thiscall",
+      "args": [ "int" ],
+      "ret": [ "@element0", "@element2", "@element1" ]
+    },
+    "0x00419598": {
+      "name": "OverlayElement_guess::SetOverlayElementRect_guess",
+      "conv": "thiscall",
+      "args": [ "ptr" ]
+    },
+    "@setrectfn": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [ "ptr", "int", "int", "int", "int" ],
+      "ret": 1
+    },
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [ "ptr", "int", "int", "int", "int" ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    { "name": "all overlays present", "args": [] },
+    {
+      "name": "play overlay missing",
+      "args": [],
+      "callees": {
+        "0x0045014c": {
+          "name": "FindOverlayElementById_guess",
+          "conv": "thiscall",
+          "args": [ "int" ],
+          "ret": [ 0, "@element2", "@element1" ]
+        }
+      }
+    },
+    {
+      "name": "upper overlay missing",
+      "args": [],
+      "callees": {
+        "0x0045014c": {
+          "name": "FindOverlayElementById_guess",
+          "conv": "thiscall",
+          "args": [ "int" ],
+          "ret": [ "@element0", 0, "@element1" ]
+        }
+      }
+    },
+    {
+      "name": "lower overlay missing",
+      "args": [],
+      "callees": {
+        "0x0045014c": {
+          "name": "FindOverlayElementById_guess",
+          "conv": "thiscall",
+          "args": [ "int" ],
+          "ret": [ "@element0", "@element2", 0 ]
+        }
+      }
+    },
+    {
+      "name": "all overlays missing",
+      "args": [],
+      "callees": {
+        "0x0045014c": {
+          "name": "FindOverlayElementById_guess",
+          "conv": "thiscall",
+          "args": [ "int" ],
+          "ret": [ 0, 0, 0 ]
+        }
+      }
+    },
+    {
+      "name": "background absent",
+      "args": [],
+      "memory": [ { "addr": "0x006b52b8", "u32": 0 } ]
+    },
+    {
+      "name": "negative dimensions",
+      "args": [],
+      "memory": [
+        { "addr": "@background", "offset": "0x4", "u32": 400 },
+        { "addr": "@background", "offset": "0xc", "u32": 20 },
+        { "addr": "@background", "offset": "0x8", "u32": 500 },
+        { "addr": "@background", "offset": "0x10", "u32": 10 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4400091,
+    "count": 40,
+    "args": [],
+    "memory": [
+      { "addr": "@background", "offset": "0x4", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@background", "offset": "0x8", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@background", "offset": "0xc", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@background", "offset": "0x10", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@eq_columns", "offset": "0x90", "type": "int", "count": 4, "range": [ -2000, 2000 ] },
+      { "addr": "@eq_columns", "offset": "0xa8", "type": "int", "count": 2, "range": [ -2000, 2000 ] }
+    ]
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "function": "PackFsTree_guess::rotateRight_guess",
+  "original": "0x100539e0",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfstree",
+  "args": [
+    {
+      "name": "node",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "packfstree": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@head"
+        }
+      ]
+    },
+    "head": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@node"
+        }
+      ]
+    },
+    "node": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@left"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@parent"
+        }
+      ]
+    },
+    "left": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@other"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@middle"
+        }
+      ]
+    },
+    "middle": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@other"
+        }
+      ]
+    },
+    "parent": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@other"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@node"
+        }
+      ]
+    },
+    "other": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "nil": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100fbc04",
+      "u32": "@nil"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "root with non-nil middle subtree",
+      "args": ["@node"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@node"},
+        {"addr": "@node", "offset": "0x0", "u32": "@left"},
+        {"addr": "@node", "offset": "0x4", "u32": "@parent"},
+        {"addr": "@left", "offset": "0x8", "u32": "@middle"}
+      ]
+    },
+    {
+      "name": "root with nil middle subtree",
+      "args": ["@node"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@node"},
+        {"addr": "@node", "offset": "0x0", "u32": "@left"},
+        {"addr": "@node", "offset": "0x4", "u32": "@parent"},
+        {"addr": "@left", "offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    {
+      "name": "non-root right child",
+      "args": ["@node"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@other"},
+        {"addr": "@node", "offset": "0x0", "u32": "@left"},
+        {"addr": "@node", "offset": "0x4", "u32": "@parent"},
+        {"addr": "@left", "offset": "0x8", "u32": "@middle"},
+        {"addr": "@parent", "offset": "0x8", "u32": "@node"}
+      ]
+    },
+    {
+      "name": "non-root left child with nil middle",
+      "args": ["@node"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@other"},
+        {"addr": "@node", "offset": "0x0", "u32": "@left"},
+        {"addr": "@node", "offset": "0x4", "u32": "@parent"},
+        {"addr": "@left", "offset": "0x8", "u32": "@nil"},
+        {"addr": "@parent", "offset": "0x8", "u32": "@other"}
+      ]
+    },
+    {
+      "name": "middle subtree aliases rotated node",
+      "args": ["@node"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@node"},
+        {"addr": "@node", "offset": "0x0", "u32": "@left"},
+        {"addr": "@node", "offset": "0x4", "u32": "@parent"},
+        {"addr": "@left", "offset": "0x8", "u32": "@node"}
+      ]
+    },
+    {
+      "name": "middle subtree aliases promoted node",
+      "args": ["@node"],
+      "memory": [
+        {"addr": "@head", "offset": "0x4", "u32": "@node"},
+        {"addr": "@node", "offset": "0x0", "u32": "@left"},
+        {"addr": "@node", "offset": "0x4", "u32": "@parent"},
+        {"addr": "@left", "offset": "0x8", "u32": "@left"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 342496,
+    "count": 32,
+    "args": [
+      {
+        "choices": ["@node"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@head",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": ["@node", "@other"]
+      },
+      {
+        "addr": "@node",
+        "offset": "0x0",
+        "type": "ptr",
+        "choices": ["@left", "@node"]
+      },
+      {
+        "addr": "@node",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": ["@parent", "@node"]
+      },
+      {
+        "addr": "@left",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": ["@middle", "@nil", "@node", "@left"]
+      },
+      {
+        "addr": "@parent",
+        "offset": "0x0",
+        "type": "ptr",
+        "choices": ["@other", "@node"]
+      },
+      {
+        "addr": "@parent",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": ["@node", "@other"]
+      }
+    ]
+  }
+}

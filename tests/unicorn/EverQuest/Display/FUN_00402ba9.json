@@ -1,0 +1,83 @@
+{
+  "function": "SubmitVectorAndUpdate_guess",
+  "original": "0x00402ba9",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "fn_a2": {"size": 16},
+    "fn_b2": {"size": 16},
+    "fn_b16": {"size": 16},
+    "vta": {"size": "0x50", "fill": "random", "init": [{"offset": "0x8", "u32": "@fn_a2"}]},
+    "vtb": {"size": "0x50", "fill": "random", "init": [{"offset": "0x8", "u32": "@fn_b2"}, {"offset": "0x40", "u32": "@fn_b16"}]},
+    "ia": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vta"}]},
+    "ib": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@vtb"}]},
+    "sub": {"size": "0x10", "fill": "random"},
+    "sub2": {"size": "0x10", "fill": "zero"},
+    "self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x8", "u32": "@sub"}, {"offset": "0x14", "u32": "@ia"}, {"offset": "0x18", "u32": "@ib"}]},
+    "self_noa": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x8", "u32": "@sub"}, {"offset": "0x14", "u32": "0"}, {"offset": "0x18", "u32": "@ib"}]},
+    "self_zero": {"size": "0x40", "fill": "zero", "init": [
+      {"offset": "0x18", "u32": "@ib"}]},
+    "self_alias": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x8", "u32": "@sub2"}, {"offset": "0x14", "u32": "@ib"}, {"offset": "0x18", "u32": "@ib"}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 480},
+    "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 640},
+    "@fn_a2": {"name": "iface +0x14 slot 2", "conv": "thiscall", "args": []},
+    "@fn_b2": {"name": "iface +0x18 slot 2", "conv": "thiscall", "args": []},
+    "@fn_b16": {"name": "iface +0x18 slot 16", "conv": "thiscall", "args": ["mem:12"]}
+  },
+  "cases": [
+    {"name": "typical 640x480 with +0x14 set", "args": ["@self"]},
+    {"name": "+0x14 null skips first call", "args": ["@self_noa"]},
+    {"name": "zeroed self, only +0x18 set", "args": ["@self_zero"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 0},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 0}}},
+    {"name": "+0x14 and +0x18 same interface", "args": ["@self_alias"]},
+    {"name": "-50 from both getters (unsigned conversion)", "args": ["@self"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 4294967246},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 4294967246}}},
+    {"name": "sign boundary 0x7FFFFFFF / 0x80000000", "args": ["@self"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 2147483647},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 2147483648}}},
+    {"name": "max / one", "args": ["@self_noa"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 4294967295},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "width/height distinct, rounding 0x01000001", "args": ["@self"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 16777217},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 3}}},
+    {"name": "height only", "args": ["@self"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 1024},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 0}}},
+    {"name": "width only", "args": ["@self"],
+     "callees": {
+       "0x00402087": {"name": "FUN_00402087 (height)", "conv": "thiscall", "args": [], "ret": 0},
+       "0x00402075": {"name": "FUN_00402075 (width)", "conv": "thiscall", "args": [], "ret": 1280}}}
+  ],
+  "fuzz": {
+    "seed": 4205481,
+    "count": 30,
+    "args": [
+      {"choices": ["@self", "@self_noa", "@self_zero", "@self_alias"]}
+    ],
+    "memory": []
+  }
+}

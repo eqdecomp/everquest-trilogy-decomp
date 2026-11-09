@@ -1,0 +1,143 @@
+{
+  "function": "get_next_connection_timeout_guess",
+  "original": "0x004f7350",
+  "sources": [
+    "src/Network/rdp/heap.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "heap", "type": "ptr"},
+    {"name": "tv", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "heap": {"size": "0x14", "fill": "random"},
+    "elem": {"size": "0x40", "fill": "random"},
+    "tv": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x004f4fe0": {"name": "Heap_getTopHeapElement_guess", "conv": "cdecl", "args": ["ptr"], "ret": "@elem"},
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 1000}
+  },
+  "cases": [
+    {
+      "name": "empty heap",
+      "args": ["@heap", "@tv"],
+      "callees": {
+        "0x004f4fe0": {"name": "Heap_getTopHeapElement_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "flag set",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 1},
+        {"addr": "@elem", "offset": "0x34", "u32": 5000}
+      ]
+    },
+    {
+      "name": "flag high bit",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 2147483648},
+        {"addr": "@elem", "offset": "0x34", "u32": 5000}
+      ]
+    },
+    {
+      "name": "past by one",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 999}
+      ]
+    },
+    {
+      "name": "exactly now",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 1000}
+      ]
+    },
+    {
+      "name": "1 ms",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 1001}
+      ]
+    },
+    {
+      "name": "999 ms",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 1999}
+      ]
+    },
+    {
+      "name": "1 s",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 2000}
+      ]
+    },
+    {
+      "name": "1999 ms",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 2999}
+      ]
+    },
+    {
+      "name": "max positive diff",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 2147484647}
+      ]
+    },
+    {
+      "name": "diff 0x80000000 is negative",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 2147484648}
+      ]
+    },
+    {
+      "name": "timer wraparound",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 256}
+      ],
+      "callees": {
+        "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 4294967040}
+      }
+    },
+    {
+      "name": "large diff",
+      "args": ["@heap", "@tv"],
+      "memory": [
+        {"addr": "@elem", "offset": "0x30", "u32": 0},
+        {"addr": "@elem", "offset": "0x34", "u32": 123457789}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5206864,
+    "count": 40,
+    "args": [
+      {"choices": ["@heap"]},
+      {"choices": ["@tv"]}
+    ],
+    "memory": [
+      {"addr": "@elem", "offset": "0x30", "type": "u32", "choices": [0, 0, 0, 1]},
+      {"addr": "@elem", "offset": "0x34", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

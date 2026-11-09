@@ -1,0 +1,173 @@
+{
+  "function": "t3dReadDib",
+  "original": "0x100505a7",
+  "sources": [
+    "src/eqgfx/unit_1004F9A2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "source",
+      "type": "int"
+    },
+    {
+      "name": "mode",
+      "type": "int"
+    },
+    {
+      "name": "flags",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [],
+  "callees": {
+    "0x1004cdbf": {
+      "name": "_t3dReadDibIntoSharedMemory_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": "0x12345678"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: the callee's EAX comes back unchanged",
+      "args": [
+        1,
+        1,
+        1
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "zeros: no null check, all three forwarded",
+      "args": [
+        0,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "argument order witness: each value in its own slot",
+      "args": [
+        "0x11111111",
+        "0x22222222",
+        "0x33333333"
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "boundary values in all three arguments",
+      "args": [
+        "0x7fffffff",
+        "0x80000000",
+        "0xffffffff"
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "negative arguments stay as given",
+      "args": [
+        -1,
+        -2,
+        -3
+      ],
+      "expect": {
+        "ret": "0x12345678"
+      }
+    },
+    {
+      "name": "callee returns 0: the wrapper returns 0 (EAX is not cleared)",
+      "args": [
+        1,
+        2,
+        3
+      ],
+      "callees": {
+        "0x1004cdbf": {
+          "name": "FUN_1004cdbf",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": "0x0"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee returns -1: sign preserved",
+      "args": [
+        1,
+        2,
+        3
+      ],
+      "callees": {
+        "0x1004cdbf": {
+          "name": "FUN_1004cdbf",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": "0xffffffff"
+        }
+      },
+      "expect": {
+        "ret": "0xffffffff"
+      }
+    },
+    {
+      "name": "callee returns INT_MIN: the top bit is not dropped",
+      "args": [
+        1,
+        2,
+        3
+      ],
+      "callees": {
+        "0x1004cdbf": {
+          "name": "FUN_1004cdbf",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int",
+            "int"
+          ],
+          "ret": "0x80000000"
+        }
+      },
+      "expect": {
+        "ret": "0x80000000"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 329127,
+    "count": 40,
+    "args": [
+      {},
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

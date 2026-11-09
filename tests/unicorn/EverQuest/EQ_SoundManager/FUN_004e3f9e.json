@@ -1,0 +1,267 @@
+{
+  "function": "SetSoundListener_guess",
+  "original": "0x004e3f9e",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "unused_this",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "camera",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "unused_this": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "camera": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "ctl": {
+      "size": "0x10",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt"
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x60",
+      "init": [
+        {
+          "offset": "0x44",
+          "u32": "@setl"
+        }
+      ]
+    },
+    "getcam": {
+      "size": "0x10"
+    },
+    "calc": {
+      "size": "0x10"
+    },
+    "setl": {
+      "size": "0x10"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@player"
+    },
+    {
+      "addr": "0x006b6f08",
+      "u32": 1
+    },
+    {
+      "addr": "0x006e5290",
+      "u32": "@getcam"
+    },
+    {
+      "addr": "0x006e5168",
+      "u32": "@calc"
+    },
+    {
+      "addr": "0x006e4dd0",
+      "u32": "@ctl"
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "@getcam": {
+      "name": "t3dGetCameraLocation",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "000030410000404100005041000060410000704100008041"
+        }
+      ]
+    },
+    "@calc": {
+      "name": "t3dCalculateAccurateCoefficientsFromHeadingPitchRoll",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "float",
+        "float",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "0000803f0000004000004040000080400000a0400000c0400000e0400000004100001041"
+        }
+      ]
+    },
+    "@setl": {
+      "name": "SetListener",
+      "conv": "thiscall",
+      "args": [
+        "mem:88"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "player, mode 1",
+      "args": [
+        "@unused_this",
+        1,
+        "@camera"
+      ]
+    },
+    {
+      "name": "player, mode 0",
+      "args": [
+        "@unused_this",
+        1,
+        "@camera"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b6f08",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "player, mode 2",
+      "args": [
+        "@unused_this",
+        1,
+        "@camera"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b6f08",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "player, mode -1",
+      "args": [
+        "@unused_this",
+        1,
+        "@camera"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b6f08",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "no player: camera location",
+      "args": [
+        "@unused_this",
+        0,
+        "@camera"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4d8c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "no player, mode 1",
+      "args": [
+        "@unused_this",
+        0,
+        "@camera"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4d8c",
+          "u32": 0
+        },
+        {
+          "addr": "0x006b6f08",
+          "u32": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5128094,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@unused_this"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@camera"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4d8c",
+        "type": "ptr",
+        "choices": [
+          "@player",
+          "@player",
+          "@player",
+          0
+        ]
+      },
+      {
+        "addr": "0x006b6f08",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "addr": "@player",
+        "offset": "0x34",
+        "type": "float",
+        "count": 5
+      }
+    ]
+  }
+}

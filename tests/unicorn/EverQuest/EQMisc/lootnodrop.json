@@ -1,0 +1,54 @@
+{
+  "function": "lootnodrop_guess",
+  "original": "0x004a64ba",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {"size": "0x100", "fill": "zero"},
+    "command": {"size": "0x80", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006b6f04", "u32": 0}
+  ],
+  "callees": {
+    "0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "args": ["cstr"]},
+    "0x004cf3e1": {"name": "CEverQuest::saveOptions2_guess", "conv": "thiscall", "args": []}
+  },
+  "cases": [
+    {"name": "null command and empty text return", "args": [0, ""]},
+    {"name": "high mode is reset before the null command returns", "args": [0, ""], "memory": [{"addr": "0x006b6f04", "u32": 3}]},
+    {"name": "negative mode is reset before the null command returns", "args": [0, ""], "memory": [{"addr": "0x006b6f04", "hex": "ffffffff"}]},
+    {"name": "zero field at offset 0x74 returns without display", "args": ["@command", ""], "memory": [{"addr": "0x006b6f04", "u32": 1}]},
+    {"name": "field at offset 0x74 enables empty query for always", "args": ["@command", ""], "memory": [{"addr": "@command", "offset": "0x74", "u32": 1}]},
+    {"name": "empty query reports sometimes", "args": ["@command", ""], "memory": [{"addr": "@command", "offset": "0x74", "u32": 1}, {"addr": "0x006b6f04", "u32": 1}]},
+    {"name": "empty query reports never", "args": ["@command", ""], "memory": [{"addr": "@command", "offset": "0x74", "u32": 1}, {"addr": "0x006b6f04", "u32": 2}]},
+    {"name": "empty query normalizes high mode before reporting", "args": ["@command", ""], "memory": [{"addr": "@command", "offset": "0x74", "u32": 1}, {"addr": "0x006b6f04", "u32": 4}]},
+    {"name": "case-insensitive never prefix", "args": [0, "nEvEr-extra"]},
+    {"name": "exact four-byte never prefix", "args": [0, "neve"]},
+    {"name": "leading 2 selects never", "args": [0, "2anything"]},
+    {"name": "case-insensitive sometimes prefix", "args": [0, "SoMe-extra"]},
+    {"name": "leading 1 selects sometimes", "args": [0, "1anything"]},
+    {"name": "case-insensitive always prefix", "args": [0, "ALWa-extra"]},
+    {"name": "leading 0 selects always", "args": [0, "0anything"]},
+    {"name": "three-byte partial prefix is rejected but still saves", "args": [0, "nev"]},
+    {"name": "unknown setting keeps mode and only saves", "args": [0, "maybe"], "memory": [{"addr": "0x006b6f04", "u32": 1}]}
+  ],
+  "fuzz": {
+    "seed": 4875450,
+    "count": 40,
+    "args": [
+      {"choices": [0, "@command"]},
+      {"choices": ["", "always", "sometimes", "never", "0", "1", "2", "junk", "neve", "some", "alwa"]}
+    ],
+    "memory": [
+      {"addr": "0x006b6f04", "type": "int", "range": [-2, 4]},
+      {"addr": "@command", "offset": "0x74", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

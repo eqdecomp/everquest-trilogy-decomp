@@ -1,0 +1,201 @@
+{
+  "function": "t3dCreateResourceDescriptor_guess",
+  "original": "0x10024e99",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "dictionary", "type": "ptr" },
+    { "name": "descriptor", "type": "ptr" },
+    { "name": "providedStorage", "type": "ptr" },
+    { "name": "label", "type": "cstr" },
+    { "name": "kind", "type": "int" },
+    { "name": "elementCount", "type": "u32" },
+    { "name": "sourceData", "type": "ptr" },
+    { "name": "owner", "type": "ptr" },
+    { "name": "values", "type": "ptr" },
+    { "name": "extraValue", "type": "u32" },
+    { "name": "optionalValue", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": { "size": "0x100", "fill": "random" },
+    "descriptor": { "size": "0x100", "fill": "random" },
+    "providedstorage": { "size": "0x400", "fill": "zero" },
+    "newstorage": { "size": "0x400", "fill": "zero" },
+    "sourcedata": { "size": "0x400", "fill": "random" },
+    "owner": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{ "offset": "0x10", "u32": 7 }]
+    },
+    "values": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 11 },
+        { "offset": "0x4", "u32": 22 },
+        { "offset": "0x8", "u32": 33 }
+      ]
+    },
+    "allocation": { "size": "0x100", "fill": "zero" },
+    "entryallocation": { "size": "0x100", "fill": "zero" }
+  },
+  "memory": [],
+  "callees": {
+    "0x10024e56": {
+      "name": "getResourceStorageSize_guess",
+      "conv": "cdecl",
+      "args": ["cstr", "int", "int"],
+      "ret": 256
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@newstorage", "@allocation", "@entryallocation"]
+    },
+    "0x10019012": {
+      "name": "t3dInitReferenceList",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": 0
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 12345
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "provided storage, label, owner and successful dictionary add",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "abc", 1, 4, "@sourcedata", "@owner", "@values", 99, 7],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", "@entryallocation"] }
+      },
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "allocated storage, null label skips dictionary add, kind two copies one byte per element",
+      "args": ["@dictionary", "@descriptor", 0, 0, 2, 9, "@sourcedata", 0, "@values", 0, 0],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "add failure removes dictionary entry then frees both suballocations",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "named", 0, 5, "@sourcedata", "@owner", "@values", 4, 0],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", "@entryallocation"] },
+        "0x1000dc08": { "ret": -1 }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "resource initialization failure frees both suballocations",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "named", 2, 3, "@sourcedata", "@owner", "@values", 5, 6],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", "@entryallocation"] },
+        "0x1001564b": { "ret": 1 }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "reference-list initialization failure stops before resource initialization",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "named", 1, 2, "@sourcedata", "@owner", "@values", 6, 1],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", "@entryallocation"] },
+        "0x10019012": { "ret": 1 }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "first suballocation fails",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "named", 3, 7, "@sourcedata", "@owner", "@values", 7, 1],
+      "callees": {
+        "0x10050c48": { "ret": 0 }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "second suballocation fails and frees first",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "named", 0, 6, "@sourcedata", "@owner", "@values", 8, 1],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", 0] }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "backing storage allocation fails",
+      "args": ["@dictionary", "@descriptor", 0, "named", 0, 4, "@sourcedata", 0, "@values", 9, 1],
+      "callees": {
+        "0x10050c48": { "ret": 0 }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "allocated backing storage is freed after first suballocation fails",
+      "args": ["@dictionary", "@descriptor", 0, "named", 1, 4, "@sourcedata", "@owner", "@values", 9, 1],
+      "callees": {
+        "0x10050c48": { "ret": ["@newstorage", 0] }
+      },
+      "expect": { "ret": "0xffff3d3e" }
+    },
+    {
+      "name": "negative kind and zero length with external storage",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "", -1, 0, "@sourcedata", 0, "@values", 0, -1],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", "@entryallocation"] }
+      },
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "nonnegative dictionary add result is returned as success",
+      "args": ["@dictionary", "@descriptor", "@providedstorage", "resource", 2, 11, "@sourcedata", 0, "@values", 0, 0],
+      "callees": {
+        "0x10050c48": { "ret": ["@allocation", "@entryallocation"] },
+        "0x1000dc08": { "ret": 4 }
+      },
+      "expect": { "ret": 0 }
+    }
+  ],
+  "fuzz": {
+    "seed": 151193,
+    "count": 32,
+    "args": [
+      { "choices": ["@dictionary"] },
+      { "choices": ["@descriptor"] },
+      { "choices": [0, "@providedstorage"] },
+      {},
+      { "choices": [-1, 0, 1, 2, 3] },
+      { "range": [0, 24] },
+      { "choices": ["@sourcedata"] },
+      { "choices": [0, "@owner"] },
+      { "choices": ["@values"] },
+      { "range": [0, 100] },
+      { "range": [-2, 2] }
+    ],
+    "memory": [
+      { "addr": "@values", "type": "int", "count": 3, "range": [-100, 100] },
+      { "addr": "@owner", "offset": "0x10", "type": "int", "range": [-10, 100] }
+    ]
+  }
+}

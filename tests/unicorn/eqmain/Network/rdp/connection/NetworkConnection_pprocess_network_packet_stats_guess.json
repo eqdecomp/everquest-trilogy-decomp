@@ -1,0 +1,630 @@
+{
+  "function": "NetworkConnection_pprocess_network_packet_stats_guess",
+  "original": "0x1002D870",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "connection",
+      "type": "int"
+    },
+    {
+      "name": "packet_type",
+      "type": "char"
+    },
+    {
+      "name": "packet_subtype",
+      "type": "u8"
+    },
+    {
+      "name": "is_reply",
+      "type": "char"
+    },
+    {
+      "name": "reply_index",
+      "type": "u32"
+    },
+    {
+      "name": "packet",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x900",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x718",
+          "u32": "@slots"
+        },
+        {
+          "offset": "0x72c",
+          "u32": 8
+        },
+        {
+          "offset": "0x730",
+          "u32": 16
+        },
+        {
+          "offset": "0x738",
+          "u32": 4
+        }
+      ]
+    },
+    "slots": {
+      "size": "0x1000",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 900
+        },
+        {
+          "offset": "0xc",
+          "u8": 5
+        },
+        {
+          "offset": "0x10",
+          "u32": 901
+        },
+        {
+          "offset": "0x1c",
+          "u8": 7
+        }
+      ]
+    },
+    "stats": {
+      "size": "0x400",
+      "fill": "zero"
+    },
+    "packet": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 777
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100498b4",
+      "u32": "@stats"
+    }
+  ],
+  "callees": {
+    "0x1002f9f0": {
+      "name": "WINMM.DLL::timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        1000,
+        2000
+      ]
+    },
+    "0x1002c5b0": {
+      "name": "NetworkConnection_Disconnect_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "unhandled packet type",
+      "args": [
+        "@conn",
+        2,
+        4,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 3 subtype zero",
+      "args": [
+        "@conn",
+        3,
+        0,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 3 subtype fifteen",
+      "args": [
+        "@conn",
+        3,
+        15,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 3 subtype sixteen fallback",
+      "args": [
+        "@conn",
+        3,
+        16,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 4",
+      "args": [
+        "@conn",
+        4,
+        255,
+        0,
+        0,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x310",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "type 11 subtype zero",
+      "args": [
+        "@conn",
+        11,
+        0,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 11 subtype one boundary",
+      "args": [
+        "@conn",
+        11,
+        1,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 11 subtype two fallback",
+      "args": [
+        "@conn",
+        11,
+        2,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 12 subtype one",
+      "args": [
+        "@conn",
+        12,
+        1,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 12 subtype two fallback",
+      "args": [
+        "@conn",
+        12,
+        2,
+        0,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "type 3 subtype three wrap and disconnect",
+      "args": [
+        "@conn",
+        3,
+        3,
+        0,
+        0,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x290",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x28c",
+          "u32": 9
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x110",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "reply normal slot zero",
+      "args": [
+        "@conn",
+        4,
+        7,
+        1,
+        0,
+        "@packet"
+      ]
+    },
+    {
+      "name": "reply sequence below both limits",
+      "args": [
+        "@conn",
+        3,
+        3,
+        1,
+        0,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x72c",
+          "u32": 8
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x730",
+          "u32": 10
+        },
+        {
+          "addr": "@slots",
+          "offset": "0xc",
+          "u8": 7
+        }
+      ]
+    },
+    {
+      "name": "reply sequence equals high limit",
+      "args": [
+        "@conn",
+        3,
+        3,
+        1,
+        0,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x72c",
+          "u32": 8
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x730",
+          "u32": 7
+        },
+        {
+          "addr": "@slots",
+          "offset": "0xc",
+          "u8": 7
+        }
+      ]
+    },
+    {
+      "name": "reply sequence updates high only",
+      "args": [
+        "@conn",
+        3,
+        3,
+        1,
+        0,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x72c",
+          "u32": 7
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x730",
+          "u32": 10
+        },
+        {
+          "addr": "@slots",
+          "offset": "0xc",
+          "u8": 7
+        }
+      ]
+    },
+    {
+      "name": "reply index equals bound",
+      "args": [
+        "@conn",
+        3,
+        3,
+        1,
+        1,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x738",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "reply null slot table",
+      "args": [
+        "@conn",
+        3,
+        3,
+        1,
+        0,
+        "@packet"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x718",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5185264,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          3,
+          4,
+          11,
+          12,
+          2,
+          -1
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          15,
+          16,
+          255
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "range": [
+          0,
+          512
+        ]
+      },
+      {
+        "choices": [
+          "@packet"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x718",
+        "type": "ptr",
+        "choices": [
+          "@slots"
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x738",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x72c",
+        "type": "u32",
+        "range": [
+          0,
+          256
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x730",
+        "type": "u32",
+        "range": [
+          0,
+          256
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0xfc",
+        "type": "u32",
+        "count": 16,
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x13c",
+        "type": "u32",
+        "count": 1,
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x140",
+        "type": "u32",
+        "count": 2,
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x148",
+        "type": "u32",
+        "count": 2,
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x150",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x174",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x170",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x178",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@slots",
+        "offset": "0x0",
+        "type": "u32",
+        "count": 8,
+        "stride": "0x10",
+        "range": [
+          0,
+          2000
+        ]
+      },
+      {
+        "addr": "@slots",
+        "offset": "0xc",
+        "type": "u8",
+        "count": 8,
+        "stride": "0x10",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@packet",
+        "offset": "0x4",
+        "type": "u32",
+        "range": [
+          0,
+          10000
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x290",
+        "type": "u32",
+        "count": 32,
+        "choices": [
+          0,
+          1,
+          2147483647,
+          4294967294,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x310",
+        "type": "u32",
+        "count": 10,
+        "choices": [
+          0,
+          1,
+          2147483647,
+          4294967294,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x338",
+        "type": "u32",
+        "count": 2,
+        "choices": [
+          0,
+          1,
+          2147483647,
+          4294967294,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

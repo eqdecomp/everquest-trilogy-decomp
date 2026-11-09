@@ -1,0 +1,278 @@
+{
+  "function": "t3dSetWorldDefaultPaletteFileName",
+  "original": "0x1001e1e9",
+  "sources": [
+    "src/eqgfx/unit_1001E0E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "paletteFileName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x48",
+          "u32": 0
+        }
+      ]
+    },
+    "oldName": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "old/palette.pal"
+        }
+      ]
+    },
+    "nameCopy": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@nameCopy"
+    }
+  },
+  "cases": [
+    {
+      "name": "old name freed, abc copied into a new allocation",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "objects": {
+        "world": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x48",
+              "u32": "@oldName"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no old name, abc copied into a new allocation",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty name: one-byte allocation holding just the terminator",
+      "args": [
+        "@world",
+        ""
+      ],
+      "objects": {
+        "world": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x48",
+              "u32": "@oldName"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "longer name copied after the old name is freed",
+      "args": [
+        "@world",
+        "palette/worldname_longer.pal"
+      ],
+      "objects": {
+        "world": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x48",
+              "u32": "@oldName"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "NULL name: old name freed, field cleared, nothing allocated",
+      "args": [
+        "@world",
+        0
+      ],
+      "objects": {
+        "world": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x48",
+              "u32": "@oldName"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "NULL name, no old name: field stays cleared",
+      "args": [
+        "@world",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation fails: old name freed, field zeroed, returns 0xffff3d3e",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "objects": {
+        "world": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x48",
+              "u32": "@oldName"
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "allocation fails with no old name: nothing freed, field zeroed",
+      "args": [
+        "@world",
+        "abc"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "name is the old name: freed before it is measured and copied",
+      "args": [
+        "@world",
+        "@oldName"
+      ],
+      "objects": {
+        "world": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x48",
+              "u32": "@oldName"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 123369,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "abc",
+          "",
+          "palette/world01.pal",
+          "d/eq/textures/worldpalette.pal"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@world",
+        "offset": "0x48",
+        "type": "ptr",
+        "choices": [
+          "@oldName",
+          0
+        ]
+      }
+    ]
+  }
+}

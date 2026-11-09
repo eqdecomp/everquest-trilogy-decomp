@@ -1,0 +1,170 @@
+{
+  "function": "updateReferenceCount_guess",
+  "original": "0x004fb6e0",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "rewrite": "updateReferenceCount_guess",
+  "conv": "thiscall",
+  "this": "@holder",
+  "args": [
+    {
+      "name": "value",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "holder": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@old"}
+      ]
+    },
+    "destroy_fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "vtable": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@destroy_fn"}
+      ]
+    },
+    "old": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"},
+        {"offset": "0x4", "u32": 2}
+      ]
+    },
+    "new": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"},
+        {"offset": "0x4", "u32": 2}
+      ]
+    },
+    "other": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"},
+        {"offset": "0x4", "u32": 2}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@destroy_fn": {
+      "name": "destroy_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "replace with counts above zero",
+      "args": ["@new"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": 3},
+        {"addr": "@new", "offset": "0x4", "u32": 2}
+      ]
+    },
+    {
+      "name": "old count reaches zero before replacement",
+      "args": ["@new"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": 1},
+        {"addr": "@new", "offset": "0x4", "u32": 2}
+      ]
+    },
+    {
+      "name": "null old pointer and new count zero",
+      "args": ["@new"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": 0},
+        {"addr": "@new", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "old and new deleters run in order",
+      "args": ["@new"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": 1},
+        {"addr": "@new", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "release old into null",
+      "args": [0],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": 1}
+      ]
+    },
+    {
+      "name": "null old and null new",
+      "args": [0],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "same old and new object at count one",
+      "args": ["@old"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": 1}
+      ]
+    },
+    {
+      "name": "same old and new object at count two",
+      "args": ["@old"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": 2}
+      ]
+    },
+    {
+      "name": "negative one wraps after increment and decrement",
+      "args": ["@new"],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": 0},
+        {"addr": "@new", "offset": "0x4", "u32": "0xFFFFFFFF"}
+      ]
+    },
+    {
+      "name": "signed minimum decrement wraps",
+      "args": [0],
+      "memory": [
+        {"addr": "@holder", "offset": "0x0", "u32": "@old"},
+        {"addr": "@old", "offset": "0x4", "u32": "0x80000000"}
+      ]
+    }
+  ],
+  "coverage_ok": {
+    "004FB708-004FB723": "self-assignment: the holder is the address of the by-value argument (&value == holder). The harness puts its arguments on its own stack and a fixture 'this' only names objects, so no input can reach the early return. The recorded callers pass persistent PackFS holder slots."
+  },
+  "fuzz": {
+    "seed": 5224160,
+    "count": 40,
+    "args": [
+      {"choices": [0, "@old", "@new", "@other"]}
+    ],
+    "memory": [
+      {"addr": "@holder", "offset": "0x0", "type": "ptr", "choices": [0, "@old", "@new", "@other"]},
+      {"addr": "@old", "offset": "0x4", "type": "int", "range": [-2, 3]},
+      {"addr": "@new", "offset": "0x4", "type": "int", "range": [-2, 3]},
+      {"addr": "@other", "offset": "0x4", "type": "int", "range": [-2, 3]}
+    ]
+  }
+}

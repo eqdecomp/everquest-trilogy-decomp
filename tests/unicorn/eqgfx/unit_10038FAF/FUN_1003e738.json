@@ -1,0 +1,305 @@
+{
+  "function": "projectTintedActiveVerticesWithFogToScreen_guess",
+  "original": "0x1003e738",
+  "sources": [
+    "src/eqgfx/unit_10038FAF.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "count", "type": "int"},
+    {"name": "nextIndex", "type": "int"},
+    {"name": "active", "type": "ptr"},
+    {"name": "pos", "type": "ptr"},
+    {"name": "shape", "type": "ptr"},
+    {"name": "tint", "type": "ptr"},
+    {"name": "xform", "type": "ptr"},
+    {"name": "out", "type": "ptr"},
+    {"name": "remap", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "active": {"size": "0x10", "fill": "zero"},
+    "pos": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "f32": 2.0},
+        {"offset": "0x4", "f32": 3.0},
+        {"offset": "0x8", "f32": 4.0},
+        {"offset": "0xc", "f32": -1.5},
+        {"offset": "0x10", "f32": 0.5},
+        {"offset": "0x14", "f32": 2.5},
+        {"offset": "0x18", "f32": 6.0},
+        {"offset": "0x1c", "f32": -2.0},
+        {"offset": "0x20", "f32": -4.0}
+      ]
+    },
+    "shape": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x6", "f32": 1.5},
+        {"offset": "0xa", "f32": 2.5},
+        {"offset": "0x1a", "f32": 3.5},
+        {"offset": "0x1e", "f32": 4.5},
+        {"offset": "0x2e", "f32": 5.5},
+        {"offset": "0x32", "f32": 6.5}
+      ]
+    },
+    "tint": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 74565},
+        {"offset": "0x4", "u32": 511},
+        {"offset": "0x8", "u32": 127},
+        {"offset": "0xc", "u32": 16711680},
+        {"offset": "0x10", "u32": 16},
+        {"offset": "0x14", "u32": 3},
+        {"offset": "0x18", "u32": 9},
+        {"offset": "0x1c", "u32": 1000},
+        {"offset": "0x20", "u32": 4294967040}
+      ]
+    },
+    "xform": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 16},
+        {"offset": "0x4", "f32": 0.5},
+        {"offset": "0x8", "f32": 1.0},
+        {"offset": "0xc", "f32": 0.25},
+        {"offset": "0x10", "f32": 0.75},
+        {"offset": "0x14", "f32": 320.0},
+        {"offset": "0x18", "f32": 240.0},
+        {"offset": "0x1c", "f32": 320.0},
+        {"offset": "0x20", "f32": 240.0},
+        {"offset": "0x24", "f32": 1.0},
+        {"offset": "0x28", "f32": 0.5}
+      ]
+    },
+    "out": {"size": "0x200", "fill": "random"},
+    "remap": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1004ec8d": {
+      "name": "t3dFloatRoundToInt_guess",
+      "conv": "cdecl",
+      "args": ["float", "ignore"],
+      "writes": [{"arg": 1, "offset": 0, "hex": "40000000"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "count zero returns the cursor without touching pointers",
+      "args": [0, 5, 0, 0, 0, 0, 0, "@out", 0]
+    },
+    {
+      "name": "count zero with live pointers",
+      "args": [0, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"]
+    },
+    {
+      "name": "no vertex active: no writes, cursor unchanged",
+      "args": [3, 9, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"]
+    },
+    {
+      "name": "single active vertex, fog in range",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ]
+    },
+    {
+      "name": "fog 0x100 clamps to 0xff (specular 0)",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "00010000"}]}
+      }
+    },
+    {
+      "name": "fog 0xff is the upper edge (specular 0)",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "ff000000"}]}
+      }
+    },
+    {
+      "name": "fog 0 is the lower edge (specular 0xff000000)",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "fog -1 clamps to 0 (specular 0xff000000)",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "ffffffff"}]}
+      }
+    },
+    {
+      "name": "fog 0x7fffffff clamps high",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "ffffff7f"}]}
+      }
+    },
+    {
+      "name": "fog -0x80000000 clamps low",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "00000080"}]}
+      }
+    },
+    {
+      "name": "fog 0x101 just above the clamp",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "01010000"}]}
+      }
+    },
+    {
+      "name": "fog 1 (specular 0xfe000000)",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1}
+      ],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "01000000"}]}
+      }
+    },
+    {
+      "name": "four vertices, one inactive: remap takes nextIndex before the increment",
+      "args": [4, 10, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@active", "offset": "0x2", "u8": 1},
+        {"addr": "@active", "offset": "0x3", "u8": 1}
+      ]
+    },
+    {
+      "name": "negative tint product takes the arithmetic shift",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@xform", "offset": "0x0", "u32": 1},
+        {"addr": "@tint", "offset": "0x8", "u32": 4294967040}
+      ]
+    },
+    {
+      "name": "alpha with the top bit set, positive tint",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@xform", "offset": "0x0", "u32": 2147483648},
+        {"addr": "@tint", "offset": "0x8", "u32": 1}
+      ]
+    },
+    {
+      "name": "alpha zero",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@xform", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "negative inverse depth: pos[2] = -2",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@pos", "offset": "0x8", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "active flag is any nonzero byte",
+      "args": [1, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 128}
+      ]
+    },
+    {
+      "name": "two active vertices: texture coordinates step 20 bytes",
+      "args": [2, 1, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@active", "offset": "0x1", "u8": 1}
+      ]
+    },
+    {
+      "name": "three active vertices: pos, tint and out strides",
+      "args": [3, 1, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@active", "offset": "0x1", "u8": 1},
+        {"addr": "@active", "offset": "0x2", "u8": 1}
+      ]
+    },
+    {
+      "name": "all six vertices active",
+      "args": [6, 1, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x0", "u8": 1},
+        {"addr": "@active", "offset": "0x1", "u8": 1},
+        {"addr": "@active", "offset": "0x2", "u8": 1},
+        {"addr": "@active", "offset": "0x3", "u8": 1},
+        {"addr": "@active", "offset": "0x4", "u8": 1},
+        {"addr": "@active", "offset": "0x5", "u8": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1003738,
+    "count": 40,
+    "args": [
+      {"range": [0, 6]},
+      {"range": [-4, 30]},
+      {"choices": ["@active"]},
+      {"choices": ["@pos"]},
+      {"choices": ["@shape"]},
+      {"choices": ["@tint"]},
+      {"choices": ["@xform"]},
+      {"choices": ["@out"]},
+      {"choices": ["@remap"]}
+    ],
+    "memory": [
+      {"addr": "@active", "type": "u8", "count": 6, "choices": [0, 0, 1, 255]},
+      {"addr": "@pos", "type": "float", "count": 18, "range": [-50, 50]},
+      {"addr": "@shape", "type": "float", "count": 30, "range": [-100, 100]},
+      {"addr": "@tint", "type": "int", "count": 18, "range": [-100000, 100000]},
+      {"addr": "@xform", "offset": "0x0", "type": "int", "range": [-300, 300]},
+      {"addr": "@xform", "offset": "0x4", "type": "float", "range": [-4, 4]},
+      {"addr": "@xform", "offset": "0x8", "type": "float", "range": [-4, 4]},
+      {"addr": "@xform", "offset": "0xc", "type": "float", "range": [-4, 4]},
+      {"addr": "@xform", "offset": "0x10", "type": "float", "range": [-4, 4]},
+      {"addr": "@xform", "offset": "0x14", "type": "float", "range": [-400, 400]},
+      {"addr": "@xform", "offset": "0x18", "type": "float", "range": [-400, 400]},
+      {"addr": "@xform", "offset": "0x1c", "type": "float", "range": [-400, 400]},
+      {"addr": "@xform", "offset": "0x20", "type": "float", "range": [-400, 400]},
+      {"addr": "@xform", "offset": "0x24", "type": "float", "range": [-4, 4]},
+      {"addr": "@xform", "offset": "0x28", "type": "float", "range": [-4, 4]}
+    ]
+  }
+}

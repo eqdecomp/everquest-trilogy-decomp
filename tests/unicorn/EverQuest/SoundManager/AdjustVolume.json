@@ -1,0 +1,60 @@
+{
+  "function": "SoundAsset::CalibrateTscFrequency_guess",
+  "original": "0x0040101e",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "_comment": "RDTSC in Unicorn reads the host clock, so the tick count stored at 0x0058FB54 differs between runs; that write is ignored and the cases check the _time call sequence (loop exits).",
+  "ignore_writes": [["0x0058FB54", "0x0058FB58"]],
+  "objects": {},
+  "memory": [
+    {"addr": "0x0058FB54", "u32": "0xDEADBEEF"}
+  ],
+  "callees": {
+    "0x005213E9": {"name": "time", "conv": "cdecl", "args": ["ptr"], "ret": [100, 101, 101, 102]}
+  },
+  "cases": [
+    {"name": "second boundary right away, one call in the second wait"},
+    {
+      "name": "first wait loops twice",
+      "callees": {
+        "0x005213E9": {"name": "time", "conv": "cdecl", "args": ["ptr"], "ret": [7, 7, 7, 8, 8, 8, 9]}
+      }
+    },
+    {
+      "name": "both waits loop several times",
+      "callees": {
+        "0x005213E9": {"name": "time", "conv": "cdecl", "args": ["ptr"], "ret": [50, 50, 50, 50, 51, 51, 51, 51, 51, 52]}
+      }
+    },
+    {
+      "name": "time going backwards still ends the waits",
+      "callees": {
+        "0x005213E9": {"name": "time", "conv": "cdecl", "args": ["ptr"], "ret": [10, 9, 3]}
+      }
+    },
+    {
+      "name": "second wait only matches the second sample, not the first",
+      "callees": {
+        "0x005213E9": {"name": "time", "conv": "cdecl", "args": ["ptr"], "ret": [1, 2, 1, 2, 2, 3]}
+      }
+    },
+    {
+      "name": "zero and negative times",
+      "callees": {
+        "0x005213E9": {"name": "time", "conv": "cdecl", "args": ["ptr"], "ret": [0, -1, -1, 0]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4198430,
+    "count": 20,
+    "args": [],
+    "memory": [
+      {"addr": "0x0058FB54", "type": "u32"}
+    ]
+  }
+}

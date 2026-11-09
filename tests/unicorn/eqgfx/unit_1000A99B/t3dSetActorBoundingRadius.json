@@ -1,0 +1,192 @@
+{
+  "function": "t3dSetActorBoundingRadius_guess",
+  "original": "0x1000ab0a",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "radius",
+      "type": "float"
+    },
+    {
+      "name": "flag",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10076284",
+      "f32": 0.0
+    },
+    {
+      "addr": "@actor",
+      "offset": "0x34",
+      "f32": 6.0
+    },
+    {
+      "addr": "@actor",
+      "offset": "0x38",
+      "f32": 4.0
+    },
+    {
+      "addr": "@actor",
+      "offset": "0xf",
+      "u8": 0
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "flag set, old radius zero: new radius stored unscaled, 0x34 replaced",
+      "args": ["@actor", 2.5, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x38",
+          "f32": 0.0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x34",
+          "f32": 7.0
+        }
+      ]
+    },
+    {
+      "name": "flag set, old radius nonzero: 0x34 scaled by radius / old",
+      "args": ["@actor", 10.0, 1]
+    },
+    {
+      "name": "flag zero: only the radius at 0x38 is stored, 0x34 and the flag byte untouched",
+      "args": ["@actor", 10.0, 0]
+    },
+    {
+      "name": "flag negative is nonzero: takes the scaling branch",
+      "args": ["@actor", 10.0, -1]
+    },
+    {
+      "name": "flag set, radius zero: scaled 0x34 becomes zero",
+      "args": ["@actor", 0.0, 1]
+    },
+    {
+      "name": "old radius -0.0 compares equal to zero: radius stored unscaled",
+      "args": ["@actor", 3.0, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x38",
+          "hex": "00000080"
+        }
+      ]
+    },
+    {
+      "name": "old radius NaN takes the unordered branch: radius stored unscaled",
+      "args": ["@actor", 3.0, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x38",
+          "hex": "0000c07f"
+        }
+      ]
+    },
+    {
+      "name": "old radius +inf: scaled 0x34 is zero",
+      "args": ["@actor", 2.0, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x38",
+          "hex": "0000807f"
+        }
+      ]
+    },
+    {
+      "name": "flag byte keeps its other bits and gains 0x20",
+      "args": ["@actor", 10.0, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0xf",
+          "u8": 15
+        }
+      ]
+    },
+    {
+      "name": "flag byte already 0x20: stays 0x20",
+      "args": ["@actor", 10.0, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0xf",
+          "u8": 32
+        }
+      ]
+    },
+    {
+      "name": "flag zero keeps a set flag byte as it is",
+      "args": ["@actor", 10.0, 0],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0xf",
+          "u8": 15
+        }
+      ]
+    },
+    {
+      "name": "scaled radius overflows to infinity when the float store rounds",
+      "args": ["@actor", 1.0e30, 1],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x38",
+          "f32": 1.0e-30
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 43786,
+    "count": 50,
+    "args": [
+      {
+        "choices": ["@actor"]
+      },
+      {},
+      {
+        "range": [-2, 3]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x34",
+        "type": "float"
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x38",
+        "type": "float"
+      },
+      {
+        "addr": "@actor",
+        "offset": "0xf",
+        "type": "u8"
+      }
+    ]
+  }
+}

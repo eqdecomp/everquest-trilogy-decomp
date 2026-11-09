@@ -1,0 +1,129 @@
+{
+  "function": "InsertFillBuffer_guess",
+  "original": "0x00401261",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "a1", "type": "int"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "u32"},
+    {"name": "param_4", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "receiver": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@storage+0x28"},
+        {"offset": "0x8", "u32": "@storage+0x48"}
+      ]
+    },
+    "storage": {"size": "0x80", "fill": "random"},
+    "fill_value": {"size": "0x4", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x004013b7": {
+      "name": "ReallocateAndInsertFillBuffer_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "ptr", "u32"]
+    }
+  },
+  "cases": [
+    {
+      "name": "smallest nonzero count one below tail exercises strict boundary",
+      "args": ["@receiver", 0, "@storage+0x20", 1, "@fill_value"]
+    },
+    {
+      "name": "empty tail with one inserted word guards unsigned subtraction",
+      "args": ["@receiver", 0, "@storage+0x28", 1, "@fill_value"]
+    },
+    {
+      "name": "equal count and tail with receiver overwritten by appended suffix",
+      "args": ["@storage+0x28", 0, "@storage+0x10", 6, "@fill_value"],
+      "memory": [
+        {"addr": "@storage", "offset": "0x2c", "u32": "@storage+0x28"},
+        {"addr": "@storage", "offset": "0x30", "u32": "@storage+0x48"}
+      ]
+    },
+    {
+      "name": "receiver overlaps appended suffix and exposes update order",
+      "args": ["@storage+0x28", 0, "@storage+0x10", 7, "@fill_value"],
+      "memory": [
+        {"addr": "@storage", "offset": "0x2c", "u32": "@storage+0x28"},
+        {"addr": "@storage", "offset": "0x30", "u32": "@storage+0x48"}
+      ]
+    },
+    {
+      "name": "one extra fill word is required before suffix copy",
+      "args": ["@receiver", 0, "@storage+0x20", 3, "@fill_value"]
+    },
+    {
+      "name": "zero count leaves receiver and storage alone",
+      "args": ["@receiver", 0, "@storage+0x10", 0, "@fill_value"]
+    },
+    {
+      "name": "capacity one below count calls growth helper",
+      "args": ["@receiver", 1, "@storage+0x10", 5, "@fill_value"],
+      "memory": [
+        {"addr": "@receiver", "offset": "0x4", "u32": "@storage+0x28"},
+        {"addr": "@receiver", "offset": "0x8", "u32": "@storage+0x38"}
+      ]
+    },
+    {
+      "name": "count below tail shifts overlapping suffix backward",
+      "args": ["@receiver", 2, "@storage+0x10", 2, "@fill_value"]
+    },
+    {
+      "name": "count equals tail length",
+      "args": ["@receiver", 3, "@storage+0x18", 4, "@fill_value"]
+    },
+    {
+      "name": "count exceeds tail length",
+      "args": ["@receiver", 4, "@storage+0x20", 5, "@fill_value"]
+    },
+    {
+      "name": "insertion at end extends with fill value",
+      "args": ["@receiver", 5, "@storage+0x28", 3, "@fill_value"]
+    },
+    {
+      "name": "one less than tail shifts suffix",
+      "args": ["@receiver", 6, "@storage+0x18", 3, "@fill_value"]
+    },
+    {
+      "name": "insert at beginning shifts entire current range",
+      "args": ["@receiver", 7, "@storage+0x08", 1, "@fill_value"]
+    },
+    {
+      "name": "unaligned insertion address follows dword arithmetic",
+      "args": ["@receiver", 8, "@storage+0x11", 2, "@fill_value"]
+    },
+    {
+      "name": "capacity exactly accommodates insertion",
+      "args": ["@receiver", 9, "@storage+0x20", 8, "@fill_value"],
+      "memory": [
+        {"addr": "@receiver", "offset": "0x4", "u32": "@storage+0x28"},
+        {"addr": "@receiver", "offset": "0x8", "u32": "@storage+0x48"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4199009,
+    "count": 32,
+    "args": [
+      {"choices": ["@receiver"]},
+      {"range": [-4, 4]},
+      {"choices": ["@storage+0x08", "@storage+0x10", "@storage+0x18", "@storage+0x20", "@storage+0x28"]},
+      {"range": [0, 10]},
+      {"choices": ["@fill_value"]}
+    ],
+    "memory": [
+      {"addr": "@receiver", "offset": "0x4", "type": "ptr", "choices": ["@storage+0x28", "@storage+0x30", "@storage+0x38"]},
+      {"addr": "@receiver", "offset": "0x8", "type": "ptr", "choices": ["@storage+0x38", "@storage+0x40", "@storage+0x48", "@storage+0x50"]}
+    ]
+  }
+}

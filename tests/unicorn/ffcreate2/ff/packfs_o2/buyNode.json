@@ -1,0 +1,88 @@
+{
+  "function": "PackFsTreeAllocator_guess::buyNode_guess",
+  "original": "0x004fab40",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@allocator",
+  "args": [
+    {
+      "name": "parent",
+      "type": "ptr"
+    },
+    {
+      "name": "color",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "allocator": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "parent": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "parent2": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "buf": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    { "name": "red node under a parent", "args": [ "@parent", 0 ] },
+    { "name": "black node under a parent", "args": [ "@parent", 1 ] },
+    { "name": "other parent, color 2", "args": [ "@parent2", 2 ] },
+    { "name": "null parent", "args": [ 0, 1 ] },
+    { "name": "color -1", "args": [ "@parent", -1 ] },
+    { "name": "color max", "args": [ "@parent2", 2147483647 ] },
+    { "name": "color min", "args": [ "@parent", -2147483648 ] },
+    {
+      "name": "allocation failure faults on the first store",
+      "args": [ "@parent", 1 ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [ "u32" ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5221184,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@parent",
+          "@parent2",
+          0
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

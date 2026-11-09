@@ -1,0 +1,159 @@
+{
+  "function": "t3dDuplicateSphylinder",
+  "original": "0x1001d447",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sphylinder",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "sphylinder": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "duplicate": {
+      "size": "0x18",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@duplicate"
+    }
+  },
+  "cases": [
+    {
+      "name": "copy four words and clear the definition pointer",
+      "args": [
+        "@sphylinder"
+      ],
+      "memory": [
+        {"addr": "@sphylinder", "offset": "0x0", "u32": "0x11111111"},
+        {"addr": "@sphylinder", "offset": "0x4", "u32": "0x22222222"},
+        {"addr": "@sphylinder", "offset": "0x8", "u32": "0x33333333"},
+        {"addr": "@sphylinder", "offset": "0xc", "u32": "0x44444444"},
+        {"addr": "@duplicate", "offset": "0x0", "u32": "0xa5a5a5a5"},
+        {"addr": "@duplicate", "offset": "0x4", "u32": "0xa5a5a5a5"},
+        {"addr": "@duplicate", "offset": "0x8", "u32": "0xa5a5a5a5"},
+        {"addr": "@duplicate", "offset": "0xc", "u32": "0xa5a5a5a5"},
+        {"addr": "@duplicate", "offset": "0x10", "u32": "0x5a5a5a5a"},
+        {"addr": "@duplicate", "offset": "0x14", "u32": "0x5a5a5a5a"}
+      ]
+    },
+    {
+      "name": "zero values replace prior destination contents",
+      "args": [
+        "@sphylinder"
+      ],
+      "memory": [
+        {"addr": "@sphylinder", "offset": "0x0", "u32": 0},
+        {"addr": "@sphylinder", "offset": "0x4", "u32": 0},
+        {"addr": "@sphylinder", "offset": "0x8", "u32": 0},
+        {"addr": "@sphylinder", "offset": "0xc", "u32": 0},
+        {"addr": "@duplicate", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@duplicate", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@duplicate", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "@duplicate", "offset": "0xc", "u32": "0xffffffff"},
+        {"addr": "@duplicate", "offset": "0x10", "u32": "0x12345678"}
+      ]
+    },
+    {
+      "name": "copy preserves arbitrary bit patterns",
+      "args": [
+        "@sphylinder"
+      ],
+      "memory": [
+        {"addr": "@sphylinder", "offset": "0x0", "u32": "0x7fc00001"},
+        {"addr": "@sphylinder", "offset": "0x4", "u32": "0xdeadbeef"},
+        {"addr": "@sphylinder", "offset": "0x8", "u32": "0x80000000"},
+        {"addr": "@sphylinder", "offset": "0xc", "u32": "0x00000001"}
+      ]
+    },
+    {
+      "name": "allocation failure skips the source dereference",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "destination equal to source leaves only definition cleared",
+      "args": [
+        "@sphylinder"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@sphylinder"
+        }
+      },
+      "memory": [
+        {"addr": "@sphylinder", "offset": "0x0", "u32": "0x11111111"},
+        {"addr": "@sphylinder", "offset": "0x4", "u32": "0x22222222"},
+        {"addr": "@sphylinder", "offset": "0x8", "u32": "0x33333333"},
+        {"addr": "@sphylinder", "offset": "0xc", "u32": "0x44444444"}
+      ]
+    },
+    {
+      "name": "overlap exposes forward dword copy order",
+      "args": [
+        "@sphylinder"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@sphylinder+0x4"
+        }
+      },
+      "memory": [
+        {"addr": "@sphylinder", "offset": "0x0", "u32": "0x01020304"},
+        {"addr": "@sphylinder", "offset": "0x4", "u32": "0x11121314"},
+        {"addr": "@sphylinder", "offset": "0x8", "u32": "0x21222324"},
+        {"addr": "@sphylinder", "offset": "0xc", "u32": "0x31323334"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 119879,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sphylinder"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@sphylinder", "type": "u32", "count": 4}
+    ]
+  }
+}

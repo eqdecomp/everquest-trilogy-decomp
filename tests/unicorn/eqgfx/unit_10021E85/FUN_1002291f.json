@@ -1,0 +1,219 @@
+{
+  "function": "t3dCreateMIPMappedBMInfoFromFileContext_guess",
+  "original": "0x1002291f",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "u32": "@dictionary" },
+        { "offset": "0x8", "u32": "@bitmapName" },
+        { "offset": "0x38", "u32": 100 },
+        { "offset": "0x8044", "u32": "@bitmap" },
+        { "offset": "0x8064", "u32": "@allocationContext" }
+      ]
+    },
+    "bitmap": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": -64 },
+        { "offset": "0x4", "u32": 1 },
+        { "offset": "0x8", "u16": 0 },
+        { "offset": "0xa", "u16": 4 },
+        { "offset": "0x10", "u16": 2 }
+      ]
+    },
+    "dictionary": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "bitmapName": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "allocationContext": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "poolBuffer": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "bitmapInfo": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "bitmapInfoReference": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@bitmapInfo" }
+      ]
+    }
+  },
+  "memory": [
+    { "addr": "@bitmapName", "cstr": "test_bitmap" }
+  ],
+  "callees": {
+    "0x100223f5": {
+      "name": "decryptData_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"]
+    },
+    "0x1000b570": {
+      "name": "s3dCalcBMInfoAllocSize",
+      "conv": "cdecl",
+      "args": ["int", "u32", "mem:8", "cstr"],
+      "ret": 64
+    },
+    "0x10019a5c": {
+      "name": "s3dAllocateMemoryFromPool",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "ptr"],
+      "ret": "@poolBuffer"
+    },
+    "0x1000b5d6": {
+      "name": "t3dDefineBMInfoMIPMapped",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int", "u32", "ptr", "cstr", "int"],
+      "ret": "@bitmapInfoReference"
+    }
+  },
+  "cases": [
+    { "name": "one mip with pool context", "args": ["@context"] },
+    {
+      "name": "zero mips and nonnegative size",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x0", "u32": 64 },
+        { "addr": "@bitmap", "offset": "0x4", "u32": 0 },
+        { "addr": "@context", "offset": "0x8064", "u32": 0 }
+      ]
+    },
+    {
+      "name": "fifteen mip boundary",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x4", "u32": 15 },
+        { "addr": "@bitmap", "offset": "0x8", "u16": 0 }
+      ]
+    },
+    {
+      "name": "sixteen mips are discarded",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x4", "u32": 16 }
+      ]
+    },
+    {
+      "name": "high bit mip count is discarded",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x4", "u32": 2147483648 }
+      ]
+    },
+    {
+      "name": "all bits mip count is discarded",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x4", "u32": 4294967295 }
+      ]
+    },
+    {
+      "name": "header prefix and mip data",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x4", "u32": 2 },
+        { "addr": "@bitmap", "offset": "0x8", "u16": 4 },
+        { "addr": "@bitmap", "offset": "0xe", "u16": 2 },
+        { "addr": "@bitmap", "offset": "0x12", "u16": 3 }
+      ]
+    },
+    {
+      "name": "allocation size zero bypasses pool allocation",
+      "args": ["@context"],
+      "callees": {
+        "0x1000b570": { "name": "s3dCalcBMInfoAllocSize", "conv": "cdecl", "args": ["int", "u32", "ptr", "cstr"], "ret": 0 }
+      }
+    },
+    {
+      "name": "pool allocation fails",
+      "args": ["@context"],
+      "callees": {
+        "0x10019a5c": { "name": "s3dAllocateMemoryFromPool", "conv": "cdecl", "args": ["ptr", "int", "ptr"], "ret": 0 }
+      }
+    },
+    {
+      "name": "bitmap definition fails",
+      "args": ["@context"],
+      "callees": {
+        "0x1000b5d6": { "name": "t3dDefineBMInfoMIPMapped", "conv": "cdecl", "args": ["ptr", "ptr", "int", "u32", "ptr", "cstr", "int"], "ret": 0 }
+      }
+    },
+    {
+      "name": "pool context flag is not set",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@context", "offset": "0x8064", "u32": 0 }
+      ]
+    },
+    {
+      "name": "positive source size with context flag",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x0", "u32": 40 }
+      ]
+    },
+    {
+      "name": "zero source size distinguishes the strict threshold",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@bitmap", "offset": "0x0", "u32": 0 }
+      ]
+    },
+    {
+      "name": "allocator changes aliased sprite offset before the second size calculation",
+      "args": ["@context"],
+      "memory": [
+        { "addr": "@context", "offset": "0x4", "u32": "@context" }
+      ],
+      "callees": {
+        "0x10019a5c": {
+          "name": "s3dAllocateMemoryFromPool",
+          "conv": "cdecl",
+          "args": ["ptr", "int", "ptr"],
+          "ret": "@poolBuffer",
+          "writes": [
+            { "arg": 0, "offset": 56, "hex": "fa000000" }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 141599,
+    "count": 40,
+    "args": [
+      { "choices": ["@context"] }
+    ],
+    "memory": [
+      { "addr": "@bitmap", "offset": "0x0", "type": "int", "range": [-128, 512] },
+      { "addr": "@bitmap", "offset": "0x4", "type": "u32", "choices": [0, 1, 2, 8, 15, 16, 17, 2147483648, 4294967295] },
+      { "addr": "@bitmap", "offset": "0x8", "type": "u16", "range": [0, 64] },
+      { "addr": "@context", "offset": "0x38", "type": "int", "range": [-16, 400] },
+      { "addr": "@context", "offset": "0x8064", "type": "ptr", "choices": [0, "@allocationContext"] }
+    ]
+  }
+}

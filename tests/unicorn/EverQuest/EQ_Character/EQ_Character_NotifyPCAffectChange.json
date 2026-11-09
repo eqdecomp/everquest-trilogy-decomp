@@ -1,0 +1,184 @@
+{
+  "function": "EQ_Character_NotifyPCAffectChange_guess",
+  "original": "0x004251b9",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "ch",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ch": {
+      "size": "0x400",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xa0",
+          "u32": "@affect_info"
+        }
+      ]
+    },
+    "affect_info": {
+      "size": "0x84",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x80",
+          "u32": "0x12345678"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "@ch",
+      "offset": "0x27a",
+      "hex": "0102030405060708090a1112131415161718191a2122232425262728292a3132333435363738393a4142434445464748494a5152535455565758595a6162636465666768696a7172737475767778797a8182838485868788898a9192939495969798999aa1a2a3a4a5a6a7a8a9aa"
+    }
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:20",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "record zero",
+      "args": [
+        "@ch",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "record one with edx noise",
+      "args": [
+        "@ch",
+        -1,
+        1
+      ]
+    },
+    {
+      "name": "negative record index",
+      "args": [
+        "@ch",
+        99,
+        -1
+      ]
+    },
+    {
+      "name": "high in-bounds record index",
+      "args": [
+        "@ch",
+        4951,
+        20
+      ]
+    },
+    {
+      "name": "affect info null skips send",
+      "args": [
+        "@ch",
+        0,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@ch",
+          "offset": "0xa0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "byte before null pointer is nonzero",
+      "args": [
+        "@ch",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@ch",
+          "offset": "0xa0",
+          "u32": 0
+        },
+        {
+          "addr": "@ch",
+          "offset": "0x9f",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "byte after null pointer is nonzero",
+      "args": [
+        "@ch",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@ch",
+          "offset": "0xa0",
+          "u32": 0
+        },
+        {
+          "addr": "@ch",
+          "offset": "0xa4",
+          "u8": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4346297,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@ch"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "range": [
+          -1,
+          20
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@ch",
+        "offset": "0x27a",
+        "size": "0x138"
+      }
+    ]
+  }
+}

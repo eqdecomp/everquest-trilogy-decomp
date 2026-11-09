@@ -1,0 +1,89 @@
+{
+  "function": "HandleTwoRecordYesNoDialog_guess",
+  "original": "0x1001d3c0",
+  "sources": [
+    "src/eqmain/unit_1001CFB0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {"name": "dialog", "type": "u32"},
+    {"name": "message", "type": "u32"},
+    {"name": "wParam", "type": "u32"},
+    {"name": "lParam", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "s50": {"size": "0x20", "fill": "zero"},
+    "s54": {"size": "0x20", "fill": "zero"},
+    "s5c": {"size": "0x20", "fill": "zero"},
+    "s60": {"size": "0x20", "fill": "zero"},
+    "raw1": {"size": "0x20", "fill": "random"},
+    "raw2": {"size": "0x20", "fill": "random"},
+    "text1": {"size": "0x40", "fill": "zero"},
+    "text2": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10055a50", "u32": "@s50"},
+    {"addr": "0x10055a54", "u32": "@s54"},
+    {"addr": "0x10055a5c", "u32": "@s5c"},
+    {"addr": "0x10055a60", "u32": "@s60"},
+    {"addr": "@s50", "cstr": "Accept"},
+    {"addr": "@s54", "cstr": "Decline"},
+    {"addr": "@s5c", "cstr": "Title"},
+    {"addr": "@s60", "cstr": "Footer"},
+    {"addr": "@text1", "cstr": "Hello, the first part. "},
+    {"addr": "@text2", "cstr": "Second part!"},
+    {"addr": "0x100ec9c0", "u32": "0x11111111"},
+    {"addr": "0x100ec9c4", "u32": "0x22222222"},
+    {"addr": "0x100e49c0", "size": 32768, "fill": "random"}
+  ],
+  "callees": {
+    "user32.dll!EndDialog": {"name": "EndDialog", "conv": "stdcall", "args": ["u32", "int"], "ret": 1},
+    "0x100210f0": {"name": "FUN_100210f0", "conv": "cdecl", "args": ["ptr", "mem:2048", "int"],
+                   "ret": ["@s50", "@s54", "@s5c", "@text1", "@text2"]},
+    "user32.dll!SetDlgItemTextA": {"name": "SetDlgItemTextA", "conv": "stdcall", "args": ["u32", "int", "cstr"], "ret": 1},
+    "user32.dll!SetWindowTextA": {"name": "SetWindowTextA", "conv": "stdcall", "args": ["u32", "cstr"], "ret": 1},
+    "0x10021110": {"name": "FUN_10021110", "conv": "cdecl", "args": ["ptr"], "ret": ["@raw1", "@raw2"]},
+    "0x1001cf80": {"name": "FUN_1001cf80", "conv": "cdecl", "args": ["cstr", "int"]},
+    "user32.dll!GetDlgItem": {"name": "GetDlgItem", "conv": "stdcall", "args": ["u32", "int"], "ret": "0x5a5a0001"},
+    "user32.dll!SendMessageA": {"name": "SendMessageA", "conv": "stdcall", "args": ["u32", "u32", "u32", "u32"], "ret": 0},
+    "user32.dll!SendDlgItemMessageA": {"name": "SendDlgItemMessageA", "conv": "stdcall",
+                                       "args": ["u32", "int", "u32", "u32", "u32"], "ret": 0}
+  },
+  "cases": [
+    {"name": "WM_INITDIALOG: texts, buffer, edit control", "args": ["0x00030044", "0x110", 0, 0]},
+    {"name": "WM_INITDIALOG with another handle and junk wParam", "args": ["0x00a0b0c0", "0x110", "0x3eb", "0x1234"]},
+    {"name": "WM_INITDIALOG, second text empty", "args": [7, "0x110", 0, 0],
+     "memory": [{"addr": "@text2", "u8": 0}]},
+    {"name": "WM_INITDIALOG, first text empty", "args": [8, "0x110", 0, 0],
+     "memory": [{"addr": "@text1", "u8": 0}]},
+    {"name": "WM_COMMAND 0x3EB: EndDialog 0", "args": ["0x00030044", "0x111", "0x3eb", 0]},
+    {"name": "WM_COMMAND 0x3EC: EndDialog 1", "args": ["0x00030044", "0x111", "0x3ec", 0]},
+    {"name": "WM_COMMAND 0x3EA: nothing", "args": ["0x00030044", "0x111", "0x3ea", 0]},
+    {"name": "WM_COMMAND 0x3ED: nothing", "args": ["0x00030044", "0x111", "0x3ed", 0]},
+    {"name": "WM_COMMAND high word set, low 0x3EB", "args": [5, "0x111", "0x000103eb", 0]},
+    {"name": "WM_COMMAND high word set, low 0x3EC", "args": [5, "0x111", "0xffff03ec", 0]},
+    {"name": "WM_COMMAND 0x103EB without low match", "args": [5, "0x111", "0x3eb0000", 0]},
+    {"name": "WM_COMMAND 0", "args": [5, "0x111", 0, 0]},
+    {"name": "message 0x10F", "args": [5, "0x10f", "0x3eb", 0]},
+    {"name": "message 0x112", "args": [5, "0x112", "0x3ec", 0]},
+    {"name": "message 0", "args": [5, 0, "0x3eb", 0]},
+    {"name": "message 0x10110", "args": [5, "0x10110", "0x3eb", 0]},
+    {"name": "message 0xFFFFFFFF", "args": [5, "0xffffffff", "0x3ec", 0]}
+  ],
+  "fuzz": {
+    "seed": 119744,
+    "count": 40,
+    "args": [
+      {},
+      {"choices": [272, 273, 271, 274, 0, 1, 4294967295, 65808]},
+      {"choices": [1003, 1004, 1002, 1005, 66539, 4294902764, 0, 123456]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@text1", "type": "u8", "count": 20, "range": [0, 255]},
+      {"addr": "@text2", "type": "u8", "count": 20, "range": [0, 255]},
+      {"addr": "@s5c", "type": "u8", "count": 8, "range": [0, 255]}
+    ]
+  }
+}

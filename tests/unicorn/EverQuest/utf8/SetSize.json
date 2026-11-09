@@ -1,0 +1,121 @@
+{
+  "function": "EQSizedQuad_guess::SetSize_guess",
+  "original": "0x004038e9",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqsizedquad",
+  "args": [
+    {
+      "name": "width",
+      "type": "float"
+    },
+    {
+      "name": "height",
+      "type": "float"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eqsizedquad": {
+      "size": "0xa0",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@eqsizedquad+0x44", "f32": 10.0},
+    {"addr": "@eqsizedquad+0x48", "f32": 20.0},
+    {"addr": "@eqsizedquad+0x4c", "f32": -3.0},
+    {"addr": "@eqsizedquad+0x50", "f32": 4.5},
+    {"addr": "@eqsizedquad+0x54", "f32": 11.0},
+    {"addr": "@eqsizedquad+0x58", "f32": -12.0},
+    {"addr": "@eqsizedquad+0x5c", "f32": 0.25},
+    {"addr": "@eqsizedquad+0x60", "f32": 640.0},
+    {"addr": "@eqsizedquad+0x8c", "f32": 3.0},
+    {"addr": "@eqsizedquad+0x90", "f32": 7.0}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: right/bottom = left/top + size - 1, then rescaled",
+      "args": [100.0, 50.0]
+    },
+    {
+      "name": "zero size: right = left - 1",
+      "args": [0.0, 0.0]
+    },
+    {
+      "name": "unit size: right == left",
+      "args": [1.0, 1.0]
+    },
+    {
+      "name": "distinct width/height catch swapped args",
+      "args": [640.0, 3.0]
+    },
+    {
+      "name": "distinct divisors catch swapped x/y divisor",
+      "args": [32.0, 64.0],
+      "memory": [
+        {"addr": "@eqsizedquad+0x8c", "f32": 2.0},
+        {"addr": "@eqsizedquad+0x90", "f32": 1024.0}
+      ]
+    },
+    {
+      "name": "fractional and negative divisors, negative sizes",
+      "args": [-5.5, -0.25],
+      "memory": [
+        {"addr": "@eqsizedquad+0x8c", "f32": 0.5},
+        {"addr": "@eqsizedquad+0x90", "f32": -0.25}
+      ]
+    },
+    {
+      "name": "zero divisors give infinities and nan",
+      "args": [1.0, 2.0],
+      "memory": [
+        {"addr": "@eqsizedquad+0x44", "f32": 0.0},
+        {"addr": "@eqsizedquad+0x48", "f32": 0.0},
+        {"addr": "@eqsizedquad+0x8c", "f32": 0.0},
+        {"addr": "@eqsizedquad+0x90", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "extended-precision intermediates (huge + tiny - 1)",
+      "args": [16777216.0, 0.3],
+      "memory": [
+        {"addr": "@eqsizedquad+0x44", "f32": 0.3},
+        {"addr": "@eqsizedquad+0x48", "f32": 16777216.0},
+        {"addr": "@eqsizedquad+0x8c", "f32": 3.0},
+        {"addr": "@eqsizedquad+0x90", "f32": 0.1}
+      ]
+    },
+    {
+      "name": "untouched odd corners (+0x50, +0x5c) are read for scaling",
+      "args": [8.0, 8.0],
+      "memory": [
+        {"addr": "@eqsizedquad+0x50", "f32": -77.0},
+        {"addr": "@eqsizedquad+0x5c", "f32": 99.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4208873,
+    "count": 40,
+    "args": [
+      {"choices": [-100.0, -1.0, 0.0, 0.3, 1.0, 2.5, 640.0, 16777216.0]},
+      {"choices": [-100.0, -1.0, 0.0, 0.7, 1.0, 3.25, 480.0, 1e20]}
+    ],
+    "memory": [
+      {"addr": "@eqsizedquad+0x44", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x48", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x4c", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x50", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x54", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x58", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x5c", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x60", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqsizedquad+0x8c", "type": "float", "choices": [-2.0, 0.0, 0.1, 1.0, 3.0, 640.0]},
+      {"addr": "@eqsizedquad+0x90", "type": "float", "choices": [-5.0, 0.0, 0.7, 1.0, 9.0, 480.0]}
+    ]
+  }
+}

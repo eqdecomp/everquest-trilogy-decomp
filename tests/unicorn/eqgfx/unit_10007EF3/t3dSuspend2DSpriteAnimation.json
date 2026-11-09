@@ -1,0 +1,181 @@
+{
+  "function": "t3dSuspend2DSpriteAnimation",
+  "original": "0x10007f43",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "suspend",
+      "type": "int"
+    },
+    {
+      "name": "resume_flags",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "suspend sets bit 0x08, keeps the resume bits",
+      "args": [
+        "@sprite",
+        1,
+        "0x11111111"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x70",
+          "u32": "0xaaaaaaaa"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "suspend on an already set bit stays set",
+      "args": [
+        "@sprite",
+        1,
+        "0xffffffff"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 8
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "resume clears the bit and ORs the resume bits in",
+      "args": [
+        "@sprite",
+        0,
+        "0x0000ffff"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x70",
+          "u32": "0x00ff0000"
+        }
+      ]
+    },
+    {
+      "name": "resume with zero bits only clears the bit",
+      "args": [
+        "@sprite",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 8
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x70",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "negative suspend still suspends",
+      "args": [
+        "@sprite",
+        -1,
+        "0x12345678"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "large suspend value still suspends",
+      "args": [
+        "@sprite",
+        "0x100",
+        "0x80000000"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0xc",
+          "u32": "0xfffffff7"
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 32579,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0xc",
+        "type": "u32"
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x70",
+        "type": "u32"
+      }
+    ]
+  }
+}

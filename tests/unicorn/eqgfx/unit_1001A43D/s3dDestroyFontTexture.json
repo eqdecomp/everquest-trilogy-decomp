@@ -1,0 +1,378 @@
+{
+  "function": "s3dDestroyFontTexture",
+  "original": "0x1001aa66",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "texture",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "texture": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000be1b": {
+      "name": "t3dUnshareBMInfo",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000bcf0": {
+      "name": "t3dUndefineBMInfo",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    }
+  },
+  "cases": [
+    {
+      "name": "busy texture returns the error without touching owned resources",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x8",
+          "u32": "0x0a000101"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x20",
+          "u32": "0x0a000201"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x24",
+          "u32": "0x0a000202"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x28",
+          "u32": "0x0a000203"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x2c",
+          "u32": "0x0a000204"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "negative use count is also busy",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "eligible empty texture only frees the texture after the helper",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "buffer at 0x20 is freed",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x20",
+          "u32": "0x0a000201"
+        }
+      ]
+    },
+    {
+      "name": "buffer at 0x24 is freed",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x24",
+          "u32": "0x0a000202"
+        }
+      ]
+    },
+    {
+      "name": "buffer at 0x28 is freed",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x28",
+          "u32": "0x0a000203"
+        }
+      ]
+    },
+    {
+      "name": "bitmap info is unshared then undefined",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x2c",
+          "u32": "0x0a000204"
+        }
+      ]
+    },
+    {
+      "name": "flag bit zero clear skips dictionary removal but still frees key",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x8",
+          "u32": "0x0a000101"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0xc",
+          "u8": 254
+        }
+      ]
+    },
+    {
+      "name": "flag bit zero set removes the key from the dictionary",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x8",
+          "u32": "0x0a000101"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0xc",
+          "u8": 129
+        }
+      ]
+    },
+    {
+      "name": "flag bit zero with a null key still calls dictionary removal",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "all owned fields exercise call and free ordering",
+      "args": [
+        "@dictionary",
+        "@texture"
+      ],
+      "memory": [
+        {
+          "addr": "@texture",
+          "offset": "0x8",
+          "u32": "0x0a000101"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x20",
+          "u32": "0x0a000201"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x24",
+          "u32": "0x0a000202"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x28",
+          "u32": "0x0a000203"
+        },
+        {
+          "addr": "@texture",
+          "offset": "0x2c",
+          "u32": "0x0a000204"
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 109158,
+    "count": 35,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@texture"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@texture",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000101"
+        ]
+      },
+      {
+        "addr": "@texture",
+        "offset": "0xc",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@texture",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2,
+          2
+        ]
+      },
+      {
+        "addr": "@texture",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000201"
+        ]
+      },
+      {
+        "addr": "@texture",
+        "offset": "0x24",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000202"
+        ]
+      },
+      {
+        "addr": "@texture",
+        "offset": "0x28",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000203"
+        ]
+      },
+      {
+        "addr": "@texture",
+        "offset": "0x2c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000204"
+        ]
+      }
+    ]
+  }
+}

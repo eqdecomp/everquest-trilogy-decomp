@@ -1,0 +1,565 @@
+{
+  "function": "s3dCollideRaySegmentWithWorld",
+  "original": "0x1000482e",
+  "sources": ["src/eqgfx/unit_10001000.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "world", "type": "ptr"},
+    {"name": "textureTable", "type": "ptr"},
+    {"name": "segmentStart", "type": "ptr"},
+    {"name": "segmentEnd", "type": "ptr"},
+    {"name": "surfaceMask", "type": "u32"},
+    {"name": "testAll", "type": "int"},
+    {"name": "spriteCallback", "type": "ptr"},
+    {"name": "collisionCallback", "type": "ptr"},
+    {"name": "callbackArg", "type": "ptr"},
+    {"name": "collisionOutput", "type": "ptr"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "world": {
+      "size": "0x360",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0c", "u32": "@rootplane"},
+        {"offset": "0x24", "u32": "@contexttable+0x4"},
+        {"offset": "0x17c", "u32": "@objectsbyindex"},
+        {"offset": "0x35c", "u32": "@clipstack+0x18"}
+      ]
+    },
+    "texturetable": {"size": "0x614", "fill": "zero"},
+    "segmentstart": {
+      "size": "0x0c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x04", "f32": 0.0},
+        {"offset": "0x08", "f32": 0.0}
+      ]
+    },
+    "segmentend": {
+      "size": "0x0c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": -1.0},
+        {"offset": "0x04", "f32": 0.0},
+        {"offset": "0x08", "f32": 0.0}
+      ]
+    },
+    "rootplane": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@positiveleaf"},
+        {"offset": "0x14", "u32": "@negativeleaf"}
+      ]
+    },
+    "positiveleaf": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [{"offset": "0x18", "u32": 1}]
+    },
+    "negativeleaf": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [{"offset": "0x18", "u32": 1}]
+    },
+    "matchleaf": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [{"offset": "0x18", "u32": 2}]
+    },
+    "mismatchleaf": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [{"offset": "0x18", "u32": 3}]
+    },
+    "rootposnegx": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@nestedx"}
+      ]
+    },
+    "nestedx": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x0c", "f32": 0.5},
+        {"offset": "0x10", "u32": "@matchleaf"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "rootposnegy": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@nestedy"}
+      ]
+    },
+    "rootposnegyinterp": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@nestedyinterp"}
+      ]
+    },
+    "rootposnegrestore": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@nestedyrestore"}
+      ]
+    },
+    "rootposnegyendpoint": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@nestedyendpoint"}
+      ]
+    },
+    "rootposnegsimple": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@matchleaf"}
+      ]
+    },
+    "nestedy": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x04", "f32": 1.0},
+        {"offset": "0x0c", "f32": -3.0},
+        {"offset": "0x10", "u32": "@matchleaf"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "nestedyinterp": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x04", "f32": 1.0},
+        {"offset": "0x0c", "f32": -4.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@matchleaf"}
+      ]
+    },
+    "nestedyrestore": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x04", "f32": 1.0},
+        {"offset": "0x0c", "f32": -3.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@matchleaf"}
+      ]
+    },
+    "nestedyendpoint": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x04", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@matchleaf"}
+      ]
+    },
+    "rootnegposz": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@nestedz"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "rootposnegzinterp": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@mismatchleaf"},
+        {"offset": "0x14", "u32": "@nestedzinterp"}
+      ]
+    },
+    "nestedz": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "f32": 1.0},
+        {"offset": "0x0c", "f32": -3.0},
+        {"offset": "0x10", "u32": "@matchleaf"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "nestedzinterp": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "f32": 1.0},
+        {"offset": "0x0c", "f32": -4.0},
+        {"offset": "0x10", "u32": "@matchleaf"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "rootnegpossimple": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@matchleaf"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "rootnegposfraction": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "f32": 1.0},
+        {"offset": "0x10", "u32": "@nestedfraction"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "nestedfraction": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "f32": 1.0},
+        {"offset": "0x0c", "f32": -2.5},
+        {"offset": "0x10", "u32": "@matchleaf"},
+        {"offset": "0x14", "u32": "@mismatchleaf"}
+      ]
+    },
+    "contexttable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x04", "u32": "@collisioncontext"},
+        {"offset": "0x08", "u32": "@matchcontext"},
+        {"offset": "0x0c", "u32": "@misscontext"}
+      ]
+    },
+    "collisioncontext": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [{"offset": "0x0c", "u32": 5}]
+    },
+    "matchcontext": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [{"offset": "0x0c", "u32": 1}]
+    },
+    "misscontext": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [{"offset": "0x0c", "u32": 0}]
+    },
+    "objectsbyindex": {"size": "0x10", "fill": "zero"},
+    "clipstack": {"size": "0x200", "fill": "zero"},
+    "sqrt": {"size": "0x04", "fill": "zero"},
+    "collisionoutput": {"size": "0x14", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x10086080", "u32": 12},
+    {"addr": "0x100aad08", "u32": 3},
+    {"addr": "0x100fc77c", "u32": "@sqrt"},
+    {"addr": "0x10076284", "f32": 0.0}
+  ],
+  "callees": {
+    "0x10006e31": {
+      "name": "s3dReallocateClipSegmentStack",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x10004bf1": {
+      "name": "s3dCollideRaySegmentWithRegion_guess",
+      "conv": "cdecl",
+      "args": ["mem:96", "ptr"],
+      "ret": 0
+    },
+    "@sqrt": {
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 1.0
+    }
+  },
+  "cases": [
+    {
+      "name": "stack allocator reports failure and leaves the result zero",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 1, 0, 0, 0, "@collisionoutput"],
+      "callees": {
+        "0x10006e31": {"name": "s3dReallocateClipSegmentStack", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "empty plane list writes the default result",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 1, 0, 0, 0, "@collisionoutput"],
+      "memory": [{"addr": "@world", "offset": "0x0c", "u32": 0}]
+    },
+    {
+      "name": "positive leaf with matching surface bit returns that bit",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 1, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@positiveleaf"},
+        {"addr": "@collisioncontext", "offset": "0x0c", "u32": 5}
+      ]
+    },
+    {
+      "name": "negative leaf chooses a different matching bit",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 4, 1, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@negativeleaf"},
+        {"addr": "@collisioncontext", "offset": "0x0c", "u32": 5}
+      ]
+    },
+    {
+      "name": "mask mismatch calls the intersection helper and misses",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 2, 1, 0, 0, 0, "@collisionoutput"]
+    },
+    {
+      "name": "mask mismatch calls the intersection helper and records a hit",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 2, 1, 0, 0, 0, "@collisionoutput"],
+      "callees": {
+        "0x10004bf1": {"name": "FUN_10004bf1", "conv": "cdecl", "args": ["mem:96", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "intersection helper receives the collision callback in its ray",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 2, 1, 0, "0x10050000", 0, "@collisionoutput"],
+      "expect": {"ret": 1},
+      "callees": {
+        "0x10004bf1": {"name": "FUN_10004bf1", "conv": "cdecl", "args": ["mem:96", "ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "crosses from positive to negative, visits both child branches",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentend", "f32": -1.0}
+      ]
+    },
+    {
+      "name": "crosses from negative to positive, visits both child branches",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "both endpoints positive do not push a branch",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentend", "f32": 2.0}
+      ]
+    },
+    {
+      "name": "both endpoints negative do not push a branch",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "start on the plane and end negative takes the zero-to-negative crossing",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": 0.0},
+        {"addr": "@segmentend", "f32": -1.0}
+      ]
+    },
+    {
+      "name": "end on the plane stays on the positive side",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentend", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "zero length ray stays at the plane boundary",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 0, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@segmentstart", "f32": 0.0},
+        {"addr": "@segmentend", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "positive-to-negative second branch hits after the x intersection",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegx"},
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentend", "f32": -1.0}
+      ]
+    },
+    {
+      "name": "positive-to-negative y intersection detects a reversed endpoint delta",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegy"},
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x04", "f32": 4.0},
+        {"addr": "@segmentend", "f32": -1.0},
+        {"addr": "@segmentend", "offset": "0x04", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "negative-to-positive y endpoint interpolation preserves the negative branch",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "expect": {"ret": 1},
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegyinterp"},
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentstart", "offset": "0x04", "f32": 4.0},
+        {"addr": "@segmentend", "f32": 1.0},
+        {"addr": "@segmentend", "offset": "0x04", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "positive-to-negative restore detects the wrong current y start",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegrestore"},
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x04", "f32": 4.0},
+        {"addr": "@segmentend", "f32": -1.0},
+        {"addr": "@segmentend", "offset": "0x04", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "positive-to-negative restore detects a missing saved y endpoint",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegyendpoint"},
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x04", "f32": 4.0},
+        {"addr": "@segmentend", "f32": -1.0},
+        {"addr": "@segmentend", "offset": "0x04", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "negative-to-positive z intersection detects a reversed endpoint delta",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootnegposz"},
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x08", "f32": 4.0},
+        {"addr": "@segmentend", "offset": "0x08", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "positive-to-negative z endpoint interpolation preserves the negative branch",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "expect": {"ret": 0},
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegzinterp"},
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentend", "f32": -1.0},
+        {"addr": "@segmentstart", "offset": "0x08", "f32": 4.0},
+        {"addr": "@segmentend", "offset": "0x08", "f32": -2.0}
+      ]
+    },
+    {
+      "name": "negative-to-positive z intersection detects the wrong coordinate index",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "expect": {"ret": 1},
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootnegposz"},
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x04", "f32": 10.0},
+        {"addr": "@segmentend", "offset": "0x04", "f32": -10.0},
+        {"addr": "@segmentstart", "offset": "0x08", "f32": 4.0},
+        {"addr": "@segmentend", "offset": "0x08", "f32": -2.0},
+        {"addr": "@nestedz", "offset": "0x0c", "f32": -0.5}
+      ]
+    },
+    {
+      "name": "negative-to-positive z intersection detects the wrong z base coordinate",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "expect": {"ret": 1},
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootnegposz"},
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x04", "f32": -10.0},
+        {"addr": "@segmentend", "offset": "0x04", "f32": 10.0},
+        {"addr": "@segmentstart", "offset": "0x08", "f32": 4.0},
+        {"addr": "@segmentend", "offset": "0x08", "f32": -2.0},
+        {"addr": "@nestedz", "offset": "0x0c", "f32": -0.5}
+      ]
+    },
+    {
+      "name": "negative-to-positive second branch hit tests its saved fraction",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootnegpossimple"},
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "nested negative-to-positive crossing detects fraction addition",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "expect": {"ret": 1},
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootnegposfraction"},
+        {"addr": "@segmentstart", "f32": -1.0},
+        {"addr": "@segmentend", "f32": 1.0},
+        {"addr": "@segmentstart", "offset": "0x08", "f32": 0.0},
+        {"addr": "@segmentend", "offset": "0x08", "f32": 4.0}
+      ]
+    },
+    {
+      "name": "positive-to-negative second branch hit tests its saved fraction",
+      "args": ["@world", "@texturetable", "@segmentstart", "@segmentend", 1, 0, 0, 0, 0, "@collisionoutput"],
+      "memory": [
+        {"addr": "@world", "offset": "0x0c", "u32": "@rootposnegsimple"},
+        {"addr": "@segmentstart", "f32": 1.0},
+        {"addr": "@segmentend", "f32": -1.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 802842,
+    "count": 32,
+    "args": [
+      {"choices": ["@world"]},
+      {"choices": ["@texturetable"]},
+      {"choices": ["@segmentstart"]},
+      {"choices": ["@segmentend"]},
+      {"range": [0, 15]},
+      {"choices": [0, 1]},
+      {"choices": [0]},
+      {"choices": [0]},
+      {"choices": [0]},
+      {"choices": ["@collisionoutput"]}
+    ],
+    "memory": [
+      {"addr": "@segmentstart", "type": "float", "count": 3, "range": [-3, 3]},
+      {"addr": "@segmentend", "type": "float", "count": 3, "range": [-3, 3]},
+      {"addr": "@rootplane", "offset": "0x00", "type": "float", "count": 4, "range": [-2, 2]},
+      {"addr": "@collisioncontext", "offset": "0x0c", "type": "u32", "range": [0, 15]}
+    ]
+  }
+}

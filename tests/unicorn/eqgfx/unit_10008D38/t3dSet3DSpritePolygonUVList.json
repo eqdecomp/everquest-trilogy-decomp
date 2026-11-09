@@ -1,0 +1,326 @@
+{
+  "function": "t3dSet3DSpritePolygonUVList",
+  "original": "0x10008e0d",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "uvList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@polygons"
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@info"
+        }
+      ]
+    },
+    "info": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": 4
+        },
+        {
+          "offset": "0x24",
+          "u32": "@uvcounts"
+        }
+      ]
+    },
+    "uvcounts": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2
+        },
+        {
+          "offset": "0x30",
+          "u32": 0
+        },
+        {
+          "offset": "0x5c",
+          "u32": 16
+        },
+        {
+          "offset": "0x88",
+          "u32": 31
+        }
+      ]
+    },
+    "polygons": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x44",
+          "u32": "@polys"
+        },
+        {
+          "offset": "0x94",
+          "u32": "@polys+0x100"
+        },
+        {
+          "offset": "0xe4",
+          "u32": "@polys+0x200"
+        },
+        {
+          "offset": "0x134",
+          "u32": "@polys+0x300"
+        }
+      ]
+    },
+    "polys": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "uvlist": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x1000897d": {
+      "name": "t3dCopy3DSpriteDefinitionFrames_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: index 0 copies its two-entry UV list (count 2 << 3 = 16 bytes)",
+      "args": [
+        "@sprite",
+        0,
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index 1: count 0 copies nothing (size 0, the list is still passed to memcpy)",
+      "args": [
+        "@sprite",
+        1,
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index 2: count 16 gives a 128-byte copy (size is count << 3, not count)",
+      "args": [
+        "@sprite",
+        2,
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index 3: count 31, the largest copy (248 bytes)",
+      "args": [
+        "@sprite",
+        3,
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index equal to the count (4): out of range, nothing copied",
+      "args": [
+        "@sprite",
+        4,
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "index 5, past the count: out of range",
+      "args": [
+        "@sprite",
+        5,
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "index 0xffffffff: the compare is unsigned, so it is out of range",
+      "args": [
+        "@sprite",
+        "0xffffffff",
+        "@uvlist"
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "polyBase zero, setup fails (FUN returns 1): error, nothing copied",
+      "args": [
+        "@sprite",
+        1,
+        "@uvlist"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1000897d": {
+          "name": "FUN_1000897d",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "polyBase set: the setup call is skipped, so a failing FUN is never seen",
+      "args": [
+        "@sprite",
+        2,
+        "@uvlist"
+      ],
+      "callees": {
+        "0x1000897d": {
+          "name": "FUN_1000897d",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "polyBase zero and index out of range: error before any setup call",
+      "args": [
+        "@sprite",
+        4,
+        "@uvlist"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "null source with count 0 (memcpy of zero bytes still runs; the list is never read)",
+      "args": [
+        "@sprite",
+        1,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 36365,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "choices": [
+          "@uvlist"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@info",
+        "offset": "0x20",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@uvcounts",
+        "offset": "0x4",
+        "type": "u32",
+        "range": [
+          0,
+          31
+        ],
+        "count": 4,
+        "stride": 44
+      }
+    ]
+  }
+}

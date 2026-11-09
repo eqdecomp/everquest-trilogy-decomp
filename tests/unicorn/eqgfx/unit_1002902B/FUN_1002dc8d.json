@@ -1,0 +1,144 @@
+{
+  "function": "reserveDynamicArray_guess",
+  "original": "0x1002dc8d",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "object", "type": "ptr" },
+    { "name": "requiredCount", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "object": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": 2 },
+        { "offset": "0x04", "u32": 8 },
+        { "offset": "0x0c", "u32": "@block" }
+      ]
+    },
+    "block": { "size": "0x100", "fill": "random" },
+    "freshblock": { "size": "0x100", "fill": "zero" },
+    "grownblock": { "size": "0x100", "fill": "zero" }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": "@grownblock"
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@freshblock"
+    }
+  },
+  "cases": [
+    { "name": "requirement equal to the count keeps the block",
+      "args": ["@object", 2], "expect": { "ret": 0 } },
+    { "name": "requirement below the count keeps the block",
+      "args": ["@object", 1], "expect": { "ret": 0 } },
+    { "name": "requirement one above the count reallocates",
+      "args": ["@object", 3], "expect": { "ret": 0 } },
+    { "name": "requirement well above the count reallocates",
+      "args": ["@object", 5], "expect": { "ret": 0 } },
+    { "name": "held block with zero count reallocates",
+      "args": ["@object", 1],
+      "memory": [{ "addr": "@object", "offset": "0x00", "u32": 0 }],
+      "expect": { "ret": 0 } },
+    { "name": "empty object allocates",
+      "args": ["@object", 4],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 } },
+    { "name": "zero requirement on an empty object makes no call",
+      "args": ["@object", 0],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 1 } },
+    { "name": "negative requirement on an empty object makes no call (signed compare)",
+      "args": ["@object", -1],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 1 } },
+    { "name": "negative stored count is below a positive requirement (signed compare)",
+      "args": ["@object", 3],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": "0xfffffffb" },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 } },
+    { "name": "zero element size allocates zero bytes",
+      "args": ["@object", 4],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x04", "u32": 0 },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 } },
+    { "name": "element size times count wraps to zero",
+      "args": ["@object", 4],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x04", "u32": "0x40000000" },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 } },
+    { "name": "largest requirement with unit elements",
+      "args": ["@object", 2147483647],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x04", "u32": 1 },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 } },
+    { "name": "requirement equal to the count with a null block makes no call",
+      "args": ["@object", 2],
+      "memory": [{ "addr": "@object", "offset": "0x0c", "u32": 0 }],
+      "expect": { "ret": 1 } },
+    { "name": "negative requirement below a held block keeps it",
+      "args": ["@object", -2],
+      "expect": { "ret": 0 } },
+    { "name": "allocation failure keeps the new count and stores null",
+      "args": ["@object", 3],
+      "memory": [
+        { "addr": "@object", "offset": "0x00", "u32": 0 },
+        { "addr": "@object", "offset": "0x0c", "u32": 0 }
+      ],
+      "callees": {
+        "0x10050c48": { "name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0 }
+      },
+      "expect": { "ret": 1 } },
+    { "name": "reallocation failure keeps the new count and stores null",
+      "args": ["@object", 4],
+      "callees": {
+        "0x10050c8c": { "name": "t3dReallocateMemory", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0 }
+      },
+      "expect": { "ret": 1 } }
+  ],
+  "fuzz": {
+    "seed": 187533,
+    "count": 40,
+    "args": [
+      { "choices": ["@object"] },
+      { "choices": [-3, -1, 0, 1, 2, 3, 4, 5, 9, 2147483647] }
+    ],
+    "memory": [
+      { "addr": "@object", "offset": "0x00", "type": "u32", "choices": [0, 1, 2, 3, 5, 4294967295, 2147483648, 2147483647] },
+      { "addr": "@object", "offset": "0x04", "type": "u32", "choices": [0, 1, 4, 8, 1073741824, 2147483648] },
+      { "addr": "@object", "offset": "0x0c", "type": "ptr", "choices": [0, "@block"] }
+    ]
+  }
+}

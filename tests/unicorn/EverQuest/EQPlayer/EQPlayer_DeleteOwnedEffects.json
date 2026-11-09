@@ -1,0 +1,134 @@
+{
+  "function": "EQPlayer_DeleteOwnedEffects_guess",
+  "original": "0x004b13e3",
+  "sources": [
+    "src/EverQuest/EQPlayer.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "other": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "e0": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": "@e1"},
+        {"offset": "0x58", "u32": "@owner"}
+      ]
+    },
+    "e1": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": "@e2"},
+        {"offset": "0x58", "u32": "@other"}
+      ]
+    },
+    "e2": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": "@e3"},
+        {"offset": "0x58", "u32": "@owner"}
+      ]
+    },
+    "e3": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": 0},
+        {"offset": "0x58", "u32": 0}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4d74", "u32": "@e0"}
+  ],
+  "callees": {
+    "0x00490ef4": {
+      "name": "EQEffect::~EQEffect_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "mixed owners: e0 and e2 deleted, e1 and e3 kept",
+      "args": ["@owner"]
+    },
+    {
+      "name": "empty list",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "0x006e4d74", "u32": 0}
+      ]
+    },
+    {
+      "name": "single node owned (head next null)",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "0x006e4d74", "u32": "@e3"},
+        {"addr": "@e3", "offset": "0x58", "type": "u32", "u32": "@owner"}
+      ]
+    },
+    {
+      "name": "single node not owned",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "0x006e4d74", "u32": "@e3"}
+      ]
+    },
+    {
+      "name": "last node owned",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@e3", "offset": "0x58", "type": "u32", "u32": "@owner"}
+      ]
+    },
+    {
+      "name": "owner other: only e1 deleted",
+      "args": ["@other"]
+    },
+    {
+      "name": "null owner matches null-owner effect e3",
+      "args": [0]
+    }
+  ],
+  "fuzz": {
+    "seed": 4920291,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@owner", "@other", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "@e0", "offset": "0x58", "type": "u32", "choices": ["@owner", "@other", 0]},
+      {"addr": "@e1", "offset": "0x58", "type": "u32", "choices": ["@owner", "@other", 0]},
+      {"addr": "@e2", "offset": "0x58", "type": "u32", "choices": ["@owner", "@other", 0]},
+      {"addr": "@e3", "offset": "0x58", "type": "u32", "choices": ["@owner", "@other", 0]},
+      {"addr": "@e1", "offset": "0x54", "type": "u32", "choices": ["@e2", 0]},
+      {"addr": "0x006e4d74", "type": "u32", "choices": ["@e0", "@e1", "@e2", 0]}
+    ]
+  }
+}

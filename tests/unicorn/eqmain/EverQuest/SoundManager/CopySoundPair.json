@@ -1,0 +1,53 @@
+{
+  "function": "DeleteGdiObjectAndClearWord_guess",
+  "original": "0x10027960",
+  "sources": [
+    "src/eqmain/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": "0x1234abcd"},
+        {"offset": "0x40", "u16": "0xbeef"}
+      ]
+    }
+  },
+  "callees": {
+    "gdi32.dll!DeleteObject": {
+      "name": "DeleteObject",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {"name": "handle set: DeleteObject on it, word at +0x40 cleared", "args": []},
+    {"name": "handle zero: no call, word at +0x40 cleared", "args": [],
+     "memory": [{"addr": "@self", "offset": "0x00", "u32": 0}]},
+    {"name": "handle 1: smallest non-null handle", "args": [],
+     "memory": [{"addr": "@self", "offset": "0x00", "u32": 1}]},
+    {"name": "handle with high bit set: the null test is unsigned", "args": [],
+     "memory": [{"addr": "@self", "offset": "0x00", "u32": "0x80000000"}]},
+    {"name": "handle all ones", "args": [],
+     "memory": [{"addr": "@self", "offset": "0x00", "u32": "0xffffffff"}]},
+    {"name": "word at +0x40 already zero", "args": [],
+     "memory": [{"addr": "@self", "offset": "0x40", "u16": 0}]},
+    {"name": "bytes after the word at +0x40 set: a dword store would show", "args": [],
+     "memory": [{"addr": "@self", "offset": "0x42", "u16": "0xcafe"}]}
+  ],
+  "fuzz": {
+    "seed": 5160321,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@self", "offset": "0x00", "type": "u32", "choices": [0, 1, "0x80000000", "0xffffffff", "0x1234abcd", 4]},
+      {"addr": "@self", "offset": "0x40", "type": "u16", "choices": [0, "0xbeef", "0x00ff", "0xff00"]}
+    ]
+  }
+}

@@ -1,0 +1,550 @@
+{
+  "function": "NetworkConnection_process_connection_state_guess",
+  "original": "0x1002dae0",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "param_3": {
+      "size": "0x8",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002c930": {
+      "name": "NetworkConnection_ProcessNetworkPackets_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 48,
+          "hex": "01000000"
+        }
+      ]
+    },
+    "0x1002be10": {
+      "name": "NetworkConnection_SendConnectionAcknowledgement_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 48,
+          "hex": "01000000"
+        }
+      ]
+    },
+    "0x1002bec0": {
+      "name": "NetworkConnection_SendHeartbeat_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 48,
+          "hex": "01000000"
+        }
+      ]
+    },
+    "0x1002d230": {
+      "name": "NetworkConnection_getConnectionStatus_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 48,
+          "hex": "01000000"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "state 1 returns without calling anything",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "state 0 runs only the status query",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "state 5 runs only the status query",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "state 0xffffffff runs only the status query",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "state 2 processes network packets",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "state 3 sends connection acknowledgement",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "state 4 sends heartbeat",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "status non-zero stops after the handler",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "01000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "status non-zero stops even when the handler moves the state on",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x1002c930": {
+          "name": "NetworkConnection_ProcessNetworkPackets_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 48,
+              "hex": "03000000"
+            }
+          ]
+        },
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "01000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "status zero loops through states 2, 3 and 1",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x1002c930": {
+          "name": "NetworkConnection_ProcessNetworkPackets_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 48,
+              "hex": "03000000"
+            }
+          ]
+        },
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ]
+        }
+      }
+    },
+    {
+      "name": "difference of zero keeps looping (boundary)",
+      "args": [
+        "@conn",
+        5,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        },
+        {
+          "addr": "@param_3",
+          "offset": "0x4",
+          "u32": 5
+        }
+      ],
+      "callees": {
+        "0x1002c930": {
+          "name": "NetworkConnection_ProcessNetworkPackets_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 48,
+              "hex": "03000000"
+            }
+          ]
+        },
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ]
+        }
+      }
+    },
+    {
+      "name": "difference of minus one stops (boundary)",
+      "args": [
+        "@conn",
+        4,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        },
+        {
+          "addr": "@param_3",
+          "offset": "0x4",
+          "u32": 5
+        }
+      ],
+      "callees": {
+        "0x1002c930": {
+          "name": "NetworkConnection_ProcessNetworkPackets_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 48,
+              "hex": "03000000"
+            }
+          ]
+        },
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ]
+        }
+      }
+    },
+    {
+      "name": "difference that overflows int is negative",
+      "args": [
+        "@conn",
+        2147483647,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        },
+        {
+          "addr": "@param_3",
+          "offset": "0x4",
+          "u32": 4294967295
+        }
+      ],
+      "callees": {
+        "0x1002c930": {
+          "name": "NetworkConnection_ProcessNetworkPackets_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 48,
+              "hex": "03000000"
+            }
+          ]
+        },
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ]
+        }
+      }
+    },
+    {
+      "name": "status -1 is non-zero",
+      "args": [
+        "@conn",
+        100,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x30",
+          "u32": 2
+        },
+        {
+          "addr": "@param_3",
+          "offset": "0x0",
+          "u32": 4294967295
+        }
+      ],
+      "callees": {
+        "0x1002c930": {
+          "name": "NetworkConnection_ProcessNetworkPackets_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 48,
+              "hex": "03000000"
+            }
+          ]
+        },
+        "0x1002d230": {
+          "name": "NetworkConnection_getConnectionStatus_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "ptr"
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 187104,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "range": [
+          -16,
+          80
+        ]
+      },
+      {
+        "choices": [
+          "@param_3"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x30",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          -1
+        ]
+      },
+      {
+        "addr": "@param_3",
+        "offset": "0x0",
+        "type": "int",
+        "range": [
+          -1,
+          1
+        ]
+      },
+      {
+        "addr": "@param_3",
+        "offset": "0x4",
+        "type": "int",
+        "range": [
+          -16,
+          80
+        ]
+      }
+    ]
+  }
+}

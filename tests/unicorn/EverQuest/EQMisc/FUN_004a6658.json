@@ -1,0 +1,251 @@
+{
+  "function": "do_corpse",
+  "original": "0x004a6658",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "local": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Bob"},
+      {"offset": "0x34", "f32": 1.75},
+      {"offset": "0x38", "f32": -2.5},
+      {"offset": "0x3C", "f32": 3.9},
+      {"offset": "0x98", "u8": 0}
+    ]},
+    "target": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Bob's corpse"},
+      {"offset": "0x98", "u8": 2}
+    ]},
+    "c1": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Bob's corpse01"},
+      {"offset": "0x68", "u32": "@c2"},
+      {"offset": "0x98", "u8": 3}
+    ]},
+    "c2": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Bob's corpse02"},
+      {"offset": "0x68", "u32": "@c3"},
+      {"offset": "0x98", "u8": 2}
+    ]},
+    "c3": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x01", "cstr": "Bob's corpse03"},
+      {"offset": "0x98", "u8": 3}
+    ]},
+    "pc": {"size": "0xA00", "fill": "zero", "init": [
+      {"offset": "0x974", "cstr": "qeynos"}
+    ]},
+    "everquest": {"size": "0x100", "fill": "random"},
+    "sbob": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "Bob"}]},
+    "sbigbob": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "BOB"}]},
+    "sother": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "Alice"}]},
+    "slong": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "Bobby"}]},
+    "sname": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "Bob"}]},
+    "trimmed": {"size": "0x20", "fill": "zero", "init": [{"offset": "0", "cstr": "Corpse"}]}
+  },
+  "memory": [
+    {"addr": "0x006E4DAC", "u32": "@target"},
+    {"addr": "0x006E4D8C", "u32": "@local"},
+    {"addr": "0x006E4DA8", "u32": "@pc"},
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006E4D58", "u32": "@c1"}
+  ],
+  "callees": {
+    "0x004a6445": {
+      "name": "can_summon_corpse_from_here_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:0x6c", "u32", "int"],
+      "ret": 0
+    },
+    "0x004d02fd": {
+      "name": "CEverQuest::trimName_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": "@trimmed"
+    },
+    "0x004d0436": {
+      "name": "CEverQuest::stripName_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": "@sname"
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": 0
+    },
+    "0x005219c0": {"name": "strcpy", "conv": "cdecl", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x005224fb": {"name": "_sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x00524240": {"name": "__strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "passthrough": true},
+    "0x004ef0cf": {"name": "__ftol", "conv": "cdecl", "args": [], "passthrough": true}
+  },
+  "rewrite_aliases": {
+    "__ftol": "0x004ef0cf"
+  },
+  "cases": [
+    {"name": "target corpse (type 2) is summoned without searching", "args": []},
+    {"name": "NPC corpse target (type 3) is summoned", "args": [], "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 3}
+    ]},
+    {"name": "type 0xFF target is unsigned: still a corpse", "args": [], "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 255}
+    ]},
+    {"name": "target corpse refused by can_summon: silent return", "args": [], "callees": {
+      "0x004a6445": {"name": "can_summon_corpse_from_here_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+    }},
+    {"name": "target refusal does not search the list", "args": [], "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 3}
+    ], "callees": {
+      "0x004a6445": {"name": "can_summon_corpse_from_here_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+    }},
+    {"name": "can_summon clears the target: nothing to summon, no corpse found", "args": [], "callees": {
+      "0x004a6445": {"name": "can_summon_corpse_from_here_guess", "conv": "cdecl", "args": ["ptr"], "ret": 1,
+        "writes": [{"addr": "0x006E4DAC", "hex": "00000000"}]}
+    }},
+    {"name": "live NPC target (type 1) falls back to the list: first corpse matches", "args": [], "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 1}
+    ]},
+    {"name": "player target (type 0) falls back to the list", "args": [], "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 0}
+    ]},
+    {"name": "no target searches the list", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ]},
+    {"name": "no target, empty spawn list: no corpses message", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "0x006E4D58", "u32": 0}
+    ]},
+    {"name": "no name match anywhere: no corpses message", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": "@sother"}
+    }},
+    {"name": "name compare is case-insensitive", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": "@sbigbob"}
+    }},
+    {"name": "name compare is not a prefix compare", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": "@slong"}
+    }},
+    {"name": "matching corpse refused, only one match: silent return", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004a6445": {"name": "can_summon_corpse_from_here_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+    }},
+    {"name": "first match refused, the next one is summoned", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004a6445": {"name": "can_summon_corpse_from_here_guess", "conv": "cdecl", "args": ["ptr"], "ret": [0, 1]}
+    }},
+    {"name": "first non-matching, second matching and summoned", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": ["@sother", "@sbob"]}
+    }},
+    {"name": "match only on the last list entry", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": ["@sother", "@sother", "@sbob"]}
+    }},
+    {"name": "first match refused, later entries do not match: silent return", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": ["@sbob", "@sother"]},
+      "0x004a6445": {"name": "can_summon_corpse_from_here_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+    }},
+    {"name": "local player in the list is skipped", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "0x006E4D58", "u32": "@local"},
+      {"addr": "@local", "offset": "0x98", "u8": 3},
+      {"addr": "@local", "offset": "0x68", "u32": "@c2"}
+    ]},
+    {"name": "local player alone in the list: no corpses message", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "0x006E4D58", "u32": "@local"},
+      {"addr": "@local", "offset": "0x98", "u8": 3}
+    ]},
+    {"name": "type 1 entries are skipped even when the name would match", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "@c1", "offset": "0x98", "u8": 1},
+      {"addr": "@c2", "offset": "0x98", "u8": 1},
+      {"addr": "@c3", "offset": "0x98", "u8": 1}
+    ]},
+    {"name": "type 2 entry is the lower bound of a corpse", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "@c1", "offset": "0x98", "u8": 1},
+      {"addr": "@c2", "offset": "0x98", "u8": 2}
+    ]},
+    {"name": "type 0xFF entry is a corpse (unsigned compare)", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "@c1", "offset": "0x98", "u8": 255}
+    ]},
+    {"name": "type 0 entry is skipped", "args": [], "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "@c1", "offset": "0x98", "u8": 0},
+      {"addr": "@c2", "offset": "0x98", "u8": 0},
+      {"addr": "@c3", "offset": "0x98", "u8": 0}
+    ]},
+    {"name": "coordinates truncate toward zero", "args": [], "memory": [
+      {"addr": "@local", "offset": "0x34", "f32": -1.5},
+      {"addr": "@local", "offset": "0x38", "f32": 7.99},
+      {"addr": "@local", "offset": "0x3C", "f32": -0.5}
+    ]},
+    {"name": "coordinates beyond the int range keep the low dword", "args": [], "memory": [
+      {"addr": "@local", "offset": "0x34", "f32": 10000000000.0},
+      {"addr": "@local", "offset": "0x38", "f32": -10000000000.0},
+      {"addr": "@local", "offset": "0x3C", "f32": 2.0}
+    ]},
+    {"name": "full-length names are copied", "args": [], "memory": [
+      {"addr": "@local", "offset": "0x01", "cstr": "LocalPlayerNameOfTwentyNine"},
+      {"addr": "@target", "offset": "0x01", "cstr": "TargetCorpseNameOfTwentyNineX"},
+      {"addr": "@pc", "offset": "0x974", "cstr": "zonenamefifteen"}
+    ]},
+    {"name": "stale callee-saved registers at entry", "args": [], "regs": {"esi": 5, "edi": 7, "ebx": 9}},
+    {"name": "stale registers, no name match: found starts at zero", "args": [], "regs": {"esi": 5, "edi": 7, "ebx": 9, "ecx": 3, "edx": 4, "eax": 6}, "memory": [
+      {"addr": "0x006E4DAC", "u32": 0}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": "@sother"}
+    }},
+    {"name": "stale registers, live NPC target, no name match", "args": [], "regs": {"esi": 5, "edi": 7, "ebx": 9}, "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 1}
+    ], "callees": {
+      "0x004d0436": {"name": "CEverQuest::stripName_guess", "conv": "thiscall", "args": ["cstr"], "ret": "@sother"}
+    }},
+    {"name": "stale registers, empty list, no target", "args": [], "regs": {"esi": 5, "edi": 7, "ebx": 9}, "memory": [
+      {"addr": "0x006E4DAC", "u32": 0},
+      {"addr": "0x006E4D58", "u32": 0}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4875864,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x006E4DAC", "type": "ptr", "choices": [0, "@target", "@target", "@c1"]},
+      {"addr": "@target", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@c1", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@c2", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@c3", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3, 255]},
+      {"addr": "@c1", "offset": "0x68", "type": "ptr", "choices": ["@c2", "@c2", "@c3", 0]},
+      {"addr": "@c2", "offset": "0x68", "type": "ptr", "choices": ["@c3", "@c3", 0]},
+      {"addr": "0x006E4D58", "type": "ptr", "choices": ["@c1", "@c1", "@c2", "@local", 0]},
+      {"addr": "@local", "offset": "0x68", "type": "ptr", "choices": ["@c1", "@c2", 0]},
+      {"addr": "@local", "offset": "0x98", "type": "u8", "choices": [0, 2, 3]},
+      {"addr": "@sname", "type": "u32", "choices": [6516546, 4345698, 6900801, 6516546, 6516546]},
+      {"addr": "@local", "offset": "0x34", "type": "float", "range": [-5000, 5000]},
+      {"addr": "@local", "offset": "0x38", "type": "float", "range": [-5000, 5000]},
+      {"addr": "@local", "offset": "0x3C", "type": "float", "range": [-500, 500]}
+    ]
+  }
+}

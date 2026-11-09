@@ -1,0 +1,147 @@
+{
+  "function": "FindNameRecord_guess",
+  "original": "0x1001dc50",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {},
+  "memory": [
+    {"addr": "0x100f1d26", "u16": 3},
+    {"addr": "0x100ecb50", "cstr": "Alpha"},
+    {"addr": "0x100ecc68", "cstr": "Beta"},
+    {"addr": "0x100ecd80", "cstr": "Gamma"},
+    {"addr": "0x100ece98", "cstr": "Delta"},
+    {"addr": "0x100ecfb0", "cstr": "Epsilon"},
+    {"addr": "0x100ed0c8", "cstr": "Zeta"}
+  ],
+  "callees": {
+    "0x10033730": {"name": "strcmpi", "args": ["cstr", "cstr"], "passthrough": true}
+  },
+  "cases": [
+    {
+      "name": "record 1 of 3",
+      "args": ["Beta"],
+      "expect": {"ret": "0x100ecbe8"}
+    },
+    {
+      "name": "record 0 is the first compared",
+      "args": ["Alpha"],
+      "expect": {"ret": "0x100ecad0"}
+    },
+    {
+      "name": "record 2, the last inside the count of 3",
+      "args": ["Gamma"],
+      "expect": {"ret": "0x100ecd00"}
+    },
+    {
+      "name": "strcmpi ignores case",
+      "args": ["ALPHA"],
+      "expect": {"ret": "0x100ecad0"}
+    },
+    {
+      "name": "record 3 is past the count of 3",
+      "args": ["Delta"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 4 reaches record 3",
+      "args": ["Delta"],
+      "memory": [{"addr": "0x100f1d26", "u16": 4}],
+      "expect": {"ret": "0x100ece18"}
+    },
+    {
+      "name": "last of 6 records",
+      "args": ["Zeta"],
+      "memory": [{"addr": "0x100f1d26", "u16": 6}],
+      "expect": {"ret": "0x100ed048"}
+    },
+    {
+      "name": "record 2 is past a count of 2",
+      "args": ["Gamma"],
+      "memory": [{"addr": "0x100f1d26", "u16": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 1 finds record 0",
+      "args": ["Alpha"],
+      "memory": [{"addr": "0x100f1d26", "u16": 1}],
+      "expect": {"ret": "0x100ecad0"}
+    },
+    {
+      "name": "count 1 does not reach record 1",
+      "args": ["Beta"],
+      "memory": [{"addr": "0x100f1d26", "u16": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0: the name is never read",
+      "args": ["0x0"],
+      "memory": [{"addr": "0x100f1d26", "u16": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count -1: the name is never read",
+      "args": ["0x0"],
+      "memory": [{"addr": "0x100f1d26", "u16": 65535}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0 with a name",
+      "args": ["Alpha"],
+      "memory": [{"addr": "0x100f1d26", "u16": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first of duplicate names wins",
+      "args": ["Dup"],
+      "memory": [
+        {"addr": "0x100f1d26", "u16": 4},
+        {"addr": "0x100ecc68", "cstr": "Dup"},
+        {"addr": "0x100ece98", "cstr": "Dup"}
+      ],
+      "expect": {"ret": "0x100ecbe8"}
+    },
+    {
+      "name": "a prefix of a name is not a match",
+      "args": ["Alp"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "a name longer than the record's name is not a match",
+      "args": ["Alphaa"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty string is not a match",
+      "args": [""],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "record 4 with mixed case, count 5",
+      "args": ["ePsIlOn"],
+      "memory": [{"addr": "0x100f1d26", "u16": 5}],
+      "expect": {"ret": "0x100ecf30"}
+    }
+  ],
+  "fuzz": {
+    "seed": 121936,
+    "count": 50,
+    "args": [
+      {
+        "choices": ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "alpha", "BETA", "gamma",
+                    "Eta", "", "Alp", "Dup", "Betaa", "ZETA", "delta"]
+      }
+    ],
+    "memory": [
+      {"addr": "0x100f1d26", "type": "short", "range": [-2, 6]}
+    ]
+  }
+}

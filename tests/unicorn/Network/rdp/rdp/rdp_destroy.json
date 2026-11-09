@@ -1,0 +1,275 @@
+{
+  "function": "rdp_destroy",
+  "original": "0x004f1160",
+  "sources": [
+    "src/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "0xffffffff"
+        },
+        {
+          "offset": "0x10",
+          "u32": "0x0000002a"
+        },
+        {
+          "offset": "0x14",
+          "u32": "0x01020304"
+        },
+        {
+          "offset": "0x18",
+          "u32": "0x11121314"
+        },
+        {
+          "offset": "0x1c",
+          "u32": "0x21222324"
+        },
+        {
+          "offset": "0x20",
+          "u32": "0x31323334"
+        },
+        {
+          "offset": "0x34",
+          "hex": "020011220102030405060708090a0b0c"
+        },
+        {
+          "offset": "0x8c",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "callees": {
+    "0x00500398": {
+      "name": "htonl",
+      "conv": "stdcall",
+      "args": [
+        "u32"
+      ],
+      "ret": "0x0100007f"
+    },
+    "0x00500392": {
+      "name": "sendto",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "mem:4",
+        "int",
+        "int",
+        "mem:16",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004f71f0": {
+      "name": "waitForThreadAndGetExitCode_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x004f7250": {
+      "name": "uevent_destroy_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x005230dd": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x005230dd"
+  },
+  "cases": [
+    {
+      "name": "inactive state leaves all fields untouched",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x8c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "active stored address sends then clears state without cleanup",
+      "args": [
+        "@conn",
+        0
+      ]
+    },
+    {
+      "name": "invalid stored socket skips send and still cleans up",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "loopback send precedes thread event and free cleanup",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x04",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "zero socket is sent when it is not the invalid sentinel",
+      "args": [
+        "@conn",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x04",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "state value two is not active",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x8c",
+          "u32": 2
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x04",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "active invalid socket with no cleanup",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5181792,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x04",
+        "type": "u32",
+        "choices": [
+          "0xffffffff",
+          0,
+          1,
+          7
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          "0xffffffff",
+          0,
+          42,
+          65536
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x8c",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x14",
+        "type": "u32",
+        "count": 4,
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "function": "t3dDuplicatePalette",
+  "original": "0x1001802d",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "int"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "source": {
+      "size": "0x42c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x420",
+          "u32": 0
+        }
+      ]
+    },
+    "duplicate": {
+      "size": "0x42c",
+      "fill": "random"
+    },
+    "sourceBlock": {
+      "size": "0x8000",
+      "fill": "random"
+    },
+    "reverseBlock": {
+      "size": "0x8000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@duplicate",
+        "@reverseBlock"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "first allocation fails",
+      "args": [
+        1,
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "no reverse block and zero owner sets sentinel",
+      "args": [
+        0,
+        "@source"
+      ]
+    },
+    {
+      "name": "no reverse block and owner accepts palette",
+      "args": [
+        7,
+        "@source"
+      ]
+    },
+    {
+      "name": "dictionary rejects palette",
+      "args": [
+        7,
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "reverse block allocation fails",
+      "args": [
+        0,
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x42c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x420",
+              "u32": "@sourceBlock"
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x10050c48": {
+          "ret": [
+            "@duplicate",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "reverse block copy with zero owner",
+      "args": [
+        0,
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x42c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x420",
+              "u32": "@sourceBlock"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "reverse block copy and owner accepts palette",
+      "args": [
+        7,
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x42c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x420",
+              "u32": "@sourceBlock"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "reverse block copy and owner rejects palette",
+      "args": [
+        7,
+        "@source"
+      ],
+      "objects": {
+        "source": {
+          "size": "0x42c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x420",
+              "u32": "@sourceBlock"
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x1001564b": {
+          "ret": -1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 98349,
+    "count": 30,
+    "args": [
+      {
+        "range": [
+          -4,
+          4
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source",
+        "offset": "0x420",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@sourceBlock"
+        ]
+      }
+    ]
+  }
+}

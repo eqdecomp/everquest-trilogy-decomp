@@ -1,0 +1,126 @@
+{
+  "function": "EQItemList_destructor_guess",
+  "original": "0x004a0396",
+  "sources": [
+    "src/EverQuest/EQItemList.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": "@prev"},
+        {"offset": 4, "u32": "@next"},
+        {"offset": "0x24", "u32": 4660}
+      ]
+    },
+    "prev": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "next": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4d5c", "u32": 2864434397},
+    {"addr": "0x006e4de0", "u32": "@display"}
+  ],
+  "callees": {
+    "0x00411715": {
+      "name": "CDisplay::DeleteActor",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "middle of list: prev and next relinked, head kept, actor deleted",
+      "args": ["@self"]
+    },
+    {
+      "name": "middle of list, no actor",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": "0x24", "u32": 0}
+      ]
+    },
+    {
+      "name": "first item (prev null): next becomes head",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 0, "u32": 0}
+      ]
+    },
+    {
+      "name": "last item (next null): prev's next cleared",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 4, "u32": 0}
+      ]
+    },
+    {
+      "name": "only item: links and head cleared",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 0, "u32": 0},
+        {"addr": "@self", "offset": 4, "u32": 0}
+      ]
+    },
+    {
+      "name": "only item, no actor",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 0, "u32": 0},
+        {"addr": "@self", "offset": 4, "u32": 0},
+        {"addr": "@self", "offset": "0x24", "u32": 0}
+      ]
+    },
+    {
+      "name": "prev and next the same node (ordering of the two stores)",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "@self", "offset": 4, "u32": "@prev"}
+      ]
+    },
+    {
+      "name": "null display pointer passed through",
+      "args": ["@self"],
+      "memory": [
+        {"addr": "0x006e4de0", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4850582,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@self", "offset": 0, "type": "ptr", "choices": [0, "@prev", "@next"]},
+      {"addr": "@self", "offset": 4, "type": "ptr", "choices": [0, "@next", "@prev"]},
+      {"addr": "@self", "offset": "0x24", "type": "int", "choices": [0, 1, 4660, -1]},
+      {"addr": "0x006e4d5c", "type": "ptr", "choices": [0, "@self", "@next", 305419896]}
+    ]
+  }
+}

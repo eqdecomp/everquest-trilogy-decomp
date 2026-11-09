@@ -1,0 +1,159 @@
+{
+  "function": "_t3dHashDictionaryName_guess",
+  "original": "0x1000e0ce",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "strbuf": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty string: top-of-loop test exits at once, hash 0",
+      "args": [""],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one char: break at text[1], even-position weight 0x80",
+      "args": ["a"],
+      "expect": {"ret": 602176}
+    },
+    {
+      "name": "two chars: full pair, top-of-loop exit",
+      "args": ["ab"]
+    },
+    {
+      "name": "two chars reversed: weight order witness",
+      "args": ["ba"]
+    },
+    {
+      "name": "three chars: odd tail takes the even-position weight",
+      "args": ["abc"]
+    },
+    {
+      "name": "four chars: two pairs",
+      "args": ["abcd"]
+    },
+    {
+      "name": "five chars: two pairs plus odd tail",
+      "args": ["abcde"]
+    },
+    {
+      "name": "four equal chars",
+      "args": ["aaaa"]
+    },
+    {
+      "name": "20 chars: sum exceeds 16 bits, masking witness",
+      "args": ["aaaaaaaaaaaaaaaaaaaa"]
+    },
+    {
+      "name": "long mixed string",
+      "args": ["abcdefghijklmnopqrstuvwxyz0123456789"]
+    },
+    {
+      "name": "sign-extended 0x80 at even position",
+      "args": ["@strbuf"],
+      "objects": {
+        "strbuf": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "u8": 128}
+          ]
+        }
+      },
+      "expect": {"ret": 9437184}
+    },
+    {
+      "name": "sign-extended 0x80 at odd position",
+      "args": ["@strbuf"],
+      "objects": {
+        "strbuf": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "u8": 97},
+            {"offset": "0x1", "u8": 128}
+          ]
+        }
+      },
+      "expect": {"ret": 589824}
+    },
+    {
+      "name": "three sign-extended bytes, both weights",
+      "args": ["@strbuf"],
+      "objects": {
+        "strbuf": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "u8": 128},
+            {"offset": "0x1", "u8": 128},
+            {"offset": "0x2", "u8": 128}
+          ]
+        }
+      },
+      "expect": {"ret": 4161600}
+    },
+    {
+      "name": "single 0xff (sign-extended -1) at even position",
+      "args": ["@strbuf"],
+      "objects": {
+        "strbuf": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "u8": 255}
+          ]
+        }
+      },
+      "expect": {"ret": 16711744}
+    },
+    {
+      "name": "0x7f, 0x80, 0xff: mixed signs across both weights",
+      "args": ["@strbuf"],
+      "objects": {
+        "strbuf": {
+          "size": "0x40",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x0", "u8": 127},
+            {"offset": "0x1", "u8": 128},
+            {"offset": "0x2", "u8": 255}
+          ]
+        }
+      },
+      "expect": {"ret": 1000000}
+    }
+  ],
+  "fuzz": {
+    "seed": 57550,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@strbuf"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@strbuf",
+        "type": "u8",
+        "count": 63,
+        "choices": [0, 1, 32, 65, 97, 126, 127, 128, 194, 255]
+      }
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "function": "InitIdxLookup_guess",
+  "original": "0x100258a0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    },
+    {
+      "name": "param_1",
+      "type": "cstr"
+    },
+    {
+      "name": "param_2",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "name_copy": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "items": {
+      "size": "0x400",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1003396b": {
+      "name": "__strdup",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@name_copy"
+    },
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@items"
+    }
+  },
+  "rewrite_aliases": {
+    "__strdup": "0x1003396b",
+    "_malloc": "0x1003342e"
+  },
+  "cases": [
+    {
+      "name": "one item, short name",
+      "args": ["@self", 1, "abc", 1]
+    },
+    {
+      "name": "zero count: malloc(0), nothing zeroed, index 0",
+      "args": ["@self", 0, "", 0]
+    },
+    {
+      "name": "three items, longer name",
+      "args": ["@self", 7, "IdxLookup", 3]
+    },
+    {
+      "name": "255 items fill the whole block",
+      "args": ["@self", 0, "max", 255]
+    },
+    {
+      "name": "count 0x40000000 masks to 0 dwords",
+      "args": ["@self", 0, "wrap0", "0x40000000"]
+    },
+    {
+      "name": "count 0x40000001 zeroes one dword",
+      "args": ["@self", 0, "wrap1", "0x40000001"]
+    },
+    {
+      "name": "count 0x40000100 zeroes 256 dwords",
+      "args": ["@self", 0, "wrap256", "0x40000100"]
+    },
+    {
+      "name": "strdup failure stored as is (no null check)",
+      "args": ["@self", 0, "abc", 2],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "malloc failure with count 0 is not checked",
+      "args": ["@self", 0, "abc", 0],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "edx is ignored",
+      "args": ["@self", "0x7fff1234", "abc", 2]
+    }
+  ],
+  "fuzz": {
+    "seed": 8842011,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@self"]
+      },
+      {},
+      {
+        "choices": ["", "a", "abc", "IdxLookup_guess", "a longer name with spaces"]
+      },
+      {
+        "choices": [0, 1, 2, 3, 5, 17, 64, 255, "0x40000000", "0x40000001", "0x40000003", "0x400000FF"]
+      }
+    ],
+    "memory": []
+  }
+}

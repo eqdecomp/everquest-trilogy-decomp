@@ -1,0 +1,76 @@
+{
+  "function": "box_table_release_guess",
+  "original": "0x004030ea",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "ref",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ref": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@box"}
+    ]},
+    "box": {"size": "0x60", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 1},
+      {"offset": "0x50", "u32": "0x12345678"}
+    ]},
+    "box2": {"size": "0x60", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 7}
+    ]},
+    "fn": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E51DC", "u32": "@fn"}
+  ],
+  "callees": {
+    "@fn": {"name": "t3dDestroyFont", "conv": "cdecl", "args": ["u32"], "ret": 0},
+    "0x00401c0b": {
+      "name": "box_table_clear_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "last reference: destroy font, clear, delete, null slot", "args": ["@ref"]},
+    {"name": "two references: decrement only, slot still nulled", "args": ["@ref"], "memory": [{"addr": "@box", "u32": 2}]},
+    {"name": "zero count wraps to -1: no calls", "args": ["@ref"], "memory": [{"addr": "@box", "u32": 0}]},
+    {"name": "high count", "args": ["@ref"], "memory": [{"addr": "@box", "u32": "0x80000000"}]},
+    {"name": "empty slot: nothing happens", "args": ["@ref"], "memory": [{"addr": "@ref", "u32": 0}]},
+    {"name": "null ref pointer", "args": [0]},
+    {"name": "font handle zero still passed", "args": ["@ref"], "memory": [{"addr": "@box+0x50", "u32": 0}]},
+    {"name": "font callback nulls slot: clear/delete skipped (reload)", "args": ["@ref"],
+     "callees": {"@fn": {"name": "t3dDestroyFont", "conv": "cdecl", "args": ["u32"], "ret": 0, "writes": [{"addr": "@ref", "hex": "00000000"}]}}},
+    {"name": "font callback raises count: clear/delete still done", "args": ["@ref"],
+     "callees": {"@fn": {"name": "t3dDestroyFont", "conv": "cdecl", "args": ["u32"], "ret": 0, "writes": [{"addr": "@box", "hex": "05000000"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4206826,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@ref", "@ref", "@ref", 0
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@ref", "type": "u32", "choices": ["@box", "@box", "@box2", 0]},
+      {"addr": "@box", "type": "u32", "choices": [0, 1, 1, 2, 3, "0xFFFFFFFF", "0x80000000"]},
+      {"addr": "@box2", "type": "u32", "choices": [0, 1, 2, "0x7FFFFFFF"]},
+      {"addr": "@box+0x50", "type": "u32", "choices": [0, 1, "0xDEADBEEF", "0x12345678"]}
+    ]
+  }
+}

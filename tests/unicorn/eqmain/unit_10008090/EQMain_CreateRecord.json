@@ -1,0 +1,91 @@
+{
+  "function": "EQMain_CreateRecord_guess",
+  "original": "0x10008c10",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "u32"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "int"},
+    {"name": "param_5", "type": "int"},
+    {"name": "param_6", "type": "u32"},
+    {"name": "param_7", "type": "u32"},
+    {"name": "param_8", "type": "int"},
+    {"name": "param_9", "type": "u32"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "rec": {"size": "0x44", "fill": "zero", "init": [{"offset": "0x3c", "u32": 16}]},
+    "surf": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004cec8", "u32": 4660},
+    {"addr": "0x1004ceb8", "u32": 22136}
+  ],
+  "callees": {
+    "0x1003342e": {"name": "malloc", "conv": "cdecl", "args": ["u32"], "ret": "@rec"},
+    "0x10028330": {"name": "ClearRecord3_guess", "conv": "cdecl", "args": ["ptr"], "passthrough": true},
+    "0x10006d80": {"name": "FUN_10006d80", "conv": "cdecl", "args": ["int", "int", "int"], "ret": "@surf"},
+    "0x10006c20": {"name": "FUN_10006c20", "conv": "cdecl", "args": ["int", "int", "int", "int", "int", "int", "int", "int", "int"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "row kind matches (DAT_1004cec8): height 28 / 14 = 2",
+      "args": ["0x11111111", 10, 20, 30, 28, "0x22222222", "0x33333333", 4660, "0x44444444"]
+    },
+    {
+      "name": "row kind differs: divisor is the dword at +0x3c (16), height 60 / 16 = 3",
+      "args": ["0x1", 10, 20, 30, 60, "0x2", "0x3", 7, "0x4"]
+    },
+    {
+      "name": "negative height: IDIV truncates toward zero (-30 / 14 = -2)",
+      "args": ["0x1", 5, -40, 9, -30, "0x2", "0x3", 4660, "0x4"]
+    },
+    {
+      "name": "rect sum wraps: (INT_MAX + 1) - INT_MAX = 1, 1 / 14 = 0",
+      "args": ["0x1", 0, 2147483647, 0, 1, "0x2", "0x3", 4660, "0x4"]
+    },
+    {
+      "name": "INT_MIN height with the 14 divisor",
+      "args": ["0x1", 0, 0, 0, -2147483648, "0x2", "0x3", 4660, "0x4"]
+    },
+    {
+      "name": "malloc fails: NULL returned, nothing else called",
+      "args": ["0x1", 10, 20, 30, 28, "0x2", "0x3", 4660, "0x4"],
+      "callees": {
+        "0x1003342e": {"name": "malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "FUN_10006d80 returns NULL: 0 goes to +0x30 and FUN_10006c20",
+      "args": ["0x1", 10, 20, 30, 28, "0x2", "0x3", 4660, "0x4"],
+      "callees": {
+        "0x10006d80": {"name": "FUN_10006d80", "conv": "cdecl", "args": ["int", "int", "int"], "ret": 0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 7321,
+    "count": 40,
+    "args": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {"choices": [4660, 4660, 14, 0, -1, 7]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@rec", "offset": "0x3c", "type": "u32", "range": [1, 40]},
+      {"addr": "0x1004cec8", "type": "int", "choices": [4660, 4660, 0, -1], "p": 0.5},
+      {"addr": "0x1004ceb8", "type": "int", "p": 0.5}
+    ]
+  }
+}

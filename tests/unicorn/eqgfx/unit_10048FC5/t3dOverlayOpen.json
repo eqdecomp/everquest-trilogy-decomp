@@ -1,0 +1,172 @@
+{
+  "function": "t3dOverlayOpen",
+  "original": "0x10049308",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "bmHandle",
+      "type": "u32"
+    },
+    {
+      "name": "bmInfo",
+      "type": "ptr"
+    },
+    {
+      "name": "overlayFlags",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "bminfo": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": 256},
+        {"offset": "0x20", "u32": 128},
+        {"offset": "0x60", "u32": "@surface"}
+      ]
+    },
+    "surface": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@vtable"}]
+    },
+    "vtable": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x74", "u32": "@set_color_key"}]
+    },
+    "set_color_key": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "allocated": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100FB8A8", "u32": 1},
+    {"addr": "0x100FBA30", "u32": "0x0000f81f"}
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@allocated"
+    },
+    "0x1000bcf0": {
+      "name": "t3dUndefineBMInfo",
+      "conv": "cdecl",
+      "args": ["u32", "mem:4"],
+      "ret": 0
+    },
+    "@set_color_key": {
+      "name": "surface_set_color_key",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "mem:8"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "mode 1 takes the surface and undefines the bitmap",
+      "args": [42, "@bminfo", 0],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}]
+    },
+    {
+      "name": "mode 2 sets the color key for flag bit 1",
+      "args": [7, "@bminfo", 1],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 1 sets no color key for flag bit 2 alone",
+      "args": [7, "@bminfo", 2],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}]
+    },
+    {
+      "name": "mode 2 with every flag bit set sets the color key",
+      "args": [0, "@bminfo", 4294967295],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 0 keeps the surface on the bitmap",
+      "args": [1, "@bminfo", 1],
+      "memory": [{"addr": "0x100FB8A8", "u32": 0}]
+    },
+    {
+      "name": "mode 3 keeps the surface on the bitmap",
+      "args": [1, "@bminfo", 1],
+      "memory": [{"addr": "0x100FB8A8", "u32": 3}]
+    },
+    {
+      "name": "mode 0xffffffff keeps the surface on the bitmap",
+      "args": [1, "@bminfo", 1],
+      "memory": [{"addr": "0x100FB8A8", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "mode 1 with a null surface and no color key",
+      "args": [3, "@bminfo", 0],
+      "memory": [
+        {"addr": "0x100FB8A8", "u32": 1},
+        {"addr": "@bminfo", "offset": "0x60", "u32": 0}
+      ]
+    },
+    {
+      "name": "allocation failure returns 0 and leaves the bitmap alone",
+      "args": [1, "@bminfo", 1],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 299784,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": ["@bminfo"]
+      },
+      {
+        "range": [0, 7]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100FB8A8",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 4294967295]
+      },
+      {
+        "addr": "0x100FBA30",
+        "type": "u32"
+      },
+      {
+        "addr": "@bminfo",
+        "offset": "0x1c",
+        "type": "u32",
+        "range": [0, 1024],
+        "count": 2
+      },
+      {
+        "addr": "@bminfo",
+        "offset": "0x60",
+        "type": "ptr",
+        "choices": ["@surface"]
+      }
+    ]
+  }
+}

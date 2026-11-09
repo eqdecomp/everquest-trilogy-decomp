@@ -1,0 +1,163 @@
+{
+  "function": "InitializeContainerMember_guess",
+  "original": "0x0040107b",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "param_1": {
+      "size": "0x120",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004010d7": {
+      "name": "BoxDrawContainer_guess::BoxDrawContainer_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "typical random object",
+      "args": ["@param_1"]
+    },
+    {
+      "name": "zeroed object",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "clear zero first dword",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x0", "u32": 0}]
+        }
+      }
+    },
+    {
+      "name": "clear one first dword",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x0", "u32": 1}]
+        }
+      }
+    },
+    {
+      "name": "clear high-bit first dword",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x0", "u32": 2147483648}]
+        }
+      }
+    },
+    {
+      "name": "clear all-ones first dword",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x0", "u32": 4294967295}]
+        }
+      }
+    },
+    {
+      "name": "clear patterned first dword",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x0", "u32": 305419896}]
+        }
+      }
+    },
+    {
+      "name": "callee writes first dword before clear",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x0", "u32": 4294967295}]
+        }
+      },
+      "callees": {
+        "0x004010d7": {
+          "name": "BoxDrawContainer_guess::BoxDrawContainer_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {"addr": "@param_1", "hex": "78563412"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "unaligned pointer",
+      "args": ["@param_1+0x1"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0x1", "u32": 305419896}]
+        }
+      }
+    },
+    {
+      "name": "first dword at object boundary",
+      "args": ["@param_1+0xfc"],
+      "objects": {
+        "param_1": {
+          "size": "0x120",
+          "fill": "zero",
+          "init": [{"offset": "0xfc", "u32": 305419896}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4198523,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1",
+          "@param_1+0x1",
+          "@param_1+0xfc"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "type": "u32",
+        "choices": [0, 1, 4294967295, 2147483648, 305419896]
+      }
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "function": "ConfirmLastName_guess",
+  "original": "0x004d55b4",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "lastname", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x100", "fill": "random"},
+    "prompt": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"},
+        {"offset": "0x10", "u32": 0}
+      ]
+    },
+    "vt": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@fn_show"}
+      ]
+    },
+    "fn_show": {"size": "0x10", "fill": "zero"},
+    "display": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0xbc", "u32": 123456}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4E20", "u32": "@prompt"},
+    {"addr": "0x006E4DE0", "u32": "@display"}
+  ],
+  "callees": {
+    "@fn_show": {"name": "Prompt_vfunc1_guess", "conv": "thiscall", "args": []}
+  },
+  "cases": [
+    {"name": "typical", "args": ["@self", 1, "Fippy"]},
+    {"name": "empty name", "args": ["@self", 0, ""]},
+    {"name": "other name", "args": ["@self", 7, "Soandso"]},
+    {"name": "no prompt", "args": ["@self", 1, "abc"], "memory": [{"addr": "0x006E4E20", "u32": 0}]},
+    {"name": "no prompt, next global set", "args": ["@self", 1, "abc"], "memory": [{"addr": "0x006E4E20", "u32": 0}, {"addr": "0x006E4E24", "u32": 4294967295}]},
+    {"name": "prompt shown", "args": ["@self", 1, "abc"], "memory": [{"addr": "@prompt+0x10", "u32": 1}]},
+    {"name": "prompt flag negative", "args": ["@self", 1, "abc"], "memory": [{"addr": "@prompt+0x10", "u32": 4294967295}]},
+    {"name": "prompt flag high bit", "args": ["@self", 1, "abc"], "memory": [{"addr": "@prompt+0x10", "u32": 2147483648}]},
+    {"name": "time zero", "args": ["@self", 1, "abc"], "memory": [{"addr": "@display+0xbc", "u32": 0}]},
+    {"name": "time wraps", "args": ["@self", 1, "abc"], "memory": [{"addr": "@display+0xbc", "u32": 4294967295}]},
+    {"name": "time max int", "args": ["@self", 1, "abc"], "memory": [{"addr": "@display+0xbc", "u32": 2147483647}]},
+    {"name": "long name", "args": ["@self", 1, "Abcdefghijklmnopqrstuvwxyz0123"]}
+  ],
+  "fuzz": {
+    "seed": 5068212,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": ["", "a", "Fippy", "Darkpaw", "Ironforge", "Lord_Nagafen_the_Great"]}
+    ],
+    "memory": [
+      {"addr": "@prompt", "offset": "0x10", "type": "u32", "choices": [0, 0, 0, 1, 4294967295]},
+      {"addr": "@display", "offset": "0xbc", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "function": "msg_player_physics_guess",
+  "original": "0x00491075",
+  "sources": [
+    "src/EverQuest/Physics.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "msg",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "msg": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0",
+          "u16": 4660
+        }
+      ]
+    },
+    "everquest": {
+      "size": "8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "4",
+          "u32": 5
+        }
+      ]
+    },
+    "top": {
+      "size": "4",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x34",
+          "f32": 11.25
+        },
+        {
+          "offset": "0x38",
+          "f32": -22.5
+        },
+        {
+          "offset": "0x3c",
+          "f32": 33.75
+        },
+        {
+          "offset": "0x70",
+          "u32": "@actor"
+        }
+      ]
+    },
+    "actor": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x19c",
+          "u32": 0
+        }
+      ]
+    },
+    "display": {
+      "size": "0xc0",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xbc",
+          "u32": 20000
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006e4d58",
+      "u32": "@top"
+    },
+    {
+      "addr": "0x006e4de0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x004b1416": {
+      "name": "EQPlayer::GetPlayerFromID_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": "@player"
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004e0fc7": {
+      "name": "vehicle_premove",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004a3717": {
+      "name": "unpack_physics",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x004e1109": {
+      "name": "vehicle_postmove",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004ae653": {
+      "name": "CDisplay::DoFloorCheck_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "float",
+        "float",
+        "float"
+      ]
+    },
+    "0x00410abf": {
+      "name": "CDisplay::UpdatePlayerActor_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "inactive mode skips movement",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@everquest",
+          "offset": "4",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "missing player sends packet request",
+      "args": [
+        "@msg"
+      ],
+      "callees": {
+        "0x004b1416": {
+          "name": "EQPlayer::GetPlayerFromID_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "delta below threshold",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 11999
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x19c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "delta exactly 12000",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 12000
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x19c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "delta just over threshold orders floor before update",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 12001
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x19c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "unsigned clock wrap with small delta",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 16
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x19c",
+          "u32": 4294967280
+        }
+      ]
+    },
+    {
+      "name": "unsigned negative delta wraps above threshold",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 1000
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x19c",
+          "u32": 2000
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4788341,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@msg"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@everquest",
+        "offset": "4",
+        "type": "u32",
+        "choices": [
+          0,
+          4,
+          5,
+          6,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@display",
+        "offset": "0xbc",
+        "type": "u32",
+        "range": [
+          0,
+          50000
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x19c",
+        "type": "u32",
+        "range": [
+          0,
+          50000
+        ]
+      }
+    ]
+  }
+}

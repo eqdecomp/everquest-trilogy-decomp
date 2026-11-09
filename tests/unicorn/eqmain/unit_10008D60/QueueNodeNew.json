@@ -1,0 +1,100 @@
+{
+  "function": "QueueNodeNew_guess",
+  "original": "0x1000b250",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "int"
+    },
+    {
+      "name": "param_5",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "rec": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x20", "u32": "@alloc"},
+        {"offset": "0x28", "u32": 305419896}
+      ]
+    },
+    "node": {
+      "size": "0x30",
+      "fill": "random"
+    },
+    "alloc": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@alloc": {
+      "conv": "cdecl",
+      "args": ["int", "int", "int"],
+      "ret": "@node"
+    }
+  },
+  "cases": [
+    {
+      "name": "node allocated: bytes and dwords stored",
+      "args": [1, 2, 3, 4, "@rec"]
+    },
+    {
+      "name": "byte arguments: only the low byte is stored",
+      "args": [511, -2, 3, 4, "@rec"]
+    },
+    {
+      "name": "zero arguments",
+      "args": [0, 0, 0, 0, "@rec"]
+    },
+    {
+      "name": "allocator returns 0: nothing stored",
+      "args": [1, 2, 3, 4, "@rec"],
+      "callees": {
+        "@alloc": {"conv": "cdecl", "args": ["int", "int", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "allocator returns the record: node aliases it",
+      "args": [1, 2, 3, 4, "@rec"],
+      "callees": {
+        "@alloc": {"conv": "cdecl", "args": ["int", "int", "int"], "ret": "@rec"}
+      }
+    },
+    {
+      "name": "record arg (+0x28) is zero",
+      "args": [5, 6, 7, 8, "@rec"],
+      "memory": [
+        {"addr": "@rec", "offset": "0x28", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 45648,
+    "count": 40,
+    "args": [{}, {}, {}, {}, {"choices": ["@rec"]}],
+    "memory": [
+      {"addr": "@rec", "offset": "0x28", "type": "int"}
+    ]
+  }
+}

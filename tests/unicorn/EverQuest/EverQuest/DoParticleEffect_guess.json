@@ -1,0 +1,147 @@
+{
+  "function": "GetAnimationDuration_guess",
+  "original": "0x0048EB3A",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "display", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "player", "type": "ptr"},
+    {"name": "anim", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "display": {"size": "0x4", "fill": "zero"},
+    "player": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x70", "u32": "@ai"}]},
+    "ai": {"size": "0x200", "fill": "zero", "init": [{"offset": "0x178", "u32": "@table+0x100"}]},
+    "table": {
+      "size": "0x1000",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x12C", "u32": "@direct_slot"},
+        {"offset": "0x130", "u32": "@state_record"},
+        {"offset": "0x138", "u32": "@missing_slot"},
+        {"offset": "0x13C", "u32": "@state_record"},
+        {"offset": "0x140", "u32": "@missing_slot"},
+        {"offset": "0x144", "u32": "@state_record"},
+        {"offset": "0x148", "u32": "@state_record"},
+        {"offset": "0x14C", "u32": "@direct_slot"}
+      ]
+    },
+    "direct_slot": {"size": "0x8", "fill": "zero", "init": [{"offset": "0x4", "u32": "@track"}]},
+    "missing_slot": {"size": "0x8", "fill": "zero"},
+    "state_record": {
+      "size": "0x25000",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@track"},
+        {"offset": "0xD9C", "u32": "@track6"},
+        {"offset": "0x241C0", "u32": "@track255"}
+      ]
+    },
+    "track": {"size": "0x4", "fill": "zero"},
+    "track6": {"size": "0x4", "fill": "zero"},
+    "track255": {"size": "0x4", "fill": "zero"},
+    "intervalFn": {"size": "0x4", "fill": "zero"},
+    "framesFn": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E52F8", "u32": "@intervalFn"},
+    {"addr": "0x006E5304", "u32": "@framesFn"}
+  ],
+  "callees": {
+    "0x0048EBF8": {"name": "getFallbackAnimationId", "conv": "thiscall", "args": ["int", "ptr", "mem:1"], "ret": 0},
+    "@intervalFn": {"conv": "cdecl", "args": ["int"], "ret": 13},
+    "@framesFn": {"conv": "cdecl", "args": ["int"], "ret": 8}
+  },
+  "cases": [
+    {"args": ["@display", 0, 0, 7], "expect": {"ret": 0}},
+    {"args": ["@display", 0, "@player", 7], "expect": {"ret": 104}},
+    {"args": ["@display", 0, "@player", -1], "expect": {"ret": 104}},
+    {"args": ["@display", 0, "@player", 1073741824], "expect": {"ret": 104}},
+    {
+      "args": ["@display", 0, "@player", 2],
+      "expect": {"ret": 104}
+    },
+    {
+      "args": ["@display", 0, "@player", 4],
+      "expect": {"ret": -45},
+      "callees": {
+        "0x0048EBF8": {
+          "name": "getFallbackAnimationId",
+          "conv": "thiscall",
+          "args": ["int", "ptr", "mem:1"],
+          "ret": 5,
+          "writes": [{"arg": 2, "offset": 0, "hex": "06"}]
+        },
+        "@intervalFn": {"conv": "cdecl", "args": ["int"], "ret": -5},
+        "@framesFn": {"conv": "cdecl", "args": ["int"], "ret": 9}
+      }
+    },
+    {
+      "args": ["@display", 0, "@player", 6],
+      "expect": {"ret": 15},
+      "callees": {
+        "0x0048EBF8": {
+          "name": "getFallbackAnimationId",
+          "conv": "thiscall",
+          "args": ["int", "ptr", "mem:1"],
+          "ret": 6,
+          "writes": [{"arg": 2, "offset": 0, "hex": "ff"}]
+        },
+        "@intervalFn": {"conv": "cdecl", "args": ["int"], "ret": 3},
+        "@framesFn": {"conv": "cdecl", "args": ["int"], "ret": 5}
+      }
+    },
+    {
+      "args": ["@display", 0, "@player", 2],
+      "expect": {"ret": 0},
+      "callees": {
+        "0x0048EBF8": {"name": "getFallbackAnimationId", "conv": "thiscall", "args": ["int", "ptr", "mem:1"], "ret": 1}
+      }
+    },
+    {
+      "args": ["@display", 0, "@player", 2],
+      "expect": {"ret": 0},
+      "callees": {
+        "0x0048EBF8": {"name": "getFallbackAnimationId", "conv": "thiscall", "args": ["int", "ptr", "mem:1"], "ret": 4}
+      }
+    },
+    {
+      "args": ["@display", 0, "@player", 2],
+      "expect": {"ret": 104},
+      "callees": {
+        "0x0048EBF8": {
+          "name": "getFallbackAnimationId",
+          "conv": "thiscall",
+          "args": ["int", "ptr", "mem:1"],
+          "ret": 3,
+          "writes": [{"arg": 1, "offset": 112, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "args": ["@display", 0, "@player", 7],
+      "expect": {"ret": -2147483648},
+      "callees": {
+        "@intervalFn": {"conv": "cdecl", "args": ["int"], "ret": -1},
+        "@framesFn": {"conv": "cdecl", "args": ["int"], "ret": -2147483648}
+      }
+    },
+    {
+      "args": ["@display", 0, "@player", 0],
+      "expect": {"ret": 0},
+      "memory": [{"addr": "@ai", "offset": "0x178", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 322171,
+    "count": 30,
+    "args": [
+      {"choices": ["@display"], "type": "ptr"},
+      {"choices": [0, 305419896], "type": "int"},
+      {"choices": [0, "@player"], "type": "ptr"},
+      {"range": [0, 20], "type": "int"}
+    ]
+  }
+}

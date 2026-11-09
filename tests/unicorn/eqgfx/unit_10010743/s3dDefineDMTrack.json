@@ -1,0 +1,640 @@
+{
+  "function": "s3dDefineDMTrack",
+  "original": "0x1001075c",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "trackName",
+      "type": "cstr"
+    },
+    {
+      "name": "vertexCount",
+      "type": "int"
+    },
+    {
+      "name": "frameCount",
+      "type": "u32"
+    },
+    {
+      "name": "headerWord3",
+      "type": "int"
+    },
+    {
+      "name": "headerWord4",
+      "type": "int"
+    },
+    {
+      "name": "frameSources",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "framesources": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@frame0"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@frame1"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@frame2"
+        },
+        {
+          "offset": "0xc",
+          "u32": "@frame3"
+        }
+      ]
+    },
+    "frame0": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "frame1": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "frame2": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "frame3": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "namecopy": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "table": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "block": {
+      "size": "0x400",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@track",
+        "@namecopy",
+        "@table",
+        "@block"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: name, two frames, dictionary add succeeds (returns the track)",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ]
+    },
+    {
+      "name": "one frame of one vertex, one-character name",
+      "args": [
+        "@dictionary",
+        "x",
+        1,
+        1,
+        -1,
+        0,
+        "@framesources"
+      ]
+    },
+    {
+      "name": "zero frames: no table, no block, name still copied",
+      "args": [
+        "@dictionary",
+        "abc",
+        4,
+        0,
+        1,
+        1,
+        "@framesources"
+      ]
+    },
+    {
+      "name": "no frame sources: no table, no block",
+      "args": [
+        "@dictionary",
+        "abc",
+        3,
+        2,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "no name: no name copy, the track returns after the dictionary check",
+      "args": [
+        "@dictionary",
+        0,
+        3,
+        2,
+        5,
+        6,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            "@table",
+            "@block"
+          ]
+        }
+      }
+    },
+    {
+      "name": "no name and no frame sources: only the track is allocated",
+      "args": [
+        "@dictionary",
+        0,
+        3,
+        2,
+        5,
+        6,
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track"
+          ]
+        }
+      }
+    },
+    {
+      "name": "track alloc fails: returns 0 at once, nothing freed",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "name alloc fails: the track is freed, returns 0",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "name alloc fails with no frames: the track is freed, returns 0",
+      "args": [
+        "@dictionary",
+        "abc",
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "table alloc fails: name and track freed, returns 0",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            "@namecopy",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "table alloc fails with no name: track freed only, returns 0",
+      "args": [
+        "@dictionary",
+        0,
+        2,
+        2,
+        1,
+        1,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "block alloc fails: name, table and track freed, returns 0",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            "@namecopy",
+            "@table",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "block alloc fails with no name: table and track freed, returns 0",
+      "args": [
+        "@dictionary",
+        0,
+        2,
+        2,
+        1,
+        1,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            "@table",
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dictionary check fails after the frames: every object freed, returns 0",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dictionary check fails with no name: table and block freed, returns 0",
+      "args": [
+        "@dictionary",
+        0,
+        2,
+        2,
+        3,
+        4,
+        "@framesources"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@track",
+            "@table",
+            "@block"
+          ]
+        },
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dictionary add fails: entry undefined, every object freed, returns 0",
+      "args": [
+        "@dictionary",
+        "abc",
+        2,
+        2,
+        7,
+        9,
+        "@framesources"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dictionary add fails with a single frame and a long-ish name",
+      "args": [
+        "@dictionary",
+        "track name",
+        1,
+        1,
+        2,
+        3,
+        "@framesources"
+      ],
+      "callees": {
+        "0x1000dc08": {
+          "name": "t3dAddEntryToDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "four frames of three vertices: block and table sized by the loop",
+      "args": [
+        "@dictionary",
+        "track name",
+        3,
+        4,
+        2,
+        2,
+        "@framesources"
+      ]
+    },
+    {
+      "name": "zero vertices: zero-byte frames copied, track kept",
+      "args": [
+        "@dictionary",
+        "abc",
+        0,
+        1,
+        1,
+        1,
+        "@framesources"
+      ]
+    },
+    {
+      "name": "null dictionary is passed through to the callees",
+      "args": [
+        0,
+        "abc",
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 67421,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "x",
+          "abc",
+          "track name"
+        ]
+      },
+      {
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "range": [
+          0,
+          4
+        ]
+      },
+      {},
+      {},
+      {
+        "choices": [
+          "@framesources",
+          0
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

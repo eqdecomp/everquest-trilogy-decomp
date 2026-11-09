@@ -1,0 +1,92 @@
+{
+  "function": "EQMainDrawText_guess::truncateTextToWidth_guess",
+  "original": "0x00457110",
+  "sources": [
+    "src/EverQuest/EQ_MainDraw.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqmaindrawtext",
+  "args": [
+    {"name": "param_2", "type": "cstr"},
+    {"name": "param_3", "type": "short"},
+    {"name": "param_4", "type": "short"}
+  ],
+  "ret": "int",
+  "objects": {
+    "eqmaindrawtext": {"size": "0x1000", "fill": "random"},
+    "font10": {
+      "size": "0x400", "fill": "zero",
+      "init": [
+        {"offset": "0x304", "u32": 1}, {"offset": "0x308", "u32": 3}, {"offset": "0x30c", "u32": 2},
+        {"offset": "0x384", "u32": 1}, {"offset": "0x388", "u32": 2}, {"offset": "0x38c", "u32": 3}, {"offset": "0x390", "u32": 4}
+      ]
+    },
+    "font12": {
+      "size": "0x400", "fill": "zero",
+      "init": [
+        {"offset": "0x304", "u32": 2}, {"offset": "0x308", "u32": 2}, {"offset": "0x30c", "u32": 2},
+        {"offset": "0x384", "u32": 2}, {"offset": "0x388", "u32": 2}, {"offset": "0x38c", "u32": 2}, {"offset": "0x390", "u32": 2}
+      ]
+    },
+    "font14": {
+      "size": "0x400", "fill": "zero",
+      "init": [
+        {"offset": "0x304", "u32": 3}, {"offset": "0x308", "u32": 3}, {"offset": "0x30c", "u32": 3},
+        {"offset": "0x384", "u32": 3}, {"offset": "0x388", "u32": 3}, {"offset": "0x38c", "u32": 3}, {"offset": "0x390", "u32": 3}
+      ]
+    },
+    "font16": {
+      "size": "0x400", "fill": "zero",
+      "init": [
+        {"offset": "0x304", "u32": 4}, {"offset": "0x308", "u32": 4}, {"offset": "0x30c", "u32": 4},
+        {"offset": "0x384", "u32": 4}, {"offset": "0x388", "u32": 4}, {"offset": "0x38c", "u32": 4}, {"offset": "0x390", "u32": 4}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006EFDD8", "u32": "@font10+0x200"},
+    {"addr": "0x006EFDDC", "u32": "@font12+0x200"},
+    {"addr": "0x006EFDE0", "u32": "@font14+0x200"},
+    {"addr": "0x006EFDE8", "u32": "@font16+0x200"}
+  ],
+  "callees": {},
+  "cases": [
+    {"name": "null text", "args": [0, 5, 10]},
+    {"name": "empty text", "args": ["", 5, 12]},
+    {"name": "negative width", "args": ["abc", -1, 10]},
+    {"name": "zero width", "args": ["abc", 0, 10]},
+    {"name": "stop at exact first advance", "args": ["abc", 1, 10]},
+    {"name": "append before exceeding width", "args": ["abc", 2, 10]},
+    {"name": "width equals full advance", "args": ["abc", 6, 10]},
+    {"name": "larger width copies all", "args": ["abcd", 20, 10]},
+    {"name": "font 10 table", "args": ["abc", 5, 10]},
+    {"name": "font 10 uppercase distinguishes fallback", "args": ["AA", 2, 10]},
+    {"name": "font 12 table", "args": ["abc", 5, 12]},
+    {"name": "font 12 uppercase distinguishes fallback", "args": ["AA", 3, 12]},
+    {"name": "font 14 table", "args": ["abc", 5, 14]},
+    {"name": "font 16 table", "args": ["abc", 5, 16]},
+    {"name": "font 16 uppercase distinguishes fallback", "args": ["AA", 4, 16]},
+    {"name": "unrecognized font falls back", "args": ["abc", 5, 99]},
+    {"name": "negative font falls back", "args": ["abc", 5, -32768]},
+    {"name": "max signed width", "args": ["abc", 32767, 10]},
+    {"name": "signed high bytes", "args": ["ÿA", 1, 10]},
+    {"name": "single character", "args": ["a", 1, 10]},
+    {"name": "string terminator after full copy", "args": ["a", 2, 10]}
+  ],
+  "fuzz": {
+    "seed": 4550928,
+    "count": 35,
+    "args": [
+      {},
+      {"range": [-2, 30]},
+      {"choices": [8, 10, 12, 14, 16, 18, -1]}
+    ],
+    "memory": [
+      {"addr": "@font10", "type": "u32", "count": 256, "range": [0, 7]},
+      {"addr": "@font12", "type": "u32", "count": 256, "range": [0, 7]},
+      {"addr": "@font14", "type": "u32", "count": 256, "range": [0, 7]},
+      {"addr": "@font16", "type": "u32", "count": 256, "range": [0, 7]}
+    ]
+  },
+  "defaults": true
+}

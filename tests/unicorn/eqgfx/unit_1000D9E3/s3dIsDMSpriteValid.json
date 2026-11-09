@@ -1,0 +1,212 @@
+{
+  "function": "s3dIsDMSpriteValid",
+  "original": "0x1001032b",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "type 0x48 and field 0x34 set -> 0",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "field 0x34 = 0x100 (only bit 8 set) -> 0",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "00010000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "field 0x34 = 0x01000000 (only top byte set) -> 0",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "00000001"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "field 0x34 = 0xffffffff -> 0",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "ffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "type 0x48 but field 0x34 zero -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "00000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fields 0x30 and 0x38 set, 0x34 zero -> error (offset is 0x34)",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48000000"},
+        {"addr": "@sprite", "offset": "0x30", "hex": "01000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "00000000"},
+        {"addr": "@sprite", "offset": "0x38", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0x47 (just below) -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "47000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0x49 (just above) -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "49000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0 -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "00000000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "type 0xffffffff -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "ffffffff"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "whole dword is compared: 0x00480000 -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "00004800"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "whole dword is compared: 0x148 (low byte 0x48) -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x0", "hex": "48010000"},
+        {"addr": "@sprite", "offset": "0x34", "hex": "01000000"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "zeroed sprite -> error",
+      "args": [
+        "@sprite"
+      ],
+      "memory": [
+        {"addr": "@sprite", "size": 64, "fill": "zero"}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "null sprite faults on the read (bug kept)",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 66347,
+    "count": 100,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [72, 72, 72, 71, 73, 0, 4294967295, 328, 4718592]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x34",
+        "type": "u32",
+        "choices": [0, 1, 256, 16777216, 2147483648, 4294967295]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x30",
+        "type": "u32",
+        "choices": [0, 1]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0x38",
+        "type": "u32",
+        "choices": [0, 1]
+      }
+    ]
+  }
+}

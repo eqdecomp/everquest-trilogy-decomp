@@ -1,0 +1,39 @@
+{
+  "function": "HandlePoisonApplicationResult_guess",
+  "original": "0x004955b1",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "message", "type": "ptr"}],
+  "ret": "void",
+  "objects": {
+    "state": {"size": "0x2000", "fill": "zero", "init": [{"offset": "0xE5C", "u32": 17}, {"offset": "0x94", "u32": 23}, {"offset": "0xEB8", "u32": 0}]},
+    "message": {"size": "8", "fill": "zero", "init": [{"offset": "4", "u32": 1}]}
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": "@state"},
+    {"addr": "0x006efe2c", "u32": "0x60020000"},
+    {"addr": "0x60020000", "size": "0x20", "fill": "zero"}
+  ],
+  "callees": {
+    "0x004d055e": {"name": "dsp_chat_guess", "conv": "thiscall", "this": "ptr", "args": ["cstr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "nonzero full-width outcome reports success and clears all three fields", "args": ["@message"]},
+    {"name": "zero outcome reports failure", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 0}]},
+    {"name": "high-bit nonzero outcome is still success", "args": ["@message"], "memory": [{"addr": "@message", "offset": "4", "u32": 2147483648}]},
+    {"name": "null state skips all state writes but still reports the packet", "args": ["@message"], "memory": [{"addr": "0x006e4e44", "u32": 0}]},
+    {"name": "first store aliases packet flag so the later comparison observes zero", "args": ["@state+0xe58"], "memory": [{"addr": "@state+0xe5c", "u32": 1}]},
+    {"name": "second store aliases packet flag so the later comparison observes zero", "args": ["@state+0x90"], "memory": [{"addr": "@state+0x94", "u32": 1}]},
+    {"name": "third store aliases packet flag so the later comparison observes one", "args": ["@state+0xeb4"], "memory": [{"addr": "@state+0xeb8", "u32": 0}]},
+    {"name": "first clear store changes the global state pointer before its reload", "args": ["@message"], "memory": [{"addr": "0x006e4e44", "u32": "0x006e3fe8"}]},
+    {"name": "second clear store changes the global state pointer before the third reload", "args": ["@message"], "memory": [{"addr": "0x006e4e44", "u32": "0x006e4db0"}]},
+    {"name": "third store aliases chat receiver and the handler reloads it afterward", "args": ["@message"], "memory": [{"addr": "0x006e4e44", "u32": "0x006eef74"}]},
+    {"name": "null packet is still dereferenced after null state", "args": ["0"], "memory": [{"addr": "0x006e4e44", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 95537,
+    "count": 30,
+    "args": [{"choices": ["@message"]}],
+    "memory": [{"addr": "@message", "offset": "4", "type": "u32", "choices": [0, 1, 255, 2147483648, 4294967295]}]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "function": "CStmlWnd_ProcessStmlWindowUpdate_guess",
+  "original": "0x004edcdb",
+  "sources": ["src/EverQuest/SoundManager.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "u32"}
+  ],
+  "ret": "u8",
+  "objects": {
+    "self": {
+      "size": "0xbd0",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@window_vtable"},
+        {"offset": "0xc", "u32": "@slot0"},
+        {"offset": "0x10", "u32": "@slot1"},
+        {"offset": "0xb48", "u32": "@slot719"},
+        {"offset": "0xb4c", "u32": "@queue"},
+        {"offset": "0xb60", "u32": "@provider"},
+        {"offset": "0xbcc", "u32": 4}
+      ]
+    },
+    "param_2": {"size": 4, "fill": "zero", "init": [{"offset": 0, "u32": 7}]},
+    "queue": {"size": 4, "fill": "zero"},
+    "provider": {"size": 4, "fill": "zero", "init": [{"offset": 0, "u32": "@provider_vtable"}]},
+    "provider_vtable": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x1c", "u32": "@get_text"}]},
+    "window_vtable": {"size": "0x30", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@change_token"}]},
+    "slot0": {"size": 4, "fill": "zero"},
+    "slot1": {"size": 4, "fill": "zero"},
+    "slot719": {"size": 4, "fill": "zero"},
+    "get_text": {"size": 4, "fill": "zero"},
+    "change_token": {"size": 4, "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x004ec77d": {"name": "FUN_004ec77d", "conv": "thiscall", "args": ["u16", "u32", "int"]},
+    "0x004ee589": {"name": "SoundQueueObject_guess::AddEntryIfAbsent_guess", "conv": "thiscall", "args": ["ptr"], "ret": 4},
+    "@get_text": {
+      "name": "provider_get_text",
+      "conv": "thiscall",
+      "args": ["ptr", "mem:12"],
+      "writes": [{"arg": 1, "offset": 0, "hex": "112233445566778899AABBCC"}]
+    },
+    "0x004ee62a": {"name": "SoundQueueObject_guess::FUN_004ee62a_guess", "conv": "thiscall", "args": ["mem:12"], "ret": 2},
+    "0x004ee791": {"name": "FUN_004ee791", "conv": "thiscall", "args": [], "ret": 0},
+    "@change_token": {"name": "window_change_token", "conv": "thiscall", "args": ["ptr"]},
+    "0x004ee5e4": {"name": "SoundQueueObject_guess::cleanupCollectionResources_guess", "conv": "thiscall", "args": ["ptr"]},
+    "0x004ec094": {"name": "PlayR", "conv": "thiscall", "args": ["u16", "int"], "ret": 9}
+  },
+  "cases": [
+    {"name": "threshold zero rejects before reading the slot", "args": ["@self", 0, "@param_2", 1], "memory": [{"addr": "@self", "offset": "0xbcc", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "index at first invalid boundary", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@self", "offset": "0xbcc", "u32": 4}, {"addr": "@param_2", "u32": "0x02d00037"}], "expect": {"ret": 0}},
+    {"name": "invalid high index", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@param_2", "u32": "0xffff0005"}], "expect": {"ret": 0}},
+    {"name": "valid range but null slot", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@param_2", "u32": "0x00020022"}], "expect": {"ret": 0}},
+    {"name": "null slot zero with nonnull next slot catches shifted guard", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@self", "offset": "0xc", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "ordinary playback and zero optional update", "args": ["@self", 0, "@param_2", 0], "expect": {"ret": 9}},
+    {"name": "update arguments and equal first threshold", "args": ["@self", 0, "@param_2", 77], "memory": [{"addr": "@param_2", "u32": "0x00011234"}], "expect": {"ret": 9}},
+    {"name": "first comparison greater then second below threshold", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@self", "offset": "0xbcc", "u32": 3}], "callees": {"0x004ee62a": {"name": "SoundQueueObject_guess::FUN_004ee62a_guess", "conv": "thiscall", "args": ["mem:12"], "ret": 2}}, "expect": {"ret": 9}},
+    {"name": "second comparison equal and token matches: cleanup return", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@self", "offset": "0xbcc", "u32": 2}], "callees": {"0x004ee791": {"name": "FUN_004ee791", "conv": "thiscall", "args": [], "ret": 7}}, "expect": {"ret": 1}},
+    {"name": "second comparison equal and token differs: notify then play", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@self", "offset": "0xbcc", "u32": 2}], "callees": {"0x004ee791": {"name": "FUN_004ee791", "conv": "thiscall", "args": [], "ret": 8}}, "expect": {"ret": 9}},
+    {"name": "second comparison greater and token matches", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@self", "offset": "0xbcc", "u32": 1}], "callees": {"0x004ee62a": {"name": "SoundQueueObject_guess::FUN_004ee62a_guess", "conv": "thiscall", "args": ["mem:12"], "ret": 2}, "0x004ee791": {"name": "FUN_004ee791", "conv": "thiscall", "args": [], "ret": 7}}, "expect": {"ret": 1}},
+    {"name": "last valid slot index", "args": ["@self", 0, "@param_2", 0], "memory": [{"addr": "@param_2", "u32": "0x02cf1234"}], "expect": {"ret": 9}},
+    {"name": "update with distinct low word and playback false result", "args": ["@self", 0, "@param_2", "0x12345678"], "memory": [{"addr": "@param_2", "u32": "0x000000ab"}], "callees": {"0x004ec094": {"name": "PlayR_guess", "conv": "thiscall", "args": ["u16", "int"], "ret": 0}}, "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 5168347,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": ["@param_2"]},
+      {"choices": [0, 1, 2, "0xffffffff"]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0xbcc", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 10]},
+      {"addr": "@param_2", "type": "u32", "choices": [7, "0x00010008", "0x02cf0009", "0x02d0000a", "0xffff000b"]}
+    ]
+  }
+}

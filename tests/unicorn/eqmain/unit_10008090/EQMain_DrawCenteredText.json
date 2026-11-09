@@ -1,0 +1,205 @@
+{
+  "function": "EQMain_DrawCenteredText_guess",
+  "original": "0x10008390",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "u32"},
+    {"name": "param_5", "type": "cstr"},
+    {"name": "param_6", "type": "int"},
+    {"name": "param_7", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "rec": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@surf"}
+      ]
+    },
+    "surf": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"}
+      ]
+    },
+    "vt": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x44", "u32": "@getdc"},
+        {"offset": "0x68", "u32": "@releasedc"}
+      ]
+    },
+    "getdc": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "releasedc": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@getdc": {
+      "name": "GetDC",
+      "conv": "stdcall",
+      "args": ["ptr", "ignore"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "78563412"}]
+    },
+    "@releasedc": {
+      "name": "ReleaseDC",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 1
+    },
+    "gdi32.dll!SetTextColor": {
+      "name": "SetTextColor",
+      "conv": "stdcall",
+      "args": ["ptr", "u32"],
+      "ret": 0
+    },
+    "gdi32.dll!SetBkMode": {
+      "name": "SetBkMode",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": 0
+    },
+    "gdi32.dll!SetTextAlign": {
+      "name": "SetTextAlign",
+      "conv": "stdcall",
+      "args": ["ptr", "u32"],
+      "ret": 0
+    },
+    "0x10008230": {
+      "name": "FUN_10008230",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "u32"],
+      "ret": 0
+    },
+    "gdi32.dll!GetTextExtentPoint32A": {
+      "name": "GetTextExtentPoint32A",
+      "conv": "stdcall",
+      "args": ["ptr", "cstr", "int", "ignore"],
+      "ret": 1,
+      "writes": [
+        {"arg": 3, "offset": 0, "hex": "40000000"},
+        {"arg": 3, "offset": 4, "hex": "10000000"}
+      ]
+    },
+    "gdi32.dll!TextOutA": {
+      "name": "TextOutA",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "cstr", "int"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: centred on 320, width 64",
+      "args": ["@rec", 320, 240, "0x00ffffff", "Hello", 1, "0x1234"],
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "NULL text returns 0 before any call",
+      "args": ["@rec", 320, 240, "0x00ffffff", 0, 1, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty text",
+      "args": ["@rec", 0, 0, 0, "", 0, 0],
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "size id -1, black text",
+      "args": ["@rec", 10, 20, 0, "Hi", -1, 0],
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "size id 3, negative x, all-ones font param",
+      "args": ["@rec", -5, 7, "0x00ff0000", "xyz", 3, "0xffffffff"],
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "odd negative width: x rounds toward zero (-7/2 = -3)",
+      "args": ["@rec", 100, 50, "0x00112233", "odd", 2, 0],
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["ptr", "cstr", "int", "ignore"],
+          "ret": 1,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "f9ffffff"},
+            {"arg": 3, "offset": 4, "hex": "09000000"}
+          ]
+        }
+      },
+      "expect": {"ret": -7}
+    },
+    {
+      "name": "odd positive width: 33/2 = 16",
+      "args": ["@rec", 100, 50, "0x00112233", "odd", 2, 0],
+      "callees": {
+        "gdi32.dll!GetTextExtentPoint32A": {
+          "name": "GetTextExtentPoint32A",
+          "conv": "stdcall",
+          "args": ["ptr", "cstr", "int", "ignore"],
+          "ret": 1,
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "21000000"},
+            {"arg": 3, "offset": 4, "hex": "09000000"}
+          ]
+        }
+      },
+      "expect": {"ret": 33}
+    },
+    {
+      "name": "unmapped size id 4, long text",
+      "args": ["@rec", 400, 300, "0x00808080", "A longer line of text for the centre", 4, 7],
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "size id 0 maps to 14",
+      "args": ["@rec", 200, 100, "0x000000ff", "zero", 0, 0],
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "entry registers hold junk: the text must come from param_5, not from ESI on entry",
+      "args": ["@rec", 320, 240, "0x00ffffff", "Hello", 1, "0x1234"],
+      "regs": {"eax": "0x0badf00d", "ebx": "0x0badf00d", "ecx": "0x0badf00d", "edx": "0x0badf00d",
+               "esi": "0x0badf00d", "edi": "0x0badf00d", "ebp": "0x0badf00d"},
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "entry registers hold junk, NULL text still returns 0 with no call",
+      "args": ["@rec", 320, 240, "0x00ffffff", 0, 1, 0],
+      "regs": {"eax": "0x0badf00d", "ebx": "0x0badf00d", "ecx": "0x0badf00d", "edx": "0x0badf00d",
+               "esi": "0x0badf00d", "edi": "0x0badf00d"},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 8390,
+    "count": 40,
+    "args": [
+      {"choices": ["@rec"]},
+      {"range": [-64, 700]},
+      {"range": [-64, 500]},
+      {},
+      {"choices": ["", "A", "Centred text line", 0]},
+      {"choices": [-1, 0, 1, 2, 3, 4, 5, 9]},
+      {}
+    ],
+    "memory": []
+  }
+}

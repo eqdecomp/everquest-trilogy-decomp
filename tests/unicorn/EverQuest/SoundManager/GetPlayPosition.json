@@ -1,0 +1,150 @@
+{
+  "function": "GetPlayPosition_guess",
+  "original": "0x004ec01e",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "voice",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "voice": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": "@buffer"}
+      ]
+    },
+    "buffer": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl"}
+      ]
+    },
+    "buffer2": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl2"}
+      ]
+    },
+    "getpos": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "getpos2": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "vtbl": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x10", "u32": "@getpos"}
+      ]
+    },
+    "vtbl2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x10", "u32": "@getpos2"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@getpos": {
+      "name": "GetCurrentPosition",
+      "conv": "stdcall",
+      "args": ["ptr", "ignore", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "78563412"}]
+    },
+    "@getpos2": {
+      "name": "GetCurrentPosition2",
+      "conv": "stdcall",
+      "args": ["ptr", "ignore", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "efcdab89"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: play cursor from the first buffer",
+      "args": ["@voice", 1],
+      "expect": {"ret": "0x12345678"}
+    },
+    {
+      "name": "zero edx",
+      "args": ["@voice", 0],
+      "expect": {"ret": "0x12345678"}
+    },
+    {
+      "name": "edx garbage is ignored",
+      "args": ["@voice", -1],
+      "expect": {"ret": "0x12345678"}
+    },
+    {
+      "name": "second buffer: its own vtable slot 4",
+      "args": ["@voice", 0],
+      "memory": [
+        {"addr": "@voice", "offset": "0x4", "u32": "@buffer2"}
+      ],
+      "expect": {"ret": "0x89abcdef"}
+    },
+    {
+      "name": "callee writes nothing: value stays zero",
+      "args": ["@voice", 0],
+      "callees": {
+        "@getpos": {
+          "name": "GetCurrentPosition",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "callee returns E_FAIL: the value written is still returned",
+      "args": ["@voice", 0],
+      "callees": {
+        "@getpos": {
+          "name": "GetCurrentPosition",
+          "conv": "stdcall",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": "0x80004005",
+          "writes": [{"arg": 1, "offset": 0, "hex": "78563412"}]
+        }
+      },
+      "expect": {"ret": "0x12345678"}
+    }
+  ],
+  "fuzz": {
+    "seed": 5160990,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@voice"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@voice", "offset": "0x4", "type": "ptr", "choices": ["@buffer", "@buffer2"]},
+      {"addr": "@voice", "offset": "0x0", "size": 4},
+      {"addr": "@voice", "offset": "0x8", "size": 8}
+    ]
+  }
+}

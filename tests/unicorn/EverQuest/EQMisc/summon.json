@@ -1,0 +1,308 @@
+{
+  "function": "summon_guess",
+  "original": "0x004a847d",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "connection": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "local_player": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "pc": {
+      "size": "0x1100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0058fba4",
+      "cstr": "target"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@local_player"
+    },
+    {
+      "addr": "0x006e4da8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": "@connection"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "@local_player",
+      "offset": "0x1",
+      "cstr": "Gmname"
+    },
+    {
+      "addr": "@local_player",
+      "offset": "0x34",
+      "f32": 12.75
+    },
+    {
+      "addr": "@local_player",
+      "offset": "0x38",
+      "f32": -40.75
+    },
+    {
+      "addr": "@local_player",
+      "offset": "0x3c",
+      "f32": 3.9
+    },
+    {
+      "addr": "@target",
+      "offset": "0x1",
+      "cstr": "Bobby"
+    },
+    {
+      "addr": "@pc",
+      "offset": "0x974",
+      "from_image": "0x0055C32C",
+      "image_size": 9
+    }
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:108",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x00522920": {
+      "name": "_strcmp",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": [
+        "ignore",
+        "cstr",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "ordinary name: sends the packet with the truncated position, then echoes the name",
+      "args": [
+        0,
+        "Bob"
+      ]
+    },
+    {
+      "name": "the unused first argument does not matter",
+      "args": [
+        -7,
+        "Bob"
+      ]
+    },
+    {
+      "name": "target name with a target: sends the target's name and echoes it",
+      "args": [
+        0,
+        "target"
+      ]
+    },
+    {
+      "name": "target name without a target returns before any call",
+      "args": [
+        0,
+        "target"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "a null target pointer does not stop an ordinary name",
+      "args": [
+        0,
+        "Bob"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "a null target returns even when the byte just past g_target is non-zero",
+      "args": [
+        0,
+        "target"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4db0",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "Target (capital T) is not the target keyword",
+      "args": [
+        0,
+        "Target"
+      ]
+    },
+    {
+      "name": "targets is not the target keyword",
+      "args": [
+        0,
+        "targets"
+      ]
+    },
+    {
+      "name": "empty name is an ordinary name",
+      "args": [
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "a 34-character name overflows the 30-byte name field into gm_name, which is copied after it",
+      "args": [
+        0,
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"
+      ]
+    },
+    {
+      "name": "fractional and negative coordinates truncate toward zero",
+      "args": [
+        0,
+        "Bob"
+      ],
+      "memory": [
+        {
+          "addr": "@local_player",
+          "offset": "0x34",
+          "f32": -0.75
+        },
+        {
+          "addr": "@local_player",
+          "offset": "0x38",
+          "f32": -2147483648.0
+        },
+        {
+          "addr": "@local_player",
+          "offset": "0x3c",
+          "f32": 2147483520.0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4883581,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -4,
+          30
+        ]
+      },
+      {
+        "choices": [
+          "target",
+          "Target",
+          "targets",
+          "Bob",
+          "",
+          "target ",
+          "Bobby",
+          "xtarget"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4dac",
+        "type": "ptr",
+        "choices": [
+          "@target",
+          0
+        ]
+      },
+      {
+        "addr": "@local_player",
+        "offset": "0x34",
+        "type": "float",
+        "count": 3,
+        "range": [
+          -3000,
+          3000
+        ]
+      }
+    ]
+  }
+}

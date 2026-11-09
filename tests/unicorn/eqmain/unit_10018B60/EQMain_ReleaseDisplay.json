@@ -1,0 +1,183 @@
+{
+  "function": "EQMain_ReleaseDisplay_guess",
+  "original": "0x1001b220",
+  "sources": [
+    "src/eqmain/unit_10018B60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "destroy_window",
+      "type": "char"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "release": {"size": 1, "fill": "zero"},
+    "set": {"size": 1, "fill": "zero"},
+    "vt": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@release"},
+        {"offset": "0x50", "u32": "@set"}
+      ]
+    },
+    "com_a": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@vt"}]
+    },
+    "com_b": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@vt"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x100D5B28", "u32": 0},
+    {"addr": "0x100D5B24", "u32": 0},
+    {"addr": "0x100D5B2C", "u32": 0}
+  ],
+  "callees": {
+    "0x100280a0": {
+      "name": "FUN_100280a0",
+      "conv": "fastcall",
+      "args": ["ptr"]
+    },
+    "user32.dll!DestroyWindow": {
+      "name": "DestroyWindow",
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": 1
+    },
+    "@release": {
+      "name": "com_release_slot2_stub",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@set": {
+      "name": "com_set_slot50_stub",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "all null, flag 0",
+      "args": [0]
+    },
+    {
+      "name": "all null, flag 1, no window",
+      "args": [1]
+    },
+    {
+      "name": "window only, flag 1",
+      "args": [1],
+      "memory": [{"addr": "0x100D5B2C", "u32": "0x1234"}]
+    },
+    {
+      "name": "com_a only, flag 0",
+      "args": [0],
+      "memory": [{"addr": "0x100D5B28", "u32": "@com_a"}]
+    },
+    {
+      "name": "com_a and window, flag 1",
+      "args": [1],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"}
+      ]
+    },
+    {
+      "name": "com_b only, flag 0, window set",
+      "args": [0],
+      "memory": [
+        {"addr": "0x100D5B24", "u32": "@com_b"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"}
+      ]
+    },
+    {
+      "name": "com_b only, flag 1, no window",
+      "args": [1],
+      "memory": [{"addr": "0x100D5B24", "u32": "@com_b"}]
+    },
+    {
+      "name": "both, window, flag 1",
+      "args": [1],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B24", "u32": "@com_b"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"}
+      ]
+    },
+    {
+      "name": "both, window, flag -1",
+      "args": [-1],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B24", "u32": "@com_b"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"}
+      ]
+    },
+    {
+      "name": "both, window, flag 2 (nonzero, not 1)",
+      "args": [2],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B24", "u32": "@com_b"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"}
+      ]
+    },
+    {
+      "name": "both, window, flag 0",
+      "args": [0],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B24", "u32": "@com_b"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"}
+      ]
+    },
+    {
+      "name": "both, no window, flag -128",
+      "args": [-128],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B24", "u32": "@com_b"}
+      ]
+    },
+    {
+      "name": "slot 0x50 retargets DAT_100d5b24: the release reloads the global",
+      "args": [1],
+      "memory": [
+        {"addr": "0x100D5B28", "u32": "@com_a"},
+        {"addr": "0x100D5B24", "u32": "@com_b"},
+        {"addr": "0x100D5B2C", "u32": "0x1234"},
+        {"addr": "0x100D5B30", "u32": "@vt"}
+      ],
+      "callees": {
+        "@set": {
+          "name": "com_set_slot50_retarget_stub",
+          "conv": "stdcall",
+          "args": ["ptr", "int", "int"],
+          "ret": 0,
+          "writes": [{"addr": "0x100D5B24", "hex": "305b0d10"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 111136,
+    "count": 40,
+    "args": [
+      {"choices": [0, 1, -1, 2, 127, -128]}
+    ],
+    "memory": [
+      {"addr": "0x100D5B28", "type": "ptr", "choices": [0, "@com_a"]},
+      {"addr": "0x100D5B24", "type": "ptr", "choices": [0, "@com_b"]},
+      {"addr": "0x100D5B2C", "type": "u32", "choices": [0, 4660, 65537]}
+    ]
+  }
+}

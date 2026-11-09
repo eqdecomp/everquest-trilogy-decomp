@@ -1,0 +1,158 @@
+{
+  "function": "GetRecordDelta_guess",
+  "original": "0x1002e120",
+  "sources": [
+    "src/eqmain/unit_1002DE90.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: first dword minus the +0x8 dword",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 100},
+        {"addr": "@param_1", "offset": "0x4", "u32": "0x99999999"},
+        {"addr": "@param_1", "offset": "0x8", "u32": 58}
+      ],
+      "expect": {"ret": 42}
+    },
+    {
+      "name": "first dword zero: returns 0 whatever +0x8 holds",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 0},
+        {"addr": "@param_1", "offset": "0x4", "u32": "0x12345678"},
+        {"addr": "@param_1", "offset": "0x8", "u32": "0xdeadbeef"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "+0x8 zero: returns the first dword",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 42},
+        {"addr": "@param_1", "offset": "0x8", "u32": 0}
+      ],
+      "expect": {"ret": 42}
+    },
+    {
+      "name": "equal dwords: nonzero first, result 0",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 7},
+        {"addr": "@param_1", "offset": "0x8", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative result",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 3},
+        {"addr": "@param_1", "offset": "0x8", "u32": 10}
+      ],
+      "expect": {"ret": -7}
+    },
+    {
+      "name": "signed overflow wraps: 0x80000000 - 1",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": "0x80000000"},
+        {"addr": "@param_1", "offset": "0x8", "u32": 1}
+      ],
+      "expect": {"ret": 2147483647}
+    },
+    {
+      "name": "signed overflow wraps: 1 - 0x80000000",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": 1},
+        {"addr": "@param_1", "offset": "0x8", "u32": "0x80000000"}
+      ],
+      "expect": {"ret": -2147483647}
+    },
+    {
+      "name": "negative first dword (0xffffffff) minus 0xffffffff: result 0",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x8", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative first dword (0xffffffff) minus 0: result -1",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x8", "u32": 0}
+      ],
+      "expect": {"ret": -1}
+    }
+  ],
+  "fuzz": {
+    "seed": 188704,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [0, 0, 1, -1, 2, 42, 2147483647, -2147483648, 305419896]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x8",
+        "type": "int",
+        "choices": [0, 0, 1, -1, 2, 42, 2147483647, -2147483648, 305419896]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x4",
+        "type": "int",
+        "range": [-8, 8],
+        "p": 0.5
+      }
+    ]
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "function": "t3dDuplicatePolyhedron",
+  "original": "0x10018d49",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "source": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x11111111"
+        },
+        {
+          "offset": "0x4",
+          "u32": "0x22222222"
+        },
+        {
+          "offset": "0x8",
+          "u32": "0x33333333"
+        },
+        {
+          "offset": "0xc",
+          "u32": "0x44444444"
+        },
+        {
+          "offset": "0x10",
+          "u32": "0x55555555"
+        },
+        {
+          "offset": "0x14",
+          "u32": "0x66666666"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@owner"
+        }
+      ]
+    },
+    "duplicate": {
+      "size": "0x1c",
+      "fill": "random"
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 41
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100aade4",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@duplicate"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure returns null",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zero global, owner count wraps at signed boundary",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aade4",
+          "u32": 0
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "nonzero global sets duplicate flag",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aade4",
+          "u32": 1
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "any nonzero global value sets duplicate flag",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aade4",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "registration failure frees duplicate without incrementing owner",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "registration writes expose call-before-increment ordering",
+      "args": [
+        "@context",
+        "@source"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@owner+0x10",
+              "hex": "05000000"
+            },
+            {
+              "addr": "@duplicate+0x8",
+              "hex": "efbeadde"
+            },
+            {
+              "addr": "@duplicate+0xc",
+              "hex": "78563412"
+            },
+            {
+              "addr": "@duplicate+0x10",
+              "hex": "44332211"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 101705,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100aade4",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@source",
+        "type": "u32",
+        "count": 6,
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "function": "EQMoneyList_dtor_guess",
+  "original": "0x004ad9b0",
+  "sources": [
+    "src/EverQuest/EQMoneyList.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x40", "fill": "random"},
+    "prev": {"size": "0x10", "fill": "random"},
+    "next": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x006e4d60", "u32": "0xa5a5a5a5"},
+    {"addr": "0x006e4de0", "u32": "0x12345678"}
+  ],
+  "callees": {
+    "0x00411715": {
+      "name": "CDisplay::DeleteActor",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "both linked, actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@prev"}, {"offset": "0x4", "u32": "@next"}, {"offset": "0x34", "u32": "0x00c0ffee"}]}}},
+    {"name": "both linked, no actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@prev"}, {"offset": "0x4", "u32": "@next"}, {"offset": "0x34", "u32": 0}]}}},
+    {"name": "head (no prev), actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "@next"}, {"offset": "0x34", "u32": 1}]}}},
+    {"name": "head (no prev), no actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "@next"}, {"offset": "0x34", "u32": 0}]}}},
+    {"name": "tail (no next), actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@prev"}, {"offset": "0x4", "u32": 0}, {"offset": "0x34", "u32": "0xffffffff"}]}}},
+    {"name": "tail (no next), no actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "@prev"}, {"offset": "0x4", "u32": 0}, {"offset": "0x34", "u32": 0}]}}},
+    {"name": "alone, actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 0}, {"offset": "0x34", "u32": "0x80000000"}]}}},
+    {"name": "alone, no actor", "args": ["@self"], "objects": {"self": {"size": "0x40", "fill": "random", "init": [
+      {"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 0}, {"offset": "0x34", "u32": 0}]}}}
+  ],
+  "fuzz": {
+    "seed": 4905392,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@self+0x0", "type": "u32", "choices": [0, "@prev"]},
+      {"addr": "@self+0x4", "type": "u32", "choices": [0, "@next"]},
+      {"addr": "@self+0x34", "type": "u32", "choices": [0, 1, "0x7fffffff", "0xdeadbeef"]}
+    ]
+  }
+}

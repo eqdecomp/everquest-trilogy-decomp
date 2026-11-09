@@ -1,0 +1,39 @@
+{
+  "function": "ConstructSharedHolder_guess",
+  "original": "0x10021b49",
+  "sources": ["src/eqgfx/unit_10021B49.c"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "holder", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "value", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "holder": {"size": "0x10", "fill": "zero"},
+    "newobj": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x100fc014", "u32": 0},
+    {"addr": "0x100fbc10", "size": 512, "fill": "zero"}
+  ],
+  "callees": {
+    "0x10068c72": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": "@newobj"},
+    "0x100549a0": {"name": "verifyConditionOrFatalError_guess", "conv": "cdecl", "args": ["ptr", "cstr", "cstr"]}
+  },
+  "cases": [
+    {"name": "zero value keeps holder null", "args": ["@holder", 0, 0]},
+    {"name": "nonzero allocates and logs", "args": ["@holder", 0, 7], "memory": [{"addr": "0x100fc014", "u32": 0}]},
+    {"name": "log boundary last slot", "args": ["@holder", 0, 7], "memory": [{"addr": "0x100fc014", "u32": 63}]},
+    {"name": "log full skips table", "args": ["@holder", 0, 7], "memory": [{"addr": "0x100fc014", "u32": 64}]},
+    {"name": "log overflow skips table", "args": ["@holder", 0, 7], "memory": [{"addr": "0x100fc014", "u32": 100}]},
+    {"name": "edx ignored", "args": ["@holder", 12345, 7], "memory": [{"addr": "0x100fc014", "u32": 0}]},
+    {"name": "allocation failure calls verify", "args": ["@holder", 0, 7], "memory": [{"addr": "0x100fc014", "u32": 0}], "callees": {"0x10068c72": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": 0}}}
+  ],
+  "fuzz": {
+    "seed": 138057,
+    "count": 30,
+    "args": [{"choices": ["@holder"]}, {}, {"range": [0, 5]}],
+    "memory": [{"addr": "0x100fc014", "type": "u32", "range": [0, 70]}]
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "function": "SubtractQword_guess",
+  "original": "0x10027860",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "u32"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "u32"
+    },
+    {
+      "name": "param_5",
+      "type": "ptr"
+    },
+    {
+      "name": "param_6",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_5": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "param_6": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "no borrow, small values",
+      "args": [5, 3, 7, 10, "@param_5", "@param_6"],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "low dword borrows, high dword takes it",
+      "args": [0, 5, 2, 3, "@param_5", "@param_6"],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "equal operands: zero, no borrow",
+      "args": [4, 9, 4, 9, "@param_5", "@param_6"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "low borrow from zero, high goes to -1",
+      "args": [0, 4294967295, 0, 0, "@param_5", "@param_6"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "high dword wraps: INT_MIN minus zero",
+      "args": [-2147483648, 0, 0, 0, "@param_5", "@param_6"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "low dword underflows with no high borrow",
+      "args": [0, 1, 0, 4294967295, "@param_5", "@param_6"],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "negative high operand with low borrow",
+      "args": [-1, 4294967295, 0, 0, "@param_5", "@param_6"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "aliased outputs: the high dword is what reads back",
+      "args": [1, 0, 5, 9, "@param_5", "@param_5"],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "outputs at different offsets of one object",
+      "args": [1, 0, 5, 9, "@param_5+0x4", "@param_5"],
+      "expect": {"ret": 9}
+    },
+    {
+      "name": "high dword no borrow, underflows to -1",
+      "args": [1, 0, 0, 1, "@param_5", "@param_6"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "high dword underflows from param_1, low is zero",
+      "args": [1, 0, 0, 0, "@param_5", "@param_6"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "all ones minus all ones",
+      "args": [-1, -1, -1, -1, "@param_5", "@param_6"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unsigned compare: 0x80000000 is not below 1",
+      "args": [0, 1, 0, 2147483648, "@param_5", "@param_6"],
+      "expect": {"ret": 2147483647}
+    },
+    {
+      "name": "unsigned compare: 1 is below 0x80000000",
+      "args": [0, 2147483648, 0, 1, "@param_5", "@param_6"],
+      "expect": {"ret": -2147483647}
+    },
+    {
+      "name": "all zeros",
+      "args": [0, 0, 0, 0, "@param_5", "@param_6"],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 161888,
+    "count": 40,
+    "args": [
+      {},
+      {},
+      {},
+      {},
+      {
+        "choices": [
+          "@param_5",
+          "@param_6",
+          "@param_5+0x4",
+          "@param_6+0x8"
+        ]
+      },
+      {
+        "choices": [
+          "@param_5",
+          "@param_6",
+          "@param_6+0x4",
+          "@param_5+0xc"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

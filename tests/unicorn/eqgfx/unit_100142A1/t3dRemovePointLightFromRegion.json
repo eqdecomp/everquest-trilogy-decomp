@@ -1,0 +1,302 @@
+{
+  "function": "t3dRemovePointLightFromRegion",
+  "original": "0x10014771",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "regionIndicesAddress",
+      "type": "ptr"
+    },
+    {
+      "name": "regionIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@regionarray"
+        }
+      ]
+    },
+    "regionarray": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "@region"
+        },
+        {
+          "offset": "0x04",
+          "u32": "@region"
+        },
+        {
+          "offset": "0x08",
+          "u32": "@region"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@region"
+        }
+      ]
+    },
+    "region": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@regionset"
+        }
+      ]
+    },
+    "regionset": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "0x27"
+        },
+        {
+          "offset": "0x10",
+          "u32": 3
+        },
+        {
+          "offset": "0x14",
+          "u32": 8
+        },
+        {
+          "offset": "0x18",
+          "u32": "@regionentries"
+        }
+      ]
+    },
+    "regionentries": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "@regionindices"
+        },
+        {
+          "offset": "0x04",
+          "u32": "0x77777777"
+        },
+        {
+          "offset": "0x08",
+          "u32": "@regionindices"
+        }
+      ]
+    },
+    "regionindices": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0f",
+          "u8": "0x40"
+        },
+        {
+          "offset": "0x24",
+          "u32": 3
+        },
+        {
+          "offset": "0x28",
+          "u32": 8
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@indexarray"
+        }
+      ]
+    },
+    "indexarray": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": 1
+        },
+        {
+          "offset": "0x04",
+          "u32": 3
+        },
+        {
+          "offset": "0x08",
+          "u32": 5
+        },
+        {
+          "offset": "0x0c",
+          "u32": 7
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100679f0": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "point light flag clear",
+      "args": ["@world", "@regionindices", 1],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x0f", "u8": 0}
+      ]
+    },
+    {
+      "name": "empty region index list",
+      "args": ["@world", "@regionindices", 1],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 0}
+      ]
+    },
+    {
+      "name": "negative region count",
+      "args": ["@world", "@regionindices", 1],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "single matching region",
+      "args": ["@world", "@regionindices", 1],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 1},
+        {"addr": "@indexarray", "u32": 1},
+        {"addr": "@regionset", "offset": "0x10", "u32": 1},
+        {"addr": "@regionentries", "u32": "@regionindices"}
+      ]
+    },
+    {
+      "name": "search misses below first",
+      "args": ["@world", "@regionindices", 0]
+    },
+    {
+      "name": "search misses above last",
+      "args": ["@world", "@regionindices", 8]
+    },
+    {
+      "name": "search misses between entries",
+      "args": ["@world", "@regionindices", 4]
+    },
+    {
+      "name": "remove first sorted entry",
+      "args": ["@world", "@regionindices", 1]
+    },
+    {
+      "name": "remove middle sorted entry",
+      "args": ["@world", "@regionindices", 3]
+    },
+    {
+      "name": "remove last sorted entry",
+      "args": ["@world", "@regionindices", 5]
+    },
+    {
+      "name": "valid alternate region set tag",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "u32": "0x29"}
+      ]
+    },
+    {
+      "name": "unsupported region set tag",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "u32": "0x28"}
+      ]
+    },
+    {
+      "name": "matching region pointer absent from set",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionentries", "u32": "0x77777777"},
+        {"addr": "@regionentries", "offset": "0x04", "u32": "0x77777777"},
+        {"addr": "@regionentries", "offset": "0x08", "u32": "0x77777777"}
+      ]
+    },
+    {
+      "name": "matching pointer at end of set entries",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionentries", "u32": "0x77777777"},
+        {"addr": "@regionentries", "offset": "0x04", "u32": "0x77777777"},
+        {"addr": "@regionentries", "offset": "0x08", "u32": "@regionindices"}
+      ]
+    },
+    {
+      "name": "four-entry set copies three words from first match",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x10", "u32": 4}
+      ]
+    },
+    {
+      "name": "empty region set entry list",
+      "args": ["@world", "@regionindices", 3],
+      "memory": [
+        {"addr": "@regionset", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "duplicate sorted values",
+      "args": ["@world", "@regionindices", 2],
+      "memory": [
+        {"addr": "@indexarray", "u32": 2},
+        {"addr": "@indexarray", "offset": "0x04", "u32": 2},
+        {"addr": "@indexarray", "offset": "0x08", "u32": 2}
+      ]
+    },
+    {
+      "name": "two item boundary match",
+      "args": ["@world", "@regionindices", 2],
+      "memory": [
+        {"addr": "@regionindices", "offset": "0x24", "u32": 2},
+        {"addr": "@indexarray", "u32": 2},
+        {"addr": "@indexarray", "offset": "0x04", "u32": 4}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 83825,
+    "count": 32,
+    "args": [
+      {"choices": ["@world"]},
+      {"choices": ["@regionindices"]},
+      {"choices": [0, 1, 2, 3]}
+    ],
+    "memory": [
+      {"addr": "@regionindices", "offset": "0x0f", "type": "u8", "choices": [0, 64]},
+      {"addr": "@regionindices", "offset": "0x24", "type": "int", "range": [0, 8]},
+      {"addr": "@indexarray", "type": "u32", "count": 8, "choices": [0, 1, 2, 3, 4, 5, 6, 7]},
+      {"addr": "@regionset", "type": "u32", "choices": [39, 41, 40, 37]},
+      {"addr": "@regionset", "offset": "0x10", "type": "int", "range": [0, 8]},
+      {"addr": "@regionentries", "type": "u32", "count": 8, "choices": ["@regionindices", "0x77777777", 0, 1, 2, 3]}
+    ]
+  }
+}

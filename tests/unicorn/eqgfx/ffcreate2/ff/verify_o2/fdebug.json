@@ -1,0 +1,212 @@
+{
+  "function": "fdebug_guess",
+  "original": "0x100548b0",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/verify_o2.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "value",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x100fc01c",
+      "u32": 65535
+    },
+    {
+      "addr": "0x10086170",
+      "from_image": "0x10086170",
+      "image_size": 2
+    },
+    {
+      "addr": "0x100a3670",
+      "cstr": "%s"
+    },
+    {
+      "addr": "0x30000000",
+      "cstr": "Thu Jan 01 00:00:00 1970\n"
+    },
+    {
+      "addr": "0x30000040",
+      "cstr": "Thu Jan 01 00:00:00 1970"
+    }
+  ],
+  "callees": {
+    "0x1006a0d9": {
+      "name": "_vsprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x10069fe4": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1006a0c0": {
+      "name": "_ctime",
+      "conv": "cdecl",
+      "args": [
+        "mem:4"
+      ],
+      "ret": "0x30000000"
+    },
+    "0x10067992": {
+      "name": "_sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "cstr",
+        "int",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068412": {
+      "name": "openFileWithPath_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "0x33000000"
+    },
+    "0x100683a5": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "0x10068328": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "file opens, newline is trimmed, and the counter wraps from 0xffff",
+      "args": [
+        "message=%d",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "0x100fc01c",
+          "u32": 65535
+        }
+      ]
+    },
+    {
+      "name": "open failure skips fprintf and fclose, and a timestamp without newline is retained",
+      "args": [
+        "negative=%d",
+        -13
+      ],
+      "callees": {
+        "0x10068412": {
+          "name": "openFileWithPath_guess",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        },
+        "0x1006a0c0": {
+          "name": "_ctime",
+          "conv": "cdecl",
+          "args": [
+            "mem:4"
+          ],
+          "ret": "0x30000040"
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x100fc01c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "open succeeds with a midrange counter and unsigned format",
+      "args": [
+        "unsigned=%u",
+        4294967295
+      ],
+      "memory": [
+        {
+          "addr": "0x100fc01c",
+          "u32": 4660
+        }
+      ]
+    },
+    {
+      "name": "literal message format with the minimum signed value",
+      "args": [
+        "literal message",
+        -2147483648
+      ],
+      "memory": [
+        {
+          "addr": "0x100fc01c",
+          "u32": 4294901760
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 100548,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "message=%d",
+          "unsigned=%u",
+          "literal message"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100fc01c",
+        "type": "u32",
+        "range": [
+          0,
+          65535
+        ]
+      }
+    ]
+  }
+}

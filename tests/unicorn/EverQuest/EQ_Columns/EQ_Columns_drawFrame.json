@@ -1,0 +1,156 @@
+{
+  "function": "EQ_Columns_drawFrame_guess",
+  "original": "0x00432f84",
+  "sources": [
+    "src/EverQuest/EQ_Columns.cpp"
+  ],
+  "rewrite": "EQ_Columns_drawFrame_guess",
+  "conv": "fastcall",
+  "args": [
+    { "name": "self", "type": "ptr" },
+    { "name": "edx", "type": "int" },
+    { "name": "param_1", "type": "ptr" }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": { "size": "0x100", "fill": "zero" },
+    "param_1": { "size": "0x10", "fill": "zero" },
+    "setrect": { "size": "0x4", "fill": "zero" },
+    "root": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [ { "offset": "0x4", "u32": "@overlay" } ]
+    },
+    "overlay": { "size": "0x4", "fill": "zero" },
+    "root_alt": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [ { "offset": "0x4", "u32": "@overlay_alt" } ]
+    },
+    "overlay_alt": { "size": "0x4", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x00534248", "u32": "@setrect" },
+    { "addr": "0x0058fc6c", "u32": 2 },
+    { "addr": "0x006b63e4", "u16": 639 },
+    { "addr": "0x006e4e04", "u32": "@root" }
+  ],
+  "callees": {
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [ "ignore", "int", "int", "int", "int" ],
+      "ret": 1,
+      "writes": [ { "arg": 0, "offset": 0, "hex": "01000000020000000300000004000000" } ]
+    },
+    "0x004500be": {
+      "name": "drawExplicit",
+      "conv": "thiscall",
+      "args": [ "ptr", "mem:16", "mem:16" ]
+    },
+    "0x00450125": {
+      "name": "drawPartial_guess",
+      "conv": "thiscall",
+      "args": [ "ptr", "mem:16", "mem:16", "int" ]
+    }
+  },
+  "cases": [
+    {
+      "name": "explicit draw path with standard rectangle",
+      "args": [ "@self", "0x13579bdf", "@param_1" ],
+      "memory": [
+        { "addr": "@param_1", "u32": 17 },
+        { "addr": "@param_1", "offset": "0x4", "u32": 23 },
+        { "addr": "@param_1", "offset": "0x8", "u32": 417 },
+        { "addr": "@param_1", "offset": "0xc", "u32": 311 }
+      ]
+    },
+    {
+      "name": "mode not two uses partial draws",
+      "args": [ "@self", 0, "@param_1" ],
+      "memory": [
+        { "addr": "0x0058fc6c", "u32": 1 },
+        { "addr": "0x006b63e4", "u16": 639 }
+      ]
+    },
+    {
+      "name": "width 640 uses partial draws",
+      "args": [ "@self", 1, "@param_1" ],
+      "memory": [
+        { "addr": "0x0058fc6c", "u32": 2 },
+        { "addr": "0x006b63e4", "u16": 640 }
+      ]
+    },
+    {
+      "name": "right edge one before left gives zero width",
+      "args": [ "@self", 3, "@param_1" ],
+      "memory": [
+        { "addr": "@param_1", "u32": 100 },
+        { "addr": "@param_1", "offset": "0x4", "u32": 300 },
+        { "addr": "@param_1", "offset": "0x8", "u32": 99 },
+        { "addr": "@param_1", "offset": "0xc", "u32": 299 }
+      ]
+    },
+    {
+      "name": "negative coordinates and height",
+      "args": [ "@self", 0, "@param_1" ],
+      "memory": [
+        { "addr": "@param_1", "u32": "0xfffffff0" },
+        { "addr": "@param_1", "offset": "0x4", "u32": "0xffffffec" },
+        { "addr": "@param_1", "offset": "0x8", "u32": 40 },
+        { "addr": "@param_1", "offset": "0xc", "u32": 0 }
+      ]
+    },
+    {
+      "name": "signed coordinate subtraction wraps at integer boundaries",
+      "args": [ "@self", 1, "@param_1" ],
+      "memory": [
+        { "addr": "@param_1", "u32": "0x80000000" },
+        { "addr": "@param_1", "offset": "0x4", "u32": "0x7fffffff" },
+        { "addr": "@param_1", "offset": "0x8", "u32": "0x7fffffff" },
+        { "addr": "@param_1", "offset": "0xc", "u32": "0x80000000" }
+      ]
+    },
+    {
+      "name": "callback switches mode after first explicit draw",
+      "args": [ "@self", 0, "@param_1" ],
+      "callees": {
+        "0x004500be": {
+          "name": "drawExplicit_switches_mode",
+          "conv": "thiscall",
+          "args": [ "ptr", "mem:16", "mem:16" ],
+          "writes": [ { "addr": "0x0058fc6c", "hex": "01000000" } ]
+        }
+      }
+    },
+    {
+      "name": "draw callback mutates source rectangle before later borders",
+      "args": [ "@self", 0, "@param_1" ],
+      "callees": {
+        "0x004500be": {
+          "name": "drawExplicit_changes_source",
+          "conv": "thiscall",
+          "args": [ "ptr", "mem:16", "mem:16" ],
+          "writes": [ { "arg": 2, "offset": 0, "hex": "64000000c800000090010000f4010000" } ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4403284,
+    "count": 35,
+    "args": [
+      { "choices": [ "@self" ] },
+      { "type": "int", "range": [ -2147483648, 2147483647 ] },
+      { "choices": [ "@param_1" ] }
+    ],
+    "memory": [
+      { "addr": "0x0058fc6c", "type": "u32", "choices": [ 0, 1, 2, 3, "0xffffffff" ] },
+      { "addr": "0x006b63e4", "type": "u16", "choices": [ 0, 639, 640, 641, 65535 ] },
+      { "addr": "@param_1", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@param_1", "offset": "0x4", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@param_1", "offset": "0x8", "type": "int", "range": [ -1000, 1000 ] },
+      { "addr": "@param_1", "offset": "0xc", "type": "int", "range": [ -1000, 1000 ] }
+    ]
+  }
+}

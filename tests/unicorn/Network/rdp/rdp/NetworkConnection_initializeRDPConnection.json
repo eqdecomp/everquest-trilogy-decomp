@@ -1,0 +1,582 @@
+{
+  "function": "TraceStart_guess",
+  "original": "0x004f44e0",
+  "sources": [
+    "src/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@rdp"
+        },
+        {
+          "offset": "0x64",
+          "u32": 0
+        },
+        {
+          "offset": "0x790",
+          "u32": 10
+        },
+        {
+          "offset": "0x7b8",
+          "u32": 1
+        },
+        {
+          "offset": "0x7cc",
+          "u32": 0
+        },
+        {
+          "offset": "0x7c0",
+          "u32": 0
+        },
+        {
+          "offset": "0x498",
+          "u32": 0
+        },
+        {
+          "offset": "0x7e0",
+          "u32": 2
+        }
+      ]
+    },
+    "param_alt": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@rdp"
+        },
+        {
+          "offset": "0x64",
+          "u32": 0
+        },
+        {
+          "offset": "0x790",
+          "u32": 10
+        },
+        {
+          "offset": "0x7b8",
+          "u32": 1
+        },
+        {
+          "offset": "0x7cc",
+          "u32": 0
+        },
+        {
+          "offset": "0x7c0",
+          "u32": 0
+        },
+        {
+          "offset": "0x498",
+          "u32": 0
+        },
+        {
+          "offset": "0x7e0",
+          "u32": 2
+        }
+      ]
+    },
+    "rdp": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": 1
+        }
+      ]
+    },
+    "oldlog": {
+      "size": "0x5a0",
+      "fill": "random"
+    },
+    "copybuffer": {
+      "size": "0x5a0",
+      "fill": "random"
+    },
+    "allocation": {
+      "size": "0x5a0",
+      "fill": "random"
+    },
+    "existingbackup": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f51c0": {
+      "name": "connhash_lock_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [
+        1000,
+        1001
+      ]
+    },
+    "0x004ef240": {
+      "name": "rdp_unlock_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x00522fa3": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocation"
+    },
+    "0x005230dd": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x005213e9": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "78563412"
+        }
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x00522fa3",
+    "_free": "0x005230dd"
+  },
+  "cases": [
+    {
+      "name": "null parameter returns six",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": 6
+      }
+    },
+    {
+      "name": "invalid rdp socket returns eight",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@rdp",
+          "offset": "0xc",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 8
+      }
+    },
+    {
+      "name": "timeout before threshold",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x64",
+          "u32": 2
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x790",
+          "u32": 20
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7cc",
+          "u32": 990
+        }
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "conv": "stdcall",
+          "args": [],
+          "ret": 1000
+        }
+      },
+      "expect": {
+        "ret": 9
+      }
+    },
+    {
+      "name": "timeout equality proceeds and initializes",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x64",
+          "u32": 2
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x790",
+          "u32": 10
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7cc",
+          "u32": 990
+        }
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "conv": "stdcall",
+          "args": [],
+          "ret": [
+            1000,
+            1001
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "connection socket sentinel after lock",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x7b8",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 8
+      }
+    },
+    {
+      "name": "save old log and initialize",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x7c0",
+          "u32": "@oldlog"
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7e0",
+          "u32": 2
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7d0",
+          "u32": 1234
+        }
+      ],
+      "callees": {
+        "0x00522fa3": {
+          "args": [
+            "u32"
+          ],
+          "ret": "@copybuffer"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "old log backup allocation fails",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x7c0",
+          "u32": "@oldlog"
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7e0",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x00522fa3": {
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "free old log when a saved copy exists",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x7c0",
+          "u32": "@oldlog"
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x498",
+          "u32": "@existingbackup"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "new log allocation fails",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "0x00522fa3": {
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "allocate and initialize new log",
+      "args": [
+        "@param_1"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "unsigned time subtraction wraps",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x64",
+          "u32": 2
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x790",
+          "u32": 20
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7cc",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "args": [],
+          "ret": 5
+        }
+      },
+      "expect": {
+        "ret": 9
+      }
+    },
+    {
+      "name": "zero elapsed and zero threshold proceeds",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x64",
+          "u32": 2
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x790",
+          "u32": 0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x7cc",
+          "u32": 100
+        }
+      ],
+      "callees": {
+        "0x004f66d0": {
+          "args": [],
+          "ret": [
+            100,
+            101
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "separate connection object address",
+      "args": [
+        "@param_alt"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5194976,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rdp",
+        "offset": "0xc",
+        "type": "u32",
+        "choices": [
+          "0xffffffff",
+          0,
+          1,
+          55
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x64",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x790",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x7b8",
+        "type": "u32",
+        "choices": [
+          "0xffffffff",
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x7cc",
+        "type": "u32",
+        "choices": [
+          0,
+          50,
+          100,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x7c0",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@oldlog"
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x498",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x7e0",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x7d0",
+        "type": "u32",
+        "range": [
+          0,
+          1000
+        ]
+      }
+    ]
+  }
+}

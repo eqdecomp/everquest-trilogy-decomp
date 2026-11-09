@@ -1,0 +1,259 @@
+{
+  "function": "interpolateVertexColors_guess",
+  "original": "0x10045c77",
+  "sources": [
+    "src/eqgfx/unit_1004428D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "columns",
+      "type": "ptr"
+    },
+    {
+      "name": "outColors",
+      "type": "ptr"
+    },
+    {
+      "name": "sky",
+      "type": "int"
+    },
+    {
+      "name": "count",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "columns": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "outColors": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sky": {
+      "size": "0x500",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x45c",
+          "u32": "@grid+0x400"
+        }
+      ]
+    },
+    "grid": {
+      "size": "0x2000",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100FA068",
+      "size": 1024,
+      "fill": "random"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: columns 0, 5, 17 at row 10 weight 0.25",
+      "args": ["@columns", "@outColors", "@sky", 3],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 10},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.25},
+        {"addr": "@columns", "offset": "0x0", "u32": 0},
+        {"addr": "@columns", "offset": "0x4", "u32": 5},
+        {"addr": "@columns", "offset": "0x8", "u32": 17}
+      ]
+    },
+    {
+      "name": "weight 0 takes only the next row",
+      "args": ["@columns", "@outColors", "@sky", 3],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 10},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.0},
+        {"addr": "@columns", "offset": "0x0", "u32": 1},
+        {"addr": "@columns", "offset": "0x4", "u32": 2},
+        {"addr": "@columns", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "weight 1 takes only the current row",
+      "args": ["@columns", "@outColors", "@sky", 3],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 10},
+        {"addr": "@sky", "offset": "0x2c", "f32": 1.0},
+        {"addr": "@columns", "offset": "0x0", "u32": 1},
+        {"addr": "@columns", "offset": "0x4", "u32": 2},
+        {"addr": "@columns", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "row 59: the next row wraps to 0",
+      "args": ["@columns", "@outColors", "@sky", 3],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 59},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@columns", "offset": "0x0", "u32": 0},
+        {"addr": "@columns", "offset": "0x4", "u32": 17},
+        {"addr": "@columns", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "row 60 wraps to row 0 (next row 1)",
+      "args": ["@columns", "@outColors", "@sky", 2],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 60},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@columns", "offset": "0x0", "u32": 6},
+        {"addr": "@columns", "offset": "0x4", "u32": 7}
+      ]
+    },
+    {
+      "name": "row 58: next row 59 is not wrapped",
+      "args": ["@columns", "@outColors", "@sky", 2],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 58},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.75},
+        {"addr": "@columns", "offset": "0x0", "u32": 16},
+        {"addr": "@columns", "offset": "0x4", "u32": 17}
+      ]
+    },
+    {
+      "name": "row -1 is not wrapped (signed compare), next row 0",
+      "args": ["@columns", "@outColors", "@sky", 3],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": "0xffffffff"},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@columns", "offset": "0x0", "u32": 0},
+        {"addr": "@columns", "offset": "0x4", "u32": 5},
+        {"addr": "@columns", "offset": "0x8", "u32": 17}
+      ]
+    },
+    {
+      "name": "column 17 is kept, 18 and 0xffffffff read column 0",
+      "args": ["@columns", "@outColors", "@sky", 4],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 5},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@columns", "offset": "0x0", "u32": 17},
+        {"addr": "@columns", "offset": "0x4", "u32": 18},
+        {"addr": "@columns", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "@columns", "offset": "0xc", "u32": 19}
+      ]
+    },
+    {
+      "name": "count 0 writes nothing",
+      "args": ["@columns", "@outColors", "@sky", 0],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 10},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5}
+      ]
+    },
+    {
+      "name": "count 1",
+      "args": ["@columns", "@outColors", "@sky", 1],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 30},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@columns", "offset": "0x0", "u32": 4}
+      ]
+    },
+    {
+      "name": "row 59 and column 17 at weight 0",
+      "args": ["@columns", "@outColors", "@sky", 2],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 59},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.0},
+        {"addr": "@columns", "offset": "0x0", "u32": 17},
+        {"addr": "@columns", "offset": "0x4", "u32": 17}
+      ]
+    },
+    {
+      "name": "null color table writes nothing",
+      "args": ["@columns", "@outColors", "@sky", 3],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 10},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@sky", "offset": "0x45c", "u32": 0}
+      ]
+    },
+    {
+      "name": "count 20 fills the whole output",
+      "args": ["@columns", "@outColors", "@sky", 20],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 0},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5}
+      ]
+    },
+    {
+      "name": "color table 1 is not null: both sides fault reading columns first",
+      "args": ["0x1000", "@outColors", "@sky", 2],
+      "memory": [
+        {"addr": "@sky", "offset": "0x28", "u32": 10},
+        {"addr": "@sky", "offset": "0x2c", "f32": 0.5},
+        {"addr": "@sky", "offset": "0x45c", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1004428,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@columns"
+        ]
+      },
+      {
+        "choices": [
+          "@outColors"
+        ]
+      },
+      {
+        "choices": [
+          "@sky"
+        ]
+      },
+      {
+        "range": [0, 20]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@columns",
+        "type": "u32",
+        "count": 32,
+        "choices": [0, 1, 4, 5, 16, 17, 18, 19, 25, 59, "0xffffffff"]
+      },
+      {
+        "addr": "@sky",
+        "offset": "0x28",
+        "type": "int",
+        "range": [-2, 62]
+      },
+      {
+        "addr": "@sky",
+        "offset": "0x2c",
+        "type": "float",
+        "choices": [-0.5, 0.0, 0.125, 0.25, 0.5, 0.75, 1.0, 1.5]
+      },
+      {
+        "addr": "@sky",
+        "offset": "0x45c",
+        "type": "ptr",
+        "choices": ["@grid+0x400", 0],
+        "p": 0.1
+      },
+      {
+        "addr": "0x100FA068",
+        "type": "float",
+        "count": 256,
+        "choices": [0.0, 0.0625, 0.125, 0.25, 0.5, 0.75, 1.0],
+        "p": 0.5
+      }
+    ]
+  }
+}

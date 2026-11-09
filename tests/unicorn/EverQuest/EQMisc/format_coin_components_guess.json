@@ -1,0 +1,58 @@
+{
+  "function": "format_coin_components_guess",
+  "original": "0x004A8610",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "platinum", "type": "int"},
+    {"name": "gold", "type": "int"},
+    {"name": "silver", "type": "int"},
+    {"name": "copper", "type": "int"},
+    {"name": "output", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "output": {"size": "0x100", "fill": "zero", "init": [{"offset": "0", "cstr": "prefix:"}]}
+  },
+  "memory": [
+    {"addr": "0x0055E12C", "cstr": " <-> "}
+  ],
+  "callees": {
+    "0x005224FB": {"name": "sprintf", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true}
+  },
+  "cases": [
+    {"name": "all nonpositive amounts leave the existing prefix intact", "args": [0, -2, -3, -4, "@output"]},
+    {"name": "platinum only appends without a leading separator", "args": [1, 0, 0, 0, "@output"]},
+    {"name": "gold only appends without a leading separator", "args": [0, 2, 0, 0, "@output"]},
+    {"name": "silver only appends without a leading separator", "args": [0, 0, 3, 0, "@output"]},
+    {"name": "copper only appends without a leading separator", "args": [0, 0, 0, 4, "@output"]},
+    {"name": "all denominations use their own label in order", "args": [1, 2, 3, 4, "@output"]},
+    {"name": "platinum and copper are separated across skipped denominations", "args": [17, 0, -8, 91, "@output"]},
+    {"name": "gold silver and copper each use the separator", "args": [0, 29, 13, 7, "@output"]},
+    {"name": "negative platinum does not make a leading gold separator", "args": [-1, 5, 6, 0, "@output"]},
+    {"name": "negative earlier denominations do not make a copper separator", "args": [-1, 0, -2, 8, "@output"]},
+    {"name": "negative copper is omitted after positive denominations", "args": [11, 22, 33, -44, "@output"]},
+    {"name": "zero gold and copper preserve only positive components", "args": [101, 0, 303, 0, "@output"]},
+    {"name": "positive minimum values are accepted", "args": [1, 1, 1, 1, "@output"]},
+    {"name": "largest signed amounts retain ten digit formatting", "args": [2147483647, 2147483647, 2147483647, 2147483647, "@output"]},
+    {"name": "negative integer minimum is omitted", "args": [-2147483648, 0, 2147483647, -2147483648, "@output"]},
+    {"name": "caller prefix is preserved before appended text", "args": [0, 42, 0, 0, "@output"], "memory": [{"addr": "@output", "offset": "0", "cstr": "Existing>"}]},
+    {"name": "one platinum triggers silver separator by itself", "args": [1, 0, 5, 0, "@output"]},
+    {"name": "one gold triggers silver separator by itself", "args": [0, 1, 5, 0, "@output"]},
+    {"name": "one platinum triggers copper separator by itself", "args": [1, 0, 0, 5, "@output"]},
+    {"name": "one gold triggers copper separator by itself", "args": [0, 1, 0, 5, "@output"]},
+    {"name": "one silver triggers copper separator by itself", "args": [0, 0, 1, 5, "@output"]}
+  ],
+  "fuzz": {
+    "seed": 48610,
+    "count": 30,
+    "args": [
+      {"choices": [-2147483648, -7, -1, 0, 1, 2, 17, 999999, 2147483647]},
+      {"choices": [-2147483648, -7, -1, 0, 1, 3, 29, 1000000, 2147483647]},
+      {"choices": [-2147483648, -7, -1, 0, 1, 5, 31, 1000001, 2147483647]},
+      {"choices": [-2147483648, -7, -1, 0, 1, 7, 37, 1000002, 2147483647]},
+      {"choices": ["@output"]}
+    ],
+    "memory": []
+  }
+}

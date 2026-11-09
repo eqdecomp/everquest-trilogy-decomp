@@ -1,0 +1,228 @@
+{
+  "function": "PackFsMap_guess::freeNodeAndChildren_guess",
+  "original": "0x10054460",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfsmap",
+  "args": [
+    {
+      "name": "node",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "packfsmap": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "nil": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "a": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "b": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "c": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "d": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    },
+    "e": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@nil"},
+        {"offset": "0x8", "u32": "@nil"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100FBC08", "u32": "@nil"}
+  ],
+  "callees": {
+    "0x10054460": {
+      "name": "freeNodeAndChildren_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "node is the nil node: nothing is freed",
+      "args": [
+        "@nil"
+      ]
+    },
+    {
+      "name": "single node, both children nil: frees the node only",
+      "args": [
+        "@a"
+      ]
+    },
+    {
+      "name": "single node with a right child only: right child freed first",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x8", "u32": "@b"}
+      ]
+    },
+    {
+      "name": "single node with a left child only: left child freed after",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"}
+      ]
+    },
+    {
+      "name": "left chain of three, nil right children",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"},
+        {"addr": "@b", "offset": "0x0", "u32": "@c"}
+      ]
+    },
+    {
+      "name": "left chain of two, right child of the left child is freed before it",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"},
+        {"addr": "@b", "offset": "0x8", "u32": "@c"}
+      ]
+    },
+    {
+      "name": "right child with its own left child, nil left",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x8", "u32": "@b"},
+        {"addr": "@b", "offset": "0x0", "u32": "@c"}
+      ]
+    },
+    {
+      "name": "right chain of three",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x8", "u32": "@b"},
+        {"addr": "@b", "offset": "0x8", "u32": "@c"}
+      ]
+    },
+    {
+      "name": "mixed: right subtree of root, left chain with a right leaf under it",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": "@b"},
+        {"addr": "@a", "offset": "0x8", "u32": "@c"},
+        {"addr": "@b", "offset": "0x0", "u32": "@d"}
+      ]
+    },
+    {
+      "name": "right child with both children, left child of it drains after the right",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x8", "u32": "@b"},
+        {"addr": "@b", "offset": "0x0", "u32": "@c"},
+        {"addr": "@b", "offset": "0x8", "u32": "@d"}
+      ]
+    },
+    {
+      "name": "free rewrites the nil global to null: the loop reloads it and stops at the new value",
+      "args": [
+        "@a"
+      ],
+      "memory": [
+        {"addr": "@a", "offset": "0x0", "u32": 0}
+      ],
+      "callees": {
+        "0x10050cbb": {
+          "name": "t3dFreeMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {"addr": "0x100FBC08", "hex": "00000000"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 345184,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@a",
+          "@b",
+          "@c",
+          "@d",
+          "@e",
+          "@nil"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@a", "offset": 0, "type": "ptr", "choices": ["@b", "@c", "@d", "@e", "@nil"]},
+      {"addr": "@a", "offset": 8, "type": "ptr", "choices": ["@b", "@c", "@d", "@e", "@nil"]},
+      {"addr": "@b", "offset": 0, "type": "ptr", "choices": ["@c", "@d", "@e", "@nil"]},
+      {"addr": "@b", "offset": 8, "type": "ptr", "choices": ["@c", "@d", "@e", "@nil"]},
+      {"addr": "@c", "offset": 0, "type": "ptr", "choices": ["@d", "@e", "@nil"]},
+      {"addr": "@c", "offset": 8, "type": "ptr", "choices": ["@d", "@e", "@nil"]},
+      {"addr": "@d", "offset": 0, "type": "ptr", "choices": ["@e", "@nil"]},
+      {"addr": "@d", "offset": 8, "type": "ptr", "choices": ["@e", "@nil"]},
+      {"addr": "@e", "offset": 0, "type": "ptr", "choices": ["@nil"]},
+      {"addr": "@e", "offset": 8, "type": "ptr", "choices": ["@nil"]}
+    ]
+  }
+}

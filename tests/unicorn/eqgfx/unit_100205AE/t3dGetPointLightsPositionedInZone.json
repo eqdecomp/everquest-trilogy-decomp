@@ -1,0 +1,263 @@
+{
+  "function": "t3dGetPointLightsPositionedInZone",
+  "original": "0x10020fb4",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "zone",
+      "type": "ptr"
+    },
+    {
+      "name": "referenceList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x1d0",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1c4", "u32": 3},
+        {"offset": "0x1cc", "u32": "@entries"}
+      ]
+    },
+    "zone": {
+      "size": "0x24",
+      "fill": "zero"
+    },
+    "referencelist": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "entries": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 4},
+        {"offset": "0x4", "u32": 5},
+        {"offset": "0x8", "u32": 6},
+        {"offset": "0xc", "u32": 7},
+        {"offset": "0x10", "u32": 8}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001905a": {
+      "name": "t3dClearReferenceList",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10019324": {
+      "name": "t3dGetRegionFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 4587520
+    },
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x10019065": {
+      "name": "t3dAddReferenceToList",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "empty entry list",
+      "args": [
+        "@world",
+        "@zone",
+        "@referencelist"
+      ],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry below threshold is skipped",
+      "args": [
+        "@world",
+        "@zone",
+        "@referencelist"
+      ],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entry equal to threshold is skipped",
+      "args": [
+        "@world",
+        "@zone",
+        "@referencelist"
+      ],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "region lookup misses",
+      "args": ["@world", "@zone", "@referencelist"],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 2}
+      ],
+      "callees": {
+        "0x10019324": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": ["int", "int"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "region is absent from the zone list",
+      "args": ["@world", "@zone", "@referencelist"],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 2}
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "only an exact reference result matches",
+      "args": ["@world", "@zone", "@referencelist"],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 2}
+      ],
+      "callees": {
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "ret": 2
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero insertion result continues normally",
+      "args": ["@world", "@zone", "@referencelist"],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nonzero insertion result returns error",
+      "args": ["@world", "@zone", "@referencelist"],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 1},
+        {"addr": "@entries", "u32": 2}
+      ],
+      "callees": {
+        "0x10019065": {
+          "name": "t3dAddReferenceToList",
+          "conv": "cdecl",
+          "args": ["int", "ptr"],
+          "ret": 1
+        }
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "continues in entry order and stops on nonzero insertion",
+      "args": ["@world", "@zone", "@referencelist"],
+      "memory": [
+        {"addr": "@world", "offset": "0x1c4", "u32": 3},
+        {"addr": "@entries", "offset": "0x0", "u32": 4},
+        {"addr": "@entries", "offset": "0x4", "u32": 5},
+        {"addr": "@entries", "offset": "0x8", "u32": 6}
+      ],
+      "callees": {
+        "0x10019324": {
+          "name": "t3dGetRegionFromWorldAndXYZ",
+          "conv": "cdecl",
+          "args": ["int", "int"],
+          "ret": [0, 4587520, 4587524]
+        },
+        "0x100190b6": {
+          "name": "t3dFindReferenceInSortedList",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "ret": 1
+        },
+        "0x10019065": {
+          "name": "t3dAddReferenceToList",
+          "conv": "cdecl",
+          "args": ["int", "ptr"],
+          "ret": [0, 1]
+        }
+      },
+      "expect": {"ret": -49858}
+    }
+  ],
+  "fuzz": {
+    "seed": 135092,
+    "count": 35,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@zone"
+        ]
+      },
+      {
+        "choices": [
+          "@referencelist"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@world", "offset": "0x1c4", "type": "u32", "range": [0, 5]},
+      {"addr": "@entries", "type": "u32", "count": 5, "range": [0, 10]}
+    ]
+  }
+}

@@ -1,0 +1,312 @@
+{
+  "function": "do_friends",
+  "original": "0x004a62a6",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006E2114", "size": 960, "fill": "zero"}
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004d5a24": {
+      "name": "FUN_004d5a24",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x005223d0": {
+      "name": "strlen",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "0x00524240": {
+      "name": "strcmpi",
+      "args": ["cstr", "cstr"],
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "args": ["ptr", "cstr"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty name with no friends prints the header and both no-friend lines",
+      "args": [0, ""]
+    },
+    {
+      "name": "empty name lists the filled slots in table order then the count",
+      "args": [0, ""],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x0", "cstr": "Alice"},
+        {"addr": "0x006E2114", "offset": "0x60", "cstr": "Bob"},
+        {"addr": "0x006E2114", "offset": "0x3a0", "cstr": "Zed"}
+      ]
+    },
+    {
+      "name": "empty name lists only a friend in the last slot and counts one",
+      "args": [0, ""],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x3a0", "cstr": "Zed"}
+      ]
+    },
+    {
+      "name": "a slot whose first byte is zero is empty even when text follows it",
+      "args": [0, ""],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x1", "cstr": "Ghost"},
+        {"addr": "0x006E2114", "offset": "0x20", "cstr": "Alice"}
+      ]
+    },
+    {
+      "name": "the byte just past the last slot is not part of the table",
+      "args": [0, ""],
+      "memory": [
+        {"addr": "0x006E24D4", "cstr": "Ghost"}
+      ]
+    },
+    {
+      "name": "a name stored just past the table is not a friend",
+      "args": [0, "Ghost"],
+      "memory": [
+        {"addr": "0x006E24D4", "cstr": "Ghost"}
+      ]
+    },
+    {
+      "name": "a name of 16 characters is refused before the table is searched",
+      "args": [1, "abcdefghijklmnop"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x0", "cstr": "abcdefghijklmnop"}
+      ]
+    },
+    {
+      "name": "a name of exactly 15 characters is added to the last empty slot",
+      "args": [0, "abcdefghijklmno"]
+    },
+    {
+      "name": "a stored friend is removed when strcmpi matches it ignoring case",
+      "args": [0, "BOB"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x40", "cstr": "Bob"}
+      ]
+    },
+    {
+      "name": "an empty slot before a stored friend does not stop its removal",
+      "args": [0, "carol"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x20", "cstr": "Carol"}
+      ]
+    },
+    {
+      "name": "a name equal to the first slot is removed there",
+      "args": [0, "Alice"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x0", "cstr": "Alice"},
+        {"addr": "0x006E2114", "offset": "0xa0", "cstr": "Zed"}
+      ]
+    },
+    {
+      "name": "a name equal to the last slot is removed there",
+      "args": [0, "zed"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x3a0", "cstr": "Zed"}
+      ]
+    },
+    {
+      "name": "a 15 character friend is removed by the same name in upper case",
+      "args": [0, "ABCDEFGHIJKLMNO"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x80", "cstr": "abcdefghijklmno"}
+      ]
+    },
+    {
+      "name": "text after the zero byte of an empty slot is not matched",
+      "args": [0, "Bob"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x1", "cstr": "Bob"},
+        {"addr": "0x006E2114", "offset": "0xa0", "cstr": "Zed"}
+      ]
+    },
+    {
+      "name": "a stored friend that is a prefix of the name does not match",
+      "args": [0, "Bob"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x60", "cstr": "Bo"}
+      ]
+    },
+    {
+      "name": "a stored friend longer than the name does not match",
+      "args": [0, "Bob"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x60", "cstr": "Bobby"}
+      ]
+    },
+    {
+      "name": "a new friend goes into the last empty slot, not the first",
+      "args": [0, "Alice"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x20", "cstr": "A"},
+        {"addr": "0x006E2114", "offset": "0x60", "cstr": "f03"},
+        {"addr": "0x006E2114", "offset": "0x80", "cstr": "f04"},
+        {"addr": "0x006E2114", "offset": "0xa0", "cstr": "f05"},
+        {"addr": "0x006E2114", "offset": "0xc0", "cstr": "f06"},
+        {"addr": "0x006E2114", "offset": "0xe0", "cstr": "f07"},
+        {"addr": "0x006E2114", "offset": "0x100", "cstr": "f08"},
+        {"addr": "0x006E2114", "offset": "0x120", "cstr": "f09"},
+        {"addr": "0x006E2114", "offset": "0x140", "cstr": "f10"},
+        {"addr": "0x006E2114", "offset": "0x160", "cstr": "f11"},
+        {"addr": "0x006E2114", "offset": "0x180", "cstr": "f12"},
+        {"addr": "0x006E2114", "offset": "0x1a0", "cstr": "f13"},
+        {"addr": "0x006E2114", "offset": "0x1c0", "cstr": "f14"},
+        {"addr": "0x006E2114", "offset": "0x1e0", "cstr": "f15"},
+        {"addr": "0x006E2114", "offset": "0x200", "cstr": "f16"},
+        {"addr": "0x006E2114", "offset": "0x220", "cstr": "f17"},
+        {"addr": "0x006E2114", "offset": "0x240", "cstr": "f18"},
+        {"addr": "0x006E2114", "offset": "0x260", "cstr": "f19"},
+        {"addr": "0x006E2114", "offset": "0x280", "cstr": "f20"},
+        {"addr": "0x006E2114", "offset": "0x2a0", "cstr": "f21"},
+        {"addr": "0x006E2114", "offset": "0x2c0", "cstr": "f22"},
+        {"addr": "0x006E2114", "offset": "0x2e0", "cstr": "f23"},
+        {"addr": "0x006E2114", "offset": "0x300", "cstr": "f24"},
+        {"addr": "0x006E2114", "offset": "0x320", "cstr": "f25"},
+        {"addr": "0x006E2114", "offset": "0x340", "cstr": "f26"},
+        {"addr": "0x006E2114", "offset": "0x360", "cstr": "f27"},
+        {"addr": "0x006E2114", "offset": "0x380", "cstr": "f28"},
+        {"addr": "0x006E2114", "offset": "0x3a0", "cstr": "f29"}
+      ]
+    },
+    {
+      "name": "a single space is a name rather than an empty name",
+      "args": [0, " "]
+    },
+    {
+      "name": "a full table refuses a new name with the 30 friend message",
+      "args": [0, "Carol"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x0", "cstr": "f00"},
+        {"addr": "0x006E2114", "offset": "0x20", "cstr": "f01"},
+        {"addr": "0x006E2114", "offset": "0x40", "cstr": "f02"},
+        {"addr": "0x006E2114", "offset": "0x60", "cstr": "f03"},
+        {"addr": "0x006E2114", "offset": "0x80", "cstr": "f04"},
+        {"addr": "0x006E2114", "offset": "0xa0", "cstr": "f05"},
+        {"addr": "0x006E2114", "offset": "0xc0", "cstr": "f06"},
+        {"addr": "0x006E2114", "offset": "0xe0", "cstr": "f07"},
+        {"addr": "0x006E2114", "offset": "0x100", "cstr": "f08"},
+        {"addr": "0x006E2114", "offset": "0x120", "cstr": "f09"},
+        {"addr": "0x006E2114", "offset": "0x140", "cstr": "f10"},
+        {"addr": "0x006E2114", "offset": "0x160", "cstr": "f11"},
+        {"addr": "0x006E2114", "offset": "0x180", "cstr": "f12"},
+        {"addr": "0x006E2114", "offset": "0x1a0", "cstr": "f13"},
+        {"addr": "0x006E2114", "offset": "0x1c0", "cstr": "f14"},
+        {"addr": "0x006E2114", "offset": "0x1e0", "cstr": "f15"},
+        {"addr": "0x006E2114", "offset": "0x200", "cstr": "f16"},
+        {"addr": "0x006E2114", "offset": "0x220", "cstr": "f17"},
+        {"addr": "0x006E2114", "offset": "0x240", "cstr": "f18"},
+        {"addr": "0x006E2114", "offset": "0x260", "cstr": "f19"},
+        {"addr": "0x006E2114", "offset": "0x280", "cstr": "f20"},
+        {"addr": "0x006E2114", "offset": "0x2a0", "cstr": "f21"},
+        {"addr": "0x006E2114", "offset": "0x2c0", "cstr": "f22"},
+        {"addr": "0x006E2114", "offset": "0x2e0", "cstr": "f23"},
+        {"addr": "0x006E2114", "offset": "0x300", "cstr": "f24"},
+        {"addr": "0x006E2114", "offset": "0x320", "cstr": "f25"},
+        {"addr": "0x006E2114", "offset": "0x340", "cstr": "f26"},
+        {"addr": "0x006E2114", "offset": "0x360", "cstr": "f27"},
+        {"addr": "0x006E2114", "offset": "0x380", "cstr": "f28"},
+        {"addr": "0x006E2114", "offset": "0x3a0", "cstr": "f29"}
+      ]
+    },
+    {
+      "name": "a full table still removes the friend in the last slot",
+      "args": [0, "F29"],
+      "memory": [
+        {"addr": "0x006E2114", "offset": "0x0", "cstr": "f00"},
+        {"addr": "0x006E2114", "offset": "0x20", "cstr": "f01"},
+        {"addr": "0x006E2114", "offset": "0x40", "cstr": "f02"},
+        {"addr": "0x006E2114", "offset": "0x60", "cstr": "f03"},
+        {"addr": "0x006E2114", "offset": "0x80", "cstr": "f04"},
+        {"addr": "0x006E2114", "offset": "0xa0", "cstr": "f05"},
+        {"addr": "0x006E2114", "offset": "0xc0", "cstr": "f06"},
+        {"addr": "0x006E2114", "offset": "0xe0", "cstr": "f07"},
+        {"addr": "0x006E2114", "offset": "0x100", "cstr": "f08"},
+        {"addr": "0x006E2114", "offset": "0x120", "cstr": "f09"},
+        {"addr": "0x006E2114", "offset": "0x140", "cstr": "f10"},
+        {"addr": "0x006E2114", "offset": "0x160", "cstr": "f11"},
+        {"addr": "0x006E2114", "offset": "0x180", "cstr": "f12"},
+        {"addr": "0x006E2114", "offset": "0x1a0", "cstr": "f13"},
+        {"addr": "0x006E2114", "offset": "0x1c0", "cstr": "f14"},
+        {"addr": "0x006E2114", "offset": "0x1e0", "cstr": "f15"},
+        {"addr": "0x006E2114", "offset": "0x200", "cstr": "f16"},
+        {"addr": "0x006E2114", "offset": "0x220", "cstr": "f17"},
+        {"addr": "0x006E2114", "offset": "0x240", "cstr": "f18"},
+        {"addr": "0x006E2114", "offset": "0x260", "cstr": "f19"},
+        {"addr": "0x006E2114", "offset": "0x280", "cstr": "f20"},
+        {"addr": "0x006E2114", "offset": "0x2a0", "cstr": "f21"},
+        {"addr": "0x006E2114", "offset": "0x2c0", "cstr": "f22"},
+        {"addr": "0x006E2114", "offset": "0x2e0", "cstr": "f23"},
+        {"addr": "0x006E2114", "offset": "0x300", "cstr": "f24"},
+        {"addr": "0x006E2114", "offset": "0x320", "cstr": "f25"},
+        {"addr": "0x006E2114", "offset": "0x340", "cstr": "f26"},
+        {"addr": "0x006E2114", "offset": "0x360", "cstr": "f27"},
+        {"addr": "0x006E2114", "offset": "0x380", "cstr": "f28"},
+        {"addr": "0x006E2114", "offset": "0x3a0", "cstr": "f29"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4874918,
+    "count": 40,
+    "args": [
+      {},
+      {"choices": ["", "A", "a", "b", "B", "o", "Ab", "ab", "AB", "ob", "Bob", "bob", "x", "abc", " ", "ABCDEFGHIJKLMNO", "abcdefghijklmnop", "Alice", "Zed"]}
+    ],
+    "memory": [
+      {"addr": "0x006E2114", "type": "u8", "count": 960, "choices": [0, 0, 0, 0, 0, 65, 66, 97, 98, 111, 79], "p": 0.7},
+      {"addr": "0x006E2114", "offset": "0x1F", "type": "u8", "count": 30, "stride": 32, "choices": [0]}
+    ]
+  }
+}

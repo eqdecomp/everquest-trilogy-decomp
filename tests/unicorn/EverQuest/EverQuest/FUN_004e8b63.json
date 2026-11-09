@@ -1,0 +1,181 @@
+{
+  "function": "MainThread",
+  "original": "0x004e8b63",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [{"offset": "0x4", "u32": 0}]
+    }
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@everquest"},
+    {"addr": "0x006efe30", "u32": 1}
+  ],
+  "callees": {
+    "kernel32.dll!Sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 0
+    },
+    "user32.dll!GetMessageA": {
+      "name": "GetMessageA",
+      "conv": "stdcall",
+      "args": ["ignore", "ptr", "u32", "u32"],
+      "ret": 0
+    },
+    "user32.dll!TranslateMessage": {
+      "name": "TranslateMessage",
+      "conv": "stdcall",
+      "args": ["ignore"],
+      "ret": 1
+    },
+    "user32.dll!DispatchMessageA": {
+      "name": "DispatchMessageA",
+      "conv": "stdcall",
+      "args": ["ignore"],
+      "ret": 0
+    },
+    "0x004a46b0": {
+      "name": "RandNbr",
+      "conv": "cdecl",
+      "args": []
+    },
+    "0x005213e9": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 100
+    },
+    "user32.dll!PeekMessageA": {
+      "name": "PeekMessageA",
+      "conv": "stdcall",
+      "args": ["ignore", "ptr", "u32", "u32", "u32"],
+      "ret": 0
+    },
+    "0x004c1703": {
+      "name": "DbgLog_guess",
+      "conv": "cdecl",
+      "args": ["cstr"]
+    },
+    "0x004c49ee": {
+      "name": "CEverQuest::~CEverQuest_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "kernel32.dll!DeleteCriticalSection": {
+      "name": "DeleteCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "dispatch sets quit flag and jumps to cleanup",
+      "memory": [{"addr": "0x006efe30", "u32": 0}],
+      "callees": {
+        "user32.dll!GetMessageA": {
+          "name": "GetMessageA", "conv": "stdcall", "args": ["ignore", "ptr", "u32", "u32"], "ret": 1
+        },
+        "user32.dll!DispatchMessageA": {
+          "name": "DispatchMessageA", "conv": "stdcall", "args": ["ignore"], "ret": 0,
+          "writes": [{"addr": "0x006efe30", "hex": "01000000"}]
+        }
+      }
+    },
+    {
+      "name": "zero GetMessage result while quit flag is set",
+      "callees": {
+        "user32.dll!GetMessageA": {
+          "name": "GetMessageA", "conv": "stdcall", "args": ["ignore", "ptr", "u32", "u32"], "ret": 0
+        }
+      }
+    },
+    {
+      "name": "wait for global game object",
+      "memory": [
+        {"addr": "0x006efe2c", "u32": 0},
+        {"addr": "0x006efe30", "u32": 1},
+        {"addr": "0x006efe34", "u32": 0}
+      ],
+      "callees": {
+        "kernel32.dll!Sleep": {
+          "name": "Sleep", "conv": "stdcall", "args": ["u32"], "ret": 0,
+          "writes": [{"addr": "0x006efe2c", "hex": "30fe6e00"}]
+        }
+      }
+    },
+    {
+      "name": "wait until game state leaves six",
+      "memory": [
+        {"addr": "@everquest", "offset": "0x4", "u32": 6},
+        {"addr": "0x006efe30", "u32": 1}
+      ],
+      "callees": {
+        "kernel32.dll!Sleep": {
+          "name": "Sleep", "conv": "stdcall", "args": ["u32"], "ret": 0,
+          "writes": [{"addr": "@everquest+0x4", "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "twelfth message calls RandNbr and sets quit flag",
+      "memory": [{"addr": "0x006efe30", "u32": 0}],
+      "callees": {
+        "user32.dll!GetMessageA": {
+          "name": "GetMessageA", "conv": "stdcall", "args": ["ignore", "ptr", "u32", "u32"],
+          "ret": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
+        },
+        "0x004a46b0": {
+          "name": "RandNbr_guess", "conv": "cdecl", "args": [],
+          "writes": [{"addr": "0x006efe30", "hex": "01000000"}]
+        }
+      }
+    },
+    {
+      "name": "peek messages until six seconds have elapsed",
+      "callees": {
+        "user32.dll!PeekMessageA": {
+          "name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "ptr", "u32", "u32", "u32"],
+          "ret": [1, 1, 0]
+        },
+        "0x005213e9": {
+          "name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": [100, 105, 106]
+        }
+      }
+    },
+    {
+      "name": "unsigned subtraction treats a backwards clock as elapsed",
+      "callees": {
+        "user32.dll!PeekMessageA": {
+          "name": "PeekMessageA", "conv": "stdcall", "args": ["ignore", "ptr", "u32", "u32", "u32"], "ret": 1
+        },
+        "0x005213e9": {
+          "name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": [100, 99]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5147491,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "@everquest", "offset": "0x4", "type": "u32", "range": [0, 5]},
+      {"addr": "0x006efe30", "type": "u32", "choices": [1, 2, 2147483647]}
+    ]
+  }
+}

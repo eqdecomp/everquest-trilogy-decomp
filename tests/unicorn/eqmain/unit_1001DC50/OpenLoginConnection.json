@@ -1,0 +1,290 @@
+{
+  "function": "OpenLoginConnection_guess",
+  "original": "0x100212e0",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "char",
+  "memory": [
+    {"addr": "0x101258b0", "u8": 0},
+    {"addr": "0x10125844", "u8": 0},
+    {"addr": "0x10125638", "u32": 0},
+    {"addr": "0x10047f78", "cstr": "guest"}
+  ],
+  "callees": {
+    "0x10028750": {
+      "name": "FUN_10028750",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ]
+    },
+    "0x10024f10": {
+      "name": "FUN_10024f10",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x10024e90": {
+      "name": "FUN_10024e90",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x1002a460": {
+      "name": "rdp_create_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u16",
+        "int",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10028850": {
+      "name": "cleanupMemoryPool_guess",
+      "conv": "stdcall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "flag 1 returns at once",
+      "args": ["guest"],
+      "memory": [{"addr": "0x101258b0", "u8": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "flag 1 returns at once for any string",
+      "args": ["zzz"],
+      "memory": [{"addr": "0x101258b0", "u8": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "flag 2 is not the early return",
+      "args": ["zzz"],
+      "memory": [{"addr": "0x101258b0", "u8": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "flag 0x81 is not the early return, login path ok",
+      "args": ["login"],
+      "memory": [{"addr": "0x101258b0", "u8": 129}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "flag 2, guest, rdp fails: flag cleared",
+      "args": ["guest"],
+      "memory": [{"addr": "0x101258b0", "u8": 2}],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest, rdp ok",
+      "args": ["guest"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "guest, rdp fails",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest, rdp 0x10000 (low word 0)",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 65536}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "guest, rdp 0x8000 (low word negative)",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 32768}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest, rdp 0xffff",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 65535}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest, rdp 0x7fff0000 (low word 0)",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 2147418112}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "guest, rdp 0xffff0000 (low word 0)",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": -65536}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "guest, rdp 0x100 (low word 0x100)",
+      "args": ["guest"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 256}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login, rdp ok",
+      "args": ["login"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "login, rdp fails",
+      "args": ["login"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login, rdp 0x10000 (low word 0)",
+      "args": ["login"],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 65536}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "empty string matches an empty DAT_10047f78",
+      "args": [""],
+      "memory": [{"addr": "0x10047f78", "cstr": ""}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "empty string matches an empty DAT_10047f78, rdp fails",
+      "args": [""],
+      "memory": [{"addr": "0x10047f78", "cstr": ""}],
+      "callees": {"0x1002a460": {"name": "rdp_create_guess", "conv": "cdecl", "args": ["ptr", "u16", "int", "u32"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "other string",
+      "args": ["zzz"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty string",
+      "args": [""],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "log (prefix of login)",
+      "args": ["log"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "logins (login + s)",
+      "args": ["logins"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "LOGIN (case)",
+      "args": ["LOGIN"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login + space",
+      "args": ["login "],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "space + login",
+      "args": [" login"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login mismatch at byte 0 (below)",
+      "args": ["Xogin"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login mismatch at byte 0 (above)",
+      "args": ["xogin"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login mismatch at byte 1",
+      "args": ["lxgin"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login mismatch at byte 2",
+      "args": ["loxin"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login mismatch at byte 3",
+      "args": ["logxn"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "login mismatch at the NUL after login",
+      "args": ["loginx"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest mismatch at byte 0",
+      "args": ["Guest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest mismatch at byte 1",
+      "args": ["gXest"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest mismatch at byte 2",
+      "args": ["guXst"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest mismatch at byte 3",
+      "args": ["gueSt"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest mismatch at the NUL after guest",
+      "args": ["guestx"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest prefix (gues)",
+      "args": ["gues"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guest prefix (gu)",
+      "args": ["gu"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "guests (guest + s)",
+      "args": ["guests"],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 4711213,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["login", "guest", "", "log", "logins", "LOGIN", "gues", "guests", "zzz", "Guest", "login ", " guest", "guestx", "loginx", "Xogin", "guXst", "gu", "logi", "lo"]
+      }
+    ],
+    "memory": [
+      {"addr": "0x101258b0", "type": "u8", "choices": [0, 0, 1, 2, 129, 255]},
+      {"addr": "0x10047f78", "type": "u8", "choices": [103, 103, 103, 0, 88]}
+    ]
+  }
+}

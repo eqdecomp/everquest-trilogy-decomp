@@ -1,0 +1,175 @@
+{
+  "function": "t3dSetTrackDefinitionTransformation",
+  "original": "0x1001cf5e",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "definition", "type": "ptr"},
+    {"name": "frame", "type": "u32"},
+    {"name": "scale", "type": "float"},
+    {"name": "z_angle", "type": "float"},
+    {"name": "x_angle", "type": "float"},
+    {"name": "y_angle", "type": "float"},
+    {"name": "position", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": "@instance_list"},
+        {"offset": "0x18", "u32": "@fallback_list"}
+      ]
+    },
+    "instance_list": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 3},
+        {"offset": "0x4", "u32": "@instance_frames"}
+      ]
+    },
+    "fallback_list": {
+      "size": "0x0c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 4},
+        {"offset": "0x4", "u32": "@packed_frames"}
+      ]
+    },
+    "instance_frames": {"size": "0x144", "fill": "random"},
+    "packed_frames": {"size": "0x90", "fill": "random"},
+    "position": {"size": "0x10", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1001cfd0": {
+      "name": "t3dSetTrackTransformation_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "float", "float", "float", "ptr"]
+    },
+    "0x1001d009": {
+      "name": "s3dPackTrackTransformation_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "float", "float", "float", "float", "ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "instance list: frame two with distinct argument values",
+      "args": ["@definition", 2, 1.25, -0.5, 1.75, -2.5, "@position"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance list: frame zero",
+      "args": ["@definition", 0, 0.75, 0.25, -0.75, 1.5, "@position"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance list: frame equals count",
+      "args": ["@definition", 3, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "instance list: frame above count",
+      "args": ["@definition", 4, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback list: frame one",
+      "args": ["@definition", 1, 1.25, -0.5, 1.75, -2.5, "@position"],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fallback list: frame zero",
+      "args": ["@definition", 0, 0.75, 0.25, -0.75, 1.5, "@position"],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fallback list: frame equals count",
+      "args": ["@definition", 4, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback list: frame above count",
+      "args": ["@definition", 5, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [{"addr": "@definition", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback list: zero count rejects frame zero",
+      "args": ["@definition", 0, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback_list", "offset": "0x0", "u32": 0}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback list: one frame accepts frame zero",
+      "args": ["@definition", 0, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback_list", "offset": "0x0", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance list: zero count rejects frame zero",
+      "args": ["@definition", 0, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "instance count is compared unsigned against a high frame",
+      "args": ["@definition", "0x80000000", 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": "0xffffffff"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance count maximum accepts frame one below maximum",
+      "args": ["@definition", "0xfffffffe", 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": "0xffffffff"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "instance maximum frame equals maximum count",
+      "args": ["@definition", "0xffffffff", 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [{"addr": "@instance_list", "offset": "0x0", "u32": "0xffffffff"}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback count maximum remains unsigned",
+      "args": ["@definition", 5, 1.0, 2.0, 3.0, 4.0, "@position"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@fallback_list", "offset": "0x0", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 118622,
+    "count": 40,
+    "args": [
+      {"choices": ["@definition"]},
+      {"choices": [0, 1, 2, 3, 4, 5, 8, "0x80000000", "0xffffffff"]},
+      {"choices": [-4.0, -0.5, 0.0, 0.75, 3.25]},
+      {"choices": [-4.0, -0.5, 0.0, 0.75, 3.25]},
+      {"choices": [-4.0, -0.5, 0.0, 0.75, 3.25]},
+      {"choices": [-4.0, -0.5, 0.0, 0.75, 3.25]},
+      {"choices": ["@position"]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": ["@instance_list", 0]},
+      {"addr": "@instance_list", "offset": "0x0", "type": "u32", "range": [0, 8]},
+      {"addr": "@fallback_list", "offset": "0x0", "type": "u32", "range": [0, 8]}
+    ]
+  }
+}

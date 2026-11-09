@@ -1,0 +1,101 @@
+{
+  "function": "s3dCollideMovingSphereWithDMEdge",
+  "original": "0x1000405b",
+  "sources": ["src/eqgfx/unit_10001000.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "sphere", "type": "ptr"},
+    {"name": "segment_start", "type": "ptr"},
+    {"name": "segment_end", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "sphere": {
+      "size": "0x68",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "f32": 5.0},
+        {"offset": "0x0c", "f32": 1.0},
+        {"offset": "0x10", "f32": -0.5},
+        {"offset": "0x2c", "f32": 0.0},
+        {"offset": "0x30", "f32": 0.0},
+        {"offset": "0x34", "f32": 1.0},
+        {"offset": "0x38", "f32": 1.0},
+        {"offset": "0x3c", "f32": 2.0},
+        {"offset": "0x44", "f32": 0.75},
+        {"offset": "0x50", "f32": 100.0}
+      ]
+    },
+    "segment_start": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0c", "f32": 3.0}]
+    },
+    "segment_end": {
+      "size": "0x0c",
+      "fill": "zero",
+      "init": [{"offset": "0x00", "f32": 10.0}]
+    },
+    "inverse_sqrt": {
+      "size": "0x01",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x10076284", "f32": 0.0},
+    {"addr": "0x100fc77c", "u32": "@inverse_sqrt"}
+  ],
+  "callees": {
+    "@inverse_sqrt": {
+      "name": "inverse_sqrt",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 0.1
+    },
+    "0x1004ef68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 1.0
+    },
+    "0x10003331": {
+      "name": "s3dCollideMovingSphereWithVertex",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "negative candidate normalizes the perpendicular", "args": ["@sphere", "@segment_start", "@segment_end"]},
+    {"name": "positive candidate applies configured normal scale", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x10", "f32": -2.0}]},
+    {"name": "zero candidate follows the nonnegative branch", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x10", "f32": -2.0}, {"addr": "@sphere", "offset": "0x38", "f32": 0.0}]},
+    {"name": "candidate equal to limit falls back", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x10", "f32": -2.0}, {"addr": "@sphere", "offset": "0x50", "f32": 1.0}]},
+    {"name": "contact at segment start is excluded", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x08", "f32": 0.0}, {"addr": "@sphere", "offset": "0x10", "f32": -2.0}]},
+    {"name": "contact at segment end is excluded", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x08", "f32": 10.0}, {"addr": "@sphere", "offset": "0x10", "f32": -2.0}]},
+    {"name": "positive plane-distance boundary", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x0c", "f32": 2.0}]},
+    {"name": "negative plane-distance boundary", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x0c", "f32": -2.0}]},
+    {"name": "zero oriented-plane boundary", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x08", "f32": 5.0}, {"addr": "@sphere", "offset": "0x0c", "f32": 3.0}, {"addr": "@sphere", "offset": "0x10", "f32": 1.0}, {"addr": "@segment_start", "offset": "0x04", "f32": 2.0}, {"addr": "@segment_start", "offset": "0x08", "f32": 1.0}, {"addr": "@segment_end", "offset": "0x04", "f32": 2.0}, {"addr": "@segment_end", "offset": "0x08", "f32": 1.0}]},
+    {"name": "zero cross-product returns zero", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x2c", "f32": 1.0}, {"addr": "@sphere", "offset": "0x34", "f32": 0.0}]},
+    {"name": "second half-plane condition fails", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x10", "f32": 0.5}]},
+    {"name": "zero candidate fails segment-start boundary", "args": ["@sphere", "@segment_start", "@segment_end"], "memory": [{"addr": "@sphere", "offset": "0x10", "f32": -1.0}, {"addr": "@sphere", "offset": "0x08", "f32": 0.0}]}
+  ],
+  "fuzz": {
+    "seed": 16475,
+    "count": 40,
+    "args": [
+      {"choices": ["@sphere"]},
+      {"choices": ["@segment_start"]},
+      {"choices": ["@segment_end"]}
+    ],
+    "memory": [
+      {"addr": "@sphere", "offset": "0x08", "type": "float", "count": 3, "range": [-4, 12]},
+      {"addr": "@sphere", "offset": "0x2c", "type": "float", "count": 3, "range": [-2, 2]},
+      {"addr": "@sphere", "offset": "0x38", "type": "float", "range": [-2, 2]},
+      {"addr": "@sphere", "offset": "0x3c", "type": "float", "range": [-4, 4]},
+      {"addr": "@sphere", "offset": "0x44", "type": "float", "range": [-2, 2]},
+      {"addr": "@sphere", "offset": "0x50", "type": "float", "range": [-3, 5]},
+      {"addr": "@segment_start", "type": "float", "count": 3, "range": [-3, 3]},
+      {"addr": "@segment_end", "type": "float", "count": 3, "range": [-3, 10]}
+    ]
+  }
+}

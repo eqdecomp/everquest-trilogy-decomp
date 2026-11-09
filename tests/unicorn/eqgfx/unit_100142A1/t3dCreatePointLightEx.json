@@ -1,0 +1,358 @@
+{
+  "function": "t3dCreatePointLightEx",
+  "original": "0x10014356",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "owner",
+      "type": "ptr"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    },
+    {
+      "name": "radius",
+      "type": "float"
+    },
+    {
+      "name": "bindImmediately",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 7
+        }
+      ]
+    },
+    "position": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "f32": 1.25
+        },
+        {
+          "offset": "0x4",
+          "f32": -2.5
+        },
+        {
+          "offset": "0x8",
+          "f32": 3.75
+        }
+      ]
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "block": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@light",
+        "@block"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000129d": {
+      "name": "traverseLightInfluenceBsp_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "outer allocation failure",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        1.5,
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "secondary allocation failure frees light",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        1.5,
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@light",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "registration failure frees block then light",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        2.25,
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -7
+        }
+      }
+    },
+    {
+      "name": "mode zero creates without binding",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        0.0,
+        0
+      ]
+    },
+    {
+      "name": "mode exactly one binds successfully",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        9.5,
+        1
+      ]
+    },
+    {
+      "name": "binding failure runs cleanup and returns null",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        -4.0,
+        1
+      ],
+      "callees": {
+        "0x1000129d": {
+          "name": "FUN_1000129d",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "mode two skips binding",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        6.0,
+        2
+      ],
+      "callees": {
+        "0x1000129d": null
+      }
+    },
+    {
+      "name": "negative mode skips binding",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        -0.0,
+        -1
+      ],
+      "callees": {
+        "0x1000129d": null
+      }
+    },
+    {
+      "name": "owner count wraps from INT_MAX",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        1.0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 2147483647
+        }
+      ]
+    },
+    {
+      "name": "distinct position and negative radius",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        -13.75,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x0",
+          "f32": -11.5
+        },
+        {
+          "addr": "@position",
+          "offset": "0x4",
+          "f32": 0.125
+        },
+        {
+          "addr": "@position",
+          "offset": "0x8",
+          "f32": 44.0
+        }
+      ]
+    },
+    {
+      "name": "registration success leaves owner count incremented",
+      "args": [
+        "@context",
+        "@owner",
+        "@position",
+        1.0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 82774,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@owner"
+        ]
+      },
+      {
+        "choices": [
+          "@position"
+        ]
+      },
+      {}
+      ,
+      {
+        "range": [
+          -4,
+          4
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "int"
+      },
+      {
+        "addr": "@position",
+        "offset": "0x0",
+        "type": "float",
+        "count": 3,
+        "stride": 4
+      }
+    ]
+  }
+}

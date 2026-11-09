@@ -1,0 +1,287 @@
+{
+  "function": "NetworkConnection_disconnect_guess",
+  "original": "0x1002db50",
+  "sources": [
+    "src/eqmain/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "ptr"
+    },
+    {
+      "name": "param_4",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0c", "u32": "@state" },
+        { "offset": "0x488", "u16": 2 },
+        { "offset": "0x6d0", "u16": 2 }
+      ]
+    },
+    "state": {
+      "size": "0x140",
+      "fill": "zero",
+      "init": [
+        { "offset": "0xa4", "u32": 2 }
+      ]
+    },
+    "param_3": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "param_4": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e6e0": {
+      "name": "connhash_lock_perf",
+      "conv": "cdecl",
+      "args": [ "ptr", "ptr" ],
+      "ret": 0
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [ "ptr" ],
+      "ret": 0
+    },
+    "0x1002e120": {
+      "name": "rdp_queue_count",
+      "conv": "cdecl",
+      "args": [ "ptr" ],
+      "passthrough": true
+    },
+    "0x10030ff0": {
+      "name": "rdp_queue_update",
+      "conv": "cdecl",
+      "args": [ "ptr", "int" ],
+      "ret": 0
+    },
+    "0x1002e8e0": {
+      "name": "wait_for_event_with_timeout",
+      "conv": "cdecl",
+      "args": [ "ptr", "u32" ],
+      "ret": 0
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [ "ptr" ],
+      "ret": 0
+    },
+    "0x1002ae10": {
+      "name": "close_connection_and_cleanup",
+      "conv": "cdecl",
+      "args": [ "int", "int" ],
+      "ret": 0
+    },
+    "0x1002eb40": {
+      "name": "cleanup_connection_queues",
+      "conv": "cdecl",
+      "args": [ "int" ],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 123456
+    },
+    "0x1002bd40": {
+      "name": "NetworkConnection_send_disconnect_message",
+      "conv": "cdecl",
+      "args": [ "int" ],
+      "ret": 0
+    },
+    "0x10028ae0": {
+      "name": "rdp_resort",
+      "conv": "cdecl",
+      "args": [ "int", "int" ],
+      "ret": 0
+    },
+    "0x10030a00": {
+      "name": "uevent_signal",
+      "conv": "cdecl",
+      "args": [ "ptr" ],
+      "ret": 0
+    },
+    "0x10028bf0": {
+      "name": "rdp_unlock",
+      "conv": "cdecl",
+      "args": [ "ptr" ],
+      "ret": 77
+    }
+  },
+  "cases": [
+    {
+      "name": "null connection returns 6 and touches no outputs",
+      "args": [ 0, 1, "@param_3", "@param_4" ],
+      "expect": { "ret": 6 }
+    },
+    {
+      "name": "close now, first test false (0x6cc set, words equal): param_3 = 1, param_4 signaled",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [ { "addr": "@conn", "offset": "0x6cc", "u32": 1 } ]
+    },
+    {
+      "name": "close now, first test false, null out-pointers",
+      "args": [ "@conn", 0, 0, 0 ],
+      "memory": [ { "addr": "@conn", "offset": "0x6cc", "u32": 1 } ]
+    },
+    {
+      "name": "deferred, 0x6d4 and 0x6d8 set: param_3 = 1, param_4 signaled",
+      "args": [ "@conn", 25, "@param_3", "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6d4", "u32": 1 },
+        { "addr": "@conn", "offset": "0x6d8", "u32": 1 }
+      ]
+    },
+    {
+      "name": "close now, 0x6d4 zero, words equal: param_3 = 0, param_4 signaled, queue not drained",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ]
+    },
+    {
+      "name": "close now, 0x6d4 zero, words differ: param_3 = 0 and param_4 signaled",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6cc", "u32": 1 },
+        { "addr": "@conn", "offset": "0x6d0", "u16": 1 }
+      ]
+    },
+    {
+      "name": "close now, 0x6d4 set, 0x6d8 zero: bVar2 kept, param_3 = 0 from the close, param_4 signaled",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [ { "addr": "@conn", "offset": "0x6d4", "u32": 1 } ]
+    },
+    {
+      "name": "close now, bVar2 kept, null param_3: param_4 still signaled",
+      "args": [ "@conn", 0, 0, "@param_4" ],
+      "memory": [ { "addr": "@conn", "offset": "0x6d4", "u32": 1 } ]
+    },
+    {
+      "name": "deferred, bVar2 kept: out-pointers stored in the connection, param_4 not signaled",
+      "args": [ "@conn", 40, "@param_3", "@param_4" ],
+      "memory": [ { "addr": "@conn", "offset": "0x6d4", "u32": 1 } ]
+    },
+    {
+      "name": "deferred, bVar2 kept, null out-pointers",
+      "args": [ "@conn", 40, 0, 0 ],
+      "memory": [ { "addr": "@conn", "offset": "0x6d4", "u32": 1 } ]
+    },
+    {
+      "name": "deferred, bVar2 clear: out-pointers stored as 0, param_4 signaled",
+      "args": [ "@conn", 40, "@param_3", "@param_4" ]
+    },
+    {
+      "name": "deferred, 0x6d4 and 0x6d8 set, null param_3: param_4 signaled",
+      "args": [ "@conn", 7, 0, "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6d4", "u32": 1 },
+        { "addr": "@conn", "offset": "0x6d8", "u32": 1 }
+      ]
+    },
+    {
+      "name": "0x6d4 set, 0x6cc set, words differ: bVar2 kept through the mismatch test",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6d4", "u32": 1 },
+        { "addr": "@conn", "offset": "0x6cc", "u32": 1 },
+        { "addr": "@conn", "offset": "0x6d0", "u16": 1 }
+      ]
+    },
+    {
+      "name": "0x6d4 set, 0x6cc set, words equal: first test false, param_3 = 1",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6d4", "u32": 1 },
+        { "addr": "@conn", "offset": "0x6cc", "u32": 1 }
+      ]
+    },
+    {
+      "name": "empty queue before the update: no second count, no wait",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [ { "addr": "@state", "offset": "0xa4", "u32": 0 } ]
+    },
+    {
+      "name": "bVar2 set by the first test, queue empty: close, param_3 = 0 and param_4 signaled",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6d4", "u32": 1 },
+        { "addr": "@state", "offset": "0xa4", "u32": 0 }
+      ]
+    },
+    {
+      "name": "bVar2 set by the first test, queue empty: deferred stores the out-pointers",
+      "args": [ "@conn", 40, "@param_3", "@param_4" ],
+      "memory": [
+        { "addr": "@conn", "offset": "0x6d4", "u32": 1 },
+        { "addr": "@state", "offset": "0xa4", "u32": 0 }
+      ]
+    },
+    {
+      "name": "queue drained by the update: wait_for_event on the event at +0xa0",
+      "args": [ "@conn", 0, "@param_3", "@param_4" ],
+      "callees": {
+        "0x10030ff0": {
+          "name": "rdp_queue_update",
+          "conv": "cdecl",
+          "args": [ "ptr", "int" ],
+          "ret": 0,
+          "writes": [ { "arg": 0, "offset": 0, "hex": "00000000" } ]
+        }
+      }
+    },
+    {
+      "name": "queue drained, deferred with null out-pointers",
+      "args": [ "@conn", 3, 0, 0 ],
+      "callees": {
+        "0x10030ff0": {
+          "name": "rdp_queue_update",
+          "conv": "cdecl",
+          "args": [ "ptr", "int" ],
+          "ret": 0,
+          "writes": [ { "arg": 0, "offset": 0, "hex": "00000000" } ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 187216,
+    "count": 40,
+    "args": [
+      { "choices": [ "@conn", "@conn", "@conn", 0 ] },
+      { "choices": [ 0, 0, 1, 2, 7, 40, 1000, -1 ] },
+      { "choices": [ "@param_3", 0 ] },
+      { "choices": [ "@param_4", 0 ] }
+    ],
+    "memory": [
+      { "addr": "@conn", "offset": "0x6d4", "type": "u32", "range": [ 0, 2 ] },
+      { "addr": "@conn", "offset": "0x6d8", "type": "u32", "range": [ 0, 1 ] },
+      { "addr": "@conn", "offset": "0x6cc", "type": "u32", "range": [ 0, 1 ] },
+      { "addr": "@conn", "offset": "0x6d0", "type": "u16", "range": [ 0, 3 ] },
+      { "addr": "@conn", "offset": "0x488", "type": "u16", "range": [ 0, 3 ] },
+      { "addr": "@state", "offset": "0xa4", "type": "u32", "range": [ 0, 3 ] },
+      { "addr": "@state", "offset": "0xac", "type": "u32", "range": [ 0, 3 ] },
+      { "addr": "@state", "offset": "0x138", "type": "u32", "range": [ 0, 5 ] }
+    ]
+  }
+}

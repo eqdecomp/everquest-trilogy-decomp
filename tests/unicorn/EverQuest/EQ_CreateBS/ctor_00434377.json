@@ -1,0 +1,187 @@
+{
+  "function": "EQ_CreateBS4::EQ_CreateBS4",
+  "original": "0x00434377",
+  "sources": [
+    "src/EverQuest/EQ_CreateBS.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_createbs4",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "eq_createbs4": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "setrectfn": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00534248",
+      "u32": "@setrectfn"
+    },
+    {
+      "addr": "0x006E4DE0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450049": {
+      "name": "EQ_Overlay::EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "@setrectfn": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "000000000000000080020000e0010000"
+        }
+      ]
+    },
+    "0x00450168": {
+      "name": "EQ_Overlay::load_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "zero selects locgold bitmap and preserves untouched bytes",
+      "args": [],
+      "objects": {
+        "eq_createbs4": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x14", "hex": "11111111222222223333333344444444" },
+            { "offset": "0x24", "hex": "aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb" }
+          ]
+        },
+        "display": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [{ "offset": "0x88", "u32": 0 }]
+        }
+      }
+    },
+    {
+      "name": "one selects locnewy bitmap",
+      "args": [],
+      "objects": {
+        "display": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [{ "offset": "0x88", "u32": 1 }]
+        }
+      }
+    },
+    {
+      "name": "negative one is nonzero",
+      "args": [],
+      "objects": {
+        "display": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [{ "offset": "0x88", "u32": "0xffffffff" }]
+        }
+      }
+    },
+    {
+      "name": "sign bit only is nonzero",
+      "args": [],
+      "objects": {
+        "display": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [{ "offset": "0x88", "u32": "0x80000000" }]
+        }
+      }
+    },
+    {
+      "name": "distinct rectangle inputs witness call order",
+      "args": [],
+      "objects": {
+        "eq_createbs4": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x14", "hex": "0123456789abcdeffedcba9876543210" },
+            { "offset": "0x24", "hex": "00112233445566778899aabbccddeeff" },
+            { "offset": "0x34", "hex": "cccccccccccccccccccccccccccccccc" },
+            { "offset": "0x52", "hex": "dddddddddddddddddddddddddddddddd" }
+          ]
+        },
+        "display": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [{ "offset": "0x88", "u32": 0 }]
+        }
+      }
+    },
+    {
+      "name": "all ones in uninitialized object storage",
+      "args": [],
+      "objects": {
+        "eq_createbs4": { "size": "0x100", "fill": "zero", "init": [{ "offset": "0x0", "hex": "ffffffffffffffffffffffffffffffff" }] },
+        "display": { "size": "0x100", "fill": "zero", "init": [{ "offset": "0x88", "u32": 0 }] }
+      }
+    },
+    {
+      "name": "plus-offset field is zero while minus-offset field is nonzero",
+      "args": [],
+      "objects": {
+        "display": {
+          "size": "0x180",
+          "fill": "zero",
+          "init": [
+            { "offset": "0x8", "u32": 1 },
+            { "offset": "0x118", "u32": 0 }
+          ]
+        }
+      },
+      "memory": [
+        { "addr": "0x006E4DE0", "u32": "@display+0x90" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4408183,
+    "count": 32,
+    "args": [],
+    "memory": [
+      { "addr": "@eq_createbs4", "size": 256 },
+      { "addr": "@display", "offset": "0x88", "type": "u32", "range": [0, 4294967295] }
+    ]
+  }
+}

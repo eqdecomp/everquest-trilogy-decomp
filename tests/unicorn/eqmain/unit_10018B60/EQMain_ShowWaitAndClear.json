@@ -1,0 +1,181 @@
+{
+  "function": "EQMain_ShowWaitAndClear_guess",
+  "original": "0x100197f0",
+  "sources": [
+    "src/eqmain/unit_10018B60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "timeGetTime": {"size": "0x10"},
+    "wrap": {"size": "0x40", "fill": "random"},
+    "wrap2": {"size": "0x40", "fill": "random"},
+    "msgfz": {"size": "0x10", "fill": "zero"},
+    "msg3": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 3}]},
+    "msg4": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 4}]},
+    "msg5": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 5}]},
+    "msg104": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 260}]}
+  },
+  "memory": [
+    {"addr": "0x1004ceb8", "u32": "@wrap"},
+    {"addr": "0x1004ce78", "u8": 1},
+    {"addr": "0x10040244", "u32": "@timeGetTime"}
+  ],
+  "callees": {
+    "0x10007bf0": {"name": "FUN_10007bf0", "conv": "cdecl", "args": ["int", "cstr", "int"]},
+    "0x10003a00": {"name": "FUN_10003a00", "conv": "cdecl", "args": []},
+    "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 1000, 2000, 3000, 5000]},
+    "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msgfz"},
+    "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"]},
+    "0x10006b90": {"name": "FUN_10006b90", "conv": "cdecl", "args": ["int", "u32"], "ret": 0},
+    "0x100039e0": {"name": "FUN_100039e0", "conv": "cdecl", "args": ["int"]}
+  },
+  "cases": [
+    {
+      "name": "typical: no message, timeout after four polls",
+      "args": ["abc"]
+    },
+    {
+      "name": "empty string",
+      "args": [""]
+    },
+    {
+      "name": "no loop: exactly 5000 ms already passed",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 5000]}
+      }
+    },
+    {
+      "name": "no loop: 0x80000000 apart (unsigned compare)",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, "0x80000000"]}
+      }
+    },
+    {
+      "name": "entry: 4999 ms enters the loop, then exits at 5000",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 4999, 5000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg5"}
+      }
+    },
+    {
+      "name": "exit: 4999 keeps looping, 5000 stops",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 4999, 5000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg5"}
+      }
+    },
+    {
+      "name": "exit at exactly 5000 after three polls",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 1000, 2000, 5000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg5"}
+      }
+    },
+    {
+      "name": "wrap-around subtraction (0xFFFFFFF0 -> 0x10 -> 0x1400)",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": ["0xFFFFFFF0", "0x10", "0x1400"]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg5"}
+      }
+    },
+    {
+      "name": "message 4 on the first poll stops the loop at once",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 100]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg4"}
+      }
+    },
+    {
+      "name": "NULL poll, then message 4",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 10, 20]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": [0, "@msg4"]}
+      }
+    },
+    {
+      "name": "message 5, then NULL, then message 4 (free order)",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 10, 20, 30]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": ["@msg5", 0, "@msg4"]}
+      }
+    },
+    {
+      "name": "NULL polls only, timeout after five polls",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 1000, 2000, 3000, 4000, 5000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "message type 3 is not 4",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 1000, 5000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg3"}
+      }
+    },
+    {
+      "name": "message type 0x104 is not 4 (low byte is)",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 1000, 5000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg104"}
+      }
+    },
+    {
+      "name": "DAT_1004ceb8 cleared by FUN_10003a00 (re-read after each call)",
+      "args": ["abc"],
+      "callees": {
+        "0x10003a00": {"name": "FUN_10003a00", "conv": "cdecl", "args": [], "writes": [{"addr": "0x1004ceb8", "hex": "00000000"}]},
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 100]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg4"}
+      }
+    },
+    {
+      "name": "message 4, flag byte already 0",
+      "args": ["xyz"],
+      "memory": [{"addr": "0x1004ce78", "u8": 0}],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [0, 0, 100]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg4"}
+      }
+    },
+    {
+      "name": "start not zero: elapsed is now minus the first reading (3000 -> 3100, 5000, 8000)",
+      "args": ["abc"],
+      "callees": {
+        "@timeGetTime": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [3000, 3100, 5000, 8000]},
+        "0x10003bd0": {"name": "FUN_10003bd0", "conv": "stdcall", "args": [], "ret": "@msg5"}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 104432,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "0x1004ceb8", "type": "ptr", "choices": ["@wrap", "@wrap2"]},
+      {"addr": "0x1004ce78", "type": "u8", "range": [0, 255]},
+      {"addr": "@msgfz", "type": "u32", "choices": [0, 3, 4, 5, 260]}
+    ]
+  }
+}

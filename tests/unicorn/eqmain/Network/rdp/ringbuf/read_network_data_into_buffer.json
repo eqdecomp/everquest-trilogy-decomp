@@ -1,0 +1,374 @@
+{
+  "function": "read_network_data_into_buffer_guess",
+  "original": "0x100310f0",
+  "sources": [
+    "src/eqmain/Network/rdp/ringbuf.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "ring",
+      "type": "ptr"
+    },
+    {
+      "name": "file",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ring": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@buf"},
+        {"offset": "0x4", "u32": 64}
+      ]
+    },
+    "buf": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "file": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "kernel32.dll!ReadFile": {
+      "name": "ReadFile",
+      "conv": "stdcall",
+      "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+      "ret": 1,
+      "writes": [{"arg": 3, "offset": 0, "hex": "10000000"}]
+    },
+    "kernel32.dll!GetLastError": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 997
+    },
+    "kernel32.dll!GetOverlappedResult": {
+      "name": "GetOverlappedResult",
+      "conv": "stdcall",
+      "args": ["u32", "ptr", "ptr", "int"],
+      "ret": 1,
+      "writes": [{"arg": 2, "offset": 0, "hex": "08000000"}]
+    },
+    "winmm.dll!timeGetTime": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 77
+    }
+  },
+  "cases": [
+    {
+      "name": "empty ring, short read (16 of 64 bytes)",
+      "args": ["@ring", "@file"],
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "empty ring, read fills the buffer: wraps, then stops on count == size",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "40000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "full ring (count == size) with rd == wr: no read",
+      "args": ["@ring", "@file"],
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 64}
+      ]
+    },
+    {
+      "name": "wr before rd: room is rd - wr",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "08000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": 16, "u32": 16}
+      ]
+    },
+    {
+      "name": "wr before rd with count == size still reads (0 bytes)",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "00000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": 16, "u32": 64}
+      ]
+    },
+    {
+      "name": "no room at the end of the buffer (room == 0)",
+      "args": ["@ring", "@file"],
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x40"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "count above size (stale count) still reads",
+      "args": ["@ring", "@file"],
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 80}
+      ]
+    },
+    {
+      "name": "wrap-around over three short reads",
+      "args": ["@ring", "@file"],
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x30"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "fill to the end, wrap, then stop on count == size",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "20000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x20"},
+        {"addr": "@ring", "offset": 16, "u32": 32}
+      ]
+    },
+    {
+      "name": "read returns more than the room: wr passes the end without wrapping",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "20000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x30"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x30"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "pending read, GetOverlappedResult succeeds",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 0,
+          "writes": [{"arg": 3, "offset": 0, "hex": "10000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "pending read, GetOverlappedResult fails: got is reset to 0",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 0,
+          "writes": [{"arg": 3, "offset": 0, "hex": "10000000"}]
+        },
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "ptr", "int"],
+          "ret": 0,
+          "writes": [{"arg": 2, "offset": 0, "hex": "08000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "pending read, GetOverlappedResult fails, one byte of room: got is reset to 0",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": [0, 1],
+          "writes": [{"arg": 3, "offset": 0, "hex": "10000000"}]
+        },
+        "kernel32.dll!GetOverlappedResult": {
+          "name": "GetOverlappedResult",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "ptr", "int"],
+          "ret": 0,
+          "writes": [{"arg": 2, "offset": 0, "hex": "08000000"}]
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x1"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "read error other than pending: no wait, the failed read's count is kept",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 0,
+          "writes": [{"arg": 3, "offset": 0, "hex": "10000000"}]
+        },
+        "kernel32.dll!GetLastError": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 5
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "read error, then a retry that succeeds (three ReadFile calls)",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": [0, 1],
+          "writes": [
+            {"arg": 3, "offset": 0, "hex": "10000000"},
+            {"arg": 4, "offset": 0, "hex": "11111111"},
+            {"arg": 4, "offset": 4, "hex": "22222222"},
+            {"arg": 4, "offset": 8, "hex": "33333333"},
+            {"arg": 4, "offset": 12, "hex": "44444444"},
+            {"arg": 4, "offset": 16, "hex": "55555555"}
+          ]
+        },
+        "kernel32.dll!GetLastError": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 5
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x10"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    },
+    {
+      "name": "successful read that reports no count: got keeps the ring pointer",
+      "args": ["@ring", "@file"],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["u32", "ptr", "u32", "ptr", "mem:20"],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {"addr": "@ring", "offset": 8, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 12, "u32": "@buf+0x0"},
+        {"addr": "@ring", "offset": 16, "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 200944,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@ring"]
+      },
+      {
+        "choices": ["@file"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@ring",
+        "offset": 8,
+        "type": "ptr",
+        "choices": ["@buf+0x0", "@buf+0x4", "@buf+0x8", "@buf+0xc", "@buf+0x10", "@buf+0x14", "@buf+0x18", "@buf+0x1c", "@buf+0x20", "@buf+0x24", "@buf+0x28", "@buf+0x2c", "@buf+0x30", "@buf+0x34", "@buf+0x38", "@buf+0x3c", "@buf+0x40"]
+      },
+      {
+        "addr": "@ring",
+        "offset": 12,
+        "type": "ptr",
+        "choices": ["@buf+0x0", "@buf+0x4", "@buf+0x8", "@buf+0xc", "@buf+0x10", "@buf+0x14", "@buf+0x18", "@buf+0x1c", "@buf+0x20", "@buf+0x24", "@buf+0x28", "@buf+0x2c", "@buf+0x30", "@buf+0x34", "@buf+0x38", "@buf+0x3c", "@buf+0x40"]
+      },
+      {
+        "addr": "@ring",
+        "offset": 16,
+        "type": "u32",
+        "range": [0, 96]
+      }
+    ]
+  }
+}

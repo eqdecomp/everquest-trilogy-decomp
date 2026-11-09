@@ -1,0 +1,106 @@
+{
+  "function": "CDisplay::GetActorWorldPosition_guess",
+  "original": "0x00413f8f",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {"name": "actor", "type": "ptr"},
+    {"name": "position", "type": "ptr"}
+  ],
+  "ret": "bool",
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "random"},
+    "actor": {"size": "0x80", "fill": "random"},
+    "actor_info": {"size": "0x258", "fill": "random"},
+    "transform_owner": {"size": 16},
+    "actor_handle": {"size": 16},
+    "dag": {"size": 16},
+    "world": {"size": 16},
+    "position": {"size": 16, "fill": "random"},
+    "update_transformations": {"size": 16},
+    "get_world_transform": {"size": 16},
+    "alternate_transform": {"size": 16}
+  },
+  "memory": [
+    {"addr": "@display", "offset": "0x4", "u32": "@world"},
+    {"addr": "@actor", "offset": "0x70", "u32": "@actor_info"},
+    {"addr": "@actor_info", "offset": "0x0", "u32": "@actor_handle"},
+    {"addr": "@actor_info", "offset": "0x250", "u32": "@transform_owner"},
+    {"addr": "@actor_info", "offset": "0x254", "u32": "@dag"},
+    {"addr": "0x006e5318", "u32": "@update_transformations"},
+    {"addr": "0x006e52ac", "u32": "@get_world_transform"}
+  ],
+  "callees": {
+    "@update_transformations": {
+      "name": "t3dHierarchicalSpriteUpdateAllTransformations",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": 0
+    },
+    "@get_world_transform": {
+      "name": "t3dGetCurrentDagObjectToWorldTransform",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 2, "offset": 0, "hex": "000020410000a0410000f041"}]
+    },
+    "@alternate_transform": {
+      "name": "alternateWorldTransform",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 2, "offset": 0, "hex": "0100807f0100807f0100807f"}]
+    }
+  },
+  "cases": [
+    {"name": "null actor", "args": [0, "@position"], "expect": {"ret": 0}},
+    {"name": "missing transform owner", "args": ["@actor", "@position"], "memory": [{"addr": "@actor_info", "offset": "0x250", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "missing render world", "args": ["@actor", "@position"], "memory": [{"addr": "@display", "offset": "0x4", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "missing actor handle", "args": ["@actor", "@position"], "memory": [{"addr": "@actor_info", "offset": "0x0", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "missing current dag", "args": ["@actor", "@position"], "memory": [{"addr": "@actor_info", "offset": "0x254", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "successful transform writes x y z", "args": ["@actor", "@position"], "expect": {"ret": 1}},
+    {
+      "name": "sNaN transform only x passes through x87",
+      "args": ["@actor", "@position"],
+      "callees": {
+        "@get_world_transform": {
+          "name": "t3dGetCurrentDagObjectToWorldTransform",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "ret": 0,
+          "writes": [{"arg": 2, "offset": 0, "hex": "0100807f0100807f0100807f"}]
+        }
+      }
+    },
+    {
+      "name": "first helper updates cached DAG and transform slot",
+      "args": ["@actor", "@position"],
+      "memory": [{"addr": "@actor_info", "offset": "0x0", "u32": "@actor_info"}],
+      "callees": {
+        "@update_transformations": {
+          "name": "t3dHierarchicalSpriteUpdateAllTransformations",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "ptr"],
+          "ret": 0,
+          "writes": [
+            {"arg": 2, "offset": 596, "hex": "00000000"},
+            {"addr": "0x006e52ac", "hex": "50310060"}
+          ]
+        }
+      }
+    },
+    {"name": "output aliases actor info and keeps y x z store order", "args": ["@actor", "@actor_info+0x24c"], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 87503,
+    "count": 30,
+    "args": [{"choices": [0, "@actor"]}, {"choices": ["@position"]}],
+    "memory": [
+      {"addr": "@display", "offset": "0x4", "type": "ptr", "choices": [0, "@world"]},
+      {"addr": "@actor_info", "offset": "0x0", "type": "ptr", "choices": [0, "@actor_handle"]},
+      {"addr": "@actor_info", "offset": "0x250", "type": "ptr", "choices": [0, "@transform_owner"]},
+      {"addr": "@actor_info", "offset": "0x254", "type": "ptr", "choices": [0, "@dag"]}
+    ]
+  }
+}

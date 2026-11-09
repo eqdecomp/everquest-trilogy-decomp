@@ -1,0 +1,186 @@
+{
+  "function": "UpdateLight_guess",
+  "original": "0x004a204d",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [{"name": "param_1", "type": "int"}],
+  "ret": "void",
+  "objects": {
+    "spawn": {"size": "0x158", "fill": "zero", "init": [{"offset": "0xa0", "u32": "@player"}]},
+    "player": {"size": "0xa3", "fill": "zero", "init": [{"offset": "0x70", "u32": "@actor"}]},
+    "actor": {"size": "0x9a", "fill": "zero"},
+    "display": {"size": "4", "fill": "zero"},
+    "it0": {"size": "0xbe", "fill": "zero"},
+    "it1": {"size": "0xbe", "fill": "zero"},
+    "it2": {"size": "0xbe", "fill": "zero"},
+    "it3": {"size": "0xbe", "fill": "zero"}
+  },
+  "memory": [{"addr": "0x006e4de0", "u32": "@display"}],
+  "callees": {
+    "0x004108f2": {
+      "name": "CDisplay::GetIntensity",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": [0, 12, 4, 32, 8, 64, 1, 10, 20, 7, 13, 5, 40, 2, 18, 9, 3, 25, 6, 14, 11, 30, 15, 0, 16, 22, 19, 24, 17]
+    },
+    "0x00410602": {"name": "CDisplay::ChangeLight", "conv": "thiscall", "args": ["int"]}
+  },
+  "cases": [
+    {"name": "null argument", "args": [0]},
+    {"name": "null player", "args": ["@spawn"], "memory": [{"addr": "@spawn", "offset": "0xa0", "u32": 0}]},
+    {"name": "null actor exits before scans", "args": ["@spawn"], "memory": [{"addr": "@player", "offset": "0x70", "u32": 0}]},
+    {
+      "name": "skip non-equipment and keep equal first intensity",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0xe4", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0xe8", "u32": "@it1"},
+        {"addr": "@it0", "offset": "0x81", "u8": 1},
+        {"addr": "@it0", "offset": "0xbd", "u8": 15},
+        {"addr": "@it1", "offset": "0x81", "u8": 0},
+        {"addr": "@it1", "offset": "0xbd", "u8": 3}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [20, 20]}}
+    },
+    {
+      "name": "strict first-scan maximum chooses later stronger item",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0xe4", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0xe8", "u32": "@it1"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 3},
+        {"addr": "@it1", "offset": "0xbd", "u8": 7}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [10, 20]}}
+    },
+    {
+      "name": "equal first-scan intensities retain the first light",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0xe4", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0xe8", "u32": "@it1"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 3},
+        {"addr": "@it1", "offset": "0xbd", "u8": 5}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [20, 20]}}
+    },
+    {
+      "name": "zero intensity leaves the first scan empty",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0xe4", "u32": "@it0"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 6},
+        {"addr": "@player", "offset": "0xa2", "u8": 4}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 0}}
+    },
+    {
+      "name": "second scan 8 9 13 14 boundaries",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0x138", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0x13c", "u32": "@it1"},
+        {"addr": "@spawn", "offset": "0x140", "u32": "@it2"},
+        {"addr": "@spawn", "offset": "0x144", "u32": "@it3"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 8},
+        {"addr": "@it1", "offset": "0xbd", "u8": 9},
+        {"addr": "@it2", "offset": "0xbd", "u8": 13},
+        {"addr": "@it3", "offset": "0xbd", "u8": 14}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [0, 0, 0, 0]}}
+    },
+    {
+      "name": "equal second intensity does not override",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0xe4", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0x138", "u32": "@it1"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 4},
+        {"addr": "@it1", "offset": "0xbd", "u8": 9}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [15, 9]}}
+    },
+    {
+      "name": "lower secondary intensity overrides primary light",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0xe4", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0x138", "u32": "@it1"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 7},
+        {"addr": "@it1", "offset": "0xbd", "u8": 13}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [30, 12]}}
+    },
+    {
+      "name": "suppresses night-vision light 1",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 1}, {"addr": "@actor", "offset": "0x99", "u8": 1}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "suppresses night-vision light 2",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 2}, {"addr": "@actor", "offset": "0x99", "u8": 1}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "suppresses night-vision light 4",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 4}, {"addr": "@actor", "offset": "0x99", "u8": 1}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "suppresses night-vision light 6",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 6}, {"addr": "@actor", "offset": "0x99", "u8": 1}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "night vision keeps light 3",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 3}, {"addr": "@actor", "offset": "0x99", "u8": 1}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "actor without night vision keeps light 2",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 2}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "stored light unchanged skips ChangeLight",
+      "args": ["@spawn"],
+      "memory": [{"addr": "@spawn", "offset": "0xe4", "u32": "@it0"}, {"addr": "@it0", "offset": "0xbd", "u8": 5}, {"addr": "@player", "offset": "0xa2", "u8": 5}],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": 10}}
+    },
+    {
+      "name": "21st primary and 8th secondary slots still scan in order",
+      "args": ["@spawn"],
+      "memory": [
+        {"addr": "@spawn", "offset": "0x134", "u32": "@it0"},
+        {"addr": "@spawn", "offset": "0x154", "u32": "@it1"},
+        {"addr": "@it0", "offset": "0xbd", "u8": 8},
+        {"addr": "@it1", "offset": "0xbd", "u8": 12}
+      ],
+      "callees": {"0x004108f2": {"conv": "thiscall", "args": ["int"], "ret": [40, 2]}}
+    }
+  ],
+  "fuzz": {
+    "seed": 4857933,
+    "count": 32,
+    "args": [{"choices": ["@spawn"]}],
+    "memory": [
+      {"addr": "@spawn", "offset": "0xe4", "type": "ptr", "count": 29, "choices": [0, 0, "@it0", "@it1", "@it2", "@it3"]},
+      {"addr": "@player", "offset": "0xa2", "type": "u8"},
+      {"addr": "@actor", "offset": "0x99", "type": "u8", "choices": [0, 0, 1, 2]},
+      {"addr": "@it0", "offset": "0x81", "type": "u8", "choices": [0, 0, 1, 255]},
+      {"addr": "@it1", "offset": "0x81", "type": "u8", "choices": [0, 0, 1, 255]},
+      {"addr": "@it2", "offset": "0x81", "type": "u8", "choices": [0, 0, 1, 255]},
+      {"addr": "@it3", "offset": "0x81", "type": "u8", "choices": [0, 0, 1, 255]},
+      {"addr": "@it0", "offset": "0xbd", "type": "u8"},
+      {"addr": "@it1", "offset": "0xbd", "type": "u8"},
+      {"addr": "@it2", "offset": "0xbd", "type": "u8"},
+      {"addr": "@it3", "offset": "0xbd", "type": "u8"}
+    ]
+  }
+}

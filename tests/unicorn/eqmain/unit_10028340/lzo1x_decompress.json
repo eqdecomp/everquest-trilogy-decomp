@@ -1,0 +1,222 @@
+{
+  "function": "lzo1x_decompress_guess",
+  "original": "0x100284e0",
+  "sources": [
+    "src/eqmain/unit_10028340.cpp"
+  ],
+  "conv": "cdecl",
+  "max_insns": 1000000,
+  "args": [
+    {
+      "name": "in",
+      "type": "ptr"
+    },
+    {
+      "name": "in_len",
+      "type": "int"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    },
+    {
+      "name": "out_len",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "in": {
+      "size": "0x4400",
+      "fill": "random"
+    },
+    "out": {
+      "size": "0x5000",
+      "fill": "random"
+    },
+    "out_len": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty stream: EOF marker only, ends exactly at in_len (ret 0)",
+      "args": ["@in", 3, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "110000"}]
+    },
+    {
+      "name": "empty stream, in_len short: marker overruns the input (ret -4)",
+      "args": ["@in", 2, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "110000"}]
+    },
+    {
+      "name": "empty stream, in_len long: input left over (ret -8)",
+      "args": ["@in", 4, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "110000"}]
+    },
+    {
+      "name": "first byte 18: literal run of 1, then marker",
+      "args": ["@in", 5, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "1241110000"}]
+    },
+    {
+      "name": "first byte 21: literal run of 4 (copy loop), then marker",
+      "args": ["@in", 8, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "1541424344110000"}]
+    },
+    {
+      "name": "first byte 1: literal run of 4 through the first copy only",
+      "args": ["@in", 8, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "0141424344110000"}]
+    },
+    {
+      "name": "first byte 3: literal run of 6 (copy of 4, then the byte tail)",
+      "args": ["@in", 10, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "03414243444546110000"}]
+    },
+    {
+      "name": "first byte 8: literal run of 11 (copy of 4, then 4-byte loop, then tail)",
+      "args": ["@in", 15, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "084142434445464748494a4b110000"}]
+    },
+    {
+      "name": "first byte 9: literal run of 12 (count hits 0 on a 4-byte step)",
+      "args": ["@in", 16, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "094142434445464748494a4b4c110000"}]
+    },
+    {
+      "name": "zero token with one length byte: literal run of 19",
+      "args": ["@in", 24, "@out", "@out_len"],
+      "memory": [
+        {"addr": "@in", "hex": "0001"},
+        {"addr": "@in", "offset": "0x2", "size": 19, "fill": "random"},
+        {"addr": "@in", "offset": "0x15", "hex": "110000"}
+      ]
+    },
+    {
+      "name": "zero token with a zero-run of 2 and a length byte: literal run of 274",
+      "args": ["@in", 280, "@out", "@out_len"],
+      "memory": [
+        {"addr": "@in", "hex": "000001"},
+        {"addr": "@in", "offset": "0x3", "size": 274, "fill": "random"},
+        {"addr": "@in", "offset": "0x115", "hex": "110000"}
+      ]
+    },
+    {
+      "name": "literal run of 2068, then a 3-byte match at distance 2049 after a literal run",
+      "args": ["@in", 2083, "@out", "@out_len"],
+      "memory": [
+        {"addr": "@in", "hex": "00"},
+        {"addr": "@in", "offset": "0x1", "size": 8, "fill": "zero"},
+        {"addr": "@in", "offset": "0x9", "hex": "0a"},
+        {"addr": "@in", "offset": "0xa", "size": 2068, "fill": "random"},
+        {"addr": "@in", "offset": "0x81e", "hex": "0000110000"}
+      ]
+    },
+    {
+      "name": "overlap: out starts 2 bytes into in; literal run of 8 (4-byte copy, then a 4-byte step)",
+      "args": ["@in", 12, "@in+0x2", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "054142434445464711110000"}]
+    },
+    {
+      "name": "literal run of 2068, then token 0x0f: 3-byte match at distance 2056, then 3 literal bytes (state 3)",
+      "args": ["@in", 2086, "@out", "@out_len"],
+      "memory": [
+        {"addr": "@in", "hex": "00"},
+        {"addr": "@in", "offset": "0x1", "size": 8, "fill": "zero"},
+        {"addr": "@in", "offset": "0x9", "hex": "0a"},
+        {"addr": "@in", "offset": "0xa", "size": 2068, "fill": "random"},
+        {"addr": "@in", "offset": "0x81e", "hex": "0f01414243110000"}
+      ]
+    },
+    {
+      "name": "out_len aliases the input at in+0x10: the cell is zeroed before the literal bytes there are read (store order)",
+      "args": ["@in+0xf", 8, "@out", "@in+0x10"],
+      "memory": [{"addr": "@in", "offset": "0xf", "hex": "1541424344110000"}]
+    },
+    {
+      "name": "M2 length 3 at distance 1 (state 0), then marker",
+      "args": ["@in", 10, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "15414243444000110000"}]
+    },
+    {
+      "name": "M2 state 1: literal byte after the match, then marker",
+      "args": ["@in", 11, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "1541424344410045110000"}]
+    },
+    {
+      "name": "M1 after a state-1 literal (short match, distance 1)",
+      "args": ["@in", 13, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "15414243444100450000110000"}]
+    },
+    {
+      "name": "M3 length 3 at distance 4 (non-zero length field)",
+      "args": ["@in", 11, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "1541424344210c00110000"}]
+    },
+    {
+      "name": "M3 length from an extension byte (fast 4-byte copy, distance 4)",
+      "args": ["@in", 12, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "154142434420010c00110000"}]
+    },
+    {
+      "name": "M3 length from a zero-run extension (copy 289)",
+      "args": ["@in", 13, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "15414243442000010c00110000"}]
+    },
+    {
+      "name": "M3 length 8 at distance 1 (overlap, byte copy)",
+      "args": ["@in", 11, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "1541424344260000110000"}]
+    },
+    {
+      "name": "M4 end marker reached through a zero-run extension",
+      "args": ["@in", 5, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "1000010000"}]
+    },
+    {
+      "name": "M4 end marker reached through one extension byte",
+      "args": ["@in", 4, "@out", "@out_len"],
+      "memory": [{"addr": "@in", "hex": "10010000"}]
+    },
+    {
+      "name": "M4 back-reference at distance 0x4001, length from an extension byte (after a 16594-byte literal run)",
+      "args": ["@in", 16668, "@out", "@out_len"],
+      "memory": [
+        {"addr": "@in", "hex": "00"},
+        {"addr": "@in", "offset": "0x1", "size": 65, "fill": "zero"},
+        {"addr": "@in", "offset": "0x42", "hex": "01"},
+        {"addr": "@in", "offset": "0x43", "size": 16594, "fill": "random"},
+        {"addr": "@in", "offset": "0x4115", "hex": "10010400110000"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5017551,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@in"]
+      },
+      {
+        "range": [0, 9]
+      },
+      {
+        "choices": ["@out"]
+      },
+      {
+        "choices": ["@out_len"]
+      }
+    ],
+    "memory": [
+      {"addr": "@in", "offset": "0x0", "type": "u8", "choices": [21]},
+      {"addr": "@in", "offset": "0x1", "type": "u8", "count": 4},
+      {"addr": "@in", "offset": "0x5", "type": "u8", "choices": [17]},
+      {"addr": "@in", "offset": "0x6", "type": "u8", "choices": [0]},
+      {"addr": "@in", "offset": "0x7", "type": "u8", "choices": [0]}
+    ]
+  }
+}

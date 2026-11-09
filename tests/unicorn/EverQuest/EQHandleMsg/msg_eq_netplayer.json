@@ -1,0 +1,274 @@
+{
+  "function": "msg_eq_netplayer",
+  "original": "0x00492ada",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "connection", "type": "ptr"},
+    {"name": "opcode", "type": "u32"},
+    {"name": "data", "type": "ptr"},
+    {"name": "size", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "connection": {"size": "0x100", "fill": "zero"},
+    "data": {"size": "0x100", "fill": "random"},
+    "unpacked": {"size": "0x134", "fill": "zero"},
+    "constructed": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1", "cstr": "Aria"},
+        {"offset": "0x70", "u32": "@actor"},
+        {"offset": "0x98", "u8": 1}
+      ]
+    },
+    "actor": {"size": "0x200", "fill": "zero"},
+    "display": {"size": "0x100", "fill": "zero"},
+    "everquest": {"size": 4, "fill": "zero"},
+    "global_alloc": {"size": 4, "fill": "zero"},
+    "global_free": {"size": 4, "fill": "zero"},
+    "profile": {
+      "size": "0x1000",
+      "fill": "zero",
+      "init": [{"offset": 0, "cstr": "Aria"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x005341A0", "u32": "@global_alloc"},
+    {"addr": "0x00534038", "u32": "@global_free"},
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006E4D58", "u32": 0},
+    {"addr": "0x006E4DE0", "u32": "@display"},
+    {"addr": "0x006E4DA8", "u32": 0},
+    {"addr": "0x006E4D8C", "u32": 0},
+    {"addr": "0x006E4DA0", "u32": 0},
+    {"addr": "0x006E4DA4", "u32": 0},
+    {"addr": "0x006B3190", "u32": 0},
+    {"addr": "0x005FE968", "u8": 0},
+    {"addr": "0x005FE8BD", "size": "0x96", "fill": "zero"},
+    {"addr": "0x005FE954", "size": "0x14", "fill": "zero"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "@global_alloc": {
+      "name": "GlobalAlloc", "conv": "stdcall", "args": ["u32", "u32"], "ret": "@unpacked"
+    },
+    "0x004a3911": {
+      "name": "DecryptZoneSpawnPacket_guess", "conv": "cdecl", "args": ["ptr", "u32"]
+    },
+    "0x004f84d0": {
+      "name": "inflateInit2__guess", "conv": "cdecl",
+      "args": ["ptr", "int", "cstr", "int"], "ret": 0
+    },
+    "0x004f8600": {
+      "name": "inflate_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0,
+      "writes": [{"arg": 0, "offset": 20, "hex": "a8000000"}]
+    },
+    "0x004f8480": {"name": "inflateEnd_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x004a39e3": {
+      "name": "UnPackNetPlayer", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 0
+    },
+    "0x004b1416": {
+      "name": "EQPlayer::GetPlayerFromID_guess", "conv": "thiscall", "args": ["int"], "ret": 0
+    },
+    "0x005218c6": {
+      "name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": "@constructed"
+    },
+    "0x004b03eb": {
+      "name": "EQPlayer::EQPlayer_guess", "conv": "thiscall",
+      "args": ["ptr", "int", "int", "int", "int"], "ret": "@constructed"
+    },
+    "0x004dfe8d": {"name": "FindGuildIndex", "conv": "cdecl", "args": ["int"], "ret": 0},
+    "0x004e1c45": {
+      "name": "send_message_guess", "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:4", "u32", "int"]
+    },
+    "0x004060a7": {"name": "CDisplay::SwapNPCMaterials_guess", "conv": "thiscall", "args": ["ptr"]},
+    "0x00406edc": {
+      "name": "SwapFace", "conv": "thiscall", "args": ["ptr", "int", "int"], "ret": 0
+    },
+    "0x004ae653": {
+      "name": "CDisplay_DoFloorCheck_guess", "conv": "thiscall", "args": ["ptr", "float", "float", "float"]
+    },
+    "0x00410abf": {"name": "CDisplay::UpdatePlayerActor_guess", "conv": "thiscall", "args": ["ptr"]},
+    "0x0040e422": {"name": "CDisplay::SetViewActor", "conv": "thiscall", "args": ["ptr"]},
+    "@global_free": {"name": "GlobalFree", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "GlobalAlloc failure skips packet processing",
+      "args": ["@connection", 1, "@data", 1],
+      "callees": {
+        "@global_alloc": {"name": "GlobalAlloc", "conv": "stdcall", "args": ["u32", "u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "inflated packet contains no spawns",
+      "args": ["@connection", 1, "@data", 1],
+      "callees": {
+        "0x004f8600": {
+          "name": "inflate_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 20, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "reset stale total output before inflating",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [{"addr": "0x0059630C", "u32": 168}],
+      "callees": {
+        "0x004f8600": {"name": "inflate_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0}
+      }
+    },
+    {"name": "one ordinary player updates actor", "args": ["@connection", 1, "@data", 1]},
+    {
+      "name": "existing spawn stops record loop",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [{"addr": "0x006E4D58", "u32": 1}],
+      "callees": {
+        "0x004b1416": {
+          "name": "EQPlayer::GetPlayerFromID_guess", "conv": "thiscall", "args": ["int"], "ret": 1
+        }
+      }
+    },
+    {
+      "name": "operator new failure sets everquest flag",
+      "args": ["@connection", 1, "@data", 1],
+      "callees": {"0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": 0}}
+    },
+    {
+      "name": "missing guild sends guild request",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@constructed", "offset": "0x98", "u8": 0},
+        {"addr": "@constructed", "offset": "0x90", "u16": 7}
+      ],
+      "callees": {"0x004dfe8d": {"name": "FindGuildIndex_guess", "conv": "cdecl", "args": ["int"], "ret": -1}}
+    },
+    {
+      "name": "known guild does not send request",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@constructed", "offset": "0x98", "u8": 0},
+        {"addr": "@constructed", "offset": "0x90", "u16": 7}
+      ],
+      "callees": {"0x004dfe8d": {"name": "FindGuildIndex_guess", "conv": "cdecl", "args": ["int"], "ret": 4}}
+    },
+    {
+      "name": "class 0x17 with zero face",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@constructed", "offset": "0x99", "u8": 23},
+        {"addr": "@constructed", "offset": "0xA3", "u8": 0}
+      ]
+    },
+    {
+      "name": "class 0x17 with nonzero face",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@constructed", "offset": "0x99", "u8": 23},
+        {"addr": "@constructed", "offset": "0xA3", "u8": 4}
+      ]
+    },
+    {
+      "name": "floor delta below 12000",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@display", "offset": "0xBC", "u32": 11999},
+        {"addr": "@actor", "offset": "0x19C", "u32": 0}
+      ]
+    },
+    {
+      "name": "floor delta exactly 12000",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@display", "offset": "0xBC", "u32": 12000},
+        {"addr": "@actor", "offset": "0x19C", "u32": 0}
+      ]
+    },
+    {
+      "name": "floor delta above 12000",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "@display", "offset": "0xBC", "u32": 12001},
+        {"addr": "@actor", "offset": "0x19C", "u32": 0}
+      ]
+    },
+    {
+      "name": "group member name matches player",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "0x005FE968", "u8": 1},
+        {"addr": "0x005FE8BD", "cstr": "Aria"},
+        {"addr": "@constructed", "offset": "0x98", "u8": 0}
+      ]
+    },
+    {
+      "name": "nonplayer type blocks enabled group update",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "0x005FE968", "u8": 1},
+        {"addr": "0x005FE8BD", "cstr": "Aria"},
+        {"addr": "@constructed", "offset": "0x98", "u8": 1}
+      ]
+    },
+    {
+      "name": "two matching group names update separate slots",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "0x005FE968", "u8": 1},
+        {"addr": "0x005FE8BD", "cstr": "Aria"},
+        {"addr": "0x005FE8DB", "cstr": "Aria"},
+        {"addr": "@constructed", "offset": "0x98", "u8": 0}
+      ]
+    },
+    {
+      "name": "local profile name matches player",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [{"addr": "0x006E4DA8", "u32": "@profile"}]
+    },
+    {
+      "name": "two records preserve floor group and profile call order",
+      "args": ["@connection", 1, "@data", 1],
+      "memory": [
+        {"addr": "0x005FE968", "u8": 1},
+        {"addr": "0x005FE8BD", "cstr": "Aria"},
+        {"addr": "0x006E4DA8", "u32": "@profile"},
+        {"addr": "@constructed", "offset": "0x98", "u8": 0},
+        {"addr": "@display", "offset": "0xBC", "u32": 12001},
+        {"addr": "@actor", "offset": "0x19C", "u32": 0}
+      ],
+      "callees": {
+        "0x004f8600": {
+          "name": "inflate_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0,
+          "writes": [{"arg": 0, "offset": 20, "hex": "50010000"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4795098,
+    "count": 30,
+    "args": [
+      {"choices": ["@connection"]},
+      {"range": [0, 4294967295]},
+      {"choices": ["@data"]},
+      {"range": [0, 65535]}
+    ],
+    "memory": [
+      {"addr": "@constructed", "offset": "0x98", "type": "u8", "choices": [0, 1]},
+      {"addr": "@constructed", "offset": "0x99", "type": "u8", "choices": [0, 23]},
+      {"addr": "@constructed", "offset": "0xA3", "type": "u8", "range": [0, 255]},
+      {"addr": "@constructed", "offset": "0x90", "type": "u16", "choices": [0, 7, 65535]},
+      {"addr": "0x006E4DE0", "offset": "0xBC", "type": "u32", "range": [0, 40000]},
+      {"addr": "@actor", "offset": "0x19C", "type": "u32", "range": [0, 40000]},
+      {"addr": "0x005FE968", "type": "u8", "choices": [0, 1]},
+      {"addr": "0x006E4DA8", "type": "ptr", "choices": [0, "@profile"]}
+    ]
+  }
+}

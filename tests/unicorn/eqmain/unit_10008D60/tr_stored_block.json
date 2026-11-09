@@ -1,0 +1,236 @@
+{
+  "function": "tr_stored_block_guess",
+  "original": "0x1000ccd0",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "s",
+      "type": "ptr"
+    },
+    {
+      "name": "buf",
+      "type": "ptr"
+    },
+    {
+      "name": "stored_len",
+      "type": "int"
+    },
+    {
+      "name": "eof",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "s": {
+      "size": "0x1700",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@pbuf"
+        }
+      ]
+    },
+    "pbuf": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "buf": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e440": {
+      "name": "copy_block_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "bi_valid 0: empty buffer, short path",
+      "args": ["@s", "@buf", 5, 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 0},
+        {"addr": "@s", "offset": "0x16b4", "u16": 0},
+        {"addr": "@s", "offset": "0x14", "u32": 0},
+        {"addr": "@s", "offset": "0x16a8", "u32": 0}
+      ]
+    },
+    {
+      "name": "bi_valid 13: the last value the short path takes",
+      "args": ["@s", "@buf", 7, 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 13},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x1234"},
+        {"addr": "@s", "offset": "0x14", "u32": 2},
+        {"addr": "@s", "offset": "0x16a8", "u32": 23}
+      ]
+    },
+    {
+      "name": "bi_valid 12: short path, bi_valid becomes 15",
+      "args": ["@s", "@buf", 6, 6],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 12},
+        {"addr": "@s", "offset": "0x16b4", "u16": 1},
+        {"addr": "@s", "offset": "0x14", "u32": 9}
+      ]
+    },
+    {
+      "name": "bi_valid 14: first overflow, two bytes flushed, the top bits of eof kept",
+      "args": ["@s", "@buf", 3, 5],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 14},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0xabcd"},
+        {"addr": "@s", "offset": "0x14", "u32": 3},
+        {"addr": "@s", "offset": "0x16a8", "u32": 0}
+      ]
+    },
+    {
+      "name": "bi_valid 15: overflow with a full buffer",
+      "args": ["@s", "@buf", 0, 7],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 15},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0xffff"},
+        {"addr": "@s", "offset": "0x14", "u32": "0x10"},
+        {"addr": "@s", "offset": "0x16a8", "u32": "0x7ffffff8"}
+      ]
+    },
+    {
+      "name": "bi_valid 16: overflow, shift of 0, eof bits above 16",
+      "args": ["@s", "@buf", 9, "0x30005"],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 16},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x8001"},
+        {"addr": "@s", "offset": "0x14", "u32": 5},
+        {"addr": "@s", "offset": "0x16a8", "u32": 0}
+      ]
+    },
+    {
+      "name": "overflow with eof 0 (a stored block that is not the last)",
+      "args": ["@s", "@buf", 1, 0],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 14},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0xffff"},
+        {"addr": "@s", "offset": "0x14", "u32": 0}
+      ]
+    },
+    {
+      "name": "overflow with pending at the top of pending_buf",
+      "args": ["@s", "@buf", 64, 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 16},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x1234"},
+        {"addr": "@s", "offset": "0x14", "u32": 64}
+      ]
+    },
+    {
+      "name": "pending_buf overlaps bi_buf: the high byte is read after the low byte is stored",
+      "args": ["@s", "@buf", 4, 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x8", "u32": "@s+0x16a5"},
+        {"addr": "@s", "offset": "0x16b8", "u32": 14},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x0102"},
+        {"addr": "@s", "offset": "0x14", "u32": "0x10"}
+      ]
+    },
+    {
+      "name": "pending_buf overlaps bi_valid: bi_valid is read again after the byte stores",
+      "args": ["@s", "@buf", 4, 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x8", "u32": "@s+0x16a8"},
+        {"addr": "@s", "offset": "0x16b8", "u32": 14},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x0102"},
+        {"addr": "@s", "offset": "0x14", "u32": "0x10"}
+      ]
+    },
+    {
+      "name": "compressed_len wraps past 2^32",
+      "args": ["@s", "@buf", "0x1000", 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 0},
+        {"addr": "@s", "offset": "0x16b4", "u16": 0},
+        {"addr": "@s", "offset": "0x14", "u32": 0},
+        {"addr": "@s", "offset": "0x16a8", "u32": "0xfffffff9"}
+      ]
+    },
+    {
+      "name": "stored_len 0: header bits only, compressed_len rounded to a byte",
+      "args": ["@s", "@buf", 0, 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 0},
+        {"addr": "@s", "offset": "0x16b4", "u16": 0},
+        {"addr": "@s", "offset": "0x14", "u32": 0},
+        {"addr": "@s", "offset": "0x16a8", "u32": 23}
+      ]
+    },
+    {
+      "name": "eof with the sign bit, short path at bi_valid 13",
+      "args": ["@s", "@buf", 2, -1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 13},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x8000"},
+        {"addr": "@s", "offset": "0x14", "u32": 0}
+      ]
+    },
+    {
+      "name": "eof 0x7fffffff, short path at bi_valid 0",
+      "args": ["@s", "@buf", 2, "0x7fffffff"],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 0},
+        {"addr": "@s", "offset": "0x16b4", "u16": "0x8000"},
+        {"addr": "@s", "offset": "0x14", "u32": 0}
+      ]
+    },
+    {
+      "name": "stored_len 0x7fff, compressed_len not a multiple of 8",
+      "args": ["@s", "@buf", "0x7fff", 1],
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 3},
+        {"addr": "@s", "offset": "0x16b4", "u16": 7},
+        {"addr": "@s", "offset": "0x14", "u32": 1},
+        {"addr": "@s", "offset": "0x16a8", "u32": 29}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 52432,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@s"
+        ]
+      },
+      {
+        "choices": [
+          "@buf"
+        ]
+      },
+      {
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@s", "offset": "0x16b8", "type": "int", "range": [0, 16]},
+      {"addr": "@s", "offset": "0x16b4", "type": "u16"},
+      {"addr": "@s", "offset": "0x14", "type": "int", "range": [0, 64]},
+      {"addr": "@s", "offset": "0x16a8", "type": "u32"}
+    ]
+  }
+}

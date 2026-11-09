@@ -1,0 +1,86 @@
+{
+  "function": "CDisplay::GetFloorHeight",
+  "original": "0x00414245",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": [
+    {"name": "y", "type": "float"},
+    {"name": "x", "type": "float"},
+    {"name": "z", "type": "float"}
+  ],
+  "ret": "float",
+  "memory": [
+    {"addr": "@display", "offset": "0x0", "u32": "@render"},
+    {"addr": "@display", "offset": "0x4", "u32": "@world"},
+    {"addr": "@display", "offset": "0x2c94", "u32": 1},
+    {"addr": "@display", "offset": "0x2cac", "u32": "@ray"},
+    {"addr": "@display", "offset": "0x2cb0", "f32": 10.0},
+    {"addr": "@ray", "offset": "0x8", "f32": 2.0},
+    {"addr": "@ray2", "offset": "0x8", "f32": 2.5},
+    {"addr": "0x006e52e8", "u32": "@region"},
+    {"addr": "0x006e50c8", "u32": "@collide"}
+  ],
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "random"},
+    "world": {"size": 16},
+    "render": {"size": 16},
+    "ray": {"size": 16},
+    "ray2": {"size": 16},
+    "world2": {"size": 16},
+    "render2": {"size": 16},
+    "region": {"size": 16},
+    "collide": {"size": 16},
+    "alternate_collide": {"size": 16}
+  },
+  "callees": {
+    "@region": {
+      "name": "t3dGetRegionFromWorldAndXYZ",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:24"],
+      "ret": 1
+    },
+    "@collide": {
+      "name": "s3dCollideSphereWithWorld",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"],
+      "ret": 0,
+      "writes": [
+        {"arg": 8, "offset": 0, "hex": "00000000000000000000c842"},
+        {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"},
+        {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}
+      ]
+    },
+    "@alternate_collide": {
+      "name": "alternateSphereCollision",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {"name": "3d disabled returns zero without helpers", "args": [10.0, 20.0, 30.0], "memory": [{"addr": "@display", "offset": "0x2c94", "u32": 0}], "expect": {"ret": 0.0}},
+    {"name": "region miss returns sentinel", "args": [10.0, 20.0, 30.0], "memory": [{"addr": "0x7f0efe00", "size": "0x200", "fill": "random"}], "callees": {"@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:24"], "ret": 0}}},
+    {"name": "sphere collision miss returns sentinel", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 1, "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000000c842"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}]}}},
+    {"name": "ordinary hit returns floor minus current offset plus epsilon", "args": [10.0, 20.0, 30.0]},
+    {"name": "threshold equality retries and uses second output", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000000fac4"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}]}}},
+    {"name": "below threshold retries", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "000000000000000000007bc5"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}]}}},
+    {"name": "negative thousand is above retry threshold", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "000000000000000000007ac4"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}]}}},
+    {"name": "positive infinity is ordered above threshold", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000000807f"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}]}}},
+    {"name": "unordered z comparison retries", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000100807f"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}]}}},
+    {"name": "second collision failure returns sentinel", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": [0, 1], "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000000fac4"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}]}}},
+    {"name": "region helper writes origin consumed by collision", "args": [10.0, 20.0, 30.0], "callees": {"@region": {"name": "t3dGetRegionFromWorldAndXYZ", "conv": "cdecl", "args": ["ptr", "mem:24"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "0000a0410000a8410000b041000000000000000000000000"}]}}},
+    {"name": "retry reloads world render ray radius and final offset", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000000fac4"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}, {"addr": "@display", "hex": "502e0060"}, {"addr": "@display+0x4", "hex": "402e0060"}, {"addr": "@display+0x2cac", "hex": "302e0060"}, {"addr": "@display+0x2cb0", "hex": "0000c841"}, {"addr": "@ray2+0x8", "hex": "00002040"}]}}},
+    {"name": "collision callback address remains cached across retry", "args": [10.0, 20.0, 30.0], "callees": {"@collide": {"name": "s3dCollideSphereWithWorld", "conv": "cdecl", "args": ["ptr", "ptr", "mem:24", "mem:12", "float", "ptr", "ptr", "int", "mem:12", "mem:12", "mem:4", "int"], "ret": 0, "writes": [{"arg": 8, "offset": 0, "hex": "00000000000000000000fac4"}, {"arg": 9, "offset": 0, "hex": "000000000000000000409a44"}, {"arg": 3, "offset": 0, "hex": "0000fa4300007a440000fa43"}, {"addr": "0x006e50c8", "hex": "802e0060"}]}}}
+  ],
+  "fuzz": {
+    "seed": 87507,
+    "count": 30,
+    "args": [{"range": [-4000, 4000]}, {"range": [-4000, 4000]}, {"range": [-4000, 4000]}],
+    "memory": [
+      {"addr": "@display", "offset": "0x2c94", "type": "int", "range": [0, 1]},
+      {"addr": "@display", "offset": "0x2cb0", "type": "float", "range": [-4000, 4000]},
+      {"addr": "@ray", "offset": "0x8", "type": "float", "range": [-10, 10]}
+    ]
+  }
+}

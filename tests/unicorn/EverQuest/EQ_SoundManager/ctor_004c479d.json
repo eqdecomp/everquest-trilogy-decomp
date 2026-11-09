@@ -1,0 +1,198 @@
+{
+  "function": "FilePath_guess::FilePath_guess",
+  "original": "0x004c479d",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@filepath",
+  "args": [
+    {
+      "name": "name",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "filepath": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x7f0effdc",
+      "u32": 0
+    },
+    {
+      "addr": "0x7f0effe4",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004c4823": {
+      "name": "initializePackFSData_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004c48cb": {
+      "name": "normalizeFilePath_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004c489a": {
+      "name": "PackFsStringReference_guess::copyStringReference_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x004c4813": {
+      "name": "decrementReferenceCount_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "typical empty refs",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0effdc",
+          "u32": 0
+        },
+        {
+          "addr": "0x7f0effe4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty path with zero refs",
+      "args": [
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0effdc",
+          "u32": 0
+        },
+        {
+          "addr": "0x7f0effe4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "normalized ref cleanup only",
+      "args": [
+        "sounds\\one.wav"
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0effdc",
+          "u32": "0x30001000"
+        },
+        {
+          "addr": "0x7f0effe4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "input ref cleanup only",
+      "args": [
+        "sounds/two.wav"
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0effdc",
+          "u32": 0
+        },
+        {
+          "addr": "0x7f0effe4",
+          "u32": "0x30002000"
+        }
+      ]
+    },
+    {
+      "name": "both cleanups in reverse construction order",
+      "args": [
+        "mixed\\path/three.wav"
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0effdc",
+          "u32": "0x30003000"
+        },
+        {
+          "addr": "0x7f0effe4",
+          "u32": "0x30004000"
+        }
+      ]
+    },
+    {
+      "name": "reference boundary patterns",
+      "args": [
+        "..\\.\\four.wav"
+      ],
+      "memory": [
+        {
+          "addr": "0x7f0f001c",
+          "u32": "0x80000000"
+        },
+        {
+          "addr": "0x7f0f0024",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4999069,
+    "count": 32,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x7f0effdc",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          "0x30001000",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "0x7f0effe4",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          "0x30002000",
+          "0x7fffffff",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

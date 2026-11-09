@@ -1,0 +1,324 @@
+{
+  "function": "t3dGetSphereListWorldRadius",
+  "original": "0x1001b184",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "radiusOut",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "object": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@scaledata"
+        },
+        {
+          "offset": "0x14",
+          "f32": 2.0
+        },
+        {
+          "offset": "0x18",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": 4
+        },
+        {
+          "offset": "0x20",
+          "u32": "@radiuslist"
+        }
+      ]
+    },
+    "scaledata": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x34",
+          "f32": 0.5
+        }
+      ]
+    },
+    "radiuslist": {
+      "size": 64,
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "offset": "0xC",
+          "f32": 4.0
+        }
+      ]
+    },
+    "radiusout": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical index 1",
+      "args": [
+        "@object",
+        1,
+        "@radiusout"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first index",
+      "args": [
+        "@object",
+        0,
+        "@radiusout"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "last valid index",
+      "args": [
+        "@object",
+        3,
+        "@radiusout"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index equals count",
+      "args": [
+        "@object",
+        4,
+        "@radiusout"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "index above count",
+      "args": [
+        "@object",
+        10,
+        "@radiusout"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "huge index",
+      "args": [
+        "@object",
+        4294967295,
+        "@radiusout"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "null scale valid index",
+      "args": [
+        "@object",
+        1,
+        "@radiusout"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "null scale bad index",
+      "args": [
+        "@object",
+        9,
+        "@radiusout"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zero count",
+      "args": [
+        "@object",
+        0,
+        "@radiusout"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "zero local scale still success",
+      "args": [
+        "@object",
+        2,
+        "@radiusout"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x14",
+          "f32": 0.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative scales success",
+      "args": [
+        "@object",
+        2,
+        "@radiusout"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x14",
+          "f32": -2.0
+        },
+        {
+          "addr": "@scaledata",
+          "offset": "0x34",
+          "f32": -1.5
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 110980,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@radiusout"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x18",
+        "type": "u32",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          "@scaledata",
+          0
+        ]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x14",
+        "type": "float",
+        "range": [
+          -2,
+          2
+        ]
+      },
+      {
+        "addr": "@scaledata",
+        "offset": "0x34",
+        "type": "float",
+        "range": [
+          -2,
+          2
+        ]
+      },
+      {
+        "addr": "@radiuslist",
+        "offset": "0x0",
+        "type": "float",
+        "count": 4,
+        "stride": 4,
+        "range": [
+          -10,
+          10
+        ]
+      }
+    ]
+  }
+}

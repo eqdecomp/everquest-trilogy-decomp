@@ -1,0 +1,200 @@
+{
+  "function": "t3dSendMessageToActor_guess",
+  "original": "0x1000a553",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    },
+    {
+      "name": "param_3",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "actor": {
+      "size": "0x100",
+      "init": [
+        {
+          "offset": "0x64",
+          "u32": "@sink"
+        }
+      ]
+    },
+    "sink": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": "@fn"
+        }
+      ]
+    },
+    "sink2": {
+      "size": "0x40",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": "@fn2"
+        }
+      ]
+    },
+    "fn": {
+      "size": "0x10"
+    },
+    "fn2": {
+      "size": "0x10"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@fn": {
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 4660
+    },
+    "@fn2": {
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 4294967295
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        1,
+        "@actor",
+        2
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        0,
+        "@actor",
+        0
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "params distinct, large",
+      "args": [
+        305419896,
+        "@actor",
+        7
+      ],
+      "expect": {
+        "ret": 4660
+      }
+    },
+    {
+      "name": "actor's handler object is sink2 (handler @fn2)",
+      "args": [
+        1,
+        "@actor",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x64",
+          "u32": "@sink2"
+        }
+      ],
+      "expect": {
+        "ret": 4294967295
+      }
+    },
+    {
+      "name": "handler returns 0 (EAX passes through)",
+      "args": [
+        1,
+        "@actor",
+        2
+      ],
+      "callees": {
+        "@fn": {
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "handler returns 0xdeadbeef (EAX passes through)",
+      "args": [
+        9,
+        "@actor",
+        8
+      ],
+      "callees": {
+        "@fn": {
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 3735928559
+        }
+      },
+      "expect": {
+        "ret": 3735928559
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4242,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x64",
+        "type": "ptr",
+        "choices": [
+          "@sink",
+          "@sink2"
+        ]
+      }
+    ]
+  }
+}

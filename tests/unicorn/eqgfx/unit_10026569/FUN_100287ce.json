@@ -1,0 +1,126 @@
+{
+  "function": "copyQuotedTokenText_guess",
+  "original": "0x100287ce",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    }
+  ],
+  "ret": "cstr",
+  "objects": {
+    "parser": {
+      "size": "0x3444",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "@context"},
+        {"offset": "0x1c", "u32": "@state"},
+        {"offset": "0x2028", "cstr": "\"name\""}
+      ]
+    },
+    "context": {"size": "0x10", "fill": "zero"},
+    "state": {"size": "0x10", "fill": "zero"},
+    "buf": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "quoted name: the inner text is returned",
+      "args": ["@parser"],
+      "expect": {"ret": "name"}
+    },
+    {
+      "name": "two characters give an empty string (smallest name that does not overrun)",
+      "args": ["@parser"],
+      "memory": [{"addr": "@parser", "offset": "0x2028", "cstr": "ab"}],
+      "expect": {"ret": ""}
+    },
+    {
+      "name": "three characters keep the middle one",
+      "args": ["@parser"],
+      "memory": [{"addr": "@parser", "offset": "0x2028", "cstr": "abc"}],
+      "expect": {"ret": "b"}
+    },
+    {
+      "name": "longer name drops only its first and last character",
+      "args": ["@parser"],
+      "memory": [{"addr": "@parser", "offset": "0x2028", "cstr": "xhello!"}],
+      "expect": {"ret": "hello"}
+    },
+    {
+      "name": "24-character name (the fuzz maximum)",
+      "args": ["@parser"],
+      "memory": [{"addr": "@parser", "offset": "0x2028", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWX"}],
+      "expect": {"ret": "BCDEFGHIJKLMNOPQRSTUVW"}
+    },
+    {
+      "name": "bytes above 0x7f are copied unchanged",
+      "args": ["@parser"],
+      "memory": [{"addr": "@parser", "offset": "0x2028", "hex": "2180ff7e2100"}]
+    },
+    {
+      "name": "null allocation logs out of memory and returns NULL",
+      "args": ["@parser"],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null allocation with a null parser context",
+      "args": ["@parser"],
+      "memory": [{"addr": "@parser", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1002871,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@parser"]
+      }
+    ],
+    "memory": [
+      {"addr": "@parser", "offset": "0x2028", "type": "u8", "count": 2, "choices": [34, 65, 97, 126, 200, 255]},
+      {"addr": "@parser", "offset": "0x202a", "type": "u8", "count": 22, "choices": [0, 0, 34, 44, 65, 66, 97, 98, 99, 126, 200, 255]}
+    ]
+  }
+}

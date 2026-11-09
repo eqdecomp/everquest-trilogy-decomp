@@ -1,0 +1,147 @@
+{
+  "function": "t3dGetDirectionalLightLightDefinition",
+  "original": "0x10014cd0",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x14", "u32": "@owner" }
+      ]
+    },
+    "owner": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x10", "u32": 3 },
+        { "offset": "0x20", "u32": "@definition_alt" },
+        { "offset": "0x24", "u32": "@definition" },
+        { "offset": "0x28", "u32": "@definition_b" }
+      ]
+    },
+    "owner_alt": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        { "offset": "0x20", "u32": "@definition" },
+        { "offset": "0x24", "u32": "@definition_b" }
+      ]
+    },
+    "definition": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "definition_alt": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "definition_b": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: two hops, +0x14 then +0x24, returns @definition",
+      "args": ["@light"]
+    },
+    {
+      "name": "owner slot +0x24 swapped to @definition_alt (+0x20 is not read)",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": "@definition_alt" }
+      ]
+    },
+    {
+      "name": "light +0x14 swapped to owner_alt: returns its +0x24 (@definition_b)",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@light", "offset": "0x14", "u32": "@owner_alt" }
+      ]
+    },
+    {
+      "name": "light +0x10 names another owner: ignored, the +0x14 owner is used (@definition)",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@light", "offset": "0x10", "u32": "@owner_alt" }
+      ]
+    },
+    {
+      "name": "owner +0x10 (light count) is not read: still @definition",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x10", "u32": 99 }
+      ]
+    },
+    {
+      "name": "definition slot holds null: returns 0",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "definition slot holds 0xffffffff: passes through, never dereferenced",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 4294967295 }
+      ],
+      "expect": { "ret": "0xffffffff" }
+    },
+    {
+      "name": "definition slot holds a small non-address value: passes through",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 1 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "four-byte load: byte-order witness",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": 305419896 }
+      ],
+      "expect": { "ret": "0x12345678" }
+    },
+    {
+      "name": "definition slot points back at the light: returned as is, not dereferenced",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@owner", "offset": "0x24", "u32": "@light" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 85200,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@light"
+        ]
+      }
+    ],
+    "memory": [
+      { "addr": "@light", "offset": "0x10", "type": "u32", "choices": ["@owner", "@owner_alt"] },
+      { "addr": "@light", "offset": "0x14", "type": "u32", "choices": ["@owner", "@owner_alt"] },
+      { "addr": "@owner", "offset": "0x10", "type": "int", "range": [-8, 64] },
+      { "addr": "@owner", "offset": "0x24", "type": "u32", "choices": ["@definition", "@definition_alt", "@definition_b", "@light", 0, 1, "0xffffffff"] },
+      { "addr": "@owner_alt", "offset": "0x24", "type": "u32", "choices": ["@definition_b", "@definition", "@definition_alt"] }
+    ]
+  }
+}

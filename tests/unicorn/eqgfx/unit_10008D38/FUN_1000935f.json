@@ -1,0 +1,179 @@
+{
+  "function": "t3dAllocateActorNodePoolBlock_guess",
+  "original": "0x1000935f",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x2810",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x31c",
+          "u32": "@holder"
+        }
+      ]
+    },
+    "holder": {
+      "size": "0x2800",
+      "fill": "random"
+    },
+    "holder_alias": {
+      "size": "0x2800",
+      "fill": "random"
+    },
+    "block": {
+      "size": "0x2800",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@block"
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure stores null and returns error",
+      "args": [
+        "@world"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "successful allocation initializes all 511 slots",
+      "args": [
+        "@world"
+      ]
+    },
+    {
+      "name": "allocated block aliases the holder storage",
+      "args": [
+        "@world"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@holder"
+        }
+      }
+    },
+    {
+      "name": "block aliases the world, then world state is replaced",
+      "args": [
+        "@world"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@world"
+        }
+      }
+    },
+    {
+      "name": "slot initialization overlaps owner state before final store",
+      "args": [
+        "@world"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@world+0x10"
+        }
+      }
+    },
+    {
+      "name": "separate holder pointer",
+      "args": [
+        "@world"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x31c",
+          "u32": "@holder_alias"
+        }
+      ]
+    },
+    {
+      "name": "holder overlaps owner pointer so the post-store reload changes target",
+      "args": [
+        "@world"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x31c",
+          "u32": "@world+0x318"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 37727,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@world",
+        "offset": "0x31c",
+        "type": "ptr",
+        "choices": [
+          "@holder",
+          "@holder_alias"
+        ]
+      },
+      {
+        "addr": "@block",
+        "size": "0x2800"
+      }
+    ]
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "function": "t3dSetSky",
+  "original": "0x10045409",
+  "sources": [
+    "src/eqgfx/unit_1004428D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sky",
+      "type": "ptr"
+    },
+    {
+      "name": "mode",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "sky": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "mode 0 stored (lowest valid)",
+      "args": [
+        "@sky",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 1 stored (typical)",
+      "args": [
+        "@sky",
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 4 stored (middle)",
+      "args": [
+        "@sky",
+        4
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 8 stored (highest valid)",
+      "args": [
+        "@sky",
+        8
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "mode 9 first invalid: +0x80 cleared, 0xffff3d3e",
+      "args": [
+        "@sky",
+        9
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "mode 10 invalid",
+      "args": [
+        "@sky",
+        10
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "mode 0x7fffffff invalid (signed compare would store it)",
+      "args": [
+        "@sky",
+        2147483647
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "mode 0x80000000 invalid (negative as signed)",
+      "args": [
+        "@sky",
+        2147483648
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "mode 0xffffffff invalid (-1 as signed)",
+      "args": [
+        "@sky",
+        4294967295
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "invalid mode clears a preset +0x80 value",
+      "args": [
+        "@sky",
+        9
+      ],
+      "memory": [
+        {
+          "addr": "@sky",
+          "offset": "0x80",
+          "u32": 305419896
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "valid mode leaves the dual-layer dword at +0x7c alone",
+      "args": [
+        "@sky",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@sky",
+          "offset": "0x7c",
+          "u32": 85
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 283657,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sky"
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

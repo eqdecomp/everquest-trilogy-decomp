@@ -1,0 +1,213 @@
+{
+  "function": "EQMain_AllocEmptyString_guess",
+  "original": "0x100088f0",
+  "sources": [
+    "src/eqmain/unit_10008090.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "rec": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": 32
+        }
+      ]
+    },
+    "buf": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e"
+  },
+  "cases": [
+    {
+      "name": "typical: 32-byte request, buffer pointer stored at +0x3c, first byte cleared",
+      "args": [
+        "@rec"
+      ]
+    },
+    {
+      "name": "zero size: malloc(0) result still gets its first byte cleared",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "size 1",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "size 0x7fffffff",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "size 0x80000000",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "size 0xffffffff",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x24",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "null record: nothing called, nothing written",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "output slot already holds a value: overwritten",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x3c",
+          "u32": "0x7a0000"
+        }
+      ]
+    },
+    {
+      "name": "buffer first byte already 0",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "offset": 0,
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "buffer first byte 0xff",
+      "args": [
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "offset": 0,
+          "u8": 255
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 35056,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rec",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rec",
+        "offset": "0x24",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          31,
+          32,
+          33,
+          4096,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@rec",
+        "offset": "0x3c",
+        "type": "u32",
+        "choices": [
+          0,
+          "@buf"
+        ]
+      },
+      {
+        "addr": "@buf",
+        "offset": 0,
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          255
+        ]
+      }
+    ]
+  }
+}

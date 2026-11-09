@@ -1,0 +1,102 @@
+{
+  "function": "t3dDefineTrack2_guess",
+  "original": "0x1001c9d8",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "preallocated_definition", "type": "ptr"},
+    {"name": "name", "type": "cstr"},
+    {"name": "frame_count", "type": "u32"},
+    {"name": "frame_data", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {"size": "0x100", "fill": "random"},
+    "preallocated_definition": {"size": "0x200", "fill": "random"},
+    "frame_data": {"size": "0x200", "fill": "random"},
+    "allocated_memory": {"size": "0x400", "fill": "random"},
+    "existing": {"size": "0x100", "fill": "zero", "init": [{"offset": "0", "u32": 21}]},
+    "wrong_type": {"size": "0x100", "fill": "zero", "init": [{"offset": "0", "u32": 22}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0},
+    "0x1001c9b4": {"name": "s3dCalcTrackDef2AllocSize", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0},
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@allocated_memory"},
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 0]},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1000e334": {"name": "t3dRemoveEntryFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"]}
+  },
+  "cases": [
+    {
+      "name": "existing definition of type 0x15 is returned without creating another",
+      "args": ["@context", "@preallocated_definition", "existing", 2, "@frame_data"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}}
+    },
+    {
+      "name": "existing object with a different type returns null",
+      "args": ["@context", "@preallocated_definition", "wrong", 1, "@frame_data"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@wrong_type"}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocator returns null",
+      "args": ["@context", 0, "new", 2, "@frame_data"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocated definition fails its first validation and is freed",
+      "args": ["@context", 0, "new", 0, "@frame_data"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "preallocated definition skips name and frames and is preserved on validation failure",
+      "args": ["@context", "@preallocated_definition", 0, 0, "@frame_data"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary insertion failure cleans the definition and preserves preallocation",
+      "args": ["@context", "@preallocated_definition", "failed", 1, "@frame_data"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "default instance validation failure removes the name and frees allocated definition",
+      "args": ["@context", 0, "walk", 2, "@frame_data"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 1]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "successful preallocated definition with one frame and an empty name",
+      "args": ["@context", "@preallocated_definition", "", 1, "@frame_data"]
+    },
+    {
+      "name": "successful allocated definition with two frames and a name",
+      "args": ["@context", 0, "walk", 2, "@frame_data"]
+    },
+    {
+      "name": "successful preallocated definition with no name or frames",
+      "args": ["@context", "@preallocated_definition", 0, 0, "@frame_data"]
+    }
+  ],
+  "fuzz": {
+    "seed": 117208,
+    "count": 32,
+    "args": [
+      {"choices": ["@context"]},
+      {"choices": ["@preallocated_definition", 0]},
+      {"choices": ["", "a", "spline", 0]},
+      {"range": [0, 8]},
+      {"choices": ["@frame_data"]}
+    ],
+    "memory": []
+  }
+}

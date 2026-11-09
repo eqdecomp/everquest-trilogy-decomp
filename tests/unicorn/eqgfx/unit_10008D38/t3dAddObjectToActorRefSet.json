@@ -1,0 +1,444 @@
+{
+  "function": "t3dAddObjectToActorRefSet",
+  "original": "0x1000a453",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "object",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x10c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x108",
+          "u32": 0
+        }
+      ]
+    },
+    "refs": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "grown_refs": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@grown_refs"
+    },
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": "@grown_refs"
+    }
+  },
+  "cases": [
+    {
+      "name": "duplicate at first entry returns before growth",
+      "args": [
+        "@actor",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 1
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 3
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "duplicate at tail of full set returns before reallocating",
+      "args": [
+        "@actor",
+        12
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 3
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 3
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 4
+        },
+        {
+          "addr": "@refs",
+          "offset": 4,
+          "u32": 8
+        },
+        {
+          "addr": "@refs",
+          "offset": 8,
+          "u32": 12
+        }
+      ]
+    },
+    {
+      "name": "entry just beyond count is overwritten rather than treated as a duplicate",
+      "args": [
+        "@actor",
+        77
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 1
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 5
+        },
+        {
+          "addr": "@refs",
+          "offset": 4,
+          "u32": 77
+        }
+      ]
+    },
+    {
+      "name": "append with spare capacity",
+      "args": [
+        "@actor",
+        99
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 4
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 5
+        },
+        {
+          "addr": "@refs",
+          "offset": 4,
+          "u32": 6
+        }
+      ]
+    },
+    {
+      "name": "count greater than capacity does not trigger growth",
+      "args": [
+        "@actor",
+        77
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 1
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 10
+        },
+        {
+          "addr": "@refs",
+          "offset": 4,
+          "u32": 20
+        }
+      ]
+    },
+    {
+      "name": "empty set allocates five slots and appends",
+      "args": [
+        "@actor",
+        41
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": "@grown_refs"
+        }
+      },
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "initial allocation failure stores null and returns error",
+      "args": [
+        "@actor",
+        41
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "full set reallocates to capacity plus five",
+      "args": [
+        "@actor",
+        30
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 10
+        },
+        {
+          "addr": "@refs",
+          "offset": 4,
+          "u32": 20
+        }
+      ]
+    },
+    {
+      "name": "reallocation failure loses old pointer and skips append",
+      "args": [
+        "@actor",
+        30
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 2
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        },
+        {
+          "addr": "@refs",
+          "u32": 10
+        },
+        {
+          "addr": "@refs",
+          "offset": 4,
+          "u32": 20
+        }
+      ]
+    },
+    {
+      "name": "zero count with spare capacity uses existing storage",
+      "args": [
+        "@actor",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x100",
+          "u32": 0
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x104",
+          "u32": 3
+        },
+        {
+          "addr": "@actor",
+          "offset": "0x108",
+          "u32": "@refs"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 42067,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "range": [
+          -8,
+          64
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x100",
+        "type": "u32",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x104",
+        "type": "u32",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x108",
+        "type": "ptr",
+        "choices": [
+          "@refs"
+        ]
+      },
+      {
+        "addr": "@refs",
+        "size": 64
+      }
+    ]
+  }
+}

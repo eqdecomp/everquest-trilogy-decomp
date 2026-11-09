@@ -1,0 +1,80 @@
+{
+  "function": "t3dSetSimpleSpriteCurrentFrame",
+  "original": "0x1001b9b6",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frame",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x28", "u32": "@owner"}
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": 4},
+        {"offset": "0x18", "u32": "@frames"}
+      ]
+    },
+    "frames": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "typical", "args": ["@sprite", 1], "expect": {"ret": 0}},
+    {"name": "first frame", "args": ["@sprite", 0], "expect": {"ret": 0}},
+    {"name": "last frame", "args": ["@sprite", 3], "expect": {"ret": 0}},
+    {"name": "frame equal to count", "args": ["@sprite", 4], "expect": {"ret": "0xffff3d3e"}},
+    {"name": "frame past count", "args": ["@sprite", 9], "expect": {"ret": "0xffff3d3e"}},
+    {"name": "no frames", "args": ["@sprite", 0],
+     "memory": [{"addr": "@owner", "offset": "0x14", "u32": 0}],
+     "expect": {"ret": "0xffff3d3e"}},
+    {"name": "frame all ones", "args": ["@sprite", "0xffffffff"], "expect": {"ret": "0xffff3d3e"}},
+    {"name": "frame high bit", "args": ["@sprite", "0x80000000"], "expect": {"ret": "0xffff3d3e"}},
+    {"name": "count high bit", "args": ["@sprite", 2],
+     "memory": [{"addr": "@owner", "offset": "0x14", "u32": "0x80000000"}],
+     "expect": {"ret": 0}},
+    {"name": "frame list is the sprite itself", "args": ["@sprite", 6],
+     "memory": [{"addr": "@owner", "offset": "0x14", "u32": 8},
+                {"addr": "@owner", "offset": "0x18", "u32": "@sprite"}],
+     "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 113078,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "range": [0, 15]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x28", "type": "ptr", "choices": ["@owner"]},
+      {"addr": "@owner", "offset": "0x14", "type": "u32", "range": [0, 16]},
+      {"addr": "@owner", "offset": "0x18", "type": "ptr", "choices": ["@frames"]}
+    ]
+  }
+}

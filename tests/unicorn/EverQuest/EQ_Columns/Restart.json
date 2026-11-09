@@ -1,0 +1,34 @@
+{
+  "function": "EQ_Columns_guess::Restart",
+  "original": "0x00432264",
+  "sources": ["src/EverQuest/EQ_Columns.cpp"],
+  "conv": "thiscall", "this": "@columns", "args": [], "ret": "void",
+  "objects": {"columns": {"size": "0x1300", "fill": "random", "init": [{"offset": "0x84", "u32": 2}]}},
+  "callees": {
+    "0x00432663": {"conv": "thiscall", "args": [], "ret": 2084},
+    "0x00433764": {"conv": "thiscall", "args": ["ptr"], "writes": [{"arg": 0, "hex": "ffffffff000000000000000000000000"}]},
+    "0x00432325": {"conv": "thiscall", "args": [], "writes": [{"addr": "@columns+0x84", "hex": "02000000"}]},
+    "0x00432583": {"conv": "thiscall", "args": ["int"]}
+  },
+  "_note": "Trace validates all 120 column-major cell addresses and callee order; scripted Initialize sets next_state=2 so the final branch must clear it only for saved states 1/4/5. Random initial bytes distinguish every reset store.",
+  "cases": [
+    {"name": "state below first clear", "memory": [{"addr": "@columns+0x84", "u32": 0}]},
+    {"name": "state one clears", "memory": [{"addr": "@columns+0x84", "u32": 1}]},
+    {"name": "state two retains initialized state", "memory": [{"addr": "@columns+0x84", "u32": 2}]},
+    {"name": "state three retains initialized state", "memory": [{"addr": "@columns+0x84", "u32": 3}]},
+    {"name": "state four clears", "memory": [{"addr": "@columns+0x84", "u32": 4}]},
+    {"name": "state five clears", "memory": [{"addr": "@columns+0x84", "u32": 5}]},
+    {"name": "state six retains initialized state", "memory": [{"addr": "@columns+0x84", "u32": 6}]},
+    {"name": "negative state", "memory": [{"addr": "@columns+0x84", "u32": -1}]},
+    {"name": "negative next block returned", "callees": {"0x00432663": {"conv": "thiscall", "args": [], "ret": -1}}}
+  ],
+  "fuzz": {
+    "seed": 4399716, "count": 80, "args": [],
+    "memory": [
+      {"addr": "@columns+0x84", "type": "int", "choices": [-2147483648, -1, 0, 1, 2, 3, 4, 5, 6, 2147483647]},
+      {"addr": "@columns+0x860", "size": 76},
+      {"addr": "@columns+0x9D0", "size": 60},
+      {"addr": "@columns+0xA0C", "size": 1920}
+    ]
+  }
+}

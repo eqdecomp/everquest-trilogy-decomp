@@ -1,0 +1,259 @@
+{
+  "function": "t3dCreateDirectionalLight",
+  "original": "0x10014b20",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "owner",
+      "type": "ptr"
+    },
+    {
+      "name": "normal",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x1",
+      "fill": "zero"
+    },
+    "owner": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 7
+        }
+      ]
+    },
+    "normal": {
+      "size": "0xc",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "f32": 1.25
+        },
+        {
+          "offset": "0x4",
+          "f32": -2.5
+        },
+        {
+          "offset": "0x8",
+          "f32": 9.75
+        }
+      ]
+    },
+    "newlight": {
+      "size": "0x30",
+      "fill": "zero"
+    },
+    "newblock": {
+      "size": "0xc",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@newlight",
+        "@newblock"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "success: initializes light, runs helper, increments owner count",
+      "args": [
+        "@context",
+        "@owner",
+        "@normal"
+      ]
+    },
+    {
+      "name": "first allocation returns null",
+      "args": [
+        "@context",
+        "@owner",
+        "@normal"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "second allocation returns null: frees light and skips helper",
+      "args": [
+        "@context",
+        "@owner",
+        "@normal"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": [
+            "@newlight",
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "helper returns 1: frees block and light",
+      "args": [
+        "@context",
+        "@owner",
+        "@normal"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "helper returns -1: failure boundary and cleanup order",
+      "args": [
+        "@context",
+        "@owner",
+        "@normal"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "owner count INT_MAX wraps after successful helper",
+      "args": [
+        "@context",
+        "@owner",
+        "@normal"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 2147483647
+        }
+      ]
+    },
+    {
+      "name": "null context passes through to successful helper",
+      "args": [
+        0,
+        "@owner",
+        "@normal"
+      ]
+    },
+    {
+      "name": "null owner is not touched when helper fails",
+      "args": [
+        "@context",
+        0,
+        "@normal"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 84768,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@owner"
+        ]
+      },
+      {
+        "choices": [
+          "@normal"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "int"
+      },
+      {
+        "addr": "@normal",
+        "offset": "0x0",
+        "type": "float",
+        "count": 3
+      }
+    ]
+  }
+}

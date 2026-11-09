@@ -1,0 +1,180 @@
+{
+  "function": "FUN_004ee2fd_guess::IsEntryActive_guess",
+  "original": "0x004ee2fd",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@owner",
+  "args": [
+    {
+      "name": "index",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "owner": {
+      "size": "0x1000",
+      "fill": "zero"
+    },
+    "entry": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical slot 0 active",
+      "args": [0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": "@entry"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "slot 0 entry flag zero",
+      "args": [0],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x4", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "slot 0 null",
+      "args": [0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index -1 reads slot -1 at +8 (must not)",
+      "args": [-1],
+      "memory": [
+        {"addr": "@owner", "offset": "0x8", "u32": "@entry"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index INT_MIN",
+      "args": [-2147483648],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": "@entry"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "last slot 0x2cf",
+      "args": [719],
+      "memory": [
+        {"addr": "@owner", "offset": "0xb48", "u32": "@entry"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "last slot 0x2cf null",
+      "args": [719],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first out-of-range slot 0x2d0 set",
+      "args": [720],
+      "memory": [
+        {"addr": "@owner", "offset": "0xb4c", "u32": "@entry"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "INT_MAX index",
+      "args": [2147483647],
+      "memory": [
+        {"addr": "@owner", "offset": "0xc", "u32": "@entry"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "slot 1 flag 0x100 (high byte only)",
+      "args": [1],
+      "memory": [
+        {"addr": "@owner", "offset": "0x10", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x4", "u32": 256}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "slot 2 flag 0x10000",
+      "args": [2],
+      "memory": [
+        {"addr": "@owner", "offset": "0x14", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x4", "u32": 65536}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "slot 3 flag 0x80000000",
+      "args": [3],
+      "memory": [
+        {"addr": "@owner", "offset": "0x18", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x4", "u32": 2147483648}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "slot 5 flag 0xffffffff",
+      "args": [5],
+      "memory": [
+        {"addr": "@owner", "offset": "0x20", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x4", "u32": 4294967295}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "slot 0 null, neighbour slot 1 active",
+      "args": [0],
+      "memory": [
+        {"addr": "@owner", "offset": "0x10", "u32": "@entry"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "slot 1 active, neighbour slot 0 flag zero",
+      "args": [1],
+      "memory": [
+        {"addr": "@owner", "offset": "0x10", "u32": "@entry"},
+        {"addr": "@entry", "offset": "0x4", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 5169917,
+    "count": 40,
+    "args": [
+      {
+        "range": [-3, 723]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0xc",
+        "type": "u32",
+        "count": 720,
+        "choices": [0, "@entry"]
+      },
+      {
+        "addr": "@entry",
+        "offset": "0x4",
+        "type": "u32",
+        "choices": [0, 1, 2, 256, 65536, 16777216, 2147483648]
+      }
+    ]
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "function": "EQ_Main_ClearLoot_guess",
+  "original": "0x00464c8d",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x90", "u32": 0},
+        {"offset": "0xa4", "u32": "0xdeadbeef"}
+      ]
+    },
+    "loot": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x80", "u32": "0x12345678"}
+      ]
+    },
+    "connection": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4dc0", "u32": "@loot"},
+    {"addr": "0x006b3194", "u32": "@connection"}
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null loot pointer clears output and skips send",
+      "args": ["@self", 0],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": 0},
+        {"addr": "@self", "offset": "0x90", "u32": 0},
+        {"addr": "@self", "offset": "0xa4", "u32": "0xabcdef01"}
+      ]
+    },
+    {
+      "name": "small nonzero loot pointer sends and sets state",
+      "args": ["@self", 1],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": 1},
+        {"addr": "@self", "offset": "0x90", "u32": 0},
+        {"addr": "@self", "offset": "0xa4", "u32": "0xabcdef01"}
+      ]
+    },
+    {
+      "name": "unaligned adjacent global remains zero while target global is nonzero",
+      "args": ["@self", 1],
+      "memory": [
+        {"addr": "0x006e4dbf", "u8": 0},
+        {"addr": "0x006e4dc0", "u32": "0x01000000"},
+        {"addr": "@self", "offset": "0x90", "u32": 0},
+        {"addr": "@self", "offset": "0xa4", "u32": "0xabcdef01"}
+      ]
+    },
+    {
+      "name": "valid loot pointer sends four bytes and sets state",
+      "args": ["@self", -1],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": "@loot"},
+        {"addr": "@self", "offset": "0x90", "u32": 0},
+        {"addr": "@self", "offset": "0xa4", "u32": "0x87654321"}
+      ]
+    },
+    {
+      "name": "send observes the state field already set",
+      "args": ["@self", 0],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": "@self+0x10"},
+        {"addr": "@self", "offset": "0x90", "u32": 0},
+        {"addr": "@self", "offset": "0xa4", "u32": "0x87654321"}
+      ],
+      "callees": {
+        "0x004e1c45": {
+          "name": "send_message_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "u32", "mem:4", "u32", "int"]
+        }
+      }
+    },
+    {
+      "name": "state one skips send",
+      "args": ["@self", 2],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": "@loot"},
+        {"addr": "@self", "offset": "0x90", "u32": 1},
+        {"addr": "@self", "offset": "0xa4", "u32": "0x87654321"}
+      ]
+    },
+    {
+      "name": "other nonzero state skips send",
+      "args": ["@self", 3],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": "@loot"},
+        {"addr": "@self", "offset": "0x90", "u32": "0xffffffff"},
+        {"addr": "@self", "offset": "0xa4", "u32": "0x87654321"}
+      ]
+    },
+    {
+      "name": "null pointer with nonzero state still clears output",
+      "args": ["@self", 4],
+      "memory": [
+        {"addr": "0x006e4dc0", "u32": 0},
+        {"addr": "@self", "offset": "0x90", "u32": 7},
+        {"addr": "@self", "offset": "0xa4", "u32": "0xffffffff"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4607117,
+    "count": 32,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [-2147483648, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "0x006e4dc0", "type": "ptr", "choices": [0, 1, "@loot", "0xffffffff"]},
+      {"addr": "@self", "offset": "0x90", "type": "u32", "choices": [0, 1, 2, 4294967295]},
+      {"addr": "@self", "offset": "0xa4", "type": "u32", "choices": [0, 1, 3735928559, 4294967295]}
+    ]
+  }
+}

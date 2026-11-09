@@ -1,0 +1,337 @@
+{
+  "function": "EQHitNode_guess::FindHit_guess",
+  "original": "0x00404115",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@node",
+  "args": [
+    {
+      "name": "arg",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "_comment": "The self-call at 0x0040413E is not stubbed: both builds really recurse. Tree: node -> arr[c0,c1,c2]; c0 -> sub[c2] (fuzz: sub[c2] or empty); c1, c2 -> empty lists. vtT/vtF put @hitT/@hitF in slot +0x28.",
+  "objects": {
+    "hitT": {"size": 16},
+    "hitF": {"size": 16},
+    "vtT": {"size": "0x30", "fill": "random"},
+    "vtF": {"size": "0x30", "fill": "random"},
+    "c0": {"size": "0x20", "fill": "random"},
+    "c1": {"size": "0x20", "fill": "random"},
+    "c2": {"size": "0x20", "fill": "random"},
+    "arr": {"size": 16, "fill": "random"},
+    "sub": {"size": 8, "fill": "random"},
+    "node": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "@vtT+0x28", "u32": "@hitT"},
+    {"addr": "@vtF+0x28", "u32": "@hitF"},
+    {"addr": "@c0", "u32": "@vtF"},
+    {"addr": "@c1", "u32": "@vtF"},
+    {"addr": "@c2", "u32": "@vtF"},
+    {"addr": "@c0+0xc", "u32": "@sub"},
+    {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+    {"addr": "@c1+0xc", "u32": "@sub"},
+    {"addr": "@c1+0x10", "u32": "@sub"},
+    {"addr": "@c2+0xc", "u32": "@sub"},
+    {"addr": "@c2+0x10", "u32": "@sub"},
+    {"addr": "@sub", "u32": "@c2"},
+    {"addr": "@arr", "u32": "@c0"},
+    {"addr": "@arr+0x4", "u32": "@c1"},
+    {"addr": "@arr+0x8", "u32": "@c2"},
+    {"addr": "@node+0xc", "u32": "@arr"},
+    {"addr": "@node+0x10", "u32": "@arr+0xc"}
+  ],
+  "callees": {
+    "@hitT": {"name": "HitTest_guess true (vtable +0x28)", "conv": "thiscall", "args": ["int"], "ret": 1},
+    "@hitF": {"name": "HitTest_guess false (vtable +0x28)", "conv": "thiscall", "args": ["int"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "three children all miss: returns this after three tests",
+      "args": [-1]
+    },
+    {
+      "name": "empty list returns this, no calls",
+      "args": [5],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtT"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr"}
+      ]
+    },
+    {
+      "name": "one child, miss: returns this",
+      "args": [7],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtF"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0x4"}
+      ]
+    },
+    {
+      "name": "one child hits, leaf: returns the child",
+      "args": [8],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtT"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0x4"}
+      ]
+    },
+    {
+      "name": "first child hits, its child misses: returns c0",
+      "args": [3],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtT"},
+        {"addr": "@c1", "u32": "@vtF"},
+        {"addr": "@c2", "u32": "@vtF"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ],
+      "callees": {
+        "@hitT": {"name": "HitTest_guess (vtable +0x28)", "conv": "thiscall", "args": ["int"], "ret": [1, 0]}
+      }
+    },
+    {
+      "name": "first child hits and its child hits: returns c2 two levels down",
+      "args": [12],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtT"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ]
+    },
+    {
+      "name": "second child hits (leaf): returns c1",
+      "args": [9],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtF"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtF"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ]
+    },
+    {
+      "name": "second and third hit: stops at second",
+      "args": [11],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtF"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ]
+    },
+    {
+      "name": "last child hits: returns c2",
+      "args": [0],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtF"},
+        {"addr": "@c1", "u32": "@vtF"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ]
+    },
+    {
+      "name": "hit test only AL: 0x100 is a miss",
+      "args": [2],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtT"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ],
+      "callees": {
+        "@hitT": {"name": "HitTest_guess (vtable +0x28)", "conv": "thiscall", "args": ["int"], "ret": 256}
+      }
+    },
+    {
+      "name": "hit test AL 0x80 with high bits is a hit",
+      "args": [2],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtF"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtF"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ],
+      "callees": {
+        "@hitT": {"name": "HitTest_guess (vtable +0x28)", "conv": "thiscall", "args": ["int"], "ret": "0xffff0080"}
+      }
+    },
+    {
+      "name": "hit sequence miss, miss, hit across children",
+      "args": [6],
+      "memory": [
+        {"addr": "@vtT+0x28", "u32": "@hitT"},
+        {"addr": "@vtF+0x28", "u32": "@hitF"},
+        {"addr": "@c0", "u32": "@vtT"},
+        {"addr": "@c1", "u32": "@vtT"},
+        {"addr": "@c2", "u32": "@vtT"},
+        {"addr": "@c0+0xc", "u32": "@sub"},
+        {"addr": "@c0+0x10", "u32": "@sub+0x4"},
+        {"addr": "@c1+0xc", "u32": "@sub"},
+        {"addr": "@c1+0x10", "u32": "@sub"},
+        {"addr": "@c2+0xc", "u32": "@sub"},
+        {"addr": "@c2+0x10", "u32": "@sub"},
+        {"addr": "@sub", "u32": "@c2"},
+        {"addr": "@arr", "u32": "@c0"},
+        {"addr": "@arr+0x4", "u32": "@c1"},
+        {"addr": "@arr+0x8", "u32": "@c2"},
+        {"addr": "@node+0xc", "u32": "@arr"},
+        {"addr": "@node+0x10", "u32": "@arr+0xc"}
+      ],
+      "callees": {
+        "@hitT": {"name": "HitTest_guess (vtable +0x28)", "conv": "thiscall", "args": ["int"], "ret": [0, 0, 1]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4210965,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "@c0", "type": "ptr", "choices": ["@vtT", "@vtF"]},
+      {"addr": "@c1", "type": "ptr", "choices": ["@vtT", "@vtF"]},
+      {"addr": "@c2", "type": "ptr", "choices": ["@vtT", "@vtF"]},
+      {"addr": "@c0+0x10", "type": "ptr", "choices": ["@sub", "@sub+0x4"]},
+      {"addr": "@node+0x10", "type": "ptr", "choices": ["@arr", "@arr+0x4", "@arr+0x8", "@arr+0xc"]}
+    ]
+  }
+}

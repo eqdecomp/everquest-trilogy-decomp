@@ -1,0 +1,122 @@
+{
+  "function": "hash_string_nocase_guess",
+  "original": "0x004037d4",
+  "sources": [
+    "src/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "key",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "key": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": "@str"}
+      ]
+    },
+    "str": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "buf": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    },
+    "0x005225bc": {
+      "name": "tolower",
+      "args": [
+        "int"
+      ],
+      "passthrough": true
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty string (no lowercase loop, hash 0)",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": ""}]
+    },
+    {
+      "name": "one char (loop once)",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "A"}]
+    },
+    {
+      "name": "two chars (ordering of h*5+c)",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "ab"}]
+    },
+    {
+      "name": "two chars reversed",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "ba"}]
+    },
+    {
+      "name": "mixed case lowered",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "Hello World"}]
+    },
+    {
+      "name": "boundary letters @AZ[`az{",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "@AZ[`az{"}]
+    },
+    {
+      "name": "high bytes (signed char sign extension)",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "ÿ\u0080Áx"}]
+    },
+    {
+      "name": "long string (hash overflow wraps)",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "The Quick Brown Fox Jumps Over The Lazy Dog 0123456789"}]
+    },
+    {
+      "name": "copy terminator written over random buffer",
+      "args": ["@key"],
+      "memory": [{"addr": "@str", "cstr": "abc"}, {"addr": "@buf", "cstr": "zzzzzzzz"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4208596,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@key"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@str", "size": 48},
+      {"addr": "@str+0x30", "type": "u8", "choices": [0]},
+      {"addr": "@str+0x1", "type": "u8", "choices": [0, 65, 97, 200]},
+      {"addr": "@str+0x5", "type": "u8", "choices": [0, 90, 122, 128]},
+      {"addr": "@str+0x10", "type": "u8", "choices": [0, 66, 255]}
+    ]
+  }
+}

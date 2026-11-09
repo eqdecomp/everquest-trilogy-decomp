@@ -1,0 +1,154 @@
+{
+  "function": "t3dGetLightCurrentIntensity",
+  "original": "0x10014219",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "light": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@values"
+        }
+      ]
+    },
+    "values": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "@values", "offset": "0x00", "f32": 1.25 },
+    { "addr": "@values", "offset": "0x04", "f32": -2.5 },
+    { "addr": "@values", "offset": "0x08", "f32": 3.75 },
+    { "addr": "@values", "offset": "0x0c", "f32": -4.125 },
+    { "addr": "@values", "offset": "0x10", "f32": 5.5 },
+    { "addr": "@values", "offset": "0x14", "f32": -6.25 },
+    { "addr": "@values", "offset": "0x18", "f32": 7.875 },
+    { "addr": "@values", "offset": "0x1c", "f32": -8.5 },
+    { "addr": "@values", "offset": "0x20", "f32": 9.125 },
+    { "addr": "@values", "offset": "0x24", "f32": -10.75 },
+    { "addr": "@values", "offset": "0x28", "f32": 11.5 },
+    { "addr": "@values", "offset": "0x2c", "f32": -12.875 },
+    { "addr": "@values", "offset": "0x30", "f32": 13.25 },
+    { "addr": "@values", "offset": "0x34", "f32": -14.5 },
+    { "addr": "@values", "offset": "0x38", "f32": 15.75 },
+    { "addr": "@values", "offset": "0x3c", "f32": -16.125 }
+  ],
+  "callees": {
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "single frame ignores current frame",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 1 },
+        { "addr": "@light", "offset": "0x14", "u32": 14 }
+      ]
+    },
+    {
+      "name": "multiple frames first element",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 2 },
+        { "addr": "@light", "offset": "0x14", "u32": 0 }
+      ]
+    },
+    {
+      "name": "middle indexed element",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 3 },
+        { "addr": "@light", "offset": "0x14", "u32": 1 }
+      ]
+    },
+    {
+      "name": "last declared element",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 4 },
+        { "addr": "@light", "offset": "0x14", "u32": 3 }
+      ]
+    },
+    {
+      "name": "zero frame count still indexes",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 0 },
+        { "addr": "@light", "offset": "0x14", "u32": 2 }
+      ]
+    },
+    {
+      "name": "index beyond frame count",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 2 },
+        { "addr": "@light", "offset": "0x14", "u32": 9 }
+      ]
+    },
+    {
+      "name": "single frame with maximum in-list index",
+      "args": ["@light"],
+      "memory": [
+        { "addr": "@definition", "offset": "0x14", "u32": 1 },
+        { "addr": "@light", "offset": "0x14", "u32": 15 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 82457,
+    "count": 32,
+    "args": [
+      {
+        "choices": ["@light"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 16]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+      },
+      {
+        "addr": "@values",
+        "type": "float",
+        "count": 16,
+        "range": [-100, 100]
+      }
+    ]
+  }
+}

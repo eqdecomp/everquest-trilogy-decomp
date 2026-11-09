@@ -1,0 +1,105 @@
+{
+  "function": "freeDynamicArray_guess",
+  "original": "0x1002dce0",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "object": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x11223344"},
+        {"offset": "0x4", "u32": "0x55667788"},
+        {"offset": "0x8", "u32": "0x99aabbcc"},
+        {"offset": "0xc", "u32": "0x12345678"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "free original pointer then clear fields",
+      "args": [
+        "@object"
+      ]
+    },
+    {
+      "name": "null allocation is passed to free",
+      "args": [
+        "@object"
+      ],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "self pointer is passed to free",
+      "args": ["@object"],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": "@object"}
+      ]
+    },
+    {
+      "name": "high-bit values and pointer boundary",
+      "args": ["@object"],
+      "memory": [
+        {"addr": "@object", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@object", "offset": "0x4", "u32": "0x80000000"},
+        {"addr": "@object", "offset": "0x8", "u32": "0xffffffff"},
+        {"addr": "@object", "offset": "0xc", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "small non-null pointer",
+      "args": ["@object"],
+      "memory": [
+        {"addr": "@object", "offset": "0xc", "u32": 1}
+      ]
+    },
+    {
+      "name": "all fields start at zero",
+      "args": ["@object"],
+      "memory": [
+        {"addr": "@object", "offset": "0x0", "u32": 0},
+        {"addr": "@object", "offset": "0x4", "u32": 0},
+        {"addr": "@object", "offset": "0x8", "u32": 0},
+        {"addr": "@object", "offset": "0xc", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 187616,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@object", "offset": "0x0", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@object", "offset": "0x4", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@object", "offset": "0x8", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@object", "offset": "0xc", "type": "ptr", "choices": [0, "@object", "0x1", "0xffffffff", "0x55667788"]}
+    ]
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "function": "hail_guess",
+  "original": "0x004a7eee",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0xbb0",
+      "fill": "zero"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "TargetSentinel"
+        },
+        {
+          "offset": "0x34",
+          "f32": 12.5
+        },
+        {
+          "offset": "0x38",
+          "f32": -3.25
+        },
+        {
+          "offset": "0x3c",
+          "f32": 20.0
+        },
+        {
+          "offset": "0x9a",
+          "u16": 1
+        }
+      ]
+    },
+    "local": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "trimmed": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "TrimmedSentinel"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@local"
+    },
+    {
+      "addr": "0x005344a4",
+      "from_image": "0x005344A4",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x004a3491": {
+      "name": "CastRay_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "float",
+        "float",
+        "float"
+      ],
+      "ret": 0
+    },
+    "0x004d02fd": {
+      "name": "CEverQuest::trimName_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@trimmed+0x1"
+    },
+    "0x004d0a8e": {
+      "name": "CEverQuest::send_chat_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "null target still sends and clears hail buffer",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "race below special set uses original height and blocked ray",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 7
+        }
+      ]
+    },
+    {
+      "name": "race 11 adds height before blocked ray",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 11
+        }
+      ]
+    },
+    {
+      "name": "race 12 adds height before blocked ray",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 12
+        }
+      ]
+    },
+    {
+      "name": "race 8 adds height and visible ray formats trimmed name",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 8
+        }
+      ],
+      "callees": {
+        "0x004a3491": {
+          "name": "CastRay_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "float",
+            "float",
+            "float"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "race 10 is just outside special set and visible ray formats name",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 10
+        }
+      ],
+      "callees": {
+        "0x004a3491": {
+          "name": "CastRay_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "float",
+            "float",
+            "float"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "race 13 is just outside special set and zero ray skips name formatting",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 13
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4882158,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x006e4dac",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@target"
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x9a",
+        "type": "u16",
+        "range": [
+          7,
+          13
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x34",
+        "type": "float",
+        "range": [
+          -32,
+          32
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x38",
+        "type": "float",
+        "range": [
+          -32,
+          32
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x3c",
+        "type": "float",
+        "range": [
+          -32,
+          32
+        ]
+      },
+      {
+        "addr": "0x005344a4",
+        "type": "float",
+        "range": [
+          0,
+          2
+        ]
+      }
+    ]
+  }
+}

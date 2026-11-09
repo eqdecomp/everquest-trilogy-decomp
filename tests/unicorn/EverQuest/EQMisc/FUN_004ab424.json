@@ -1,0 +1,249 @@
+{
+  "function": "SetDynamicLights_guess",
+  "original": "0x004ab424",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "choice",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "write_profile": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x00534188",
+      "u32": "@write_profile"
+    },
+    {
+      "addr": "0x006e20b8",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "@write_profile": {
+      "name": "WritePrivateProfileStringA",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "cstr",
+        "cstr",
+        "cstr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "off prefix clears and writes false",
+      "args": [
+        0,
+        "off"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "off is case insensitive and overwrites arbitrary prior state",
+      "args": [
+        7,
+        "OfFx"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "on prefix sets flag and writes true",
+      "args": [
+        0,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "on prefix accepts trailing text",
+      "args": [
+        0,
+        "ONward"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "other text toggles zero to one",
+      "args": [
+        2,
+        "toggle"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "other text toggles one to zero",
+      "args": [
+        2,
+        "toggle"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "any non-one state toggles to one",
+      "args": [
+        2,
+        "toggle"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "partial off prefix is not a match",
+      "args": [
+        2,
+        "of"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty text toggles state",
+      "args": [
+        2,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "single character is not a prefix match",
+      "args": [
+        2,
+        "o"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "empty first argument has no effect",
+      "args": [
+        2147483647,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20b8",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4895780,
+    "count": 35,
+    "args": [
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "choices": [
+          "off",
+          "OFF",
+          "oFfX",
+          "on",
+          "ON",
+          "only",
+          "of",
+          "o",
+          "other",
+          "toggle",
+          ""
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e20b8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          5,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

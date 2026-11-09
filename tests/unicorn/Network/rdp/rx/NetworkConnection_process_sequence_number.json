@@ -1,0 +1,1132 @@
+{
+  "function": "NetworkConnection_process_sequence_number_guess",
+  "original": "0x004F5F70",
+  "sources": [
+    "src/Network/rdp/rx.c",
+    "src/Network/rdp/list.c",
+    "src/Network/rdp/msg_arrival.c",
+    "src/Network/rdp/bitops.c",
+    "src/Network/rdp/log.c",
+    "src/Network/rdp/fast_malloc.c",
+    "src/Network/rdp/rdp.c",
+    "src/Network/rdp/eventq.c",
+    "src/Network/rdp/connhash.c",
+    "src/Network/rdp/uevent.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "seq",
+      "type": "u16"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x3000",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x184",
+          "u16": 100
+        },
+        {
+          "offset": "0x186",
+          "u16": 100
+        },
+        {
+          "offset": "0x188",
+          "size": 260,
+          "fill": "zero"
+        },
+        {
+          "offset": "0x28C",
+          "u16": 0
+        },
+        {
+          "offset": "0x28E",
+          "u16": 100
+        },
+        {
+          "offset": "0x290",
+          "u16": 100
+        },
+        {
+          "offset": "0x480",
+          "u16": 1
+        }
+      ]
+    }
+  },
+  "callees": {
+    "0x004F66D0": {
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1234567
+    },
+    "0x004F7D50": {
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x004F7DD0": {
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x004F7C90": {
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "_note": "Run actual original/rewritten bitops, including in-place shifting. The larger object observes the original local absence of a bit-index bound for accepted half-range differences; no new guard is imposed. Helper input indices are zero-extended 16-bit values in original assembly.",
+  "_mutation_equivalence": "Changing the first-window rx_max assignment from seq-1 to seq-2 or seq-0 is equivalent: before any helper call, the later signed-difference update sets rx_max to seq, or leaves it at seq if already equal. The initialization already writes rx_max in all three forms, so the final value and write set agree.",
+  "cases": [
+    {
+      "name": "first sequence zero wraps base to ffff",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x480",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first sequence 1",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x480",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first sequence 32767",
+      "args": [
+        "@conn",
+        32767
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x480",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first sequence 32768",
+      "args": [
+        "@conn",
+        32768
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x480",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first sequence 65535",
+      "args": [
+        "@conn",
+        65535
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x480",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "normal sequence 99",
+      "args": [
+        "@conn",
+        99
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "normal sequence 100",
+      "args": [
+        "@conn",
+        100
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "normal sequence 101",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "normal sequence 102",
+      "args": [
+        "@conn",
+        102
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "normal sequence 108",
+      "args": [
+        "@conn",
+        108
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "normal sequence 109",
+      "args": [
+        "@conn",
+        109
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "normal sequence 219",
+      "args": [
+        "@conn",
+        219
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "out-of-order bit already present",
+      "args": [
+        "@conn",
+        102
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "front bit already present",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "wrap base 65535 sequence 0",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 65535
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 65535
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrap base 65535 sequence 1",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 65535
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 65535
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrap base 65534 sequence 0",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 65534
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 65534
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrap base 65534 sequence 65535",
+      "args": [
+        "@conn",
+        65535
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 65534
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 65534
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrap base 0 sequence 65535",
+      "args": [
+        "@conn",
+        65535
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 0
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "wrap base 32767 sequence 32768",
+      "args": [
+        "@conn",
+        32768
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 32767
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 32767
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrap base 32768 sequence 32767",
+      "args": [
+        "@conn",
+        32767
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x184",
+          "u16": 32768
+        },
+        {
+          "addr": "@conn+0x186",
+          "u16": 32768
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "signed half-range difference 32767",
+      "args": [
+        "@conn",
+        32867
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x1187",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "signed half-range difference 32768",
+      "args": [
+        "@conn",
+        32868
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x1187",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "signed half-range difference 32769",
+      "args": [
+        "@conn",
+        32869
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x1188",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "rx max signed difference from 100",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x186",
+          "u16": 100
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "rx max signed difference from 101",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x186",
+          "u16": 101
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "rx max signed difference from 102",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x186",
+          "u16": 102
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "rx max signed difference from 32769",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x186",
+          "u16": 32769
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "rx max signed difference from 32869",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x186",
+          "u16": 32869
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "ack range (0, 200, 300, 101)",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 0
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 200
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 300
+        }
+      ]
+    },
+    {
+      "name": "ack range (1, 102, 110, 101)",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 1
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 102
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 110
+        }
+      ]
+    },
+    {
+      "name": "ack range (1, 101, 110, 101)",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 1
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 101
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 110
+        }
+      ]
+    },
+    {
+      "name": "ack range (1, 100, 101, 101)",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 1
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 101
+        }
+      ]
+    },
+    {
+      "name": "ack range (1, 100, 101, 102)",
+      "args": [
+        "@conn",
+        102
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 1
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 101
+        }
+      ]
+    },
+    {
+      "name": "ack range (1, 65535, 65535, 0)",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 1
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 65535
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "ack range (1, 0, 0, 65535)",
+      "args": [
+        "@conn",
+        65535
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 1
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 0
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "ack range (65535, 100, 100, 101)",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x28c",
+          "u16": 65535
+        },
+        {
+          "addr": "@conn+0x28e",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x290",
+          "u16": 100
+        }
+      ]
+    },
+    {
+      "name": "close front gap and shift 1 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 7 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 8 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 9 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7f800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 31 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7ffffffe000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 32 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7fffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 63 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7ffffffffffffffe0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 64 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7fffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 127 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7ffffffffffffffffffffffffffffffe000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 128 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7fffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 255 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 256 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 2047 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "close front gap and shift 2048 bits",
+      "args": [
+        "@conn",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x188",
+          "hex": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "timestamp full dword",
+      "args": [
+        "@conn",
+        100
+      ],
+      "memory": [],
+      "expect": {
+        "ret": 1
+      },
+      "callees": {
+        "0x004F66D0": {
+          "conv": "stdcall",
+          "args": [],
+          "ret": 4294967295
+        }
+      }
+    },
+    {
+      "name": "connection pointer low word 0x20",
+      "args": [
+        "@conn+0x20",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x1a4",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x1a6",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x1a8",
+          "size": 260,
+          "fill": "zero"
+        },
+        {
+          "addr": "@conn+0x2ac",
+          "u16": 0
+        },
+        {
+          "addr": "@conn+0x2ae",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x2b0",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x4a0",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "connection pointer low word 0x1234",
+      "args": [
+        "@conn+0x1234",
+        101
+      ],
+      "memory": [
+        {
+          "addr": "@conn+0x13b8",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x13ba",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x13bc",
+          "size": 260,
+          "fill": "zero"
+        },
+        {
+          "addr": "@conn+0x14c0",
+          "u16": 0
+        },
+        {
+          "addr": "@conn+0x14c2",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x14c4",
+          "u16": 100
+        },
+        {
+          "addr": "@conn+0x16b4",
+          "u16": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5201776,
+    "count": 180,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          99,
+          100,
+          101,
+          102,
+          119,
+          2048,
+          32767,
+          32768,
+          32769,
+          65534,
+          65535
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn+0x184",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          100,
+          32767,
+          32768,
+          65534,
+          65535
+        ]
+      },
+      {
+        "addr": "@conn+0x186",
+        "type": "u16"
+      },
+      {
+        "addr": "@conn+0x188",
+        "size": 256
+      },
+      {
+        "addr": "@conn+0x28C",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          2,
+          65534,
+          65535
+        ]
+      },
+      {
+        "addr": "@conn+0x28E",
+        "type": "u16"
+      },
+      {
+        "addr": "@conn+0x290",
+        "type": "u16"
+      },
+      {
+        "addr": "@conn+0x480",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          2,
+          65535
+        ]
+      }
+    ]
+  }
+}

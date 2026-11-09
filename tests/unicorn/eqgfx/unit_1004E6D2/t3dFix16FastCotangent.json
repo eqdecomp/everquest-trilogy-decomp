@@ -1,0 +1,253 @@
+{
+  "function": "t3dFix16FastCotangent",
+  "original": "0x1004e702",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "angle",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "startup": {
+      "size": "0x8d04",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x6084",
+          "u32": 2147483647
+        },
+        {
+          "offset": "0x609c",
+          "u32": 424242
+        },
+        {
+          "offset": "0x60fc",
+          "u32": 100000
+        },
+        {
+          "offset": "0x6684",
+          "u32": 777777
+        },
+        {
+          "offset": "0x6c6c",
+          "hex": "c7cfffff"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100f3ff4",
+      "u32": "@startup"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "index 0 reads node 0 directly",
+      "args": [
+        0
+      ],
+      "expect": {
+        "ret": 2147483647
+      }
+    },
+    {
+      "name": "index 1 reads node 1 directly",
+      "args": [
+        "0x00010000"
+      ],
+      "expect": {
+        "ret": 424242
+      }
+    },
+    {
+      "name": "index 5 reads node 5 directly",
+      "args": [
+        "0x00050000"
+      ],
+      "expect": {
+        "ret": 100000
+      }
+    },
+    {
+      "name": "index 0x40 reads node 0x40 directly",
+      "args": [
+        "0x00400000"
+      ],
+      "expect": {
+        "ret": 777777
+      }
+    },
+    {
+      "name": "index 0x7f reads node 0x7f directly",
+      "args": [
+        "0x007f0000"
+      ],
+      "expect": {
+        "ret": -12345
+      }
+    },
+    {
+      "name": "index 0x80 mirrors node 0x7f and negates",
+      "args": [
+        "0x00800000"
+      ],
+      "expect": {
+        "ret": 12345
+      }
+    },
+    {
+      "name": "index 0x81 is in the mirrored quadrant (node 0x7e, zero)",
+      "args": [
+        "0x00810000"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index 0xbf mirrors node 0x40 and negates",
+      "args": [
+        "0x00bf0000"
+      ],
+      "expect": {
+        "ret": -777777
+      }
+    },
+    {
+      "name": "index 0xff mirrors node 0 and negates",
+      "args": [
+        "0x00ff0000"
+      ],
+      "expect": {
+        "ret": -2147483647
+      }
+    },
+    {
+      "name": "index 0x100 mirrors node 0x7f and negates",
+      "args": [
+        "0x01000000"
+      ],
+      "expect": {
+        "ret": 12345
+      }
+    },
+    {
+      "name": "index 0x101 is in the mirrored quadrant (node 0x7e, zero)",
+      "args": [
+        "0x01010000"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index 0x17a mirrors node 5 and negates",
+      "args": [
+        "0x017a0000"
+      ],
+      "expect": {
+        "ret": -100000
+      }
+    },
+    {
+      "name": "index 0x17f mirrors node 0 and negates",
+      "args": [
+        "0x017f0000"
+      ],
+      "expect": {
+        "ret": -2147483647
+      }
+    },
+    {
+      "name": "index 0x180 reads node 0 directly",
+      "args": [
+        "0x01800000"
+      ],
+      "expect": {
+        "ret": 2147483647
+      }
+    },
+    {
+      "name": "index 0x181 reads node 1 directly",
+      "args": [
+        "0x01810000"
+      ],
+      "expect": {
+        "ret": 424242
+      }
+    },
+    {
+      "name": "index 0x1ff reads node 0x7f directly",
+      "args": [
+        "0x01ff0000"
+      ],
+      "expect": {
+        "ret": -12345
+      }
+    },
+    {
+      "name": "bits above the 9-bit index are masked off",
+      "args": [
+        "0x02050000"
+      ],
+      "expect": {
+        "ret": 100000
+      }
+    },
+    {
+      "name": "negative angle wraps to index 0x1ff",
+      "args": [
+        -65536
+      ],
+      "expect": {
+        "ret": -12345
+      }
+    },
+    {
+      "name": "sign bit alone gives index 0",
+      "args": [
+        -2147483648
+      ],
+      "expect": {
+        "ret": 2147483647
+      }
+    },
+    {
+      "name": "low 16 bits are ignored",
+      "args": [
+        "0x0000ffff"
+      ],
+      "expect": {
+        "ret": 2147483647
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 321282,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@startup",
+        "offset": "0x6084",
+        "type": "int",
+        "count": 128,
+        "stride": 24
+      }
+    ]
+  }
+}

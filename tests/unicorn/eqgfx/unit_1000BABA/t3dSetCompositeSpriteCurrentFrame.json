@@ -1,0 +1,224 @@
+{
+  "function": "t3dSetCompositeSpriteCurrentFrame",
+  "original": "0x1000d97d",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x3c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "0x12345678"
+        },
+        {
+          "offset": "0x38",
+          "u32": "@frame_data"
+        }
+      ]
+    },
+    "frame_data": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": 5
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "last valid frame updates current frame",
+      "args": [
+        "@sprite",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": 5
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    {
+      "name": "zero is valid when one frame exists",
+      "args": [
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": 1
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0x87654321"
+        }
+      ]
+    },
+    {
+      "name": "index equal to count fails and preserves current frame",
+      "args": [
+        "@sprite",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": 5
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0xa5a5a5a5"
+        }
+      ]
+    },
+    {
+      "name": "zero count rejects zero and preserves current frame",
+      "args": [
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@sprite",
+          "offset": "0x18",
+          "u32": "0xdeadbeef"
+        }
+      ]
+    },
+    {
+      "name": "index greater than count fails",
+      "args": [
+        "@sprite",
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "high bit values use unsigned comparison",
+      "args": [
+        "@sprite",
+        "0x7fffffff"
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "high bit equality fails",
+      "args": [
+        "@sprite",
+        "0x80000000"
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "maximum index below maximum count succeeds",
+      "args": [
+        "@sprite",
+        "0xfffffffe"
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "maximum index equal to count fails",
+      "args": [
+        "@sprite",
+        "0xffffffff"
+      ],
+      "memory": [
+        {
+          "addr": "@frame_data",
+          "offset": "0x14",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 55677,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@frame_data",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          5,
+          "0x7fffffff",
+          "0x80000000",
+          "0xfffffffe",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

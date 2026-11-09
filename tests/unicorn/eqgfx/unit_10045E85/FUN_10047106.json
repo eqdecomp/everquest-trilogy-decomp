@@ -1,0 +1,244 @@
+{
+  "function": "t3dDeferParticleLine_guess",
+  "original": "0x10047106",
+  "sources": [
+    "src/eqgfx/unit_10045E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "cloud",
+      "type": "ptr"
+    },
+    {
+      "name": "startPos",
+      "type": "ptr"
+    },
+    {
+      "name": "endPos",
+      "type": "ptr"
+    },
+    {
+      "name": "flags",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "_comment_alias": "the float->int casts compile to __ftol; the original calls the image's helper 0x1004EC36 (ST0 in, EAX out)",
+  "rewrite_aliases": {
+    "__ftol": "0x1004ec36"
+  },
+  "objects": {
+    "cloud": {
+      "size": "0x540",
+      "fill": "random"
+    },
+    "startpos": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "endpos": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x100FB8A8", "u32": 1},
+    {"addr": "0x1055F8E4", "u32": 0},
+    {"addr": "0x100FC78C", "u32": 0},
+    {"addr": "0x1055F8E0", "u32": 0},
+    {"addr": "0x100A2674", "u32": 18},
+    {"addr": "0x100A2678", "u32": 52},
+    {"addr": "0x100A267C", "u32": 86},
+    {"addr": "0x100FBB94", "f32": 20.0},
+    {"addr": "0x100FBB98", "f32": 4.0},
+    {"addr": "@cloud", "offset": "0x198", "f32": 400.0},
+    {"addr": "@cloud", "offset": "0x19c", "f32": 300.0},
+    {"addr": "@cloud", "offset": "0x1a0", "f32": 1.0},
+    {"addr": "@cloud", "offset": "0x1a4", "f32": 50.0},
+    {"addr": "@cloud", "offset": "0x520", "f32": 320.0},
+    {"addr": "@cloud", "offset": "0x524", "f32": 240.0},
+    {"addr": "@startpos", "offset": "0x0", "f32": 10.0},
+    {"addr": "@startpos", "offset": "0x4", "f32": -5.0},
+    {"addr": "@startpos", "offset": "0x8", "f32": 40.0},
+    {"addr": "@endpos", "offset": "0x0", "f32": -3.0},
+    {"addr": "@endpos", "offset": "0x4", "f32": 8.0},
+    {"addr": "@endpos", "offset": "0x8", "f32": 60.0}
+  ],
+  "callees": {
+    "0x100466fa": {
+      "name": "t3dClipLineToFrustum_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "mem:12", "mem:12"],
+      "ret": 1
+    },
+    "0x1004ec36": {
+      "name": "__ftol",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "mode 2, table A (no alpha flag)",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 2, table B, alpha 79",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 2, table C, alpha 63",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 2, table C, alpha 255",
+      "args": ["@cloud", "@startpos", "@endpos", "0x011F0000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}]
+    },
+    {
+      "name": "mode 2, table B last two slots",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}, {"addr": "0x100FC78C", "u32": 19998}]
+    },
+    {
+      "name": "mode 1, table A, fog 80 and 160",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"]
+    },
+    {
+      "name": "mode 1, table A, fog clamps low then high",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "memory": [{"addr": "@startpos", "offset": "0x8", "f32": 10.0}, {"addr": "@endpos", "offset": "0x8", "f32": 100.0}]
+    },
+    {
+      "name": "mode 1, table A, fog clamps high then low",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "memory": [{"addr": "@startpos", "offset": "0x8", "f32": 100.0}, {"addr": "@endpos", "offset": "0x8", "f32": 10.0}]
+    },
+    {
+      "name": "mode 1, table A, fog exactly 256 (clamps to 255)",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "memory": [{"addr": "@startpos", "offset": "0x8", "f32": 84.0}, {"addr": "@endpos", "offset": "0x8", "f32": 84.0}]
+    },
+    {
+      "name": "mode 1, table B, fog exactly 256 (clamps to 255)",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"],
+      "memory": [{"addr": "@startpos", "offset": "0x8", "f32": 84.0}, {"addr": "@endpos", "offset": "0x8", "f32": 84.0}]
+    },
+    {
+      "name": "mode 1, table C, fog exactly 256 (clamps to 255)",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"],
+      "memory": [{"addr": "@startpos", "offset": "0x8", "f32": 84.0}, {"addr": "@endpos", "offset": "0x8", "f32": 84.0}]
+    },
+    {
+      "name": "mode 1, table B, alpha 79",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"]
+    },
+    {
+      "name": "mode 1, table B, fog clamps high then low",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"],
+      "memory": [{"addr": "@startpos", "offset": "0x8", "f32": 100.0}, {"addr": "@endpos", "offset": "0x8", "f32": 10.0}]
+    },
+    {
+      "name": "mode 1, table C, mangled colour, alpha 63",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"]
+    },
+    {
+      "name": "mode 1, table C, alpha 255",
+      "args": ["@cloud", "@startpos", "@endpos", "0x011F0000"]
+    },
+    {
+      "name": "mode 1, table C last two slots",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"],
+      "memory": [{"addr": "0x1055F8E0", "u32": 19998}]
+    },
+    {
+      "name": "mode 1, table B full",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"],
+      "memory": [{"addr": "0x100FC78C", "u32": 20000}]
+    },
+    {
+      "name": "mode 1, table A last two slots",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "memory": [{"addr": "0x1055F8E4", "u32": 19998}]
+    },
+    {
+      "name": "mode 1, table A full",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "memory": [{"addr": "0x1055F8E4", "u32": 19999}]
+    },
+    {
+      "name": "mode 2, table C full",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}, {"addr": "0x1055F8E0", "u32": 19999}]
+    },
+    {
+      "name": "bit 0x100000 without alpha flag stays on table A",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00100000"]
+    },
+    {
+      "name": "mode 0 gate returns 1 and writes nothing",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 0}]
+    },
+    {
+      "name": "mode 3 gate returns 1 and writes nothing",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01130000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 3}]
+    },
+    {
+      "name": "FUN_100466fa rejects (ret 0)",
+      "args": ["@cloud", "@startpos", "@endpos", "0x00000000"],
+      "callees": {
+        "0x100466fa": {"name": "FUN_100466fa", "conv": "cdecl", "args": ["ptr", "mem:12", "mem:12"], "ret": 0}
+      }
+    },
+    {
+      "name": "FUN_100466fa rejects (ret 2)",
+      "args": ["@cloud", "@startpos", "@endpos", "0x01050000"],
+      "memory": [{"addr": "0x100FB8A8", "u32": 2}],
+      "callees": {
+        "0x100466fa": {"name": "FUN_100466fa", "conv": "cdecl", "args": ["ptr", "mem:12", "mem:12"], "ret": 2}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 291078,
+    "count": 60,
+    "args": [
+      {
+        "choices": ["@cloud"]
+      },
+      {
+        "choices": ["@startpos"]
+      },
+      {
+        "choices": ["@endpos"]
+      },
+      {
+        "range": [0, 4294967295]
+      }
+    ],
+    "memory": [
+      {"addr": "0x100FB8A8", "type": "int", "choices": [0, 1, 1, 2, 2, 3]},
+      {"addr": "0x1055F8E4", "type": "int", "choices": [0, 7, 19996, 19997, 19998, 19999, 20000]},
+      {"addr": "0x100FC78C", "type": "int", "choices": [0, 7, 19996, 19997, 19998, 19999, 20000]},
+      {"addr": "0x1055F8E0", "type": "int", "choices": [0, 7, 19996, 19997, 19998, 19999, 20000]},
+      {"addr": "0x100A2674", "type": "int", "range": [0, 255]},
+      {"addr": "0x100A2678", "type": "int", "range": [0, 255]},
+      {"addr": "0x100A267C", "type": "int", "range": [0, 255]},
+      {"addr": "0x100FBB94", "type": "float", "range": [-20, 60]},
+      {"addr": "0x100FBB98", "type": "float", "range": [1, 6]},
+      {"addr": "@cloud", "offset": "0x198", "type": "float", "range": [1, 1000]},
+      {"addr": "@cloud", "offset": "0x19c", "type": "float", "range": [1, 1000]},
+      {"addr": "@cloud", "offset": "0x1a0", "type": "float", "range": [1, 10]},
+      {"addr": "@cloud", "offset": "0x1a4", "type": "float", "range": [1, 1000]},
+      {"addr": "@cloud", "offset": "0x520", "type": "float", "range": [-1000, 1000]},
+      {"addr": "@cloud", "offset": "0x524", "type": "float", "range": [-1000, 1000]},
+      {"addr": "@startpos", "type": "float", "count": 3, "range": [-50, 150]},
+      {"addr": "@endpos", "type": "float", "count": 3, "range": [-50, 150]}
+    ]
+  }
+}

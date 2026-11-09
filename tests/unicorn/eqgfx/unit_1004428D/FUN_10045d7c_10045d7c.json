@@ -1,0 +1,147 @@
+{
+  "function": "t3dD3DXContextGetPrimary",
+  "original": "0x10045d7c",
+  "sources": [
+    "src/eqgfx/unit_1004428D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "object": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"}
+      ]
+    },
+    "object2": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable2"}
+      ]
+    },
+    "vtable": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@decoy"},
+        {"offset": "0x04", "u32": "@decoy"},
+        {"offset": "0x08", "u32": "@decoy"},
+        {"offset": "0x0c", "u32": "@decoy"},
+        {"offset": "0x10", "u32": "@decoy"},
+        {"offset": "0x14", "u32": "@decoy"},
+        {"offset": "0x18", "u32": "@fn18"},
+        {"offset": "0x1c", "u32": "@decoy"}
+      ]
+    },
+    "vtable2": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@decoy"},
+        {"offset": "0x04", "u32": "@decoy"},
+        {"offset": "0x08", "u32": "@decoy"},
+        {"offset": "0x0c", "u32": "@decoy"},
+        {"offset": "0x10", "u32": "@decoy"},
+        {"offset": "0x14", "u32": "@decoy"},
+        {"offset": "0x18", "u32": "@fn18b"},
+        {"offset": "0x1c", "u32": "@decoy"}
+      ]
+    },
+    "fn18": {
+      "size": "0x10"
+    },
+    "fn18b": {
+      "size": "0x10"
+    },
+    "decoy": {
+      "size": "0x10"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@fn18": {
+      "name": "object_method18_guess",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 6168,
+      "writes": [
+        {"arg": 0, "offset": 8, "hex": "efbeadde"}
+      ]
+    },
+    "@fn18b": {
+      "name": "object2_method18_guess",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 395
+    },
+    "@decoy": {
+      "name": "other_slot_guess",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 572662306
+    }
+  },
+  "cases": [
+    {
+      "name": "baseline: slot 0x18 method called with the object, its 0x1818 result is EAX",
+      "args": ["@object"],
+      "expect": {"ret": 6168}
+    },
+    {
+      "name": "pointer at object+8: the pointer is used as given, the second vtable's slot 0x18 answers 0x18b",
+      "args": ["@object+8"],
+      "memory": [{"addr": "@object", "offset": "0x8", "u32": "@vtable2"}],
+      "expect": {"ret": 395}
+    },
+    {
+      "name": "second object: its vtable's slot 0x18 method returns 0x18b",
+      "args": ["@object2"],
+      "expect": {"ret": 395}
+    },
+    {
+      "name": "slot 0x18 method returns -1, EAX carries it",
+      "args": ["@object"],
+      "callees": {"@fn18": {"name": "method18_neg_guess", "conv": "stdcall", "args": ["ptr"], "ret": -1}},
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "slot 0x18 method returns 0, EAX carries it",
+      "args": ["@object"],
+      "callees": {"@fn18": {"name": "method18_zero_guess", "conv": "stdcall", "args": ["ptr"], "ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "slot 0x18 method returns INT_MAX, EAX carries it",
+      "args": ["@object"],
+      "callees": {"@fn18": {"name": "method18_max_guess", "conv": "stdcall", "args": ["ptr"], "ret": 2147483647}},
+      "expect": {"ret": 2147483647}
+    },
+    {
+      "name": "decoy value in the argument: EAX is still slot 0x18's 0x1818",
+      "args": ["@object"],
+      "regs": {"edx": 572662306},
+      "expect": {"ret": 6168}
+    }
+  ],
+  "fuzz": {
+    "seed": 1004577,
+    "count": 32,
+    "args": [
+      {"choices": ["@object", "@object2"]}
+    ],
+    "memory": [
+      {"addr": "@object", "offset": "0x0", "type": "u32", "choices": ["@vtable", "@vtable2"]},
+      {"addr": "@object2", "offset": "0x0", "type": "u32", "choices": ["@vtable", "@vtable2"]},
+      {"addr": "@vtable", "offset": "0x18", "type": "u32", "choices": ["@fn18", "@fn18b"]},
+      {"addr": "@vtable2", "offset": "0x18", "type": "u32", "choices": ["@fn18", "@fn18b"]}
+    ]
+  }
+}

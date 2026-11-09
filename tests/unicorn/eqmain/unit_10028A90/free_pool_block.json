@@ -1,0 +1,240 @@
+{
+  "function": "free_pool_block_guess",
+  "original": "0x10028a90",
+  "sources": [
+    "src/eqmain/unit_10028A90.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "block",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "blkA": {
+      "size": "0x40"
+    },
+    "blkB": {
+      "size": "0x40"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002ded0": {
+      "name": "FUN_1002ded0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "heap block (index 4): _free on the block base, no pool calls",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "heap block on the second object",
+      "args": [
+        "@blkB+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkB",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "pool index 0: record 0, lock at 0x1013D744",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "pool index 1: record offset 0x3c",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "pool index 2",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "pool index 3: just below the heap index",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "pool index 5: just above the heap index",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "pool index 0x10",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": 16
+        }
+      ]
+    },
+    {
+      "name": "pool index 1 on the second object",
+      "args": [
+        "@blkB+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkB",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "index 0xffffffff (-1): negative record offset",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "index 0x7fffffff: record offset wraps to -0x3c",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "index 0x80000000: record offset wraps to 0",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "index 0x11111112: record offset overflows 32 bits",
+      "args": [
+        "@blkA+0x8"
+      ],
+      "memory": [
+        {
+          "addr": "@blkA",
+          "u32": "0x11111112"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 166544,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@blkA+0x8",
+          "@blkB+0x8"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@blkA",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 16, 255, 2147483647, 2147483648, 4294967295, 286331154]
+      },
+      {
+        "addr": "@blkB",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 16, 255, 2147483647, 2147483648, 4294967295, 286331154]
+      }
+    ]
+  }
+}

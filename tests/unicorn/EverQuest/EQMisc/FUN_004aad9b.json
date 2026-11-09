@@ -1,0 +1,285 @@
+{
+  "function": "OpenSpellbookPage_guess",
+  "original": "0x004aad9b",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "command",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "pc": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "ui": {
+      "size": "0x6c564",
+      "fill": "zero"
+    },
+    "display": {
+      "size": "0xc0",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xbc",
+          "u32": 123456
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "0x006e4e44",
+      "u32": "@ui"
+    },
+    {
+      "addr": "0x006e4de0",
+      "u32": "@display"
+    },
+    {
+      "addr": "0x0058fc6c",
+      "u32": 0
+    },
+    {
+      "addr": "0x00590170",
+      "u32": 77
+    },
+    {
+      "addr": "@ui",
+      "offset": "0xfe0",
+      "u8": 0
+    }
+  ],
+  "callees": {
+    "0x004a49bd": {
+      "name": "allowslashcommand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 1
+    },
+    "0x0041980e": {
+      "name": "EQ_Character::IsSpellcaster",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 1
+    },
+    "0x0046e4aa": {
+      "name": "EQ_Main_DoHotButton_configureSpellbookHotButtonRects_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    },
+    "0x0040e58b": {
+      "name": "CDisplay::ChangeVideoMode_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    },
+    "0x00465a60": {
+      "name": "ActivateSpellbook",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "slash command denied",
+      "args": [
+        1,
+        "1"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "not a spellcaster",
+      "args": [
+        2,
+        "2"
+      ],
+      "callees": {
+        "0x0041980e": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "empty command updates non spellbook mode timestamp",
+      "args": [
+        3,
+        ""
+      ]
+    },
+    {
+      "name": "spellbook state with odd page",
+      "args": [
+        4,
+        "3"
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 5
+        }
+      ]
+    },
+    {
+      "name": "page lower clamp",
+      "args": [
+        5,
+        "0"
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 5
+        }
+      ]
+    },
+    {
+      "name": "page upper boundary 50",
+      "args": [
+        6,
+        "50"
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 5
+        }
+      ]
+    },
+    {
+      "name": "page above upper boundary",
+      "args": [
+        7,
+        "51"
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 5
+        }
+      ]
+    },
+    {
+      "name": "mode four executes sit handler",
+      "args": [
+        8,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 4
+        }
+      ]
+    },
+    {
+      "name": "mode two game state restores video and sits",
+      "args": [
+        9,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 2
+        },
+        {
+          "addr": "0x0058fc6c",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "video mode change replaces the UI object before sitting",
+      "args": [
+        11,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 2
+        },
+        {
+          "addr": "0x0058fc6c",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x0040e58b": {
+          "writes": [
+            {
+              "addr": "0x006e4e44",
+              "hex": "00007a00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "unrecognized mode saves display time",
+      "args": [
+        10,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@ui",
+          "offset": "0xfe0",
+          "u8": 3
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4894107,
+    "count": 40,
+    "args": [
+      {
+        "range": [-2, 2]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@ui",
+        "offset": "0xfe0",
+        "type": "u8",
+        "choices": [0, 1, 2, 3, 4, 5, 255]
+      },
+      {
+        "addr": "0x0058fc6c",
+        "type": "u32",
+        "choices": [0, 1, 2, 3]
+      }
+    ]
+  }
+}

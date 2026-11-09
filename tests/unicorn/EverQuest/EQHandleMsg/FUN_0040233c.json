@@ -1,0 +1,193 @@
+{
+  "function": "EQMsgArrayOwner_guess::AllocateEntryBlock_guess",
+  "original": "0x0040233c",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqmsgarrayowner",
+  "args": [
+    {
+      "name": "count",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eqmsgarrayowner": {
+      "size": "0x214",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "0x12345678"
+        },
+        {
+          "offset": "0x210",
+          "u32": 0
+        }
+      ]
+    },
+    "heap": {
+      "size": "0x1000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x00521f39": {
+      "name": "??_L@YGXPAXIHP6EX0@Z1@Z",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "int",
+        "ignore",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "ret": "@heap"
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6",
+    "??_L@YGXPAXIHP6EX0@Z1@Z": "0x00521f39"
+  },
+  "cases": [
+    {
+      "name": "zero-loop-iterations",
+      "args": [
+        2
+      ]
+    },
+    {
+      "name": "allocation-failed",
+      "args": [
+        2
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "one-link-iteration",
+      "args": [
+        3
+      ],
+      "regs": {
+        "ecx": "@eqmsgarrayowner"
+      },
+      "memory": [
+        {
+          "addr": "@eqmsgarrayowner",
+          "offset": "0x0c",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@eqmsgarrayowner",
+          "offset": "0x210",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "multiple-links-and-last-valid-slot",
+      "args": [
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@eqmsgarrayowner",
+          "offset": "0x0c",
+          "u32": "@eqmsgarrayowner"
+        },
+        {
+          "addr": "@eqmsgarrayowner",
+          "offset": "0x210",
+          "u32": 127
+        }
+      ]
+    },
+    {
+      "name": "first-slot-past-array",
+      "args": [
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@eqmsgarrayowner",
+          "offset": "0x0c",
+          "u32": 0
+        },
+        {
+          "addr": "@eqmsgarrayowner",
+          "offset": "0x210",
+          "u32": 128
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4203324,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          2,
+          16
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@eqmsgarrayowner",
+        "offset": "0x0c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@eqmsgarrayowner",
+          "0x12345678"
+        ]
+      },
+      {
+        "addr": "@eqmsgarrayowner",
+        "offset": "0x210",
+        "type": "u32",
+        "range": [
+          0,
+          127
+        ]
+      }
+    ]
+  },
+  "defaults": true
+}

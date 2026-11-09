@@ -1,0 +1,60 @@
+{
+  "function": "EQ_HSliderCtor_guess::EQ_HSliderCtor_guess",
+  "original": "0x00485de2",
+  "sources": ["src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_hsliderctor",
+  "args": [],
+  "ret": "ptr",
+  "objects": {
+    "eq_hsliderctor": {"size": "0x200", "fill": "random", "init": [{"offset": "0x84", "u16": 3}, {"offset": "0x90", "u32": "0x60000094"}, {"offset": "0xa8", "u16": 4}, {"offset": "0xb4", "u32": 0}]},
+    "SetRect": {"size": "0x1", "fill": "zero"},
+    "CopyRect": {"size": "0x1", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x00534248", "u32": "@SetRect"},
+    {"addr": "0x00534240", "u32": "@CopyRect"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x00450049": {"name": "EQ_Overlay::EQ_Overlay_guess", "conv": "thiscall", "args": []},
+    "0x0045005d": {"name": "EQ_Overlay::~EQ_Overlay_guess", "conv": "thiscall", "args": []},
+    "@SetRect": {"name": "SetRect", "conv": "stdcall", "args": ["ptr", "int", "int", "int", "int"], "ret": 1},
+    "0x004503be": {
+      "name": "EQ_Overlay_AddButton_guess",
+      "conv": "thiscall",
+      "args": ["int", "ptr", "int", "int", "int", "int"],
+      "writes": [{"addr": "@eq_hsliderctor+0x70", "hex": "70000060"}]
+    },
+    "@CopyRect": {"name": "CopyRect", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 1},
+    "0x00450168": {"name": "EQ_Overlay::load_guess", "conv": "thiscall", "args": ["int", "int"]}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "random-starting-bytes"},
+    {"name": "zero-filled-storage", "objects": {"eq_hsliderctor": {"fill": "zero"}}},
+    {"name": "single-type-four-node", "objects": {"eq_hsliderctor": {"fill": "random", "init": [{"offset": "0x84", "u16": 4}, {"offset": "0x90", "u32": 0}]}}},
+    {"name": "later-nonmatching-node-preserves-first-match", "objects": {"eq_hsliderctor": {"fill": "random", "init": [{"offset": "0x84", "u16": 4}, {"offset": "0x90", "u32": "0x60000094"}, {"offset": "0xa8", "u16": 3}, {"offset": "0xb4", "u32": 0}]}}},
+    {"name": "later-type-four-node-replaces-first-match", "objects": {"eq_hsliderctor": {"fill": "random", "init": [{"offset": "0x84", "u16": 4}, {"offset": "0x90", "u32": "0x60000094"}, {"offset": "0xa8", "u16": 4}, {"offset": "0xb4", "u32": 0}]}}},
+    {"name": "unlinked-type-four-node-is-ignored", "objects": {"eq_hsliderctor": {"fill": "random", "init": [{"offset": "0x84", "u16": 3}, {"offset": "0x90", "u32": 0}, {"offset": "0xa8", "u16": 4}, {"offset": "0xb4", "u32": 0}]}}},
+    {"name": "different-border-and-rectangle-sentinels", "objects": {"eq_hsliderctor": {"fill": "zero", "init": [{"offset": "0x10", "u32": "0xffffffff"}, {"offset": "0x80", "u32": "0x11111111"}, {"offset": "0x84", "u16": 3}, {"offset": "0x90", "u32": 0}, {"offset": "0x1cc", "u16": 0}, {"offset": "0x1e0", "u16": 65535}]}}}
+  ],
+  "fuzz": {
+    "seed": 4859874,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@eq_hsliderctor", "offset": "0x00", "type": "u32", "choices": [0, "0xffffffff", "0x12345678"]},
+      {"addr": "@eq_hsliderctor", "offset": "0x10", "type": "u32", "choices": [0, "0xffffffff", "0x87654321"]},
+      {"addr": "@eq_hsliderctor", "offset": "0x1c0", "type": "u32", "choices": [0, "0xffffffff", "0xabcdef01"]},
+      {"addr": "@eq_hsliderctor", "offset": "0x1cc", "type": "u16", "choices": [0, 1, 65535]},
+      {"addr": "@eq_hsliderctor", "offset": "0x1e0", "type": "u16", "choices": [0, 1, 65535]},
+      {"addr": "@eq_hsliderctor", "offset": "0x84", "type": "u16", "choices": [3, 4]},
+      {"addr": "@eq_hsliderctor", "offset": "0x90", "type": "u32", "choices": [0, "0x60000094"]},
+      {"addr": "@eq_hsliderctor", "offset": "0xa8", "type": "u16", "choices": [3, 4]},
+      {"addr": "@eq_hsliderctor", "offset": "0xb4", "type": "u32", "choices": [0]}
+    ]
+  }
+}

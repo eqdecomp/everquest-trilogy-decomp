@@ -1,0 +1,377 @@
+{
+  "function": "say_guess",
+  "original": "0x004a7f9b",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0xc00",
+      "fill": "zero"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "local": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "pc": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006EFE2C",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006E4DAC",
+      "u32": "@target"
+    },
+    {
+      "addr": "0x006E4D8C",
+      "u32": "@local"
+    },
+    {
+      "addr": "0x006E4DA8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "0x005344A4",
+      "from_image": "0x005344A4",
+      "image_size": 4
+    },
+    {
+      "addr": "@target",
+      "offset": "0x01",
+      "cstr": "a target"
+    },
+    {
+      "addr": "@target",
+      "offset": "0x34",
+      "f32": 12.5
+    },
+    {
+      "addr": "@target",
+      "offset": "0x38",
+      "f32": -3.25
+    },
+    {
+      "addr": "@target",
+      "offset": "0x3c",
+      "f32": 7.0
+    },
+    {
+      "addr": "@target",
+      "offset": "0x98",
+      "u8": 1
+    },
+    {
+      "addr": "@target",
+      "offset": "0x9a",
+      "u16": 7
+    },
+    {
+      "addr": "@local",
+      "offset": "0x34",
+      "f32": 1.25
+    },
+    {
+      "addr": "@local",
+      "offset": "0x38",
+      "f32": 2.5
+    }
+  ],
+  "callees": {
+    "0x004a3491": {
+      "name": "CastRay_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "float",
+        "float",
+        "float"
+      ],
+      "ret": 1
+    },
+    "0x004d0d77": {
+      "name": "CEverQuest_SendNewText_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "cstr",
+        "cstr"
+      ]
+    },
+    "0x004238a2": {
+      "name": "EQ_Character::TotalSpellAffects_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004d0a8e": {
+      "name": "CEverQuest::send_chat_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "null target sends ordinary chat",
+      "args": [
+        0,
+        "hello"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4DAC",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "target player is not hailed",
+      "args": [
+        1,
+        "player target"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x98",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "non NPC target is not hailed",
+      "args": [
+        2,
+        "corpse target"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x98",
+          "u8": 3
+        }
+      ]
+    },
+    {
+      "name": "NPC outside special races uses original height and blocked ray sends chat",
+      "args": [
+        3,
+        "blocked"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 7
+        }
+      ],
+      "callees": {
+        "0x004a3491": {
+          "name": "CastRay_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "float",
+            "float",
+            "float"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "race 11 adds one to height and active spell suppresses local line",
+      "args": [
+        4,
+        "active spell"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 11
+        }
+      ],
+      "callees": {
+        "0x004238a2": {
+          "name": "EQ_Character::TotalSpellAffects_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "race 12 adds one to height and prints local line",
+      "args": [
+        5,
+        "say %s literally"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 12
+        }
+      ],
+      "callees": {
+        "0x004238a2": {
+          "name": "EQ_Character::TotalSpellAffects_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "race 8 adds one to height with an empty message",
+      "args": [
+        6,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 8
+        }
+      ],
+      "callees": {
+        "0x004238a2": {
+          "name": "EQ_Character::TotalSpellAffects_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "race immediately outside special values does not add height",
+      "args": [
+        7,
+        "boundary race"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x9a",
+          "u16": 13
+        }
+      ],
+      "callees": {
+        "0x004238a2": {
+          "name": "EQ_Character::TotalSpellAffects_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4882331,
+    "count": 35,
+    "args": [
+      {},
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x006E4DAC",
+        "type": "ptr",
+        "choices": [
+          "@target",
+          0
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x98",
+        "type": "u8",
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x9a",
+        "type": "u16",
+        "choices": [
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x34",
+        "type": "float",
+        "range": [
+          -25,
+          25
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x38",
+        "type": "float",
+        "range": [
+          -25,
+          25
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x3c",
+        "type": "float",
+        "range": [
+          -25,
+          25
+        ]
+      }
+    ]
+  }
+}

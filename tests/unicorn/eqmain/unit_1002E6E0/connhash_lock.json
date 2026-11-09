@@ -1,0 +1,170 @@
+{
+  "function": "connhash_lock_guess",
+  "original": "0x1002e6e0",
+  "sources": [
+    "src/eqmain/unit_1002E6E0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "hash",
+      "type": "ptr"
+    },
+    {
+      "name": "addr",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "hash": {
+      "size": "0x8",
+      "init": [
+        {"offset": 0, "u16": 4},
+        {"offset": "0x4", "u32": "@buckets"}
+      ]
+    },
+    "buckets": {
+      "size": "0x180",
+      "fill": "random"
+    },
+    "addr": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u16": 2},
+        {"offset": "0x2", "u16": "0x1234"},
+        {"offset": "0x4", "u32": "0x0a000001"}
+      ]
+    },
+    "conn": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": 1}
+      ]
+    },
+    "enter_cs": {
+      "size": "0x10"
+    },
+    "leave_cs": {
+      "size": "0x10"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004014c", "u32": "@enter_cs"},
+    {"addr": "0x10040148", "u32": "@leave_cs"}
+  ],
+  "callees": {
+    "@enter_cs": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@leave_cs": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002e0c0": {
+      "name": "FUN_1002e0c0",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@conn"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: AF_INET, found in bucket 3 of 4, refcount 1 -> 2",
+      "args": ["@hash", "@addr"]
+    },
+    {
+      "name": "AF_INET, not in its bucket: no reference, no connection lock",
+      "args": ["@hash", "@addr"],
+      "callees": {
+        "0x1002e0c0": {"name": "FUN_1002e0c0", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "AF_IPX (family 6) hashes to bucket 0, found",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@addr", "u16": 6}]
+    },
+    {
+      "name": "family 0, not in its bucket",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@addr", "u16": 0}],
+      "callees": {
+        "0x1002e0c0": {"name": "FUN_1002e0c0", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "AF_INET, bucket 2 of 4 (low address bits zero)",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@addr", "offset": "0x4", "u32": "0x0a000000"}]
+    },
+    {
+      "name": "zero address and port: bucket 0",
+      "args": ["@hash", "@addr"],
+      "memory": [
+        {"addr": "@addr", "offset": "0x2", "u16": 0},
+        {"addr": "@addr", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "hash size 8: bucket 7",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@hash", "u16": 8}]
+    },
+    {
+      "name": "hash size 1: always bucket 0",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@hash", "u16": 1}]
+    },
+    {
+      "name": "hash size 0: mask 0xffff",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@hash", "u16": 0}]
+    },
+    {
+      "name": "hash size 0x8000: mask 0x7fff",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@hash", "u16": 32768}]
+    },
+    {
+      "name": "refcount 0x7fffffff wraps to 0x80000000",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": "0x7fffffff"}]
+    },
+    {
+      "name": "refcount -1 becomes 0",
+      "args": ["@hash", "@addr"],
+      "memory": [{"addr": "@conn", "offset": "0x18", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 190176,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@hash"
+        ]
+      },
+      {
+        "choices": [
+          "@addr"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@hash", "type": "u16", "choices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 32768]},
+      {"addr": "@addr", "type": "u16", "choices": [2, 2, 2, 6, 0, 1]},
+      {"addr": "@addr", "offset": "0x2", "type": "u16"},
+      {"addr": "@addr", "offset": "0x4", "type": "u32"},
+      {"addr": "@conn", "offset": "0x18", "type": "int", "range": [-3, 3]}
+    ]
+  }
+}

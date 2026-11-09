@@ -1,0 +1,319 @@
+{
+  "function": "t3dSetDagSprite",
+  "original": "0x1001387f",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "dag",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "sprite": {
+      "size": "0x128",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@oldDag"
+        },
+        {
+          "offset": "0xc",
+          "u32": "0x00c0ffee"
+        }
+      ]
+    },
+    "oldDag": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x14"
+        }
+      ]
+    },
+    "dag": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x14"
+        }
+      ]
+    },
+    "dagAlt": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x12"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: old and new dags tagged 0x14",
+      "args": [
+        "@sprite",
+        "@dag"
+      ]
+    },
+    {
+      "name": "null dag, old dag tagged 0x14 (its parent is cleared)",
+      "args": [
+        "@sprite",
+        0
+      ]
+    },
+    {
+      "name": "null dag, old dag tagged 0x2e (no parent clear)",
+      "args": [
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@oldDag",
+          "u32": "0x2e"
+        }
+      ]
+    },
+    {
+      "name": "null dag, sprite dag null (no unshare)",
+      "args": [
+        "@sprite",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "old dag tag 0 (not unshared), new dag tagged",
+      "args": [
+        "@sprite",
+        "@dag"
+      ],
+      "memory": [
+        {
+          "addr": "@oldDag",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "new dag tag 0 (not shared)",
+      "args": [
+        "@sprite",
+        "@dag"
+      ],
+      "memory": [
+        {
+          "addr": "@dag",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "new dag tag 0x12 (shared, no parent store)",
+      "args": [
+        "@sprite",
+        "@dagAlt"
+      ]
+    },
+    {
+      "name": "same dag as the old one (cleared, then stored and shared)",
+      "args": [
+        "@sprite",
+        "@oldDag"
+      ]
+    },
+    {
+      "name": "unshare re-tags the old dag to 0: the re-read sees 0, no clear",
+      "args": [
+        "@sprite",
+        "@dag"
+      ],
+      "callees": {
+        "0x10017dad": {
+          "name": "t3dUnshareObject",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "unshare tags the old dag 0x14: the re-read sees it and clears",
+      "args": [
+        "@sprite",
+        "@dag"
+      ],
+      "memory": [
+        {
+          "addr": "@oldDag",
+          "u32": "0x12"
+        }
+      ],
+      "callees": {
+        "0x10017dad": {
+          "name": "t3dUnshareObject",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "14000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "share re-tags the new dag to 0: the re-read sees 0, no parent store",
+      "args": [
+        "@sprite",
+        "@dag"
+      ],
+      "callees": {
+        "0x10017ce8": {
+          "name": "t3dShareObject",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 79999,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@dag",
+          "@dagAlt",
+          "@oldDag",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@oldDag",
+          "@dag",
+          "@dagAlt",
+          0,
+          "0x100f401c"
+        ]
+      },
+      {
+        "addr": "@sprite",
+        "offset": "0xc",
+        "type": "u32"
+      },
+      {
+        "addr": "@oldDag",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x14",
+          "0x12",
+          "0x2e",
+          "0x16"
+        ]
+      },
+      {
+        "addr": "@dag",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x14",
+          "0x12",
+          "0x2e",
+          "0x16"
+        ]
+      },
+      {
+        "addr": "@dagAlt",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x14",
+          "0x12",
+          "0x2e",
+          "0x16"
+        ]
+      }
+    ]
+  }
+}

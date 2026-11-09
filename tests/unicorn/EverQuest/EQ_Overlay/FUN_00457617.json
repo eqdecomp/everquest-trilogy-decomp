@@ -1,0 +1,301 @@
+{
+  "function": "drawMemVial",
+  "original": "0x00457617",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x6c560",
+      "fill": "zero"
+    },
+    "pc": {
+      "size": "0xa00",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x36", "u8": 3 },
+        { "offset": "0x38", "u8": 20 },
+        { "offset": "0x9e7", "u8": 40 }
+      ]
+    },
+    "tbl0": {
+      "size": "0x400",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x237", "u8": 30 }
+      ]
+    },
+    "tbl1": {
+      "size": "0x400",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x237", "u8": 30 }
+      ]
+    },
+    "clk": {
+      "size": "0xc0",
+      "fill": "zero",
+      "init": [
+        { "offset": "0xbc", "u32": 1000 }
+      ]
+    },
+    "eqmain": {
+      "size": "0xec0",
+      "fill": "zero"
+    },
+    "ui": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "0x006e4da8", "u32": "@pc" },
+    { "addr": "0x006e4de0", "u32": "@clk" },
+    { "addr": "0x006e4e44", "u32": "@eqmain" },
+    { "addr": "0x006b3814", "u32": "@ui" },
+    { "addr": "0x005fe9a0", "u32": "@tbl0" },
+    { "addr": "0x005fe9a4", "u32": "@tbl1" },
+    { "addr": "0x005921f8", "u32": 0 }
+  ],
+  "callees": {
+    "0x0041a3e9": {
+      "name": "EQ_Character::HasSkill",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x004501a1": {
+      "name": "EQ_PC::CheckSkillImprove_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "float"
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:12",
+        "u32",
+        "int"
+      ]
+    },
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": [
+        "mem:16",
+        "int",
+        "int",
+        "int",
+        "int"
+      ],
+      "ret": 1
+    },
+    "0x004384b2": {
+      "name": "EQ_Image::draw_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "index-minus-one-returns-untouched",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1004", "u16": "0xffff" }, { "offset": "0x1002", "u16": 7 } ] }
+      }
+    },
+    {
+      "name": "unskilled-idle-sends-and-resets",
+      "args": [ "@self" ]
+    },
+    {
+      "name": "skill-learned-sets-flag-and-draws",
+      "args": [ "@self" ],
+      "callees": {
+        "0x0041a3e9": { "name": "EQ_Character::HasSkill_guess", "conv": "thiscall", "args": [ "int" ], "ret": 1 }
+      },
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 5 } ] }
+      }
+    },
+    {
+      "name": "skilled-update-subtracts-skill-term",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0xfe4", "u32": 1 }, { "offset": "0x1002", "u16": 10 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    },
+    {
+      "name": "unskilled-update-decrements-once",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 3 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    },
+    {
+      "name": "skilled-update-clamps-to-zero-and-improves-skill",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0xfe4", "u32": 1 }, { "offset": "0x1002", "u16": 2 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    },
+    {
+      "name": "unskilled-decrement-to-zero-sends-without-improve",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 1 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    },
+    {
+      "name": "negative-counter-clamped-without-update",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": "0xfffd" } ] }
+      }
+    },
+    {
+      "name": "negative-time-difference-still-takes-update",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 5 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": "0xffffffce" } ] }
+      }
+    },
+    {
+      "name": "time-equal-to-speed-does-not-update",
+      "args": [ "@self" ],
+      "objects": {
+        "clk": { "init": [ { "offset": "0xbc", "u32": 1500 } ] }
+      }
+    },
+    {
+      "name": "time-one-above-speed-updates",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 2 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 1501 } ] }
+      }
+    },
+    {
+      "name": "low-table-value-clamps-speed-to-100",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 2 } ] },
+        "tbl0": { "init": [ { "offset": "0x237", "u8": 1 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 150 } ] }
+      }
+    },
+    {
+      "name": "speed-exactly-100-is-not-clamped",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 2 } ] },
+        "tbl0": { "init": [ { "offset": "0x237", "u8": 16 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 101 } ] }
+      }
+    },
+    {
+      "name": "speed-scales-by-100-not-99",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 2 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 1490 } ] }
+      }
+    },
+    {
+      "name": "send-sign-extends-counter-and-index",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1004", "u16": 1 }, { "offset": "0x6c552", "u16": "0xfffb" } ] }
+      }
+    },
+    {
+      "name": "draw-offset-negative-fe0",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 5 }, { "offset": "0xfe0", "u8": "0xfe" } ] }
+      }
+    },
+    {
+      "name": "draw-offset-positive-fe0",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": 5 }, { "offset": "0xfe0", "u8": 2 } ] }
+      }
+    },
+    {
+      "name": "counter-decrement-wraps-at-16-bits",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0x1002", "u16": "0x8000" } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    },
+    {
+      "name": "skill-tenth-rounds-toward-zero",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0xfe4", "u32": 1 }, { "offset": "0x1002", "u16": 100 } ] },
+        "pc": { "init": [ { "offset": "0x9e7", "u8": 9 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    },
+    {
+      "name": "skill-255-divides-to-25",
+      "args": [ "@self" ],
+      "objects": {
+        "self": { "init": [ { "offset": "0xfe4", "u32": 1 }, { "offset": "0x1002", "u16": 100 } ] },
+        "pc": { "init": [ { "offset": "0x9e7", "u8": 255 } ] },
+        "clk": { "init": [ { "offset": "0xbc", "u32": 2000 } ] }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5217617,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      { "addr": "@self", "offset": "0x1004", "type": "short", "choices": [ -1, 0, 1 ] },
+      { "addr": "@self", "offset": "0x1002", "type": "short", "range": [ -4, 6 ] },
+      { "addr": "@self", "offset": "0xfe4", "type": "int", "choices": [ 0, 1 ] },
+      { "addr": "@self", "offset": "0xfe0", "type": "char", "range": [ -3, 3 ] },
+      { "addr": "@self", "offset": "0x6c552", "type": "short", "range": [ -300, 300 ] },
+      { "addr": "@pc", "offset": "0x36", "type": "u8", "range": [ 0, 20 ] },
+      { "addr": "@pc", "offset": "0x38", "type": "u8", "range": [ 0, 60 ] },
+      { "addr": "@pc", "offset": "0x9e7", "type": "u8", "range": [ 0, 255 ] },
+      { "addr": "@tbl0", "offset": "0x234", "size": 256 },
+      { "addr": "@tbl1", "offset": "0x234", "size": 256 },
+      { "addr": "@clk", "offset": "0xbc", "type": "int", "range": [ -2000, 4000 ] },
+      { "addr": "0x005921f8", "type": "int", "range": [ -2000, 4000 ] },
+      { "addr": "@eqmain", "offset": "0x94", "type": "int", "range": [ 0, 100 ] }
+    ]
+  }
+}

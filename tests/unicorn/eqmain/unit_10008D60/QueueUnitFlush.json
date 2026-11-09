@@ -1,0 +1,151 @@
+{
+  "function": "QueueUnitFlush_guess",
+  "original": "0x1000b210",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": 5},
+        {"offset": "0x28", "u32": 9}
+      ]
+    },
+    "param_2": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": "@fn"},
+        {"offset": "0x28", "u32": 77}
+      ]
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000a3e0": {
+      "name": "QueueUnitReset_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ]
+    },
+    "@fn": {
+      "name": "callback_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: unit[9]=5, unit[10]=9, arg=77",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros: unit[9], unit[10] and arg all 0",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x24", "u32": 0},
+        {"addr": "@param_1", "offset": "0x28", "u32": 0},
+        {"addr": "@param_2", "offset": "0x28", "u32": 0}
+      ]
+    },
+    {
+      "name": "extremes: unit[9]=-1, unit[10]=INT_MIN, arg=INT_MAX",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x24", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x28", "u32": "0x80000000"},
+        {"addr": "@param_2", "offset": "0x28", "u32": "0x7fffffff"}
+      ]
+    },
+    {
+      "name": "distant slots: unit[9]=0x12345678, unit[10]=3, arg=0",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x24", "u32": "0x12345678"},
+        {"addr": "@param_1", "offset": "0x28", "u32": 3},
+        {"addr": "@param_2", "offset": "0x28", "u32": 0}
+      ]
+    },
+    {
+      "name": "callbacks return 85 (ignored by the caller)",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "@fn": {
+          "name": "callback_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": 85
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 45584,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "choices": [
+          "@param_2"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x24", "type": "int", "count": 2},
+      {"addr": "@param_2", "offset": "0x28", "type": "int"}
+    ]
+  }
+}

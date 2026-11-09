@@ -1,0 +1,75 @@
+{
+  "function": "t3dFloatFastCotangent",
+  "original": "0x1004ef16",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "value",
+      "type": "float"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "startup": {
+      "size": "0x8d04",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x608c", "f32": 1000.25},
+        {"offset": "0x60a4", "f32": 2.5},
+        {"offset": "0x6104", "f32": -7.75},
+        {"offset": "0x668c", "f32": 0.5},
+        {"offset": "0x6c5c", "f32": 9.125},
+        {"offset": "0x6c74", "f32": -3.75}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100F3FF4", "u32": "@startup"}
+  ],
+  "callees": {
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {"name": "index 0 reads node 0 directly", "args": [0.0], "expect": {"ret": 1000.25}},
+    {"name": "index 1 reads node 1 directly", "args": [1.0], "expect": {"ret": 2.5}},
+    {"name": "index 5 reads node 5 directly", "args": [5.0], "expect": {"ret": -7.75}},
+    {"name": "index 0x40 reads node 0x40 directly", "args": [64.0], "expect": {"ret": 0.5}},
+    {"name": "index 0x7e reads node 0x7e directly", "args": [126.0], "expect": {"ret": 9.125}},
+    {"name": "index 0x7f reads node 0x7f directly", "args": [127.0], "expect": {"ret": -3.75}},
+    {"name": "index 0x80 mirrors node 0x7f and negates", "args": [128.0], "expect": {"ret": 3.75}},
+    {"name": "index 0x81 mirrors node 0x7e and negates", "args": [129.0], "expect": {"ret": -9.125}},
+    {"name": "index 0xbf mirrors node 0x40 and negates", "args": [191.0], "expect": {"ret": -0.5}},
+    {"name": "index 0xff mirrors node 0 and negates", "args": [255.0], "expect": {"ret": -1000.25}},
+    {"name": "index 0x100 mirrors node 0x7f and negates", "args": [256.0], "expect": {"ret": 3.75}},
+    {"name": "index 0x101 mirrors node 0x7e and negates", "args": [257.0], "expect": {"ret": -9.125}},
+    {"name": "index 0x17a mirrors node 5 and negates", "args": [378.0], "expect": {"ret": 7.75}},
+    {"name": "index 0x17f mirrors node 0 and negates", "args": [383.0], "expect": {"ret": -1000.25}},
+    {"name": "index 0x180 reads node 0 directly", "args": [384.0], "expect": {"ret": 1000.25}},
+    {"name": "index 0x181 reads node 1 directly", "args": [385.0], "expect": {"ret": 2.5}},
+    {"name": "index 0x1fe reads node 0x7e directly", "args": [510.0], "expect": {"ret": 9.125}},
+    {"name": "index 0x1ff reads node 0x7f directly", "args": [511.0], "expect": {"ret": -3.75}},
+    {"name": "index 0x200 wraps to zero", "args": [512.0], "expect": {"ret": 1000.25}},
+    {"name": "index 0x3ff wraps to 0x1ff", "args": [1023.0], "expect": {"ret": -3.75}},
+    {"name": "negative one wraps to 0x1ff", "args": [-1.0], "expect": {"ret": -3.75}},
+    {"name": "negative two wraps to 0x1fe", "args": [-2.0], "expect": {"ret": 9.125}},
+    {"name": "fraction truncates toward zero", "args": [1.9], "expect": {"ret": 2.5}},
+    {"name": "half truncates to zero", "args": [0.5], "expect": {"ret": 1000.25}},
+    {"name": "2pow31 overflows to index 0", "args": [2147483648.0], "expect": {"ret": 1000.25}}
+  ],
+  "fuzz": {
+    "seed": 323350,
+    "count": 40,
+    "args": [{}],
+    "memory": [
+      {"addr": "@startup", "offset": "0x608c", "type": "float", "count": 128, "stride": 24}
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "function": "box_draw_fill_insert_guess",
+  "original": "0x00404416",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "rewrite": "box_draw_fill_insert_guess",
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [
+    {"name": "position", "type": "ptr"},
+    {"name": "count", "type": "u32"},
+    {"name": "value", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "storage": {"size": "0x80", "fill": "random"},
+    "self": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@storage+0x40"},
+        {"offset": "0x8", "u32": "@storage+0x60"}
+      ]
+    },
+    "value": {"size": "0x4", "fill": "zero", "init": [{"offset": "0", "u32": "0xA17E5EED"}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x00404656": {
+      "name": "FUN_00404656",
+      "conv": "thiscall",
+      "args": ["ptr", "ptr", "u32"]
+    }
+  },
+  "cases": [
+    {"name": "insert at lower mapped boundary", "args": ["@storage", 1, "@value"]},
+    {"name": "zero count skips pointers", "args": [0, 0, 0]},
+    {"name": "prefix move with one inserted dword", "args": ["@storage+0x20", 1, "@value"]},
+    {"name": "prefix move count below suffix length", "args": ["@storage+0x20", 3, "@value"]},
+    {"name": "strict boundary count equals suffix length", "args": ["@storage+0x38", 2, "@value"]},
+    {"name": "append at end", "args": ["@storage+0x40", 4, "@value"]},
+    {"name": "fill crosses old end", "args": ["@storage+0x38", 5, "@value"]},
+    {"name": "exactly fills spare capacity", "args": ["@storage+0x20", 8, "@value"]},
+    {"name": "capacity growth required", "args": ["@storage+0x30", 9, "@value"]},
+    {"name": "growth by more than current buffer size", "args": ["@storage+0x20", 20, "@value"]}
+  ],
+  "fuzz": {
+    "seed": 404416,
+    "count": 40,
+    "args": [
+      {"choices": ["@storage+0x20", "@storage+0x24", "@storage+0x2c", "@storage+0x30", "@storage+0x38", "@storage+0x3c", "@storage+0x40"]},
+      {"range": [0, 20]},
+      {"choices": ["@value"]}
+    ],
+    "memory": [
+      {"addr": "@storage+0x20", "size": 64}
+    ]
+  }
+}

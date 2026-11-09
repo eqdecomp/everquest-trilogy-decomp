@@ -1,0 +1,84 @@
+{
+  "function": "FreeBuffer_guess",
+  "original": "0x10024cb0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {},
+  "memory": [],
+  "callees": {
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {
+      "name": "block set: freed with its pointer, global cleared",
+      "memory": [
+        {"addr": "0x10125904", "u32": 19088743}
+      ]
+    },
+    {
+      "name": "other block set: freed with that pointer",
+      "memory": [
+        {"addr": "0x10125904", "u32": 195948557}
+      ]
+    },
+    {
+      "name": "null: nothing freed, global not written",
+      "memory": [
+        {"addr": "0x10125904", "u32": 0}
+      ]
+    },
+    {
+      "name": "pointer 1: freed as given (no sanity check)",
+      "memory": [
+        {"addr": "0x10125904", "u32": 1}
+      ]
+    },
+    {
+      "name": "pointer 0xffffffff: freed as given",
+      "memory": [
+        {"addr": "0x10125904", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "_free returns junk in EAX: still cleared, EAX ignored",
+      "memory": [
+        {"addr": "0x10125904", "u32": 19088743}
+      ],
+      "callees": {
+        "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"], "ret": 305419896}
+      }
+    },
+    {
+      "name": "neighbours 0x10125900 and 0x10125908 untouched",
+      "memory": [
+        {"addr": "0x10125900", "u32": 286331153},
+        {"addr": "0x10125904", "u32": 19088743},
+        {"addr": "0x10125908", "u32": 572662306}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 150704,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x10125904", "type": "u32", "choices": [0, 1, 19088743, 195948557, 4294967295]},
+      {"addr": "0x10125900", "size": 4},
+      {"addr": "0x10125908", "size": 4}
+    ]
+  }
+}

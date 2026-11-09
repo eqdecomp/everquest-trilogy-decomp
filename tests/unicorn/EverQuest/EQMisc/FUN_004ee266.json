@@ -1,0 +1,161 @@
+{
+  "function": "EqMiscOutputSource_guess::FillOutputRecord_guess",
+  "original": "0x004ee266",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqmiscoutputsource",
+  "args": [
+    {
+      "name": "output",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "eqmiscoutputsource": {
+      "size": "0xbd8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xb9c",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    "output": {
+      "size": "0x6",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0xa1b2c3d4"
+        },
+        {
+          "offset": "0x4",
+          "u8": 91
+        },
+        {
+          "offset": "0x5",
+          "u8": 92
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "inactive preserves value and clears both flags",
+      "args": ["@output"],
+      "memory": [
+        {"addr": "@eqmiscoutputsource", "offset": "0xbd4", "u32": 0},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbc8", "u8": 0},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbca", "u8": 0}
+      ]
+    },
+    {
+      "name": "active copies value and sets both flags",
+      "args": ["@output"],
+      "memory": [
+        {"addr": "@eqmiscoutputsource", "offset": "0xbd4", "u32": 1},
+        {"addr": "@eqmiscoutputsource", "offset": "0xb9c", "u32": "0x89abcdef"},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbc8", "u8": 1},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbca", "u8": 1}
+      ]
+    },
+    {
+      "name": "negative active value copies zero and normalizes high-bit flags",
+      "args": ["@output"],
+      "memory": [
+        {"addr": "@eqmiscoutputsource", "offset": "0xbd4", "u32": "0xffffffff"},
+        {"addr": "@eqmiscoutputsource", "offset": "0xb9c", "u32": 0},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbc8", "u8": 128},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbca", "u8": 255}
+      ]
+    },
+    {
+      "name": "inactive preserves edge value while normalizing flags",
+      "args": ["@output"],
+      "memory": [
+        {"addr": "@eqmiscoutputsource", "offset": "0xbd4", "u32": 0},
+        {"addr": "@eqmiscoutputsource", "offset": "0xb9c", "u32": "0x80000000"},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbc8", "u8": 127},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbca", "u8": 2}
+      ]
+    },
+    {
+      "name": "active two preserves byte ordering around value",
+      "args": ["@output"],
+      "memory": [
+        {"addr": "@eqmiscoutputsource", "offset": "0xbd4", "u32": 2},
+        {"addr": "@eqmiscoutputsource", "offset": "0xb9c", "u32": "0x01020304"},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbc8", "u8": 0},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbca", "u8": 0}
+      ]
+    },
+    {
+      "name": "nonzero flags with inactive value",
+      "args": ["@output"],
+      "memory": [
+        {"addr": "@eqmiscoutputsource", "offset": "0xbd4", "u32": 0},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbc8", "u8": 255},
+        {"addr": "@eqmiscoutputsource", "offset": "0xbca", "u8": 128}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5169766,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@output"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@eqmiscoutputsource",
+        "offset": "0xbd4",
+        "type": "u32",
+        "choices": [0, 1, 2, "0x7fffffff", "0x80000000", "0xffffffff"]
+      },
+      {
+        "addr": "@eqmiscoutputsource",
+        "offset": "0xb9c",
+        "type": "u32",
+        "choices": [0, 1, "0x7fffffff", "0x80000000", "0xffffffff", "0x12345678"]
+      },
+      {
+        "addr": "@eqmiscoutputsource",
+        "offset": "0xbc8",
+        "type": "u8",
+        "choices": [0, 1, 2, 127, 128, 255]
+      },
+      {
+        "addr": "@eqmiscoutputsource",
+        "offset": "0xbca",
+        "type": "u8",
+        "choices": [0, 1, 2, 127, 128, 255]
+      },
+      {
+        "addr": "@output",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [0, 1, "0x7fffffff", "0x80000000", "0xffffffff", "0xa1b2c3d4"]
+      },
+      {
+        "addr": "@output",
+        "offset": "0x4",
+        "type": "u8",
+        "choices": [0, 1, 127, 128, 255]
+      },
+      {
+        "addr": "@output",
+        "offset": "0x5",
+        "type": "u8",
+        "choices": [0, 1, 127, 128, 255]
+      }
+    ]
+  }
+}

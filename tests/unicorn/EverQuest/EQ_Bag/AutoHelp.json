@@ -1,0 +1,177 @@
+{
+  "function": "AutoHelp",
+  "original": "0x00416ef2",
+  "sources": [
+    "src/EverQuest/EQ_Bag.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x10", "u32": 1 },
+        { "offset": "0x70", "u32": "@node1" }
+      ]
+    },
+    "eqmain": {
+      "size": "0xf00",
+      "fill": "zero",
+      "init": [
+        { "offset": "0xebc", "u16": 99 },
+        { "offset": "0xec2", "u16": 3 }
+      ]
+    },
+    "node1": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x04", "u32": 0 },
+        { "offset": "0x08", "u32": 0 },
+        { "offset": "0x0c", "u32": 100 },
+        { "offset": "0x10", "u32": 100 },
+        { "offset": "0x14", "u16": 3 },
+        { "offset": "0x20", "u32": "@node2" }
+      ]
+    },
+    "node2": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x04", "u32": 0 },
+        { "offset": "0x08", "u32": 0 },
+        { "offset": "0x0c", "u32": 100 },
+        { "offset": "0x10", "u32": 100 },
+        { "offset": "0x14", "u16": 11 },
+        { "offset": "0x20", "u32": 0 }
+      ]
+    }
+  },
+  "memory": [
+    { "addr": "0x006b6864", "u32": 1 },
+    { "addr": "0x006e4e44", "u32": "@eqmain" },
+    { "addr": "0x006b6414", "u16": 20 },
+    { "addr": "0x006b6416", "u16": 30 }
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": [ "ignore", "cstr" ],
+      "passthrough": true
+    },
+    "user32.dll!PtInRect": {
+      "name": "PtInRect",
+      "conv": "stdcall",
+      "args": [ "ptr", "int", "int" ],
+      "ret": [ 0, 1 ]
+    },
+    "0x0046d4da": {
+      "name": "EQ_Main::DisplayAutoHelpText_guess",
+      "conv": "thiscall",
+      "args": [ "int", "int", "cstr", "int" ]
+    }
+  },
+  "cases": [
+    {
+      "name": "feature disabled",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "0x006b6864", "u32": 0 } ]
+    },
+    {
+      "name": "client version below threshold",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@eqmain", "offset": "0xec2", "u16": 2 } ]
+    },
+    {
+      "name": "bag field is null",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@self", "offset": "0x10", "u32": 0 } ]
+    },
+    {
+      "name": "empty list writes no selection",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@self", "offset": "0x70", "u32": 0 } ],
+      "callees": { "user32.dll!PtInRect": { "conv": "stdcall", "args": [ "ptr", "int", "int" ], "ret": 1 } }
+    },
+    {
+      "name": "first node container item slot",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node1", "offset": "0x14", "u16": 9 } ],
+      "callees": { "user32.dll!PtInRect": { "conv": "stdcall", "args": [ "ptr", "int", "int" ], "ret": 1 } }
+    },
+    {
+      "name": "first node first item slot boundary",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node1", "offset": "0x14", "u16": 0 } ],
+      "callees": { "user32.dll!PtInRect": { "conv": "stdcall", "args": [ "ptr", "int", "int" ], "ret": 1 } }
+    },
+    {
+      "name": "second node close container",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node2", "offset": "0x14", "u16": 10 } ]
+    },
+    {
+      "name": "second node last item slot boundary",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node2", "offset": "0x14", "u16": 9 } ]
+    },
+    {
+      "name": "second node combine items",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node2", "offset": "0x14", "u16": 11 } ]
+    },
+    {
+      "name": "no rectangle contains point",
+      "args": [ "@self" ],
+      "callees": { "user32.dll!PtInRect": { "conv": "stdcall", "args": [ "ptr", "int", "int" ], "ret": 0 } }
+    },
+    {
+      "name": "negative selection resets to sentinel",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node2", "offset": "0x14", "u16": 65534 } ]
+    },
+    {
+      "name": "unsupported selection resets to sentinel",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node2", "offset": "0x14", "u16": 12 } ]
+    },
+    {
+      "name": "selected sentinel returns",
+      "args": [ "@self" ],
+      "memory": [ { "addr": "@node2", "offset": "0x14", "u16": 65535 } ]
+    },
+    {
+      "name": "signed cursor and boundary coordinates",
+      "args": [ "@self" ],
+      "memory": [
+        { "addr": "0x006b6414", "u16": 65535 },
+        { "addr": "0x006b6416", "u16": 32768 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4288242,
+    "count": 30,
+    "args": [ { "choices": [ "@self" ] } ],
+    "memory": [
+      { "addr": "0x006b6864", "type": "u32", "choices": [ 0, 1, 1 ] },
+      { "addr": "@eqmain", "offset": "0xec2", "type": "u16", "choices": [ 2, 3, 4 ] },
+      { "addr": "0x006b6414", "type": "short", "range": [ -32768, 32767 ] },
+      { "addr": "0x006b6416", "type": "short", "range": [ -32768, 32767 ] },
+      { "addr": "@self", "offset": "0x10", "type": "u32", "choices": [ 0, 1, 1 ] },
+      { "addr": "@self", "offset": "0x70", "type": "ptr", "choices": [ "@node1", 0 ] },
+      { "addr": "@node1", "offset": "0x14", "type": "short", "range": [ -2, 13 ] },
+      { "addr": "@node1", "offset": "0x20", "type": "ptr", "choices": [ "@node2", 0 ] },
+      { "addr": "@node2", "offset": "0x14", "type": "short", "range": [ -2, 13 ] }
+    ]
+  }
+}

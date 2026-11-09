@@ -1,0 +1,206 @@
+{
+  "function": "EQPlayer_AutoFollow_guess",
+  "original": "0x004b0eec",
+  "sources": ["src/EverQuest/EQPlayer.cpp"],
+  "conv": "fastcall",
+  "args": [{"name": "self", "type": "ptr"}],
+  "ret": "void",
+  "objects": {"pad": {"size": "0x1000", "fill": "zero"}},
+  "memory": [
+    {"addr": "0x60000a00", "size": 308, "fill": "random"},
+    {"addr": "0x60000400", "size": 704, "fill": "random"},
+    {"addr": "0x60000700", "size": 704, "fill": "random"},
+    {"addr": "0x60000000", "size": 308, "fill": "random"},
+    {"addr": "0x60000200", "size": 308, "fill": "random"},
+    {"addr": "0x60000c00", "size": 224, "fill": "random"},
+    {"addr": "0x60000d00", "size": 64, "fill": "random"},
+    {"addr": "0x60000a70", "u32": "0x60000400"},
+    {"addr": "0x60000a34", "f32": 100.25},
+    {"addr": "0x60000a38", "f32": 200.5},
+    {"addr": "0x60000a3c", "f32": 300.75},
+    {"addr": "0x60000a40", "f32": 10.0},
+    {"addr": "0x60000a48", "f32": 1.0},
+    {"addr": "0x60000a7c", "f32": 1.0},
+    {"addr": "0x600006a4", "u32": "0x60000000"},
+    {"addr": "0x600006a8", "f32": 5.0},
+    {"addr": "0x600006b0", "f32": 1.0},
+    {"addr": "0x600009a4", "u32": "0x60000200"},
+    {"addr": "0x60000001", "cstr": "Bob"},
+    {"addr": "0x600000a1", "u8": 100},
+    {"addr": "0x60000034", "f32": 11.5},
+    {"addr": "0x60000038", "f32": 22.5},
+    {"addr": "0x60000048", "f32": 0.5},
+    {"addr": "0x6000007c", "f32": 0.5},
+    {"addr": "0x60000201", "cstr": "Zed"},
+    {"addr": "0x600002a1", "u8": 100},
+    {"addr": "0x60000248", "f32": 2.0},
+    {"addr": "0x6000027c", "f32": 3.0},
+    {"addr": "0x006e4de0", "u32": "0x60000d00"},
+    {"addr": "0x006efe2c", "u32": "0x60000c00"},
+    {"addr": "0x006b6474", "u32": "0x12345678"},
+    {"addr": "0x006b6405", "u8": 170}
+  ],
+  "callees": {
+    "0x004129f3": {"name": "TrueDistance", "conv": "thiscall", "this": "mem:64",
+      "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 50.0},
+    "0x004d05b7": {"name": "print_chat_guess", "conv": "thiscall", "this": "mem:0xE0", "args": ["cstr"], "ret": 0},
+    "0x004b117b": {"name": "TurnOffAutoFollow_guess", "conv": "thiscall", "this": "mem:0x134", "args": [], "ret": 0},
+    "0x005224fb": {"name": "_sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x004a47f9": {"name": "get_bearing", "conv": "cdecl", "args": ["float", "float", "float", "float"], "ret_float": 20.0},
+    "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 1},
+    "0x004081a3": {"name": "HeadingDiff", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+      "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]},
+    "0x00408156": {"name": "FixHeading_guess", "conv": "thiscall", "this": "mem:64", "args": ["float"], "ret_float": 77.0}
+  },
+  "cases": [
+    {"name": "typical far follow", "args": ["0x60000a00"]},
+    {"name": "null actor info", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a70", "u32": 0}]},
+    {"name": "null follow target", "args": ["0x60000a00"], "memory": [{"addr": "0x600006a4", "u32": 0}]},
+    {"name": "dead target", "args": ["0x60000a00"], "memory": [{"addr": "0x600000a1", "u8": 120}]},
+    {"name": "stand state just below x", "args": ["0x60000a00"], "memory": [{"addr": "0x600000a1", "u8": 119}]},
+    {"name": "stand state just above x", "args": ["0x60000a00"], "memory": [{"addr": "0x600000a1", "u8": 121}]},
+    {"name": "stand state high bits only", "args": ["0x60000a00"], "memory": [{"addr": "0x600000a0", "u32": "0x78000000"}]},
+    {"name": "too far", "args": ["0x60000a00"], "callees": {
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 200.5}}},
+    {"name": "distance exactly 200 is in range", "args": ["0x60000a00"], "callees": {
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 200.0}}},
+    {"name": "too far, callee swaps the target", "args": ["0x60000a00"], "callees": {
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 300.0,
+        "writes": [{"addr": "0x600006a4", "hex": "00020060"}]}}},
+    {"name": "callee swaps the actor info, distance goes to the new one", "args": ["0x60000a00"], "callees": {
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 50.0,
+        "writes": [{"addr": "0x60000a70", "hex": "00070060"}]}}},
+    {"name": "bearing callee swaps the actor info", "args": ["0x60000a00"], "callees": {
+      "0x004a47f9": {"name": "get_bearing_guess", "conv": "cdecl", "args": ["float", "float", "float", "float"], "ret_float": 20.0,
+        "writes": [{"addr": "0x60000a70", "hex": "00070060"}]}}},
+    {"name": "raycast callee swaps the actor info", "args": ["0x60000a00"], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 1,
+        "writes": [{"addr": "0x60000a70", "hex": "00070060"}]}}},
+    {"name": "heading diff callee swaps the actor info, diff below 1", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 0.5, "writes": [{"addr": "0x60000a70", "hex": "00070060"}]}}},
+    {"name": "heading diff callee swaps the actor info", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}, {"addr": "0x60000a70", "hex": "00070060"}]}}},
+    {"name": "fix heading callee swaps the actor info", "args": ["0x60000a00"], "callees": {
+      "0x00408156": {"name": "FixHeading_guess", "conv": "thiscall", "this": "mem:64", "args": ["float"], "ret_float": 77.0,
+        "writes": [{"addr": "0x60000a70", "hex": "00070060"}]}}},
+    {"name": "ray blocked", "args": ["0x60000a00"], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0}}},
+    {"name": "ray result with only high bits set counts as clear", "args": ["0x60000a00"], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 256}}},
+    {"name": "close: below 20 copies the bearing", "args": ["0x60000a00"], "callees": {
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 19.5}}},
+    {"name": "exactly 20 turns by the step", "args": ["0x60000a00"], "callees": {
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "diff below 1 copies the bearing", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 0.5, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "diff exactly 1", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 1.0, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "diff 3.5 is the step", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 3.5, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "diff exactly 4", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 4.0, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "diff 100 steps by 4", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 100.0, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "diff exactly 128 steps by 4", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 128.0, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "diff 128.5 steps by 9", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 128.5, "writes": [{"arg": 2, "offset": 0, "hex": "0000803f"}]}}},
+    {"name": "heading below bearing, sign negative: subtract", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "000080bf"}]}}},
+    {"name": "heading below bearing, sign zero: add", "args": ["0x60000a00"], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]}}},
+    {"name": "heading above bearing, sign positive: subtract", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a40", "f32": 30.0}]},
+    {"name": "heading above bearing, sign negative: add", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a40", "f32": 30.0}], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "000080bf"}]}}},
+    {"name": "heading above bearing, sign zero: add", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a40", "f32": 30.0}], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "00000000"}]}}},
+    {"name": "heading equals bearing, sign negative: add", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a40", "f32": 20.0}], "callees": {
+      "0x004081a3": {"name": "HeadingDiff_guess", "conv": "thiscall", "this": "mem:64", "args": ["float", "float", "ignore"],
+        "ret_float": 10.0, "writes": [{"arg": 2, "offset": 0, "hex": "000080bf"}]}}},
+    {"name": "heading equals bearing, sign positive: add", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a40", "f32": 20.0}]},
+    {"name": "stop: well inside", "args": ["0x60000a00"], "memory": [{"addr": "0x60000048", "f32": 0.5}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 10.0}}},
+    {"name": "stop: just under the near limit", "args": ["0x60000a00"], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 16.25}}},
+    {"name": "exactly at the near limit is not a stop", "args": ["0x60000a00"], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 16.5}}},
+    {"name": "middle band, self faster than target", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 2.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "middle band, self slower than target", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 0.25}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "middle band, equal speeds", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 0.5}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "middle band, self standing still", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 0.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "middle band, both standing still", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 0.0}, {"addr": "0x60000048", "f32": 0.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "middle band, self negative zero", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "hex": "00000080"}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 20.0}}},
+    {"name": "middle band, target faster than a stopped self reaching band top", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 1.0}, {"addr": "0x60000048", "f32": -1.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 31.25}}},
+    {"name": "exactly at the far limit", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 2.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 31.5}}},
+    {"name": "beyond the far limit", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 2.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 100.0}}},
+    {"name": "heights are added from both spawns", "args": ["0x60000a00"], "memory": [{"addr": "0x60000a48", "f32": 2.0}, {"addr": "0x60000a7c", "f32": 5.0}, {"addr": "0x6000007c", "f32": 7.0}], "callees": {
+      "0x004a3491": {"name": "CastRay_guess", "conv": "cdecl", "args": ["ptr", "float", "float", "float"], "ret": 0},
+      "0x004129f3": {"name": "TrueDistance_guess", "conv": "thiscall", "this": "mem:64",
+        "args": ["float", "float", "float", "float", "float", "float", "int"], "ret_float": 30.0}}}
+  ],
+  "fuzz": {
+    "seed": 4919020,
+    "count": 40,
+    "args": [{"choices": ["0x60000a00"]}],
+    "memory": [
+      {"addr": "0x60000a40", "type": "float", "range": [0, 40]},
+      {"addr": "0x60000a48", "type": "float", "choices": [0.0, 0.5, 1.0, 2.0]},
+      {"addr": "0x60000a7c", "type": "float", "range": [0, 30]},
+      {"addr": "0x60000048", "type": "float", "choices": [0.0, 0.5, 1.0, 2.0]},
+      {"addr": "0x6000007c", "type": "float", "range": [0, 30]},
+      {"addr": "0x600000a1", "type": "u8", "choices": [100, 100, 100, 120]}
+    ]
+  }
+}

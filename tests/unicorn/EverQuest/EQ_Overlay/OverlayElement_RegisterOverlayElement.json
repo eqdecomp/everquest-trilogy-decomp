@@ -1,0 +1,92 @@
+{
+  "function": "AddImage",
+  "original": "0x004502a1",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [
+    {"name": "imageIndex", "type": "short"},
+    {"name": "bottom", "type": "int"},
+    {"name": "source", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x10", "fill": "zero"},
+    "source": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 11},
+        {"offset": "0x4", "u32": 22},
+        {"offset": "0x8", "u32": 33},
+        {"offset": "0xc", "u32": 44}
+      ]
+    },
+    "existing": {"size": "0x40", "fill": "zero"},
+    "allocated": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006b32b0", "u32": "@existing"},
+    {"addr": "0x006b32b4", "u32": 0},
+    {"addr": "0x006b32b8", "u32": "@existing"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "user32.dll!CopyRect": {
+      "name": "CopyRect",
+      "conv": "stdcall",
+      "args": ["ignore", "ignore"],
+      "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "0b00000016000000210000002c000000"}]
+    },
+    "kernel32.dll!HeapAlloc": {
+      "name": "HeapAlloc",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": "@allocated"
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "passthrough": true
+    },
+    "0x00438458": {
+      "name": "EQ_Image_guess::EQ_Image_guess",
+      "conv": "thiscall",
+      "args": ["mem:16"],
+      "passthrough": true
+    },
+    "0x004384ce": {
+      "name": "EQ_Image_guess::UpdateImageRect_guess",
+      "conv": "thiscall",
+      "args": ["mem:16"],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "new image at index zero", "args": [0, 0, "@source"]},
+    {"name": "update existing image", "args": [1, -1, "@source"]},
+    {"name": "allocation returns null", "args": [0, 2147483647, "@source"], "callees": {"kernel32.dll!HeapAlloc": {"name": "HeapAlloc", "conv": "stdcall", "args": ["ptr", "u32", "u32"], "ret": 0}}},
+    {"name": "negative signed index", "args": [-1, -2147483648, "@source"]},
+    {"name": "rectangle bottom signed edge", "args": [0, -32768, "@source"]},
+    {"name": "rectangle bottom positive edge", "args": [0, 32767, "@source"]},
+    {"name": "rectangle bottom high bit", "args": [0, 32768, "@source"]}
+  ],
+  "fuzz": {
+    "seed": 4522657,
+    "count": 32,
+    "args": [
+      {"range": [-1, 1]},
+      {"range": [-2147483648, 2147483647]},
+      {"choices": ["@source"]}
+    ],
+    "memory": [
+      {"addr": "0x006b32b0", "type": "ptr", "choices": [0, "@existing"]},
+      {"addr": "0x006b32b4", "type": "ptr", "choices": [0, "@existing"]},
+      {"addr": "0x006b32b8", "type": "ptr", "choices": [0, "@existing"]},
+      {"addr": "@source", "type": "int", "count": 4, "range": [-100000, 100000]}
+    ]
+  }
+}

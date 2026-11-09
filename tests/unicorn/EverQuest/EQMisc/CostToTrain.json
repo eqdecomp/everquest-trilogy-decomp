@@ -1,0 +1,90 @@
+{
+  "function": "CostToTrain",
+  "original": "0x004a09a4",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    { "name": "character", "type": "ptr" },
+    { "name": "use_language", "type": "int" },
+    { "name": "multiplier", "type": "float" },
+    { "name": "skill", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "character": { "size": "0x2000", "fill": "random" }
+  },
+  "memory": [
+    { "addr": "0x00535224", "f32": 0.25 }
+  ],
+  "callees": {
+    "0x0041a3e9": {
+      "name": "EQ_Character::HasSkill",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "language at threshold",
+      "args": ["@character", 1, 1.5, 1],
+      "memory": [{ "addr": "@character", "offset": "0x7f", "u8": 10 }]
+    },
+    {
+      "name": "language above threshold",
+      "args": ["@character", 1, 1.5, 1],
+      "memory": [{ "addr": "@character", "offset": "0x7f", "u8": 11 }]
+    },
+    {
+      "name": "negative skill value is clamped",
+      "args": ["@character", 1, 100.0, 1],
+      "memory": [{ "addr": "@character", "offset": "0x7f", "u8": 9 }]
+    },
+    {
+      "name": "trained skill absent",
+      "args": ["@character", 0, 100.0, 1],
+      "callees": {
+        "0x0041a3e9": { "name": "EQ_Character::HasSkill_guess", "conv": "thiscall", "args": ["int"], "ret": 0 }
+      },
+      "memory": [{ "addr": "@character", "offset": "0x9c9", "u8": 40 }]
+    },
+    {
+      "name": "trained skill below threshold",
+      "args": ["@character", 0, 1.5, 1],
+      "memory": [{ "addr": "@character", "offset": "0x9c9", "u8": 9 }]
+    },
+    {
+      "name": "trained skill above threshold",
+      "args": ["@character", 0, 1.5, 1],
+      "memory": [{ "addr": "@character", "offset": "0x9c9", "u8": 11 }]
+    },
+    {
+      "name": "skill argument remains full-width for HasSkill",
+      "args": ["@character", 0, 0.75, 256],
+      "memory": [{ "addr": "@character", "offset": "0xac8", "u8": 255 }]
+    },
+    {
+      "name": "negative unchecked skill index",
+      "args": ["@character", 0, 1.25, -1],
+      "memory": [{ "addr": "@character", "offset": "0x9c7", "u8": 30 }]
+    },
+    {
+      "name": "HasSkill low byte controls branch",
+      "args": ["@character", 0, 1.0, 2],
+      "callees": {
+        "0x0041a3e9": { "name": "EQ_Character::HasSkill_guess", "conv": "thiscall", "args": ["int"], "ret": 256 }
+      },
+      "memory": [{ "addr": "@character", "offset": "0x9ca", "u8": 50 }]
+    }
+  ],
+  "fuzz": {
+    "seed": 4852132,
+    "count": 120,
+    "args": [
+      { "choices": ["@character"] },
+      { "choices": [-1, 0, 1, 2, 24, 255, 256, 1000] },
+      { "choices": [-2.0, -0.5, 0.0, 0.25, 1.5, 3.0] },
+      { "choices": [-2, -1, 0, 1, 2, 17, 23, 24, 73, 255, 256, 1000] }
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "function": "lower_bound_guess",
+  "original": "0x0040158c",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "first", "type": "ptr"},
+    {"name": "last", "type": "ptr"},
+    {"name": "value", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "arr": {"size": "0x28", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": 5}, {"offset": "0x4", "u32": 10}, {"offset": "0x8", "u32": 10},
+      {"offset": "0xc", "u32": 20}, {"offset": "0x10", "u32": 30}, {"offset": "0x14", "u32": 30},
+      {"offset": "0x18", "u32": 30}, {"offset": "0x1c", "u32": 40}, {"offset": "0x20", "u32": "0x80000000"},
+      {"offset": "0x24", "u32": "0xffffffff"}
+    ]},
+    "uns": {"size": "0x30", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": 50}, {"offset": "0x4", "u32": 10}, {"offset": "0x8", "u32": 40},
+      {"offset": "0xc", "u32": 20}, {"offset": "0x10", "u32": 30}, {"offset": "0x14", "u32": 5},
+      {"offset": "0x18", "u32": 60}, {"offset": "0x1c", "u32": 1}, {"offset": "0x20", "u32": 45},
+      {"offset": "0x24", "u32": 2}, {"offset": "0x28", "u32": 55}, {"offset": "0x2c", "u32": 3}
+    ]},
+    "v": {"size": "0x4", "fill": "zero", "init": [{"offset": "0x0", "u32": 20}]}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "below all", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 1}]},
+    {"name": "equal first", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 5}]},
+    {"name": "between 5 and 10", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 6}]},
+    {"name": "duplicate 10 returns first", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 10}]},
+    {"name": "just above 10", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 11}]},
+    {"name": "equal 20", "args": ["@arr", "@arr+0x28", "@v"]},
+    {"name": "triple 30 returns first", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 30}]},
+    {"name": "just above 30", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 31}]},
+    {"name": "equal 40", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 40}]},
+    {"name": "above 40, unsigned 0x80000000", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": "0x80000000"}]},
+    {"name": "just above 0x80000000", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": "0x80000001"}]},
+    {"name": "0xffffffff", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": "0xffffffff"}]},
+    {"name": "value 0", "args": ["@arr", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 0}]},
+    {"name": "empty range", "args": ["@arr+8", "@arr+8", "@v"]},
+    {"name": "last before first", "args": ["@arr+0x10", "@arr+0x4", "@v"]},
+    {"name": "one element below", "args": ["@arr+0xc", "@arr+0x10", "@v"], "memory": [{"addr": "@v", "u32": 21}]},
+    {"name": "one element equal", "args": ["@arr+0xc", "@arr+0x10", "@v"]},
+    {"name": "two elements, all below", "args": ["@arr", "@arr+0x8", "@v"]},
+    {"name": "three elements (odd)", "args": ["@arr+0x4", "@arr+0x10", "@v"]},
+    {"name": "unaligned last truncates length", "args": ["@arr", "@arr+0x1b", "@v"], "memory": [{"addr": "@v", "u32": 30}]},
+    {"name": "unsorted: probe order matters, v=35", "args": ["@uns", "@uns+0x30", "@v"], "memory": [{"addr": "@v", "u32": 35}]},
+    {"name": "unsorted: v=4", "args": ["@uns", "@uns+0x30", "@v"], "memory": [{"addr": "@v", "u32": 4}]},
+    {"name": "unsorted: v=100", "args": ["@uns", "@uns+0x30", "@v"], "memory": [{"addr": "@v", "u32": 100}]},
+    {"name": "unsorted: v=45", "args": ["@uns", "@uns+0x30", "@v"], "memory": [{"addr": "@v", "u32": 45}]},
+    {"name": "unsorted: v=15", "args": ["@uns", "@uns+0x30", "@v"], "memory": [{"addr": "@v", "u32": 15}]},
+    {"name": "unsorted: v=2", "args": ["@uns", "@uns+0x30", "@v"], "memory": [{"addr": "@v", "u32": 2}]},
+    {"name": "unsorted 8 elements v=25", "args": ["@uns", "@uns+0x20", "@v"], "memory": [{"addr": "@v", "u32": 25}]},
+    {"name": "subrange tail", "args": ["@arr+0x10", "@arr+0x28", "@v"], "memory": [{"addr": "@v", "u32": 35}]}
+  ],
+  "fuzz": {
+    "seed": 4199820,
+    "count": 40,
+    "args": [
+      {"choices": ["@arr", "@arr+0x4", "@arr+0x8", "@arr+0xc", "@arr+0x14", "@arr+0x1c"]},
+      {"choices": ["@arr+0x10", "@arr+0x18", "@arr+0x20", "@arr+0x24", "@arr+0x28", "@arr+0x4"]},
+      {"choices": ["@v"]}
+    ],
+    "memory": [
+      {"addr": "@v", "type": "int"}
+    ]
+  }
+}

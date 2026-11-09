@@ -1,0 +1,192 @@
+{
+  "function": "allocateRenderContextResourceArray_guess",
+  "original": "0x10031d7d",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x440",
+      "fill": "random"
+    },
+    "block": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@block"
+    }
+  },
+  "cases": [
+    {
+      "name": "allocates one entry",
+      "args": [
+        "@rendercontext",
+        1
+      ]
+    },
+    {
+      "name": "allocation fails clears count",
+      "args": [
+        "@rendercontext",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x438",
+          "u32": "@block"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zero count allocates",
+      "args": [
+        "@rendercontext",
+        0
+      ]
+    },
+    {
+      "name": "zero count allocation fails",
+      "args": [
+        "@rendercontext",
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "negative count shifts as unsigned",
+      "args": [
+        "@rendercontext",
+        -1
+      ]
+    },
+    {
+      "name": "count shifted to zero by wrap",
+      "args": [
+        "@rendercontext",
+        536870912
+      ]
+    },
+    {
+      "name": "largest count without wrap",
+      "args": [
+        "@rendercontext",
+        536870911
+      ]
+    },
+    {
+      "name": "failure drops a stale block",
+      "args": [
+        "@rendercontext",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x434",
+          "u32": 7
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x438",
+          "u32": "@block"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "failure with negative count",
+      "args": [
+        "@rendercontext",
+        -1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 204157,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@rendercontext",
+        "offset": "0x434",
+        "type": "int"
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x438",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@block"
+        ]
+      }
+    ]
+  }
+}

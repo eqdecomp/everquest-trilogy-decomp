@@ -1,0 +1,226 @@
+{
+  "function": "cleanup_io_completion_queue_guess",
+  "original": "0x004f6940",
+  "sources": [
+    "src/Network/rdp/fast_malloc.c",
+    "src/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "link0": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "item0": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "fn_enter": {"size": 1, "fill": "zero"},
+    "fn_overlapped": {"size": 1, "fill": "zero"},
+    "fn_close": {"size": 1, "fill": "zero"},
+    "fn_last_error": {"size": 1, "fill": "zero"},
+    "fn_leave": {"size": 1, "fill": "zero"},
+    "fn_delete": {"size": 1, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x00534194", "u32": "@fn_enter"},
+    {"addr": "0x005341D4", "u32": "@fn_close"},
+    {"addr": "0x005340C0", "u32": "@fn_overlapped"},
+    {"addr": "0x005341AC", "u32": "@fn_last_error"},
+    {"addr": "0x00534190", "u32": "@fn_leave"},
+    {"addr": "0x005341C8", "u32": "@fn_delete"},
+    {"addr": "0x006EFED4", "u32": 0}
+  ],
+  "callees": {
+    "@fn_enter": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x004f66d0": {
+      "name": "timeGetTime",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 4000
+    },
+    "@fn_overlapped": {
+      "name": "GetOverlappedResult",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "ptr", "int"],
+      "ret": 1,
+      "writes": [{"arg": 2, "offset": 0, "hex": "07000000"}]
+    },
+    "0x004f5500": {
+      "name": "list_remove_head_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": "@item0",
+      "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]
+    },
+    "@fn_close": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "@fn_last_error": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 5
+    },
+    "0x004f8030": {
+      "name": "FreeRingBuffer_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x0051cf90": {
+      "name": "no_op_empty_return_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "@fn_leave": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@fn_delete": {
+      "name": "DeleteCriticalSection",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "empty queue head",
+      "args": ["@param_1"]
+    },
+    {
+      "name": "nonzero head with null item data",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x38", "u32": "@link0"},
+        {"addr": "@link0", "offset": "0x08", "u32": 0}
+      ]
+    },
+    {
+      "name": "success matching byte count",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x1c", "u32": "0x1234"},
+        {"addr": "@param_1", "offset": "0x38", "u32": "@link0"},
+        {"addr": "@param_1", "offset": "0x4c", "u32": 30},
+        {"addr": "@param_1", "offset": "0x68", "u32": 101},
+        {"addr": "@param_1", "offset": "0x80", "u32": 202},
+        {"addr": "@link0", "offset": "0x08", "u32": "@item0"},
+        {"addr": "@item0", "offset": "0x20", "u32": "0x5678"},
+        {"addr": "@item0", "offset": "0x24", "u32": 7}
+      ]
+    },
+    {
+      "name": "success different byte count",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x1c", "u32": "0x1234"},
+        {"addr": "@param_1", "offset": "0x38", "u32": "@link0"},
+        {"addr": "@param_1", "offset": "0x4c", "u32": 30},
+        {"addr": "@param_1", "offset": "0x68", "u32": 101},
+        {"addr": "@param_1", "offset": "0x80", "u32": 202},
+        {"addr": "@link0", "offset": "0x08", "u32": "@item0"},
+        {"addr": "@item0", "offset": "0x20", "u32": "0x5678"},
+        {"addr": "@item0", "offset": "0x24", "u32": 8}
+      ]
+    },
+    {
+      "name": "pending overlapped operation stops before remove",
+      "args": ["@param_1"],
+      "callees": {
+        "@fn_overlapped": {
+          "name": "GetOverlappedResult",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "ptr", "int"],
+          "ret": 0
+        },
+        "@fn_last_error": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 995
+        }
+      },
+      "memory": [
+        {"addr": "@param_1", "offset": "0x1c", "u32": "0x1234"},
+        {"addr": "@param_1", "offset": "0x38", "u32": "@link0"},
+        {"addr": "@link0", "offset": "0x08", "u32": "@item0"},
+        {"addr": "@item0", "offset": "0x20", "u32": "0x5678"},
+        {"addr": "@item0", "offset": "0x24", "u32": 7}
+      ]
+    },
+    {
+      "name": "other overlapped error removes item",
+      "args": ["@param_1"],
+      "callees": {
+        "@fn_overlapped": {
+          "name": "GetOverlappedResult",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "ptr", "int"],
+          "ret": 0
+        },
+        "@fn_last_error": {
+          "name": "GetLastError",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 6
+        }
+      },
+      "memory": [
+        {"addr": "@param_1", "offset": "0x1c", "u32": "0x1234"},
+        {"addr": "@param_1", "offset": "0x38", "u32": "@link0"},
+        {"addr": "@param_1", "offset": "0x4c", "u32": 30},
+        {"addr": "@param_1", "offset": "0x68", "u32": 101},
+        {"addr": "@param_1", "offset": "0x80", "u32": 202},
+        {"addr": "@link0", "offset": "0x08", "u32": "@item0"},
+        {"addr": "@item0", "offset": "0x20", "u32": "0x5678"},
+        {"addr": "@item0", "offset": "0x24", "u32": 7}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5204288,
+    "count": 30,
+    "args": [
+      {"choices": ["@param_1"]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x1c", "type": "u32", "choices": [0, "0x1234"]},
+      {"addr": "@param_1", "offset": "0x38", "type": "ptr", "choices": [0, "@link0"]},
+      {"addr": "@param_1", "offset": "0x4c", "type": "int", "range": [-20, 20]},
+      {"addr": "@param_1", "offset": "0x68", "type": "int", "range": [-20, 20]},
+      {"addr": "@param_1", "offset": "0x74", "type": "int", "range": [-20, 20]},
+      {"addr": "@param_1", "offset": "0x78", "type": "int", "range": [-20, 20]},
+      {"addr": "@param_1", "offset": "0x80", "type": "int", "range": [-20, 20]},
+      {"addr": "@link0", "offset": "0x08", "type": "ptr", "choices": [0, "@item0"]},
+      {"addr": "@item0", "offset": "0x20", "type": "u32", "choices": [0, "0x5678"]},
+      {"addr": "@item0", "offset": "0x24", "type": "u32", "choices": [7, 8]}
+    ]
+  }
+}

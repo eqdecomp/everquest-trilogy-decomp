@@ -1,0 +1,116 @@
+{
+  "function": "CreateRolloutRecord_guess",
+  "original": "0x10005fd0",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "owner", "type": "int"},
+    {"name": "x", "type": "int"},
+    {"name": "y", "type": "int"},
+    {"name": "flags", "type": "u8"},
+    {"name": "name", "type": "cstr"},
+    {"name": "src", "type": "int"},
+    {"name": "p7", "type": "u8"},
+    {"name": "p8", "type": "u8"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {"size": "0x40", "fill": "random"},
+    "src": {"size": "0x40", "fill": "random"},
+    "rec": {"size": "0x38", "fill": "random"},
+    "bmp1": {"size": "0x8", "fill": "random", "init": [{"offset": "0x0", "u32": 40}, {"offset": "0x4", "u32": 30}]},
+    "bmp2": {"size": "0x8", "fill": "random", "init": [{"offset": "0x0", "u32": 64}, {"offset": "0x4", "u32": 48}]},
+    "msg": {"size": "0x20", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10055a84", "u32": "@msg"},
+    {"addr": "@msg", "cstr": "bad rollout"}
+  ],
+  "callees": {
+    "0x100278a0": {"name": "FUN_100278a0", "conv": "cdecl", "args": ["cstr"]},
+    "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@rec"},
+    "0x100061f0": {"name": "FUN_100061f0", "conv": "cdecl", "args": ["int", "cstr"], "ret": 4660},
+    "0x10007ae0": {"name": "FUN_10007ae0", "conv": "cdecl", "args": ["cstr", "int"], "ret": ["@bmp1", "@bmp2"]},
+    "0x10028340": {"name": "FUN_10028340", "conv": "cdecl", "args": ["ptr", "int", "ptr"]},
+    "0x10004ec0": {"name": "FUN_10004ec0", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e"
+  },
+  "cases": [
+    {"name": "null owner: FUN_100278A0 gets the global message and the result is NULL",
+     "args": [0, 10, 20, 1, "rollout", "@src", 1, 1], "expect": {"ret": 0}},
+    {"name": "malloc fails: NULL, nothing else runs",
+     "args": ["@owner", 10, 20, 3, "rollout", "@src", 1, 1],
+     "callees": {"0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}},
+     "expect": {"ret": 0}},
+    {"name": "no flags, empty name: no lookup, +0x28 is 0, position as given",
+     "args": ["@owner", 100, 50, 0, "", "@src", 0, 0]},
+    {"name": "name given: lookup result stored as a short",
+     "args": ["@owner", 100, 50, 0, "rollout", "@src", 1, 2]},
+    {"name": "lookup returns -2: +0x28 becomes 0xFFFE",
+     "args": ["@owner", 100, 50, 0, "x", "@src", 0, 0],
+     "callees": {"0x100061f0": {"name": "FUN_100061f0", "conv": "cdecl", "args": ["int", "cstr"], "ret": "0xfffffffe"}}},
+    {"name": "lookup returns 0x12345: only the low word is stored",
+     "args": ["@owner", 100, 50, 0, "x", "@src", 0, 0],
+     "callees": {"0x100061f0": {"name": "FUN_100061f0", "conv": "cdecl", "args": ["int", "cstr"], "ret": "0x12345"}}},
+    {"name": "flag 1 centres x: 41 wide gives x 300",
+     "args": ["@owner", 30, 50, 1, "", "@src", 0, 0],
+     "memory": [{"addr": "@bmp1", "u32": 41}, {"addr": "@bmp1", "offset": "0x4", "u32": 31}]},
+    {"name": "flag 2 centres y: 31 high gives y 225",
+     "args": ["@owner", 30, 50, 2, "", "@src", 0, 0],
+     "memory": [{"addr": "@bmp1", "u32": 41}, {"addr": "@bmp1", "offset": "0x4", "u32": 31}]},
+    {"name": "flag 4 adds 10 to x",
+     "args": ["@owner", 100, 50, 4, "", "@src", 0, 0]},
+    {"name": "flag 8 puts the right edge at x",
+     "args": ["@owner", 100, 50, 8, "", "@src", 0, 0]},
+    {"name": "flag 8 with x 0 uses 640",
+     "args": ["@owner", 0, 50, 8, "", "@src", 0, 0]},
+    {"name": "flag 0x10 puts the bottom edge at y",
+     "args": ["@owner", 10, 50, 16, "", "@src", 0, 0]},
+    {"name": "flag 0x10 with y 0 uses 480",
+     "args": ["@owner", 10, 0, 16, "", "@src", 0, 0]},
+    {"name": "order: x + 10 runs before the x 0 test (-10 becomes 0, so 640 applies)",
+     "args": ["@owner", -10, 50, 12, "", "@src", 0, 0]},
+    {"name": "order: centre y gives 0 (480 tall), then 0x1E0 applies",
+     "args": ["@owner", 10, 50, 18, "", "@src", 0, 0],
+     "memory": [{"addr": "@bmp1", "u32": 40}, {"addr": "@bmp1", "offset": "0x4", "u32": 480}]},
+    {"name": "order: centre x gives 0 (640 wide), then 0x280 applies",
+     "args": ["@owner", 0, 50, 9, "", "@src", 0, 0],
+     "memory": [{"addr": "@bmp1", "u32": 640}, {"addr": "@bmp1", "offset": "0x4", "u32": 30}]},
+    {"name": "all flags on 41 x 31",
+     "args": ["@owner", 5, 7, 31, "", "@src", 0, 0],
+     "memory": [{"addr": "@bmp1", "u32": 41}, {"addr": "@bmp1", "offset": "0x4", "u32": 31}]},
+    {"name": "negative size 0xfffffff9 x 0xfffffffb: C division truncates toward 0",
+     "args": ["@owner", 0, 0, 3, "", "@src", 0, 0],
+     "memory": [{"addr": "@bmp1", "u32": "0xfffffff9"}, {"addr": "@bmp1", "offset": "0x4", "u32": "0xfffffffb"}]},
+    {"name": "bits above 0x1f change nothing",
+     "args": ["@owner", 100, 50, 224, "", "@src", 0, 0]},
+    {"name": "param_7 and param_8 are stored as bytes (0x1ff, 0x180)",
+     "args": ["@owner", 100, 50, 0, "", "@src", 511, 384]},
+    {"name": "+0x2C is the dword at src + 8",
+     "args": ["@owner", 100, 50, 0, "", "@src", 0, 0],
+     "memory": [{"addr": "@src", "offset": "0x8", "u32": "0xdeadbeef"}]}
+  ],
+  "fuzz": {
+    "seed": 5010101,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner", 0]},
+      {"range": [-50, 700]},
+      {"range": [-50, 600]},
+      {"range": [0, 255]},
+      {"choices": ["", "a", "rollout", "bmp"]},
+      {"choices": ["@src"]},
+      {"range": [0, 255]},
+      {"range": [0, 255]}
+    ],
+    "memory": [
+      {"addr": "@bmp1", "type": "int", "range": [-20, 700]},
+      {"addr": "@bmp1", "offset": "0x4", "type": "int", "range": [-20, 600]},
+      {"addr": "@src", "offset": "0x8", "type": "u32"}
+    ]
+  }
+}

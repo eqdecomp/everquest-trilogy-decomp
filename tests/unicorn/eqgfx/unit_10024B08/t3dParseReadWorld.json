@@ -1,0 +1,207 @@
+{
+  "function": "t3dParseReadWorld",
+  "original": "0x100260e7",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "worldFilePath", "type": "cstr"},
+    {"name": "world", "type": "int"},
+    {"name": "archiveId", "type": "int"},
+    {"name": "worldLoadMode", "type": "int"},
+    {"name": "worldContext", "type": "int"},
+    {"name": "optionalWorldData", "type": "int"},
+    {"name": "optionalWorldMetadata", "type": "int"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "parser": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": 0},
+        {"offset": "0x2c", "u32": 286331153},
+        {"offset": "0x30", "u32": 572662306},
+        {"offset": "0x34", "u32": 858993459},
+        {"offset": "0x38", "u32": 1145324612}
+      ]
+    },
+    "worldFile": {"size": "0x18", "fill": "random"},
+    "parsedWorld": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x100aade4", "u32": 2712847316}
+  ],
+  "callees": {
+    "0x10021e85": {
+      "name": "checkWorldPath",
+      "conv": "cdecl",
+      "args": ["cstr", "int", "int", "int", "int", "int"],
+      "ret": "0xffff3d5a"
+    },
+    "0x10028fdf": {
+      "name": "createParserObject",
+      "conv": "cdecl",
+      "args": ["int", "int"],
+      "ret": "@parser"
+    },
+    "0x100262f0": {
+      "name": "openWorldFile",
+      "conv": "cdecl",
+      "args": ["cstr", "int"],
+      "ret": "@worldFile"
+    },
+    "0x1002902b": {
+      "name": "logParserError",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr", "cstr"]
+    },
+    "0x10029020": {
+      "name": "destroyParserObject",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10028d54": {
+      "name": "readWorldSections",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "int"],
+      "ret": "@parsedWorld"
+    },
+    "0x10026411": {
+      "name": "freeWorldFile",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x100290ce": {
+      "name": "parseWorldSections",
+      "conv": "cdecl",
+      "args": ["ptr", "int"]
+    },
+    "0x1002642d": {
+      "name": "closeWorldFile",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10028e20": {
+      "name": "freeParsedWorld",
+      "conv": "cdecl",
+      "args": ["int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "initial path check returns zero and clears active world context",
+      "args": ["world.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x10021e85": {"name": "checkWorldPath", "conv": "cdecl", "args": ["cstr", "int", "int", "int", "int", "int"], "ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "initial path check returns arbitrary success code unchanged",
+      "args": ["world.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x10021e85": {"name": "checkWorldPath", "conv": "cdecl", "args": ["cstr", "int", "int", "int", "int", "int"], "ret": "0x12345678"}},
+      "expect": {"ret": "0x12345678"}
+    },
+    {
+      "name": "one below fallback sentinel is returned without opening a file",
+      "args": ["world.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x10021e85": {"name": "checkWorldPath", "conv": "cdecl", "args": ["cstr", "int", "int", "int", "int", "int"], "ret": "0xffff3d59"}},
+      "expect": {"ret": "0xffff3d59"}
+    },
+    {
+      "name": "one above fallback sentinel is returned without opening a file",
+      "args": ["world.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x10021e85": {"name": "checkWorldPath", "conv": "cdecl", "args": ["cstr", "int", "int", "int", "int", "int"], "ret": "0xffff3d5b"}},
+      "expect": {"ret": "0xffff3d5b"}
+    },
+    {
+      "name": "maximum unsigned path status is preserved",
+      "args": ["world.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x10021e85": {"name": "checkWorldPath", "conv": "cdecl", "args": ["cstr", "int", "int", "int", "int", "int"], "ret": "0xffffffff"}},
+      "expect": {"ret": "0xffffffff"}
+    },
+    {
+      "name": "fallback parser allocation failure returns before clearing context",
+      "args": ["world.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x10028fdf": {"name": "createParserObject", "conv": "cdecl", "args": ["int", "int"], "ret": 0}},
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "fallback file open failure logs the path and destroys parser",
+      "args": ["missing.wld", 1, 0, 7, 99, 0, 0],
+      "callees": {"0x100262f0": {"name": "openWorldFile", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0}},
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "world section reader failure destroys parser then frees reader",
+      "args": ["world.wld", 1, 4, 7, 99, 0, 0],
+      "callees": {"0x10028d54": {"name": "readWorldSections", "conv": "cdecl", "args": ["ptr", "int", "int"], "ret": 0}},
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "successful parse with no parser errors returns zero and preserves optional fields when null",
+      "args": ["world.wld", 1, 4, 7, 99, 0, 88],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "successful parse writes both optional fields for nonzero data pointer",
+      "args": ["world.wld", 1, 4, 13, 4294967295, 4660, 22136],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative optional data still enables optional field writes",
+      "args": ["world.wld", 1, 0, -1, -7, -1, -2147483648],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "parser error count one returns parse failure",
+      "args": ["world.wld", 1, 4, 7, 99, 4660, 22136],
+      "memory": [{"addr": "@parser", "offset": "0x8", "u32": 1}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "negative parser error count also returns parse failure",
+      "args": ["world.wld", 1, 4, 7, 99, 0, 0],
+      "memory": [{"addr": "@parser", "offset": "0x8", "u32": "0xffffffff"}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "minimum signed parser error count is nonzero",
+      "args": ["world.wld", 1, 4, 7, 99, 0, 0],
+      "memory": [{"addr": "@parser", "offset": "0x8", "u32": "0x80000000"}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "zero optional data leaves both preexisting optional fields untouched",
+      "args": ["", 0, 0, 0, 0, 0, 4294967295],
+      "memory": [
+        {"addr": "@parser", "offset": "0x34", "u32": 2863311530},
+        {"addr": "@parser", "offset": "0x38", "u32": 3149642683}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero error count with nonzero optional data returns zero",
+      "args": ["world.wld", 0, 0, 0, 0, 1, 0],
+      "memory": [{"addr": "@parser", "offset": "0x8", "u32": 0}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 155879,
+    "count": 40,
+    "args": [
+      {},
+      {"range": [-16, 32]},
+      {"choices": [0, 1, 2, 2147483647, -1]},
+      {"range": [-20, 40]},
+      {"range": [-100, 100]},
+      {"choices": [0, 1, -1, 4660]},
+      {"range": [-1000, 1000]}
+    ],
+    "memory": [
+      {"addr": "0x100aade4", "type": "int", "range": [-1000, 1000]},
+      {"addr": "@parser", "offset": "0x8", "type": "int", "range": [-4, 4]}
+    ]
+  }
+}

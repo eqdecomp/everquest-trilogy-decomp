@@ -1,0 +1,125 @@
+{
+  "function": "ConstructEngine_guess",
+  "original": "0x004ecc9f",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "param_1": {
+      "size": "0xbd8",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005223bc": {
+      "name": "fopen_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": ["0x70000000", "0x70000000"]
+    },
+    "0x00524138": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": 0
+    },
+    "0x00521fbb": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!CreateThread": {
+      "name": "CreateThread",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr", "ptr", "u32", "ptr"],
+      "ret": "0x70000004"
+    },
+    "kernel32.dll!SetThreadPriority": {
+      "name": "SetThreadPriority",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "_fprintf": "0x00524138"
+  },
+  "cases": [
+    {
+      "name": "both file opens succeed and random object bytes are reset",
+      "args": ["@param_1"]
+    },
+    {
+      "name": "first open fails and second succeeds",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0xbd8",
+          "fill": "zero"
+        }
+      },
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": [0, "0x70000000"]
+        }
+      }
+    },
+    {
+      "name": "first open succeeds and second fails",
+      "args": ["@param_1"],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": ["0x70000000", 0]
+        }
+      }
+    },
+    {
+      "name": "both file opens fail",
+      "args": ["@param_1"],
+      "callees": {
+        "0x005223bc": {
+          "name": "fopen_guess",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": [0, 0]
+        }
+      }
+    },
+    {
+      "name": "zero object still receives all initialized fields",
+      "args": ["@param_1"],
+      "objects": {
+        "param_1": {
+          "size": "0xbd8",
+          "fill": "zero"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5164191,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@param_1"]
+      }
+    ],
+    "memory": []
+  }
+}

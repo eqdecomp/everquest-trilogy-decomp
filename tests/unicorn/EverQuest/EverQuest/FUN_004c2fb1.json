@@ -1,0 +1,145 @@
+{
+  "function": "HardwareDialogProc_guess",
+  "original": "0x004c2fb1",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "rewrite": "HardwareDialogProc_guess",
+  "conv": "thiscall",
+  "this": "@context",
+  "args": [
+    { "name": "hwnd", "type": "ptr" },
+    { "name": "message", "type": "int" },
+    { "name": "command", "type": "short" },
+    { "name": "lParam", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x210",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x4", "cstr": "Video mode" },
+        { "offset": "0x84", "cstr": "Resolution" },
+        { "offset": "0x104", "cstr": "Refresh rate" },
+        { "offset": "0x184", "cstr": "Fullscreen" },
+        { "offset": "0x204", "u32": 1800 }
+      ]
+    },
+    "cpu_text": { "size": "0x20", "fill": "zero", "init": [{ "offset": "0", "cstr": "Test CPU" }] },
+    "getdlgitem": { "size": "1", "fill": "zero" },
+    "getwindowtext": { "size": "1", "fill": "zero" },
+    "setwindowtext": { "size": "1", "fill": "zero" },
+    "sendmessage": { "size": "1", "fill": "zero" },
+    "enddialog": { "size": "1", "fill": "zero" },
+    "setfocus": { "size": "1", "fill": "zero" },
+    "cpu_speed": { "size": "1", "fill": "zero" },
+    "cpu_name": { "size": "1", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x00534254", "u32": "@getdlgitem" },
+    { "addr": "0x00534224", "u32": "@getwindowtext" },
+    { "addr": "0x00534244", "u32": "@sendmessage" },
+    { "addr": "0x0053425c", "u32": "@enddialog" },
+    { "addr": "0x00534258", "u32": "@setwindowtext" },
+    { "addr": "0x00534228", "u32": "@setfocus" },
+    { "addr": "0x006e52a4", "u32": "@cpu_speed" },
+    { "addr": "0x006e52a0", "u32": "@cpu_name" },
+    { "addr": "0x0058fbb4", "u32": 2 },
+    { "addr": "0x00590180", "u32": 305419896 },
+    { "addr": "0x005901b8", "size": "0x1000", "fill": "zero" }
+  ],
+  "callees": {
+    "@getdlgitem": {
+      "name": "GetDlgItem",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": "0x00760000"
+    },
+    "@getwindowtext": {
+      "name": "GetWindowTextA",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "int"],
+      "ret": 9,
+      "writes": [{ "arg": 1, "offset": 0, "hex": "436170747572656400" }]
+    },
+    "@sendmessage": {
+      "name": "SendMessageA",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int"],
+      "ret": 7
+    },
+    "@enddialog": {
+      "name": "EndDialog",
+      "conv": "stdcall",
+      "args": ["ptr", "int"],
+      "ret": 1
+    },
+    "@setwindowtext": {
+      "name": "SetWindowTextA",
+      "conv": "stdcall",
+      "args": ["ptr", "cstr"],
+      "ret": 1
+    },
+    "0x0053162b": {
+      "name": "__itoa",
+      "conv": "cdecl",
+      "args": ["int", "ignore", "int"],
+      "passthrough": true
+    },
+    "@setfocus": {
+      "name": "SetFocus",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@cpu_speed": {
+      "name": "t3dGetCPUSpeed",
+      "conv": "cdecl",
+      "args": ["ignore", "int"],
+      "ret": 4762
+    },
+    "@cpu_name": {
+      "name": "t3dGetCPUName",
+      "conv": "cdecl",
+      "args": [],
+      "ret": "@cpu_text"
+    }
+  },
+  "cases": [
+    { "name": "WM_INIT with two devices", "args": ["0x00760010", 272, 0, 0] },
+    {
+      "name": "WM_INIT empty device list",
+      "args": ["0x00760010", 272, 0, 0],
+      "memory": [{ "addr": "0x0058fbb4", "u32": 0 }]
+    },
+    {
+      "name": "WM_INIT one device",
+      "args": ["0x00760010", 272, 0, 0],
+      "memory": [{ "addr": "0x0058fbb4", "u32": 1 }]
+    },
+    {
+      "name": "WM_INIT negative device count",
+      "args": ["0x00760010", 272, 0, 0],
+      "memory": [{ "addr": "0x0058fbb4", "u32": -1 }]
+    },
+    { "name": "WM_COMMAND accept", "args": ["0x00760010", 273, 1, 0] },
+    { "name": "WM_COMMAND cancel", "args": ["0x00760010", 273, 2, 0] },
+    { "name": "WM_COMMAND ignored command", "args": ["0x00760010", 273, 3, 0] },
+    { "name": "unhandled message", "args": ["0x00760010", 274, 1, 0] },
+    { "name": "neighboring message boundary", "args": ["0x00760010", 271, 2, 0] }
+  ],
+  "fuzz": {
+    "seed": 4929511,
+    "count": 36,
+    "args": [
+      { "choices": ["0x00760010", "0x00760020", "0x00760030"] },
+      { "choices": [272, 273, 271, 274, 512] },
+      { "choices": [-1, 0, 1, 2, 3, 4, 257, 258] },
+      { "range": [-3, 3] }
+    ],
+    "memory": [
+      { "addr": "0x0058fbb4", "type": "int", "range": [-2, 5] }
+    ]
+  }
+}

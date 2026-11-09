@@ -1,0 +1,279 @@
+{
+  "function": "s3dCreateDMRGBTrack",
+  "original": "0x10010e08",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "source",
+      "type": "ptr"
+    },
+    {
+      "name": "trackValue24",
+      "type": "int"
+    },
+    {
+      "name": "trackValue28",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@owned_data"
+        }
+      ]
+    },
+    "source": {
+      "size": "0x28",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": 287454020
+        },
+        {
+          "offset": "0x24",
+          "u32": 1432778632
+        }
+      ]
+    },
+    "owned_data": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@track"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation fails before input reads",
+      "args": [
+        0,
+        0,
+        -2147483648,
+        2147483647
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "successful registration copies all values and shares source",
+      "args": [
+        "@context",
+        "@source",
+        305419896,
+        -19088744
+      ]
+    },
+    {
+      "name": "null owned data is copied",
+      "args": [
+        "@context",
+        "@source",
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@context",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "source and parameters cover signed dword boundaries",
+      "args": [
+        "@context",
+        "@source",
+        -2147483648,
+        2147483647
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x20",
+          "u32": 2147483648
+        },
+        {
+          "addr": "@source",
+          "offset": "0x24",
+          "u32": 2147483647
+        }
+      ]
+    },
+    {
+      "name": "registration failure frees and returns null",
+      "args": [
+        "@context",
+        "@source",
+        17,
+        29
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "negative registration failure still frees",
+      "args": [
+        "@context",
+        "@source",
+        -1,
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "high-bit registration failure still frees",
+      "args": [
+        "@context",
+        "@source",
+        2147483647,
+        -2147483648
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2147483648
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 69128,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@source"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@context",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@owned_data",
+          0
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0x20",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0x24",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

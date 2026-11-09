@@ -1,0 +1,467 @@
+{
+  "function": "rdp_connect",
+  "original": "0x004f1460",
+  "sources": [
+    "src/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "rdp",
+      "type": "ptr"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "port",
+      "type": "int"
+    },
+    {
+      "name": "flags",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rdp": {
+      "size": "0x90",
+      "fill": "zero"
+    },
+    "out": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "stats": {
+      "size": "0x280",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x150",
+          "u32": 17
+        },
+        {
+          "offset": "0x154",
+          "u32": 3
+        }
+      ]
+    },
+    "hostent": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "addrlist": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "ip": {
+      "size": "0x4",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "0x04030201"
+        }
+      ]
+    },
+    "conn": {
+      "size": "0x7e8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@rdp"
+        }
+      ]
+    },
+    "leavefn": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "enterfn": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0057f698",
+      "u32": "@stats"
+    },
+    {
+      "addr": "0x00534190",
+      "u32": "@leavefn"
+    },
+    {
+      "addr": "0x00534194",
+      "u32": "@enterfn"
+    },
+    {
+      "addr": "@hostent",
+      "offset": "0xc",
+      "u32": "@addrlist"
+    },
+    {
+      "addr": "@addrlist",
+      "u32": "@ip"
+    },
+    {
+      "addr": "0x7f0efffc",
+      "u32": "0xdeadbeef"
+    }
+  ],
+  "callees": {
+    "0x005003b0": {
+      "name": "htons",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": "0x3412"
+    },
+    "0x005003f8": {
+      "name": "inet_addr",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": "0xc0a80102"
+    },
+    "0x005003f2": {
+      "name": "gethostbyname",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@hostent"
+    },
+    "0x004f12e0": {
+      "name": "createNetworkConnection_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:4",
+        "ptr",
+        "u32"
+      ],
+      "ret": 2
+    },
+    "@leavefn": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f5330": {
+      "name": "removeConnectionFromHashTable_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@enterfn": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004f4dc0": {
+      "name": "removeHeapElement_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x004f1890": {
+      "name": "NetworkConnection_CleanupNetworkConnectionResources_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x005230dd": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x005230dd"
+  },
+  "cases": [
+    {
+      "name": "numeric address, create fails",
+      "args": [
+        "@rdp",
+        "@out",
+        "192.168.1.2",
+        1,
+        1
+      ],
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "DNS lookup fails",
+      "args": [
+        "@rdp",
+        "@out",
+        "missing.invalid",
+        80,
+        0
+      ],
+      "callees": {
+        "0x005003f8": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "0xffffffff"
+        },
+        "0x005003f2": {
+          "name": "gethostbyname",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 12
+      }
+    },
+    {
+      "name": "DNS succeeds, create fails",
+      "args": [
+        "@rdp",
+        "@out",
+        "rdp.example",
+        3389,
+        1
+      ],
+      "callees": {
+        "0x005003f8": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": "0xffffffff"
+        }
+      },
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "zero address is accepted",
+      "args": [
+        "@rdp",
+        "@out",
+        "0.0.0.0",
+        0,
+        0
+      ],
+      "callees": {
+        "0x005003f8": {
+          "name": "inet_addr",
+          "conv": "stdcall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "connection succeeds, not duplicate",
+      "args": [
+        "@rdp",
+        "@out",
+        "10.20.30.40",
+        80,
+        1
+      ],
+      "callees": {
+        "0x004f12e0": {
+          "name": "createNetworkConnection_guess",
+          "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:4",
+        "mem:16",
+        "u32"
+      ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+            "hex": "50030060"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "connection succeeds and duplicate is cleaned up",
+      "args": [
+        "@rdp",
+        "@out",
+        "10.20.30.40",
+        65535,
+        0
+      ],
+      "callees": {
+        "0x004f12e0": {
+          "name": "createNetworkConnection_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:4",
+            "mem:16",
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+            "hex": "50030060"
+            }
+          ]
+        },
+        "0x004f5330": {
+          "name": "removeConnectionFromHashTable_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "0x70001000"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "16 bit port boundary, negative one",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        -1,
+        1
+      ],
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "16 bit port boundary, sign bit",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        32768,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x150",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x154",
+          "u32": 7
+        }
+      ],
+      "expect": {
+        "ret": 2
+      }
+    },
+    {
+      "name": "16 bit port boundary, wraps above max",
+      "args": [
+        "@rdp",
+        "@out",
+        "1.2.3.4",
+        65536,
+        1
+      ],
+      "expect": {
+        "ret": 2
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5182560,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rdp"
+        ]
+      },
+      {
+        "choices": [
+          "@out"
+        ]
+      },
+      {},
+      {
+        "range": [
+          -32769,
+          65536
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@stats",
+        "offset": "0x150",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x154",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

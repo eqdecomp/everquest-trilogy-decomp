@@ -1,0 +1,272 @@
+{
+  "function": "QueryInterfaceByGuid_guess",
+  "original": "0x004e7fd5",
+  "sources": [
+    "src/EverQuest/Win.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    },
+    {
+      "name": "riid",
+      "type": "ptr"
+    },
+    {
+      "name": "ppv",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "vt": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@addref"
+        }
+      ]
+    },
+    "addref": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "obj": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt"
+        }
+      ]
+    },
+    "ppv": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "riid": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "riid_zero": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "riid_a": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "hex": "a1b2c3d4e5f60718293a4b5c6d7e8f90"
+        }
+      ]
+    },
+    "riid_b": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "hex": "0f1e2d3c4b5a69788796a5b4c3d2e1f0"
+        }
+      ]
+    },
+    "riid_near_a": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "hex": "a1b2c3d4e5f60718293a4b5c6d7e8f91"
+        }
+      ]
+    },
+    "riid_near_b": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "hex": "0f1e2d3c4b5a69788796a5b4c3d2e1f1"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x00536f40",
+      "hex": "a1b2c3d4e5f60718293a4b5c6d7e8f90"
+    },
+    {
+      "addr": "0x00534d70",
+      "hex": "0f1e2d3c4b5a69788796a5b4c3d2e1f0"
+    }
+  ],
+  "callees": {
+    "0x00524310": {
+      "name": "_memcmp",
+      "conv": "cdecl",
+      "args": [
+        "mem:16",
+        "mem:16",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "@addref": {
+      "name": "AddRef",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "random riid, no match",
+      "args": [
+        "@obj",
+        "@riid",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 2147500034
+      }
+    },
+    {
+      "name": "zero riid, no match",
+      "args": [
+        "@obj",
+        "@riid_zero",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 2147500034
+      }
+    },
+    {
+      "name": "riid is first GUID address (first memcmp matches)",
+      "args": [
+        "@obj",
+        "0x00536f40",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "riid is second GUID address (second memcmp matches)",
+      "args": [
+        "@obj",
+        "0x00534d70",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "riid copy of first GUID",
+      "args": [
+        "@obj",
+        "@riid_a",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "riid copy of second GUID",
+      "args": [
+        "@obj",
+        "@riid_b",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first GUID with last byte changed (size 16 witness)",
+      "args": [
+        "@obj",
+        "@riid_near_a",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 2147500034
+      }
+    },
+    {
+      "name": "second GUID with last byte changed (size 16 witness)",
+      "args": [
+        "@obj",
+        "@riid_near_b",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 2147500034
+      }
+    },
+    {
+      "name": "riid is the object itself (random bytes)",
+      "args": [
+        "@obj",
+        "@obj",
+        "@ppv"
+      ],
+      "expect": {
+        "ret": 2147500034
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5144533,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      },
+      {
+        "choices": [
+          "@riid",
+          "@riid_zero",
+          "@riid_a",
+          "@riid_b",
+          "@riid_near_a",
+          "@riid_near_b",
+          "0x00536f40",
+          "0x00534d70"
+        ]
+      },
+      {
+        "choices": [
+          "@ppv"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x00536f40",
+        "size": 16,
+        "p": 0.25
+      },
+      {
+        "addr": "0x00534d70",
+        "size": 16,
+        "p": 0.25
+      }
+    ]
+  }
+}

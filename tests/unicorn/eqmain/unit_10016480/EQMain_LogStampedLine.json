@@ -1,0 +1,224 @@
+{
+  "function": "EQMain_LogStampedLine_guess",
+  "original": "0x100165f0",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "tm": {
+      "size": "0x24",
+      "fill": "zero"
+    },
+    "strftime_format": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "heap_block": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055958",
+      "u32": "@strftime_format"
+    },
+    {
+      "addr": "@strftime_format",
+      "cstr": "%H:%M:%S"
+    },
+    {
+      "addr": "0x1004F884",
+      "u32": 1431633920
+    }
+  ],
+  "callees": {
+    "0x1003396b": {
+      "name": "__strdup",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapAlloc": {
+      "name": "HeapAlloc",
+      "conv": "stdcall",
+      "args": [
+        "ignore",
+        "u32",
+        "u32"
+      ],
+      "ret": "@heap_block"
+    },
+    "0x10033670": {
+      "name": "_strchr",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "passthrough": true
+    },
+    "0x10035b24": {
+      "name": "_time",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1234567890
+    },
+    "0x100359c4": {
+      "name": "_localtime",
+      "conv": "cdecl",
+      "args": [
+        "mem:4"
+      ],
+      "ret": "@tm"
+    },
+    "0x10035112": {
+      "name": "_strftime",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "u32",
+        "cstr",
+        "mem:36"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "31323a33343a353600"
+        }
+      ],
+      "ret": 8
+    },
+    "0x10034012": {
+      "name": "_fprintf",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "ret": 0
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "tag blanked (more text after it)",
+      "args": [
+        "<b>hi"
+      ]
+    },
+    {
+      "name": "tag at the end: 3 chars left, kept",
+      "args": [
+        "a<b>"
+      ]
+    },
+    {
+      "name": "4 chars left: blanked (boundary)",
+      "args": [
+        "<b>>"
+      ]
+    },
+    {
+      "name": "third char not '>': kept",
+      "args": [
+        "x<bbq>"
+      ]
+    },
+    {
+      "name": "two tags",
+      "args": [
+        "<b>x<i>y"
+      ]
+    },
+    {
+      "name": "failing tag stops the loop, later tag kept",
+      "args": [
+        "x<qq><i>y"
+      ]
+    },
+    {
+      "name": "tag then failing tag",
+      "args": [
+        "<b>x<qq>"
+      ]
+    },
+    {
+      "name": "lone <",
+      "args": [
+        "<"
+      ]
+    },
+    {
+      "name": "< at the end",
+      "args": [
+        "abc<"
+      ]
+    },
+    {
+      "name": "first < fails",
+      "args": [
+        "<<c>dd"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 91632,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "",
+          "<",
+          "<b>",
+          "<b>>",
+          "a<b>",
+          "<b>x",
+          "<b>x<i>y",
+          "x<qq><i>y",
+          "<qq>",
+          "<<c>dd",
+          "abc",
+          "x<bbq>",
+          "a<b>c<d>e",
+          "<b>x<qq>"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

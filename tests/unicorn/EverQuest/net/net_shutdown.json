@@ -1,0 +1,128 @@
+{
+  "function": "net_shutdown",
+  "original": "0x004e0601",
+  "sources": [
+    "src/EverQuest/net.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x006ecca8",
+      "u32": "0x12345678"
+    }
+  ],
+  "callees": {
+    "0x004f15a0": {
+      "name": "connection_close_wait",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "int"
+      ]
+    },
+    "0x004f1160": {
+      "name": "rdp_destroy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero parameter destroys nonzero handle",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecca8",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    {
+      "name": "zero parameter destroys null handle",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecca8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "nonzero parameter closes then destroys handle",
+      "args": [
+        1
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecca8",
+          "u32": "0x89abcdef"
+        }
+      ]
+    },
+    {
+      "name": "negative parameter takes nonzero branch",
+      "args": [
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecca8",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "large parameter passed through unchanged",
+      "args": [
+        10000
+      ],
+      "memory": [
+        {
+          "addr": "0x006ecca8",
+          "u32": "0x006ecca8"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5113345,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -10000,
+          10000
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006ecca8",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x00000001",
+          "0x12345678",
+          "0x89abcdef",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "function": "t3dSetHierarchicalSpriteCollisionVolume",
+  "original": "0x10013625",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceVolume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@oldvolume"
+        }
+      ]
+    },
+    "sourcevolume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "oldvolume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "newvolume": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@newvolume"
+    },
+    "kernel32.dll!OutputDebugStringA": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1001d5a1": {
+      "name": "t3dDestroyVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "duplicate succeeds: old volume destroyed, copy stored in sprite+0x14",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "duplicate fails: debug message, old volume kept, sprite+0x14 untouched",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49855
+      }
+    },
+    {
+      "name": "duplicate fails with a null sprite: sprite is never read",
+      "args": [
+        "@context",
+        0,
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": -49855
+      }
+    },
+    {
+      "name": "duplicate succeeds with no old volume: destroy still called with null",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ],
+      "objects": {
+        "sprite": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x14",
+              "u32": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 79397,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@sourcevolume"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x14",
+        "type": "ptr",
+        "choices": [
+          "@oldvolume",
+          "@sourcevolume",
+          "@newvolume",
+          0
+        ]
+      }
+    ]
+  }
+}

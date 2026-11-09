@@ -1,0 +1,116 @@
+{
+  "function": "createThreadWithPriority_guess",
+  "original": "0x004f7290",
+  "sources": [
+    "src/Network/rdp/rdp.c",
+    "src/Network/rdp/eventq.c",
+    "src/Network/rdp/connhash.c",
+    "src/Network/rdp/uevent.c",
+    "src/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "thread", "type": "ptr"},
+    {"name": "func", "type": "u32"},
+    {"name": "arg", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "thread": {"size": "0x10", "fill": "random"}
+  },
+  "callees": {
+    "0x00524f07": {
+      "name": "__beginthreadex",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "ptr", "ptr", "u32", "ptr"],
+      "ret": 0
+    },
+    "kernel32.dll!SetThreadPriority": {
+      "name": "SetThreadPriority",
+      "conv": "stdcall",
+      "args": ["u32", "int"],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__beginthreadex": "0x00524f07"
+  },
+  "cases": [
+    {
+      "name": "thread creation fails",
+      "args": ["@thread", 305419896, 2271560481]
+    },
+    {
+      "name": "thread created and prioritized",
+      "args": ["@thread", 324508639, 610839776],
+      "callees": {
+        "0x00524f07": {
+          "name": "__beginthreadex",
+          "conv": "cdecl",
+          "args": ["ptr", "u32", "ptr", "ptr", "u32", "ptr"],
+          "ret": 4660,
+          "writes": [{"arg": 5, "offset": 0, "hex": "78563412"}]
+        },
+        "kernel32.dll!SetThreadPriority": {
+          "name": "SetThreadPriority",
+          "conv": "stdcall",
+          "args": ["u32", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "thread handle one",
+      "args": ["@thread", 1, 4294967295],
+      "callees": {
+        "0x00524f07": {
+          "name": "__beginthreadex",
+          "conv": "cdecl",
+          "args": ["ptr", "u32", "ptr", "ptr", "u32", "ptr"],
+          "ret": 1,
+          "writes": [{"arg": 5, "offset": 0, "hex": "01000000"}]
+        },
+        "kernel32.dll!SetThreadPriority": {
+          "name": "SetThreadPriority",
+          "conv": "stdcall",
+          "args": ["u32", "int"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "maximum thread handle",
+      "args": ["@thread", 4294967295, 1],
+      "callees": {
+        "0x00524f07": {
+          "name": "__beginthreadex",
+          "conv": "cdecl",
+          "args": ["ptr", "u32", "ptr", "ptr", "u32", "ptr"],
+          "ret": 4294967295,
+          "writes": [{"arg": 5, "offset": 0, "hex": "ffffffff"}]
+        },
+        "kernel32.dll!SetThreadPriority": {
+          "name": "SetThreadPriority",
+          "conv": "stdcall",
+          "args": ["u32", "int"],
+          "ret": 1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5206672,
+    "count": 100,
+    "args": [
+      {"choices": ["@thread"]},
+      {"range": [0, 4294967295]},
+      {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@thread", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@thread", "offset": "0x4", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@thread", "offset": "0x8", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@thread", "offset": "0xc", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

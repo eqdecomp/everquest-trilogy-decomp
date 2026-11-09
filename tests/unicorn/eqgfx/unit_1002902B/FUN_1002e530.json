@@ -1,0 +1,136 @@
+{
+  "function": "parAddRegionToWorld",
+  "original": "0x1002e530",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "parser", "type": "ptr"},
+    {"name": "region", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "parser": {"size": "0x100", "fill": "random", "init": [{"offset": "0x0", "u32": "@world"}]},
+    "region": {"size": "0x100", "fill": "random", "init": [{"offset": "0x0", "u32": 7}, {"offset": "0x8", "u32": 1234}]},
+    "world": {"size": "0x100", "fill": "random"},
+    "entry": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1002902b": {"name": "logParserError_guess", "conv": "cdecl", "args": ["ptr", "cstr"]}
+  },
+  "cases": [
+    {
+      "name": "new region: list add, tag lookup and dictionary add all succeed, returns 0",
+      "args": ["@parser", "@region"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list add returns 1: logs list message, returns 1",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "list add returns -1: any nonzero is a failure",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "list add returns INT_MIN: nonzero is a failure",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -2147483648}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "list add fails with null region: region is only passed on, never read",
+      "args": ["@parser", 0],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag lookup finds an entry: logs tag message, returns 1, dictionary add not called",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "u32"], "ret": "@entry"}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag lookup returns -1: any nonzero means the tag is in use",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "u32"], "ret": -1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dictionary add returns 1: success, returns 0",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary add returns INT_MAX: success, returns 0",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 2147483647}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary add returns -1: logs dictionary message, returns 1",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dictionary add returns -2: logs dictionary message, returns 1",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -2}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dictionary add returns INT_MIN: logs dictionary message, returns 1",
+      "args": ["@parser", "@region"],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -2147483648}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "tag 0 is looked up as 0 (tag read from offset 0x8)",
+      "args": ["@parser", "@region"],
+      "memory": [{"addr": "@region", "offset": "0x8", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "large tag value is passed unchanged",
+      "args": ["@parser", "@region"],
+      "memory": [{"addr": "@region", "offset": "0x8", "u32": 3735928559}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null world is passed on unchecked",
+      "args": ["@parser", "@region"],
+      "memory": [{"addr": "@parser", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "another world object is passed on",
+      "args": ["@parser", "@region"],
+      "memory": [{"addr": "@parser", "offset": "0x0", "u32": "@entry"}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 189744,
+    "count": 40,
+    "args": [
+      {"choices": ["@parser"]},
+      {"choices": ["@region"]}
+    ],
+    "memory": [
+      {"addr": "@parser", "offset": "0x0", "type": "u32", "choices": ["@world", 0, "@entry"]},
+      {"addr": "@region", "offset": "0x0", "type": "u32", "range": [0, 16]},
+      {"addr": "@region", "offset": "0x8", "type": "u32", "choices": [0, 1, 1234, 3735928559, 4294967295, "@entry"]}
+    ]
+  }
+}

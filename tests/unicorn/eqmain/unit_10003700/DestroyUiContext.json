@@ -1,0 +1,163 @@
+{
+  "function": "DestroyUiContext_guess",
+  "original": "0x10003930",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "ctx": {
+      "size": "0x28",
+      "fill": "random"
+    },
+    "node": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "payload": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 1},
+        {"offset": "0xC", "u32": "@owner"}
+      ]
+    },
+    "owner": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"}
+      ]
+    },
+    "vt": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@fn_dtor"}
+      ]
+    },
+    "fn_dtor": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004CEB8", "u32": "@ctx"},
+    {"addr": "0x1004CED4", "u32": "0x11111111"},
+    {"addr": "0x1004CECC", "u32": "0x22222222"},
+    {"addr": "0x1004CEC8", "u32": "0x33333333"},
+    {"addr": "0x1004CED0", "u32": "0x44444444"},
+    {"addr": "0x1004CED8", "u32": "0x55555555"},
+    {"addr": "0x1004CE90", "u32": "@node"}
+  ],
+  "callees": {
+    "0x10006b90": {
+      "name": "FUN_10006b90",
+      "conv": "cdecl",
+      "args": ["int", "u32"],
+      "ret": 0
+    },
+    "0x10003a00": {
+      "name": "FUN_10003a00",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0
+    },
+    "gdi32.dll!DeleteObject": {
+      "name": "DeleteObject",
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": 1
+    },
+    "0x10028430": {
+      "name": "FUN_10028430",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": "@payload",
+      "writes": [{"addr": "0x1004CE90", "hex": "00000000"}]
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": 0
+    },
+    "@fn_dtor": {
+      "name": "owner_vtbl_slot2",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x10033568"
+  },
+  "cases": [
+    {
+      "name": "empty list: context cleared, five fonts deleted, no node freed",
+      "args": [],
+      "memory": [{"addr": "0x1004CE90", "u32": 0}]
+    },
+    {
+      "name": "one node, flag 1: payload freed, owner untouched",
+      "args": []
+    },
+    {
+      "name": "one node, flag 0: owner vtable slot 2 called with the owner, then payload freed",
+      "args": [],
+      "memory": [{"addr": "@payload", "offset": "0x10", "u32": 0}]
+    },
+    {
+      "name": "one node, flag -1 (high bit): nonzero, no destructor",
+      "args": [],
+      "memory": [{"addr": "@payload", "offset": "0x10", "u32": "0xFFFFFFFF"}]
+    },
+    {
+      "name": "one node, flag 2: nonzero, no destructor",
+      "args": [],
+      "memory": [{"addr": "@payload", "offset": "0x10", "u32": 2}]
+    },
+    {
+      "name": "context 0: FUN_10006b90 gets 0 on all three passes",
+      "args": [],
+      "memory": [{"addr": "0x1004CEB8", "u32": 0}]
+    },
+    {
+      "name": "context -1 and empty list",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CEB8", "u32": "0xFFFFFFFF"},
+        {"addr": "0x1004CE90", "u32": 0}
+      ]
+    },
+    {
+      "name": "font handles all 0: DeleteObject(0) five times, one node with flag 0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CED4", "u32": 0},
+        {"addr": "0x1004CECC", "u32": 0},
+        {"addr": "0x1004CEC8", "u32": 0},
+        {"addr": "0x1004CED0", "u32": 0},
+        {"addr": "0x1004CED8", "u32": 0},
+        {"addr": "@payload", "offset": "0x10", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 14640,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004CEB8", "type": "u32"},
+      {"addr": "0x1004CED4", "type": "u32"},
+      {"addr": "0x1004CECC", "type": "u32"},
+      {"addr": "0x1004CEC8", "type": "u32"},
+      {"addr": "0x1004CED0", "type": "u32"},
+      {"addr": "0x1004CED8", "type": "u32"},
+      {"addr": "0x1004CE90", "type": "ptr", "choices": [0, "@node"]},
+      {"addr": "@payload", "offset": "0x10", "type": "u32", "choices": [0, 1, 2, 4294967295]}
+    ]
+  }
+}

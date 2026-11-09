@@ -1,0 +1,216 @@
+{
+  "function": "EQMain_SmackDrawFrame_guess",
+  "original": "0x1001cbf0",
+  "sources": [
+    "src/eqmain/unit_10018B60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "movie": {
+      "size": "0x400",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4", "u32": 480},
+        {"offset": "0x68", "u32": 0},
+        {"offset": "0x370", "u32": 16},
+        {"offset": "0x380", "u32": 0},
+        {"offset": "0x384", "u32": 0},
+        {"offset": "0x388", "u32": 640},
+        {"offset": "0x38c", "u32": 480}
+      ]
+    },
+    "lockFn": {"size": "0x10", "fill": "zero"},
+    "restoreFn": {"size": "0x10", "fill": "zero"},
+    "unlockFn": {"size": "0x10", "fill": "zero"},
+    "vtbl": {
+      "size": "0x84",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x64", "u32": "@lockFn"},
+        {"offset": "0x6c", "u32": "@restoreFn"},
+        {"offset": "0x80", "u32": "@unlockFn"}
+      ]
+    },
+    "surface": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl"}
+      ]
+    },
+    "wrapper": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc", "u32": "@surface"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x100d5f58", "u32": "@movie"},
+    {"addr": "0x100d5f5c", "u32": 12648430},
+    {"addr": "0x1004ceb8", "u32": "@wrapper"},
+    {"addr": "0x7f0eff94", "size": 108, "fill": "random"}
+  ],
+  "_stack": "the frame of the function (desc, 0x7f0eff94..0x7f0f0000; entry ESP is 0x7f0f0000) holds stale bytes before the call, as on a real stack; the rewrite's memset clears them, so deleting it shows in the Lock argument",
+  "callees": {
+    "user32.dll!GetFocus": {
+      "name": "GetFocus",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 7
+    },
+    "smackw32.dll!_SmackBlitSetPalette@12": {
+      "name": "_SmackBlitSetPalette@12",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "u32"],
+      "ret": 0
+    },
+    "smackw32.dll!_SmackDoFrame@4": {
+      "name": "_SmackDoFrame@4",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "smackw32.dll!_SmackToBufferRect@8": {
+      "name": "_SmackToBufferRect@8",
+      "conv": "stdcall",
+      "args": ["ptr", "u32"],
+      "ret": [1, 1, 0]
+    },
+    "smackw32.dll!_SmackBlit@44": {
+      "name": "_SmackBlit@44",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "i32", "i32", "i32", "i32", "i32", "i32", "i32", "i32", "i32"],
+      "ret": 0
+    },
+    "smackw32.dll!_SmackNextFrame@4": {
+      "name": "_SmackNextFrame@4",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@lockFn": {
+      "name": "IDirectDrawSurface::Lock",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "mem:108", "u32", "ptr"],
+      "ret": [2289435074, 0],
+      "writes": [
+        {"arg": 2, "offset": 36, "hex": "0010000a"},
+        {"arg": 2, "offset": 16, "hex": "000a0000"}
+      ]
+    },
+    "@restoreFn": {
+      "name": "IDirectDrawSurface::Restore",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@unlockFn": {
+      "name": "IDirectDrawSurface::Unlock",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "other window has focus: nothing happens",
+      "args": [5, 2]
+    },
+    {
+      "name": "focused, no palette, two rects",
+      "args": [7, 2]
+    },
+    {
+      "name": "palette flag set",
+      "args": [7, 2],
+      "memory": [
+        {"addr": "@movie", "offset": "0x68", "u32": 1}
+      ]
+    },
+    {
+      "name": "palette flag set, other window focused",
+      "args": [5, 2],
+      "memory": [
+        {"addr": "@movie", "offset": "0x68", "u32": 1}
+      ]
+    },
+    {
+      "name": "no rects: no blit",
+      "args": [7, 2],
+      "callees": {
+        "smackw32.dll!_SmackToBufferRect@8": {
+          "name": "_SmackToBufferRect@8",
+          "conv": "stdcall",
+          "args": ["ptr", "u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "three rects, negative param_2 reaches SmackBlit",
+      "args": [7, -1],
+      "callees": {
+        "smackw32.dll!_SmackToBufferRect@8": {
+          "name": "_SmackToBufferRect@8",
+          "conv": "stdcall",
+          "args": ["ptr", "u32"],
+          "ret": [1, 1, 1, 0]
+        }
+      }
+    },
+    {
+      "name": "surface lost three times: restored each time",
+      "args": [7, 2],
+      "callees": {
+        "@lockFn": {
+          "name": "IDirectDrawSurface::Lock",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "mem:108", "u32", "ptr"],
+          "ret": [2289435074, 2289435074, 2289435074, 0],
+          "writes": [
+            {"arg": 2, "offset": 36, "hex": "0010000a"},
+            {"arg": 2, "offset": 16, "hex": "000a0000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "lock fails with E_FAIL: no restore, nothing written",
+      "args": [7, 2],
+      "callees": {
+        "@lockFn": {
+          "name": "IDirectDrawSurface::Lock",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "mem:108", "u32", "ptr"],
+          "ret": 2147500037
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 7321,
+    "count": 40,
+    "args": [
+      {"choices": [0, 5, 7]},
+      {"range": [-4, 30]}
+    ],
+    "memory": [
+      {"addr": "@movie", "offset": "0x68", "type": "u32", "range": [0, 2]},
+      {"addr": "@movie", "offset": "0x370", "type": "u32", "range": [0, 32]},
+      {"addr": "@movie", "offset": "0x380", "type": "i32", "count": 4, "range": [-8, 640]}
+    ]
+  }
+}

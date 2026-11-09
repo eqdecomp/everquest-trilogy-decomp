@@ -1,0 +1,159 @@
+{
+  "function": "t3dGetPolygonPlane",
+  "original": "0x10011ac6",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "polygon",
+      "type": "ptr"
+    },
+    {
+      "name": "plane",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "polygon": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "plane": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: normal (0.6, 0.8, 0) and distance 12.5 copied into the plane",
+      "args": [
+        "@polygon",
+        "@plane"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygon", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygon", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygon", "offset": "0x1c", "f32": 12.5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeros: the four plane fields of the polygon are zero",
+      "args": [
+        "@polygon",
+        "@plane"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "size": 16, "fill": "zero"}
+      ]
+    },
+    {
+      "name": "negative zero in every plane field (copied bit for bit)",
+      "args": [
+        "@polygon",
+        "@plane"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "u32": 2147483648},
+        {"addr": "@polygon", "offset": "0x14", "u32": 2147483648},
+        {"addr": "@polygon", "offset": "0x18", "u32": 2147483648},
+        {"addr": "@polygon", "offset": "0x1c", "u32": 2147483648}
+      ]
+    },
+    {
+      "name": "signaling NaN bits in the normal and distance (copied bit for bit)",
+      "args": [
+        "@polygon",
+        "@plane"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "u32": 2139095041},
+        {"addr": "@polygon", "offset": "0x14", "u32": 2139095041},
+        {"addr": "@polygon", "offset": "0x18", "u32": 2139095041},
+        {"addr": "@polygon", "offset": "0x1c", "u32": 2141192193}
+      ]
+    },
+    {
+      "name": "plane = polygon+0x4: the normal copy overlaps its own source",
+      "args": [
+        "@polygon",
+        "@polygon+0x4"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygon", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygon", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygon", "offset": "0x1c", "f32": 12.5}
+      ]
+    },
+    {
+      "name": "plane = polygon+0x10: the type store overwrites normal.x before the copy reads it",
+      "args": [
+        "@polygon",
+        "@polygon+0x10"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygon", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygon", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygon", "offset": "0x1c", "f32": 12.5}
+      ]
+    },
+    {
+      "name": "plane = polygon+0x1c: the type store overwrites the distance before it is read",
+      "args": [
+        "@polygon",
+        "@polygon+0x1c"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygon", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygon", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygon", "offset": "0x1c", "f32": 12.5}
+      ]
+    },
+    {
+      "name": "plane = polygon: the distance store lands on normal.x after the copy",
+      "args": [
+        "@polygon",
+        "@polygon"
+      ],
+      "memory": [
+        {"addr": "@polygon", "offset": "0x10", "f32": 0.6},
+        {"addr": "@polygon", "offset": "0x14", "f32": 0.8},
+        {"addr": "@polygon", "offset": "0x18", "f32": 0.0},
+        {"addr": "@polygon", "offset": "0x1c", "f32": 12.5}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 72390,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@polygon"
+        ]
+      },
+      {
+        "choices": [
+          "@plane",
+          "@polygon",
+          "@polygon+0x4",
+          "@polygon+0x10",
+          "@polygon+0x1c"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@polygon", "offset": "0x10", "type": "float", "count": 3},
+      {"addr": "@polygon", "offset": "0x1c", "type": "u32"}
+    ]
+  }
+}

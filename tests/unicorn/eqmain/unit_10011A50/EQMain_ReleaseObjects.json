@@ -1,0 +1,99 @@
+{
+  "function": "EQMain_ReleaseObjects_guess",
+  "original": "0x10011bc0",
+  "sources": [
+    "src/eqmain/unit_10011A50.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "ret_obj": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "cur_obj": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004D230", "u32": 0},
+    {"addr": "0x1004D224", "u32": 0}
+  ],
+  "callees": {
+    "0x10008a00": {
+      "name": "FUN_10008a00",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ]
+    },
+    "0x10006130": {
+      "name": "FUN_10006130",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "both objects set: 0x1004D230 freed first, then 0x1004D224, both globals cleared",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004D230", "u32": "@ret_obj"},
+        {"addr": "0x1004D224", "u32": "@cur_obj"}
+      ]
+    },
+    {
+      "name": "only 0x1004D230 set: its callee runs, the 0x1004D224 callee does not",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004D230", "u32": "@ret_obj"},
+        {"addr": "0x1004D224", "u32": 0}
+      ]
+    },
+    {
+      "name": "only 0x1004D224 set: its callee runs, the 0x1004D230 callee does not",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004D230", "u32": 0},
+        {"addr": "0x1004D224", "u32": "@cur_obj"}
+      ]
+    },
+    {
+      "name": "both globals null: no callee runs, both stay zero",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004D230", "u32": 0},
+        {"addr": "0x1004D224", "u32": 0}
+      ]
+    },
+    {
+      "name": "both globals hold the same object: freed twice, in the same order",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004D230", "u32": "@cur_obj"},
+        {"addr": "0x1004D224", "u32": "@cur_obj"}
+      ]
+    },
+    {
+      "name": "non-object values (no pointer dereference by the caller): passed through to the callees",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004D230", "u32": 305419896},
+        {"addr": "0x1004D224", "u32": 4096}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 72640,
+    "count": 100,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004D230", "type": "ptr", "choices": [0, "@ret_obj", "@cur_obj", 305419896]},
+      {"addr": "0x1004D224", "type": "ptr", "choices": [0, "@cur_obj", "@ret_obj", 4096]}
+    ]
+  }
+}

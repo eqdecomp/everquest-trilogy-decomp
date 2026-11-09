@@ -1,0 +1,147 @@
+{
+  "function": "open_chat_session_guess",
+  "original": "0x100229f0",
+  "sources": [
+    "src/eqmain/unit_100228C0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "objA": {
+      "size": "0x36b8",
+      "fill": "random"
+    },
+    "objB": {
+      "size": "0x36b8",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x101258a4", "u32": "0x12340001"},
+    {"addr": "0x101258a8", "u32": "0x12340002"},
+    {"addr": "0x1004ce40", "cstr": "EQ"},
+    {"addr": "0x10114d34", "size": 64, "fill": "random"},
+    {"addr": "0x101255f8", "size": 64, "fill": "random"},
+    {"addr": "0x10125848", "u32": "0x00000777"}
+  ],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@objA", "@objB"]
+    },
+    "0x10025cc0": {
+      "name": "FUN_10025cc0",
+      "conv": "fastcall",
+      "args": ["ptr"],
+      "ret": ["@objA+0x10", "@objB+0x10"]
+    },
+    "0x1002c010": {
+      "name": "connection_send_guess",
+      "conv": "cdecl",
+      "args": ["int", "mem:2", "u32", "u32", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": []
+    },
+    {
+      "name": "first_alloc_null",
+      "args": [],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": [0, "@objB"]
+        }
+      }
+    },
+    {
+      "name": "second_alloc_null",
+      "args": [],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": ["@objA", 0]
+        }
+      }
+    },
+    {
+      "name": "both_alloc_null",
+      "args": [],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "ctor_returns_null",
+      "args": [],
+      "callees": {
+        "0x10025cc0": {
+          "name": "FUN_10025cc0",
+          "conv": "fastcall",
+          "args": ["ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "ctor_returns_swapped",
+      "args": [],
+      "callees": {
+        "0x10025cc0": {
+          "name": "FUN_10025cc0",
+          "conv": "fastcall",
+          "args": ["ptr"],
+          "ret": ["@objB+0x10", "@objA+0x10"]
+        }
+      }
+    },
+    {
+      "name": "empty_string",
+      "args": [],
+      "memory": [{"addr": "0x1004ce40", "cstr": ""}]
+    },
+    {
+      "name": "long_string",
+      "args": [],
+      "memory": [{"addr": "0x1004ce40", "cstr": "abcdefghijklmnopqrstuvwxyz0123456789ABCDEF"}]
+    },
+    {
+      "name": "conn_zero",
+      "args": [],
+      "memory": [{"addr": "0x10125848", "u32": 0}]
+    },
+    {
+      "name": "conn_all_ones",
+      "args": [],
+      "memory": [{"addr": "0x10125848", "u32": "0xFFFFFFFF"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 141808,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004ce40", "type": "u8", "count": 12, "choices": [0, 65, 69, 90]},
+      {"addr": "0x10125848", "type": "u32", "range": [0, 4096]},
+      {"addr": "0x101258a4", "type": "u32", "range": [0, 4096]},
+      {"addr": "0x101258a8", "type": "u32", "range": [0, 4096]},
+      {"addr": "0x10114d34", "size": 64},
+      {"addr": "0x101255f8", "size": 64}
+    ]
+  }
+}

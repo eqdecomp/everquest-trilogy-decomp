@@ -1,0 +1,114 @@
+{
+  "function": "AddStrCopy_guess",
+  "original": "0x10025900",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx_unused",
+      "type": "int"
+    },
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "list": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0xc", "u32": "@items"},
+        {"offset": "0x10", "u32": 0}
+      ]
+    },
+    "items": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "dup": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1003396b": {
+      "name": "__strdup",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@dup"
+    }
+  },
+  "rewrite_aliases": {
+    "__strdup": "0x1003396b"
+  },
+  "cases": [
+    {
+      "name": "copy at index 0 returns 1",
+      "args": ["@list", 0, "Common Tongue"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "copy at index 3 returns 4",
+      "args": ["@list", 0, "abc"],
+      "memory": [{"addr": "@list", "offset": "0x10", "u32": 3}],
+      "expect": {"ret": 4}
+    },
+    {
+      "name": "copy at the last slot (15) returns 16",
+      "args": ["@list", 0, "abc"],
+      "memory": [{"addr": "@list", "offset": "0x10", "u32": 15}],
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "empty string is copied like any other",
+      "args": ["@list", 0, ""],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "edx is ignored",
+      "args": ["@list", 305419896, "abc"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "strdup fails at index 0: returns 0, index stays 0, slot 0 is null",
+      "args": ["@list", 0, "abc"],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "strdup fails at index 5: returns 0, index stays 5",
+      "args": ["@list", 0, "abc"],
+      "memory": [{"addr": "@list", "offset": "0x10", "u32": 5}],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 4417,
+    "count": 40,
+    "args": [
+      {"choices": ["@list"]},
+      {},
+      {"choices": ["", "a", "abc", "Common Tongue", "0123456789abcdef0123456789abcdef"]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x10", "type": "int", "range": [0, 15]},
+      {"addr": "@items", "size": 64}
+    ]
+  }
+}

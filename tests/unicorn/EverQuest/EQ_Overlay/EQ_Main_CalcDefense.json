@@ -1,0 +1,96 @@
+{
+  "function": "EQ_Main_CalcDefense_guess",
+  "original": "0x004575e4",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "pc": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@pc"
+    }
+  ],
+  "callees": {
+    "0x00419d0f": {
+      "name": "EQ_Character::ac_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x0041a26b": {
+      "name": "EQ_Character::compute_defense_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "typical 500 + 500", "args": ["@self", 1], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 500}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 500}}, "expect": {"ret": 1180}},
+    {"name": "zeros", "args": ["@self", 0], "expect": {"ret": 0}},
+    {"name": "self not read (null)", "args": [0, 1], "expect": {"ret": 0}},
+    {"name": "defense 1: 1000/847", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 1}}, "expect": {"ret": 1}},
+    {"name": "sum 847 exact (x1000/847 = 1000)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 847}}, "expect": {"ret": 1000}},
+    {"name": "sum 846 (998)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 846}}, "expect": {"ret": 998}},
+    {"name": "sum 848 (1001)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 848}}, "expect": {"ret": 1001}},
+    {"name": "sum -1 truncates toward zero", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": -1}}, "expect": {"ret": -1}},
+    {"name": "sum -848 (-1001)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": -848}}, "expect": {"ret": -1001}},
+    {"name": "both -1 (-2)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": -1}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": -1}}, "expect": {"ret": -2}},
+    {"name": "both s16 minimum", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": -32768}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": -32768}}, "expect": {"ret": -77374}},
+    {"name": "both s16 maximum", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 32767}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 32767}}, "expect": {"ret": 77371}},
+    {"name": "ac high half ignored (0x10005 -> 5)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 65541}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 0}}, "expect": {"ret": 5}},
+    {"name": "ac low half -32768 (0x12348000)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 305430528}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 0}}, "expect": {"ret": -38687}},
+    {"name": "defense high half ignored (AX = 5)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 305397765}}, "expect": {"ret": 5}},
+    {"name": "defense AX = -1, high half clear", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 65535}}, "expect": {"ret": -1}},
+    {"name": "defense AX = -32768", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 0}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": -32768}}, "expect": {"ret": -38687}},
+    {"name": "3 + 5 adds (9), not subtracts", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 5}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 3}}, "expect": {"ret": 9}},
+    {"name": "847 + -847 = 0", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": -847}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 847}}, "expect": {"ret": 0}},
+    {"name": "ac -1 with defense 0", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": -1}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": 0}}, "expect": {"ret": -1}},
+    {"name": "-500 + 200 = -300 (-354)", "args": ["@self", 0], "callees": {"0x00419d0f": {"name": "EQ_Character::ac_guess", "conv": "thiscall", "args": ["int"], "ret": 200}, "0x0041a26b": {"name": "EQ_Character::compute_defense_guess", "conv": "thiscall", "args": [], "ret": -500}}, "expect": {"ret": -354}}
+  ],
+  "fuzz": {
+    "seed": 4552164,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4da8",
+        "type": "u32",
+        "choices": [
+          "@pc",
+          "0x0"
+        ]
+      }
+    ]
+  }
+}

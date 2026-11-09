@@ -1,0 +1,197 @@
+{
+  "function": "t3dGetScaledActorBoundingRadius",
+  "original": "0x1000aaff",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "actor": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 4.0},
+        {"addr": "@actor", "offset": "0x38", "f32": 2.5}
+      ],
+      "expect": {"ret": 10.0}
+    },
+    {
+      "name": "unit scale",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 1.0},
+        {"addr": "@actor", "offset": "0x38", "f32": 7.25}
+      ],
+      "expect": {"ret": 7.25}
+    },
+    {
+      "name": "zero scale",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 0.0},
+        {"addr": "@actor", "offset": "0x38", "f32": 3.0}
+      ],
+      "expect": {"ret": 0.0}
+    },
+    {
+      "name": "all zero",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 0.0},
+        {"addr": "@actor", "offset": "0x38", "f32": 0.0}
+      ],
+      "expect": {"ret": 0.0}
+    },
+    {
+      "name": "negative scale",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": -2.0},
+        {"addr": "@actor", "offset": "0x38", "f32": 3.0}
+      ],
+      "expect": {"ret": -6.0}
+    },
+    {
+      "name": "both negative",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": -0.5},
+        {"addr": "@actor", "offset": "0x38", "f32": -8.0}
+      ],
+      "expect": {"ret": 4.0}
+    },
+    {
+      "name": "scale below radius",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 2.5},
+        {"addr": "@actor", "offset": "0x38", "f32": 4.0}
+      ],
+      "expect": {"ret": 10.0}
+    },
+    {
+      "name": "denormal radius",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 0.5},
+        {"addr": "@actor", "offset": "0x38", "f32": 1e-40}
+      ]
+    },
+    {
+      "name": "product below float range (kept in extended precision)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 1e-30},
+        {"addr": "@actor", "offset": "0x38", "f32": 1e-30}
+      ]
+    },
+    {
+      "name": "product above float range (kept in extended precision)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 3e38},
+        {"addr": "@actor", "offset": "0x38", "f32": 3e38}
+      ]
+    },
+    {
+      "name": "one ulp above one (rounding witness)",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 1.0000001},
+        {"addr": "@actor", "offset": "0x38", "f32": 1.0000001}
+      ]
+    },
+    {
+      "name": "infinite scale",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x7f800000"},
+        {"addr": "@actor", "offset": "0x38", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "infinite scale times zero radius",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x7f800000"},
+        {"addr": "@actor", "offset": "0x38", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "NaN radius",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "f32": 2.0},
+        {"addr": "@actor", "offset": "0x38", "u32": "0x7fc00001"}
+      ]
+    },
+    {
+      "name": "two NaNs with different payloads",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x34", "u32": "0x7fc00002"},
+        {"addr": "@actor", "offset": "0x38", "u32": "0x7fc00001"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 43775,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x34", "type": "float", "count": 2, "range": [-64, 64]},
+      {"addr": "@actor", "offset": "0x34", "type": "float", "count": 2, "choices": [0.0, -0.0, 1.0, -1.0, 0.5, 1e-40, 3e38, -3e38, 1.0000001], "p": 0.3}
+    ]
+  }
+}

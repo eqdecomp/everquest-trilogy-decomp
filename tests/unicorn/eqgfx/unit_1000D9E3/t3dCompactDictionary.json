@@ -1,0 +1,498 @@
+{
+  "function": "t3dCompactDictionary",
+  "original": "0x1000eb7e",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "owner": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x30", "u32": "@dict"}
+      ]
+    },
+    "dict": {
+      "size": "0x34",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 1},
+        {"offset": "0x4", "u32": 0},
+        {"offset": "0xc", "u32": "@heads"},
+        {"offset": "0x1c", "u32": 0},
+        {"offset": "0x20", "u32": 1},
+        {"offset": "0x24", "u32": 1},
+        {"offset": "0x2c", "u32": "@block_table"},
+        {"offset": "0x30", "u32": "0xffffffff"}
+      ]
+    },
+    "heads": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 1},
+        {"offset": "0x4", "u32": "0xffffffff"}
+      ]
+    },
+    "block_table": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@nodes"}
+      ]
+    },
+    "nodes": {
+      "size": "0x1000",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0xffffffff"},
+        {"offset": "0x80", "u32": "0xffffffff"},
+        {"offset": "0x100", "u32": "0xffffffff"}
+      ]
+    },
+    "nodes1": {
+      "size": "0x2000",
+      "fill": "zero"
+    }
+  },
+  "callees": {
+    "0x1000e1c9": {
+      "name": "_t3dFreeDictionaryEntry_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "missing dictionary returns minus one",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x30", "u32": 0}
+      ]
+    },
+    {
+      "name": "inactive dictionary leaves fields alone",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "active empty dictionary",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "two empty bucket heads",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 2},
+        {"addr": "@heads", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@heads", "offset": "0x4", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "single live node ends immediately",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0xfc", "u32": 1}
+      ]
+    },
+    {
+      "name": "linked live nodes remain linked",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0xfc", "u32": 1}
+      ]
+    },
+    {
+      "name": "unlink a leading empty node and copy one record",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x154", "u32": 1}
+      ]
+    },
+    {
+      "name": "relink failure records minus two",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x154", "u32": 1}
+      ],
+      "callees": {
+        "0x1000e1c9": {"name": "FUN_1000e1c9", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "tail node restores the selected link",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x17c", "u32": 1}
+      ]
+    },
+    {
+      "name": "unlink after a live predecessor",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0xfc", "u32": 1},
+        {"addr": "@nodes", "offset": "0x100", "u32": 3},
+        {"addr": "@nodes", "offset": "0x180", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x1d4", "u32": 1}
+      ]
+    },
+    {
+      "name": "multiple empty nodes retain reverse links",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": 3},
+        {"addr": "@nodes", "offset": "0x180", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "tail reconnects and detaches a reverse link",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": 3},
+        {"addr": "@nodes", "offset": "0x180", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x1fc", "u32": 1}
+      ]
+    },
+    {
+      "name": "tail reconnect reaches a high prior slot",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 31},
+        {"addr": "@nodes", "offset": "0xfc", "u32": 0},
+        {"addr": "@nodes", "offset": "0xf80", "u32": 2},
+        {"addr": "@nodes", "offset": "0xf88", "u32": 123},
+        {"addr": "@nodes", "offset": "0xffc", "u32": 0},
+        {"addr": "@nodes", "offset": "0x100", "u32": 3},
+        {"addr": "@nodes", "offset": "0x17c", "u32": 0},
+        {"addr": "@nodes", "offset": "0x180", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x1fc", "u32": 1}
+      ]
+    },
+    {
+      "name": "partially filled source shifts remaining records",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x154", "u32": 1},
+        {"addr": "@nodes", "offset": "0xd4", "u32": 1}
+      ]
+    },
+    {
+      "name": "full destination shifts source and follows reverse chain",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 2},
+        {"addr": "@nodes", "offset": "0x100", "u32": 3},
+        {"addr": "@nodes", "offset": "0x180", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x154", "u32": 1},
+        {"addr": "@nodes", "offset": "0x1d4", "u32": 1}
+      ]
+    },
+    {
+      "name": "high slot index uses its low five bits",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 31},
+        {"addr": "@nodes", "offset": "0xf00", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0xf80", "u32": 30},
+        {"addr": "@nodes", "offset": "0xf88", "u32": 123}
+      ]
+    },
+    {
+      "name": "tail restoration reads a high selected slot",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 1},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x80", "u32": 31},
+        {"addr": "@nodes", "offset": "0x88", "u32": 111},
+        {"addr": "@nodes", "offset": "0xfc", "u32": 0},
+        {"addr": "@nodes", "offset": "0xf80", "u32": 2},
+        {"addr": "@nodes", "offset": "0xffc", "u32": 0},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x17c", "u32": 1}
+      ]
+    },
+    {
+      "name": "second bucket is processed when entry count is two",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x0", "u32": 1},
+        {"addr": "@dict", "offset": "0x4", "u32": 2},
+        {"addr": "@heads", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@heads", "offset": "0x4", "u32": 31},
+        {"addr": "@nodes", "offset": "0xf00", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0xf80", "u32": 30},
+        {"addr": "@nodes", "offset": "0xf88", "u32": 123}
+      ]
+    },
+    {
+      "name": "bucket-chain traversal rewrites the predecessor link",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 2},
+        {"addr": "@heads", "offset": "0x0", "u32": 2},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": 0},
+        {"addr": "@nodes", "offset": "0x100", "u32": 1}
+      ],
+      "callees": {
+        "0x1000e1c9": {"name": "FUN_1000e1c9", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "last slot index selects the low bits within block one",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@block_table", "offset": "0x4", "u32": "@nodes1"},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@heads", "offset": "0x0", "u32": 33},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes1", "offset": "0x84", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {"name": "FUN_1000e1c9", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "recomputed last slot is used by the next compaction",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@block_table", "offset": "0x4", "u32": "@nodes1"},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@heads", "offset": "0x0", "u32": 33},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x104", "u32": 0},
+        {"addr": "@nodes", "offset": "0x180", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x184", "u32": 0},
+        {"addr": "@nodes", "offset": "0x188", "u32": 3},
+        {"addr": "@nodes", "offset": "0xf88", "u32": 31},
+        {"addr": "@nodes1", "offset": "0x80", "u32": 3},
+        {"addr": "@nodes1", "offset": "0x84", "u32": 0},
+        {"addr": "@nodes1", "offset": "0x88", "u32": 33}
+      ],
+      "callees": {
+        "0x1000e1c9": {
+          "name": "FUN_1000e1c9",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": [0, 1],
+          "writes": [
+            {"arg": 0, "offset": 32, "hex": "04000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "later free slot is visited in ascending order",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 3},
+        {"addr": "@heads", "offset": "0x0", "u32": 2},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": 0},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x100", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x104", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {"name": "FUN_1000e1c9", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "final compaction unlinks free slot and copies last slot",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 0},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {
+          "name": "FUN_1000e1c9",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": 0,
+          "writes": [
+            {"arg": 0, "offset": 32, "hex": "01000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "final compaction reports relink error",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 2},
+        {"addr": "@heads", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {"name": "FUN_1000e1c9", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "final compaction walks a bucket chain before missing link",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 2},
+        {"addr": "@heads", "offset": "0x0", "u32": 0},
+        {"addr": "@nodes", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {"name": "FUN_1000e1c9", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1}
+      }
+    },
+    {
+      "name": "final compaction removes a free list head",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 0},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {
+          "name": "FUN_1000e1c9",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": 0,
+          "writes": [
+            {"arg": 0, "offset": 32, "hex": "01000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "final compaction removes a later free list node",
+      "args": ["@owner"],
+      "memory": [
+        {"addr": "@dict", "offset": "0x20", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 2},
+        {"addr": "@heads", "offset": "0x0", "u32": 1},
+        {"addr": "@nodes", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@nodes", "offset": "0x84", "u32": 0},
+        {"addr": "@nodes", "offset": "0x100", "u32": 0},
+        {"addr": "@nodes", "offset": "0x104", "u32": 0}
+      ],
+      "callees": {
+        "0x1000e1c9": {
+          "name": "FUN_1000e1c9",
+          "conv": "cdecl",
+          "args": ["ptr", "u32"],
+          "ret": 0,
+          "writes": [
+            {"arg": 0, "offset": 32, "hex": "01000000"}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 60286,
+    "count": 30,
+    "args": [
+      {
+        "choices": ["@owner"]
+      }
+    ],
+    "memory": [
+      {"addr": "@dict", "offset": "0x0", "type": "u32", "choices": [0, 1]},
+      {"addr": "@dict", "offset": "0x4", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@heads", "offset": "0x0", "type": "u32", "choices": [1, "0xffffffff"]},
+      {"addr": "@nodes", "offset": "0x80", "type": "u32", "choices": ["0xffffffff", 2]},
+      {"addr": "@nodes", "offset": "0xfc", "type": "u32", "choices": [0, 1]},
+      {"addr": "@nodes", "offset": "0x154", "type": "u32", "choices": [0, 1]}
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "function": "EQ_3DView::~EQ_3DView",
+  "original": "0x004155c6",
+  "sources": [
+    "src/EverQuest/EQ_3DView.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_3dview",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "eq_3dview": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450463": {
+      "name": "EQ_Overlay::DelButtons",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x0045005d": {
+      "name": "EQ_Overlay::~EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": []
+    },
+    {
+      "name": "zeros",
+      "args": []
+    },
+    {
+      "name": "vtable preset",
+      "memory": [{"addr": "@eq_3dview", "offset": "0x0", "u32": "0xDEADBEEF"}, {"addr": "@eq_3dview", "offset": "0x4", "u32": "0x11112222"}]
+    },
+    {
+      "name": "DelButtons overwrites vtable (store precedes the call)",
+      "callees": {"0x00450463": {"name": "EQ_Overlay::DelButtons_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@eq_3dview", "offset": 0, "hex": "efbeadde"}]}}
+    },
+    {
+      "name": "base destructor overwrites vtable (it runs last)",
+      "callees": {"0x0045005d": {"name": "EQ_Overlay::~EQ_Overlay_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@eq_3dview", "offset": 0, "hex": "efbeadde"}]}}
+    },
+    {
+      "name": "DelButtons changes a field the base destructor sees",
+      "callees": {"0x00450463": {"name": "EQ_Overlay::DelButtons_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "@eq_3dview", "offset": 4, "hex": "33334444"}, {"addr": "@eq_3dview", "offset": 124, "hex": "01000000"}]}}
+    }
+  ],
+  "fuzz": {
+    "seed": 4281798,
+    "count": 30,
+    "args": [],
+    "memory": [{"addr": "@eq_3dview", "offset": "0x0", "type": "u32", "range": [0, 4294967295]}, {"addr": "@eq_3dview", "offset": "0x4", "type": "u32", "range": [0, 4294967295]}, {"addr": "@eq_3dview", "offset": "0x7C", "type": "u32", "range": [0, 4294967295]}]
+  }
+}

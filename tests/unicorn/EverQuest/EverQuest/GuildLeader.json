@@ -1,0 +1,122 @@
+{
+  "function": "CEverQuest_GuildLeader_guess_class::GuildLeader",
+  "original": "0x004ca495",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@everquest",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "game": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "pc": {
+      "size": "0x1100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x103a", "u16": 5},
+        {"offset": "0x104b", "u8": 0}
+      ]
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "longtarget": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "buf": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4DA8", "u32": "@pc"},
+    {"addr": "0x006E4DAC", "u32": 0},
+    {"addr": "0x006EFE2C", "u32": "@game"},
+    {"addr": "@target", "offset": "0x01", "cstr": "Bob"},
+    {"addr": "@longtarget", "offset": "0x01", "cstr": "abcdefghijklmnopqrstuvwxyz012"}
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "this": "ptr",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "cstr",
+        "u32",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {"name": "not in a guild: chat line, rank ignored", "args": ["abc"],
+     "memory": [{"addr": "@pc", "offset": "0x103a", "u16": 65535}, {"addr": "@pc", "offset": "0x104b", "u8": 2}]},
+    {"name": "not in a guild, empty name", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x103a", "u16": 65535}]},
+    {"name": "member rank 0: chat line", "args": ["abc"]},
+    {"name": "member rank 1: chat line", "args": ["abc"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 1}]},
+    {"name": "member rank 3: chat line", "args": ["abc"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 3}]},
+    {"name": "leader, name given, no target", "args": ["Bob"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}]},
+    {"name": "leader, empty name, no target: empty name sent", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}]},
+    {"name": "leader, empty name, target name copied", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}, {"addr": "0x006E4DAC", "u32": "@target"}]},
+    {"name": "leader, name given, target ignored", "args": ["Trixie"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}, {"addr": "0x006E4DAC", "u32": "@target"}]},
+    {"name": "leader, empty name, 29-char target name", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}, {"addr": "0x006E4DAC", "u32": "@longtarget"}]},
+    {"name": "leader, 31-char name exactly fills local_24", "args": ["abcdefghijklmnopqrstuvwxyz01234"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}]},
+    {"name": "leader, name with format directives", "args": ["100%s%n"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}]},
+    {"name": "leader, one-char name (second byte NUL), target ignored", "args": ["a"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}, {"addr": "0x006E4DAC", "u32": "@target"}]},
+    {"name": "leader, empty name, no target, dword after the target global nonzero", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 2}, {"addr": "0x006E4DB0", "u8": 1}]},
+    {"name": "rank 2 but guild_id -1: not copied, chat line", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x103a", "u16": 65535}, {"addr": "@pc", "offset": "0x104b", "u8": 2}, {"addr": "0x006E4DAC", "u32": "@target"}]},
+    {"name": "rank 0 with empty name and target: not copied", "args": ["@buf"],
+     "memory": [{"addr": "0x006E4DAC", "u32": "@target"}]},
+    {"name": "rank 1 with empty name and target: not copied", "args": ["@buf"],
+     "memory": [{"addr": "@pc", "offset": "0x104b", "u8": 1}, {"addr": "0x006E4DAC", "u32": "@target"}]}
+  ],
+  "fuzz": {
+    "seed": 5022869,
+    "count": 40,
+    "args": [
+      {"choices": ["Bob", "Trixie", "a", "abc def", "abcdefghijklmnopqrstuvwxyz01234", "100%s%n", "@buf"]}
+    ],
+    "memory": [
+      {"addr": "0x006E4DAC", "type": "ptr", "choices": ["@target", "@longtarget", 0]},
+      {"addr": "@pc", "offset": "0x103a", "type": "short", "choices": [-1, 0, 1, 5]},
+      {"addr": "@pc", "offset": "0x104b", "type": "u8", "choices": [0, 1, 2, 3, 255]}
+    ]
+  }
+}

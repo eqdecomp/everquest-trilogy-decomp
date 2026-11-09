@@ -1,0 +1,123 @@
+{
+  "function": "t3dGetPolyhedronDefinitionVertexList",
+  "original": "0x10018cd8",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "polyhedron",
+      "type": "ptr"
+    },
+    {
+      "name": "vertices",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "polyhedron": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": "@block"}
+      ]
+    },
+    "block": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "block2": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "vertices": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: three 12-byte entries are copied from the block at +0x24",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero entries: nothing is copied, the destination stays zero",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one entry: exactly 12 bytes",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two entries: 24 bytes",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "forty entries: 480 bytes fill the destination up to 0x1e0",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 40}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "source pointer is the one at +0x24: @block2 is copied, not the +0x28 block",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 3},
+        {"addr": "@polyhedron", "offset": "0x24", "u32": "@block2"},
+        {"addr": "@polyhedron", "offset": "0x28", "u32": "@block"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count is read from +0x20, not the element pointer at +0x1c",
+      "args": ["@polyhedron", "@vertices"],
+      "memory": [
+        {"addr": "@polyhedron", "offset": "0x1c", "u32": 9},
+        {"addr": "@polyhedron", "offset": "0x20", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 101592,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@polyhedron"
+        ]
+      },
+      {
+        "choices": [
+          "@vertices"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@polyhedron", "offset": "0x20", "type": "int", "range": [0, 40]},
+      {"addr": "@polyhedron", "offset": "0x24", "type": "u32", "choices": ["@block", "@block2"]}
+    ]
+  }
+}

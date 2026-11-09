@@ -1,0 +1,64 @@
+{
+  "function": "do_searchcorpse_guess",
+  "original": "0x004a8819",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "characterName", "type": "cstr"}
+  ],
+  "ret": "void",
+  "size": "0x65",
+  "objects": {
+    "player": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0xf1", "u8": 1}]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4d8c", "u32": "@player"},
+    {"addr": "0x006b3194", "u32": "0x70002000"},
+    {"addr": "0x006efe2c", "u32": "0x70001000"}
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:96", "u32", "int"]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"]
+    }
+  },
+  "cases": [
+    {"name": "gm sends and then reports", "args": [1, "corpse" ]},
+    {"name": "non-gm has no effects", "args": [0, "corpse"], "memory": [{"addr": "@player", "offset": "0xf1", "u8": 0}]},
+    {"name": "null name prompts", "args": [2, "0x0"]},
+    {"name": "empty name prompts", "args": [3, ""]},
+    {"name": "nonzero gm byte sends", "args": [-1, "a"], "memory": [{"addr": "@player", "offset": "0xf1", "u8": 128}]},
+    {"name": "31 characters", "args": [4, "1234567890123456789012345678901"]},
+    {"name": "32 characters", "args": [5, "12345678901234567890123456789012"]},
+    {"name": "33 characters", "args": [6, "123456789012345678901234567890123"]},
+    {"name": "63 characters", "args": [7, "123456789012345678901234567890123456789012345678901234567890123"]}
+  ],
+  "fuzz": {
+    "seed": 4884505,
+    "count": 40,
+    "args": [
+      {"range": [-5, 9]},
+      {"choices": ["", "x", "orc", "corpse", "12345678901234567890123456789012", "123456789012345678901234567890123"]}
+    ],
+    "memory": [
+      {"addr": "@player", "offset": "0xf1", "type": "u8", "choices": [0, 1, 127, 255]}
+    ]
+  }
+}

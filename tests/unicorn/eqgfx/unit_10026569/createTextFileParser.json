@@ -1,0 +1,65 @@
+{
+  "function": "createTextFileParser_guess",
+  "original": "0x10028651",
+  "sources": ["src/eqgfx/unit_10026569.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "parserContext", "type": "ptr"},
+    {"name": "fileContext", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "result": {"size": "0x3444", "fill": "random"},
+    "result2": {"size": "0x3444", "fill": "zero"},
+    "result3": {"size": "0x3444", "fill": "random"}
+  },
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@result"
+    },
+    "0x1002902b": {
+      "name": "logParserError_guess", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure with contexts",
+      "args": ["0x60000000", "0x60000004"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocation success with random destination",
+      "args": ["0x60000000", "0x60000004"]
+    },
+    {
+      "name": "allocation success with zeroed destination",
+      "args": ["0x60000008", "0x6000000c"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@result2"}}
+    },
+    {
+      "name": "allocation success with null arguments",
+      "args": [0, 0]
+    },
+    {
+      "name": "separate destination",
+      "args": ["0x60000008", "0x60000004"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@result3"}}
+    },
+    {
+      "name": "allocation failure with null context",
+      "args": [0, "0x6000000c"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 165457,
+    "count": 40,
+    "args": [
+      {"choices": ["0x60000000", "0x60000008", 0, "0x60000010"]},
+      {"choices": ["0x60000004", "0x6000000c", 0, "0x60000014"]}
+    ],
+    "memory": []
+  }
+}

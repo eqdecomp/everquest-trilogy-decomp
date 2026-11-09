@@ -1,0 +1,135 @@
+{
+  "function": "EQSwitch::SwitchWasOpened",
+  "original": "0x004be347",
+  "sources": [
+    "src/EverQuest/EQSwitch.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqswitch",
+  "args": [
+    {"name": "keyItem", "type": "short"},
+    {"name": "skill", "type": "short"},
+    {"name": "player", "type": "ptr"}
+  ],
+  "ret": "bool",
+  "objects": {
+    "eqswitch": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1d", "u8": 0},
+        {"offset": "0x4c", "u8": 50},
+        {"offset": "0x5e", "u16": 100},
+        {"offset": "0x62", "u16": 0}
+      ]
+    },
+    "player": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x74", "u32": "@player"},
+        {"offset": "0x98", "u8": 0}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004bdee6": {"name": "EQSwitch::GetSwitchDamage", "conv": "thiscall", "args": [], "ret": 0},
+    "0x004a07e9": {"name": "token_string_to_client_guess", "conv": "cdecl", "args": ["ptr", "cstr", "int"]}
+  },
+  "cases": [
+    {"name": "trap: skill above lock level opens", "args": [0, 51, "@player"],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: skill equals lock level, null player", "args": [0, 50, 0],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: player flag 1 opens", "args": [0, 50, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x98", "u8": 1}],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: failed to disarm message", "args": [0, 50, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x98", "u8": 2}],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: no message target", "args": [0, 50, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x74", "u32": 0}],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: negative skill", "args": [0, -5, "@player"],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: lock level 0x80 is unsigned", "args": [0, 100, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 128}],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "trap: lock level 0xff vs skill 0xff", "args": [0, 255, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 255}],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 1}}},
+    {"name": "damage 0x10000 truncates to zero", "args": [100, 1, "@player"],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 65536}}},
+    {"name": "damage 0x8000 is negative", "args": [100, 1, "@player"],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 32768}}},
+    {"name": "damage 0x10001 is positive short", "args": [0, 50, 0],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": 65537}}},
+    {"name": "damage -1", "args": [100, 0, "@player"],
+     "callees": {"0x004bdee6": {"name": "dmg", "conv": "thiscall", "args": [], "ret": -1}}},
+    {"name": "no key needed", "args": [0, 0, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x5e", "u16": 65535}]},
+    {"name": "switch state 1 opens", "args": [0, 0, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x1d", "u8": 1}]},
+    {"name": "switch state 2 does not open", "args": [0, 0, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x1d", "u8": 2}]},
+    {"name": "param below -1, wrong key", "args": [99, -2, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x62", "u16": 65534}]},
+    {"name": "param below -1, key and skill match", "args": [100, -2, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x62", "u16": 65534}]},
+    {"name": "param below -1, key matches, skill differs", "args": [100, -3, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x62", "u16": 65534}]},
+    {"name": "param -32768, key and skill match", "args": [100, -32768, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x62", "u16": 32768}]},
+    {"name": "param -1 is not below -1, key matches", "args": [100, -1, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x62", "u16": 65535}]},
+    {"name": "param -1, wrong key, locked message", "args": [99, -1, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x62", "u16": 65535}]},
+    {"name": "key matches", "args": [100, 0, 0]},
+    {"name": "wrong key, skill 0: locked message", "args": [5, 0, "@player"]},
+    {"name": "wrong key, skill 0, null player", "args": [5, 0, 0]},
+    {"name": "wrong key, skill 0, no message target", "args": [5, 0, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x74", "u32": 0}]},
+    {"name": "wrong key, negative skill: locked message", "args": [5, -1, "@player"]},
+    {"name": "wrong key, skill 0xfe: locked message", "args": [5, 254, "@player"]},
+    {"name": "wrong key, skill 0xff: lock level below", "args": [5, 255, "@player"]},
+    {"name": "wrong key, skill 1, lock 0 opens", "args": [5, 1, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 0}]},
+    {"name": "wrong key, skill 51 above lock opens", "args": [5, 51, 0]},
+    {"name": "wrong key, skill 50 equals lock, skilled message", "args": [5, 50, "@player"]},
+    {"name": "wrong key, skill 50, null player", "args": [5, 50, 0]},
+    {"name": "wrong key, skill 50, no message target", "args": [5, 50, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x74", "u32": 0}]},
+    {"name": "lock level 0xd1 skilled message", "args": [5, 100, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 209}]},
+    {"name": "lock level 0xd2 cannot be picked", "args": [5, 100, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 210}]},
+    {"name": "lock level 0xff cannot be picked, skill 255", "args": [5, 255, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 255}]},
+    {"name": "lock level 0x80 is unsigned", "args": [5, 100, "@player"],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 128}]},
+    {"name": "lock level 0xd2, skill above opens", "args": [5, 211, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x4c", "u8": 210}]},
+    {"name": "player flag 1 ignored without damage", "args": [5, 50, "@player"],
+     "memory": [{"addr": "@player", "offset": "0x98", "u8": 1}]},
+    {"name": "key item compares only 16 bits", "args": [100, 0, 0],
+     "memory": [{"addr": "@eqswitch", "offset": "0x5e", "u32": 65636}]}
+  ],
+  "fuzz": {
+    "seed": 4973383,
+    "count": 40,
+    "args": [
+      {"choices": [-1, 0, 5, 99, 100, 101, -2, -32768]},
+      {"choices": [-3, -2, -1, 0, 1, 2, 49, 50, 51, 100, 209, 210, 211, 254, 255]},
+      {"choices": ["@player", 0]}
+    ],
+    "memory": [
+      {"addr": "@eqswitch", "offset": "0x1d", "type": "u8", "choices": [0, 1, 2]},
+      {"addr": "@eqswitch", "offset": "0x4c", "type": "u8", "choices": [0, 49, 50, 51, 128, 209, 210, 255]},
+      {"addr": "@eqswitch", "offset": "0x5e", "type": "short", "choices": [-1, 0, 99, 100, -2]},
+      {"addr": "@eqswitch", "offset": "0x62", "type": "short", "choices": [-32768, -3, -2, -1, 0, 1, 100, 254, 255]},
+      {"addr": "@player", "offset": "0x74", "type": "u32", "choices": [0, "@player"]},
+      {"addr": "@player", "offset": "0x98", "type": "u8", "choices": [0, 1, 2]}
+    ]
+  }
+}

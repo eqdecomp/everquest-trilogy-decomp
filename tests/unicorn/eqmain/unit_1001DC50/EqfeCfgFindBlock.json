@@ -1,0 +1,98 @@
+{
+  "function": "EqfeCfgFindBlock_guess",
+  "original": "0x10020f30",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@obj",
+  "args": [
+    {
+      "name": "key",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "obj": {
+      "size": "0x18",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": 1},
+        {"offset": "0xc", "u32": "@text"}
+      ]
+    },
+    "text": {
+      "size": "0x200",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10035fd0": {"name": "strstr", "args": ["cstr", "cstr"], "passthrough": true},
+    "0x10033670": {"name": "strchr", "args": ["cstr", "int"], "passthrough": true}
+  },
+  "cases": [
+    {"name": "file closed returns null", "args": ["key"],
+     "memory": [{"addr": "@obj", "offset": "0x8", "u32": 0}, {"addr": "@text", "cstr": "key { value }"}],
+     "expect": {"ret": 0}},
+    {"name": "file minus one counts as open (returns the a of abc)", "args": ["key"],
+     "memory": [{"addr": "@obj", "offset": "0x8", "u32": 4294967295}, {"addr": "@text", "cstr": "key {abc"}]},
+    {"name": "key not found returns null", "args": ["gamma"],
+     "memory": [{"addr": "@text", "cstr": "alpha { beta }"}], "expect": {"ret": 0}},
+    {"name": "key without brace returns null", "args": ["gamma"],
+     "memory": [{"addr": "@text", "cstr": "gamma value"}], "expect": {"ret": 0}},
+    {"name": "only brace before the key returns null", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "{ x } key value"}], "expect": {"ret": 0}},
+    {"name": "key at end of text returns null", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "xx key"}], "expect": {"ret": 0}},
+    {"name": "brace then value at once (returns the a of abc)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key{abc}"}]},
+    {"name": "brace then closing brace (returns the }) ", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key{}"}]},
+    {"name": "key matches as a substring (returns the x)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "keys { x }"}]},
+    {"name": "newline run skipped (returns the v of value)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key {\n\nvalue}"}]},
+    {"name": "CR space CR LF space skipped (returns the v of val)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key {\r \r\n val"}]},
+    {"name": "tab is not skipped (returns the tab)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key {\tval"}]},
+    {"name": "vertical tab is not skipped (returns the vtab)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key {\u000b x"}]},
+    {"name": "LF before brace (returns the x)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key\n{\n  x"}]},
+    {"name": "CR LF before brace (returns the z)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key\r\n{ z"}]},
+    {"name": "brace then NUL returns the terminator", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key {"}]},
+    {"name": "whitespace run stops at NUL (returns the terminator)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key {  \n"}]},
+    {"name": "first key occurrence wins (returns the o of one)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key { one }\nkey { two }"}]},
+    {"name": "brace search starts at the key, not the buffer start (returns the y)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "{ x }\nkey value { y }"}]},
+    {"name": "brace after a second key occurrence (returns the y)", "args": ["key"],
+     "memory": [{"addr": "@text", "cstr": "key x\nkey {y"}]},
+    {"name": "empty key matches the buffer start (returns the b)", "args": [""],
+     "memory": [{"addr": "@text", "cstr": "a { b }"}]},
+    {"name": "empty key in empty text returns null", "args": [""],
+     "memory": [], "expect": {"ret": 0}},
+    {"name": "brace as the key (returns the b)", "args": ["{"],
+     "memory": [{"addr": "@text", "cstr": "a {b"}]},
+    {"name": "high byte is not skipped (returns the 0xff)", "args": ["key"],
+     "memory": [{"addr": "@text", "hex": "6b6579207bff7a"}]}
+  ],
+  "fuzz": {
+    "seed": 134960,
+    "count": 48,
+    "args": [
+      {"choices": ["", "a", "b", "k", "y", "ky", "ke", "a{", "{"]}
+    ],
+    "memory": [
+      {"addr": "@obj", "offset": "0x8", "type": "u32", "choices": [0, 1, 4294967295]},
+      {"addr": "@text", "type": "u8", "count": 48,
+       "choices": [97, 98, 107, 101, 121, 123, 123, 125, 10, 13, 32, 32, 9, 255, 0]}
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "function": "EQ_Columns_guess::InitializeNextLevel_guess",
+  "original": "0x00432325",
+  "sources": ["src/EverQuest/EQ_Columns.cpp"],
+  "conv": "thiscall", "this": "@columns", "args": [], "ret": "void",
+  "objects": {
+    "columns": {"size": "0x1300", "fill": "random", "init": [
+      {"offset": "0x864", "u32": 1}, {"offset": "0x9D4", "u32": -1}, {"offset": "0x890", "u32": 0}
+    ]},
+    "display": {"size": "0x100", "fill": "random", "init": [{"offset": "0xBC", "u32": 100000}]}
+  },
+  "memory": [{"addr": "0x006E4DE0", "u32": "@display"}],
+  "_mutation_equivalence": "The three surviving cap-threshold mutants (> to >=, 400 to 399/401 in the condition) are equivalent: 2*level+50 is always even, including 32-bit wrap, and assigning 400 at equality leaves the same value and write set.",
+  "callees": {
+    "0x004335FE": {"conv": "thiscall", "args": ["int"], "writes": [{"addr": "@columns+0x860", "hex": "04030201"}]},
+    "0x00432626": {"conv": "thiscall", "args": [], "writes": [{"addr": "@columns+0x888", "hex": "88776655"}]}
+  },
+  "cases": [
+    {"name": "negative level skips score", "memory": [{"addr": "@columns+0x864", "u32": -1}]},
+    {"name": "zero level skips score", "memory": [{"addr": "@columns+0x864", "u32": 0}]},
+    {"name": "positive level scores", "memory": [{"addr": "@columns+0x864", "u32": 1}]},
+    {"name": "step count below cap", "memory": [{"addr": "@columns+0x864", "u32": 173}]},
+    {"name": "step count equals cap", "memory": [{"addr": "@columns+0x864", "u32": 174}]},
+    {"name": "step count above cap", "memory": [{"addr": "@columns+0x864", "u32": 175}]},
+    {"name": "effect first use", "memory": [{"addr": "@columns+0x9D4", "u32": "0x82A"}, {"addr": "@columns+0x890", "u32": 0}]},
+    {"name": "effect last retained use", "memory": [{"addr": "@columns+0x9D4", "u32": "0x82A"}, {"addr": "@columns+0x890", "u32": 3}]},
+    {"name": "effect exhausted", "memory": [{"addr": "@columns+0x9D4", "u32": "0x82A"}, {"addr": "@columns+0x890", "u32": 4}]},
+    {"name": "unsigned effect count", "memory": [{"addr": "@columns+0x9D4", "u32": "0x82A"}, {"addr": "@columns+0x890", "u32": "0xFFFFFFFF"}]},
+    {"name": "adjacent special has normal timer", "memory": [{"addr": "@columns+0x9D4", "u32": "0x829"}]},
+    {"name": "normal timer wraps", "memory": [{"addr": "@display+0xBC", "u32": "0xFFFFFFFF"}]},
+    {"name": "special timer wraps", "memory": [{"addr": "@columns+0x9D4", "u32": "0x82A"}, {"addr": "@display+0xBC", "u32": "0xFFFFFF80"}]},
+    {"name": "level increment wraps", "memory": [{"addr": "@columns+0x864", "u32": "0x7FFFFFFF"}]},
+    {"name": "level scaling wraps signed", "memory": [{"addr": "@columns+0x864", "u32": "0x40000000"}]}
+  ],
+  "fuzz": {
+    "seed": 4399909, "count": 120, "args": [],
+    "memory": [
+      {"addr": "@columns+0x864", "type": "int", "choices": [-2147483648, -2, -1, 0, 1, 2, 173, 174, 175, 176, 1073741824, 2147483647]},
+      {"addr": "@columns+0x9D4", "type": "int", "choices": [-1, 0, 2089, 2090, 2091]},
+      {"addr": "@columns+0x890", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 2147483648, 4294967295]},
+      {"addr": "@display+0xBC", "type": "u32"}
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "function": "CEverQuest_GuildSay_guess_class::GuildSay_guess",
+  "original": "0x004ca544",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "rewrite": "CEverQuest_GuildSay_guess_class::GuildSay_guess",
+  "conv": "thiscall",
+  "this": "@thisptr",
+  "args": [{"name": "param_1", "type": "cstr"}],
+  "ret": "void",
+  "objects": {
+    "thisptr": {"size": "0x100", "fill": "random"},
+    "profile": {
+      "size": "0x1040",
+      "fill": "random",
+      "init": [{"offset": "0x103a", "u16": 0}]
+    }
+  },
+  "memory": [
+    {"addr": "0x006b63f8", "u8": 0},
+    {"addr": "0x006b6494", "u32": 0},
+    {"addr": "0x006b6465", "u8": 0},
+    {"addr": "0x006e4da8", "u32": "@profile"}
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"]
+    },
+    "0x004d0d77": {
+      "name": "CEverQuest_SendNewText_guess",
+      "conv": "thiscall",
+      "args": ["int", "int", "cstr"]
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": ["mem:512", "cstr", "cstr"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {"name": "gate one blocks", "args": ["blocked one"], "memory": [{"addr": "0x006b63f8", "u8": 1}, {"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}]},
+    {"name": "gate two blocks after first opens", "args": ["blocked two"], "memory": [{"addr": "0x006b6494", "u32": 1}, {"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}]},
+    {"name": "gate three blocks after first two open", "args": ["blocked three"], "memory": [{"addr": "0x006b6465", "u8": 1}, {"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}]},
+    {"name": "member check shows not in guild", "args": ["ignored text"], "memory": [{"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 65535}]},
+    {"name": "adjacent byte before second gate is nonzero", "args": ["adjacent address witness"], "memory": [{"addr": "0x006b6493", "u32": 1}, {"addr": "0x006b6494", "u32": 0}, {"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 0}]},
+    {"name": "guild id zero sends say", "args": ["hello guild"], "memory": [{"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 0}]},
+    {"name": "other negative guild id sends say", "args": ["-1 is the only sentinel"], "memory": [{"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 65534}]},
+    {"name": "largest guild id sends say", "args": ["boundary"], "memory": [{"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 32767}]},
+    {"name": "different text", "args": ["guild words: %s remain formatting data"], "memory": [{"addr": "0x006e4da8", "u32": "@profile"}, {"addr": "@profile", "offset": "0x103a", "u16": 42}]}
+  ],
+  "fuzz": {
+    "seed": 5023044,
+    "count": 40,
+    "args": [{"choices": ["", "guild text", "another message", "100% literal %s"]}],
+    "memory": [
+      {"addr": "0x006b63f8", "type": "u8", "choices": [0, 1]},
+      {"addr": "0x006b6494", "type": "u32", "choices": [0, 1, 2, 4294967295]},
+      {"addr": "0x006b6465", "type": "u8", "choices": [0, 1]},
+      {"addr": "@profile", "offset": "0x103a", "type": "short", "choices": [-32768, -2, -1, 0, 1, 32767]}
+    ]
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "function": "t3dReadSourceBytes_guess",
+  "original": "0x1002645c",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    },
+    {
+      "name": "buffer",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "source": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "0x5678"
+        }
+      ]
+    },
+    "buffer": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!ReadFile": {
+      "name": "ReadFile",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32",
+        "ignore",
+        "ptr"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "10000000"
+        }
+      ]
+    },
+    "0x1002186a": {
+      "name": "t3dFastFileRead",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x10069227": {
+      "name": "_fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "u32",
+        "ptr"
+      ],
+      "ret": 16
+    }
+  },
+  "cases": [
+    {
+      "name": "fast file: count below the bytes left reads count and advances the position",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "fast file: count above the bytes left reads the bytes left",
+      "args": [
+        "@source",
+        "@buffer",
+        512
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": 240}
+    },
+    {
+      "name": "fast file: count equal to the bytes left reads count",
+      "args": [
+        "@source",
+        "@buffer",
+        240
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": 240}
+    },
+    {
+      "name": "fast file: nothing left reads nothing",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 256}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fast file: past the end passes the negative bytes left (signed compare)",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 16},
+        {"addr": "@source", "offset": "0x14", "u32": 21}
+      ],
+      "expect": {"ret": "0xfffffffb"}
+    },
+    {
+      "name": "fast file: count with the top bit set compares signed",
+      "args": [
+        "@source",
+        "@buffer",
+        "0x80000000"
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": "0x80000000"}
+    },
+    {
+      "name": "fast file: zero count reads nothing",
+      "args": [
+        "@source",
+        "@buffer",
+        0
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fast file: the count is taken whatever EDI held on entry",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "regs": {"edi": 77777},
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 0},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "ReadFile: returns the count ReadFile wrote, not the request",
+      "args": [
+        "@source",
+        "@buffer",
+        64
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 1},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "u32", "ignore", "ptr"],
+          "ret": 1,
+          "writes": [{"arg": 3, "offset": 0, "hex": "18000000"}]
+        }
+      },
+      "expect": {"ret": 24}
+    },
+    {
+      "name": "ReadFile: a failed call still returns the count it wrote",
+      "args": [
+        "@source",
+        "@buffer",
+        64
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 1},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "u32", "ignore", "ptr"],
+          "ret": 0,
+          "writes": [{"arg": 3, "offset": 0, "hex": "20000000"}]
+        }
+      },
+      "expect": {"ret": 32}
+    },
+    {
+      "name": "ReadFile: count left alone when ReadFile wrote nothing",
+      "args": [
+        "@source",
+        "@buffer",
+        64
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 1},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "callees": {
+        "kernel32.dll!ReadFile": {
+          "name": "ReadFile",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "u32", "ignore", "ptr"],
+          "ret": 1,
+          "writes": []
+        }
+      },
+      "expect": {"ret": 64}
+    },
+    {
+      "name": "fread: returns fread's count",
+      "args": [
+        "@source",
+        "@buffer",
+        64
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 2},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "fread: an error (-1) passes through",
+      "args": [
+        "@source",
+        "@buffer",
+        64
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 2},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "callees": {
+        "0x10069227": {
+          "name": "_fread",
+          "conv": "cdecl",
+          "args": ["ptr", "int", "u32", "ptr"],
+          "ret": -1
+        }
+      },
+      "expect": {"ret": "0xffffffff"}
+    },
+    {
+      "name": "fread: zero count",
+      "args": [
+        "@source",
+        "@buffer",
+        0
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 2},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ]
+    },
+    {
+      "name": "unknown kind 3 returns -1 and touches nothing",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": 3},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": "0xffffffff"}
+    },
+    {
+      "name": "unknown kind -1 returns -1",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": "0xffffffff"}
+    },
+    {
+      "name": "unknown kind 0x80000000 returns -1",
+      "args": [
+        "@source",
+        "@buffer",
+        32
+      ],
+      "memory": [
+        {"addr": "@source", "offset": "0x0", "u32": "0x80000000"},
+        {"addr": "@source", "offset": "0x10", "u32": 256},
+        {"addr": "@source", "offset": "0x14", "u32": 16}
+      ],
+      "expect": {"ret": "0xffffffff"}
+    }
+  ],
+  "fuzz": {
+    "seed": 156764,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@source"
+        ]
+      },
+      {
+        "choices": [
+          "@buffer"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {"addr": "@source", "offset": "0x0", "type": "int", "range": [-1, 4]},
+      {"addr": "@source", "offset": "0x10", "type": "int", "range": [-16, 512]},
+      {"addr": "@source", "offset": "0x14", "type": "u32", "range": [0, 528]}
+    ]
+  }
+}

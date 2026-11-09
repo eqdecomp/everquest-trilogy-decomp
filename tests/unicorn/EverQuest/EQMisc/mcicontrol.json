@@ -1,0 +1,68 @@
+{
+  "function": "mcicontrol_guess",
+  "original": "0x004ac37b",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "command", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "profile": {"size": "0x4", "fill": "zero"},
+    "everquest": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x0053e658", "cstr": ""},
+    {"addr": "0x006efe2c", "u32": "@everquest"}
+  ],
+  "callees": {
+    "0x004a31a5": {
+      "name": "CDisplay::SetPCloudDensity_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "winmm.dll!mciSendStringA": {
+      "name": "mciSendStringA",
+      "conv": "stdcall",
+      "args": ["cstr", "ignore", "int", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 0, "hex": "4f4b00"}]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"]
+    },
+    "winmm.dll!mciGetErrorStringA": {
+      "name": "mciGetErrorStringA",
+      "conv": "stdcall",
+      "args": ["int", "ignore", "int"],
+      "ret": 1,
+      "writes": [{"arg": 1, "offset": 0, "hex": "42616420636f6d6d616e6400"}]
+    }
+  },
+  "cases": [
+    {"name": "null_profile", "args": [0, "status"], "memory": [{"addr": "0x006e4da8", "u32": 0}]},
+    {"name": "density_gate_closed", "args": [0, "status"], "callees": {"0x004a31a5": {"name": "CDisplay::SetPCloudDensity_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}}},
+    {"name": "empty_command", "args": [0, ""]},
+    {"name": "response_untouched", "args": [0, "status"], "memory": [{"addr": "0x0053e659", "cstr": "shift"}], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 0}}},
+    {"name": "normal_return", "args": [0, "status"]},
+    {"name": "star_return", "args": [0, "status"], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "2a49676e6f72656400"}]}}},
+    {"name": "empty_return", "args": [0, "status"], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 0, "writes": [{"arg": 1, "offset": 0, "hex": "00"}]}}},
+    {"name": "return_and_error", "args": [0, "open file"], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 7, "writes": [{"arg": 1, "offset": 0, "hex": "526561647900"}]}, "winmm.dll!mciGetErrorStringA": {"name": "mciGetErrorStringA", "conv": "stdcall", "args": ["int", "ignore", "int"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "4e6f7420666f756e6400"}]}}},
+    {"name": "error_only", "args": [0, "open file"], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 7, "writes": [{"arg": 1, "offset": 0, "hex": "2a00"}]}, "winmm.dll!mciGetErrorStringA": {"name": "mciGetErrorStringA", "conv": "stdcall", "args": ["int", "ignore", "int"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "4e6f7420666f756e6400"}]}}},
+    {"name": "error_text_star", "args": [0, "open file"], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 7, "writes": [{"arg": 1, "offset": 0, "hex": "526561647900"}]}, "winmm.dll!mciGetErrorStringA": {"name": "mciGetErrorStringA", "conv": "stdcall", "args": ["int", "ignore", "int"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "2a756e617661696c61626c6500"}]}}},
+    {"name": "error_text_empty", "args": [0, "open file"], "callees": {"winmm.dll!mciSendStringA": {"name": "mciSendStringA", "conv": "stdcall", "args": ["cstr", "ignore", "int", "ptr"], "ret": 7, "writes": [{"arg": 1, "offset": 0, "hex": "526561647900"}]}, "winmm.dll!mciGetErrorStringA": {"name": "mciGetErrorStringA", "conv": "stdcall", "args": ["int", "ignore", "int"], "ret": 1, "writes": [{"arg": 1, "offset": 0, "hex": "00"}]}}}
+  ],
+  "fuzz": {
+    "seed": 4899707,
+    "count": 32,
+    "args": [
+      {"choices": [-1, 0, 1, 2147483647]},
+      {"choices": ["status", "play", "close", "", "mixer volume"]}
+    ]
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "function": "t3dGetActorLight",
+  "original": "0x1000ad02",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "actor": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x54",
+          "u32": "@light"
+        }
+      ]
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "0x5a5aa5a5"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "light present, returns its +0x10 dword",
+      "args": [
+        "@actor"
+      ],
+      "expect": {
+        "ret": "0x5a5aa5a5"
+      }
+    },
+    {
+      "name": "light pointer null, returns 0",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": "0x0"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "light present with zero dword",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": "0x0"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "size": 256,
+          "fill": "zero"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "light dword with high bit set",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": "0x80000001"
+        }
+      ],
+      "expect": {
+        "ret": "0x80000001"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 44290,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x54",
+        "type": "ptr",
+        "choices": [
+          "@light",
+          0
+        ]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x10",
+        "type": "u32"
+      }
+    ]
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "function": "EQMain_CreateLabel_guess",
+  "original": "0x100118f0",
+  "sources": [
+    "src/eqmain/unit_10010DC0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "int"
+    },
+    {
+      "name": "param_5",
+      "type": "int"
+    },
+    {
+      "name": "param_6",
+      "type": "cstr"
+    },
+    {
+      "name": "param_7",
+      "type": "ptr"
+    },
+    {
+      "name": "param_8",
+      "type": "u32"
+    },
+    {
+      "name": "param_9",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "hdc": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "out": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "text": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "made": {
+      "size": "0xa8",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004ceb8", "u32": "0x00ab0000"},
+    {"addr": "@text", "cstr": "Hello"}
+  ],
+  "callees": {
+    "0x100082c0": {
+      "name": "FUN_100082c0",
+      "conv": "cdecl",
+      "args": ["int", "u32", "ptr", "int", "cstr", "int", "int"],
+      "ret": 0
+    },
+    "0x10008800": {
+      "name": "FUN_10008800",
+      "conv": "cdecl",
+      "args": ["int", "int", "int"],
+      "ret": 0
+    },
+    "0x10008460": {
+      "name": "FUN_10008460",
+      "conv": "cdecl",
+      "args": ["int", "int", "int", "int", "int", "u32", "int", "int", "u32", "u32"],
+      "ret": "@made"
+    },
+    "0x10008970": {
+      "name": "FUN_10008970",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: result stored in *param_7, label text passed to 0x10008970",
+      "args": [16777215, "@hdc", 10, 20, 30, "Label", "@out", 16, "@text"]
+    },
+    {
+      "name": "param_9 null: 0x10008970 not called, result still stored",
+      "args": [16777215, "@hdc", 10, 20, 30, "Label", "@out", 16, 0]
+    },
+    {
+      "name": "0x10008460 returns null: null stored, text still passed",
+      "args": [16777215, "@hdc", 10, 20, 30, "Label", "@out", 16, "@text"],
+      "callees": {
+        "0x10008460": {
+          "name": "FUN_10008460",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "u32", "int", "int", "u32", "u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "0x10008460 returns null and param_9 null",
+      "args": [16777215, "@hdc", 10, 20, 30, "Label", "@out", 16, 0],
+      "callees": {
+        "0x10008460": {
+          "name": "FUN_10008460",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "u32", "int", "int", "u32", "u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zeros and empty label",
+      "args": [0, "@hdc", 0, 0, 0, "", "@out", 0, "@text"]
+    },
+    {
+      "name": "null HDC passed through",
+      "args": [1, 0, 1, 1, 1, "abc", "@out", 1, "@text"]
+    },
+    {
+      "name": "wrap: param_3 INT_MAX (param_3 + 2 overflows), param_8 0xffffffff, negative params",
+      "args": [4294967295, "@hdc", 2147483647, -1, -2147483648, "abc", "@out", 4294967295, "@text"]
+    },
+    {
+      "name": "global zero: the object passed to both callees is 0",
+      "args": [1, "@hdc", 1, 1, 1, "abc", "@out", 1, "@text"],
+      "memory": [{"addr": "0x1004ceb8", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5150118,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [0, "@hdc"]
+      },
+      {},
+      {},
+      {},
+      {},
+      {
+        "choices": ["@out"]
+      },
+      {},
+      {
+        "choices": [0, "@text"]
+      }
+    ],
+    "memory": [
+      {"addr": "0x1004ceb8", "type": "u32"}
+    ]
+  }
+}

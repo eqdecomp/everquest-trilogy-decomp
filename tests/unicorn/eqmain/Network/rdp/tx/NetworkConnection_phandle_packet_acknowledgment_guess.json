@@ -1,0 +1,612 @@
+{
+  "function": "NetworkConnection_phandle_packet_acknowledgment_guess",
+  "original": "0x1002B2D0",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "sequence",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero"
+    },
+    "stats": {
+      "size": "0x280",
+      "fill": "zero"
+    },
+    "item": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 900
+        },
+        {
+          "offset": "0x1c",
+          "u16": 1
+        }
+      ]
+    },
+    "result": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "event": {
+      "size": 4,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100498b4",
+      "u32": "@stats"
+    }
+  ],
+  "callees": {
+    "0x10030ed0": {
+      "name": "find_and_remove_packet_by_sequence_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": "@item"
+    },
+    "0x1002f9f0": {
+      "name": "WINMM.DLL::timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1000
+    },
+    "0x10030a80": {
+      "name": "update_network_statistics_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "u32"
+      ]
+    },
+    "0x10028a90": {
+      "name": "FUN_10028a90",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10030a00": {
+      "name": "uevent_signal_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "no acknowledged item",
+      "args": [
+        "@conn",
+        5
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "non-reliable item",
+      "args": [
+        "@conn",
+        7
+      ],
+      "memory": [
+        {
+          "addr": "@item",
+          "offset": "0x1c",
+          "u16": 2
+        }
+      ]
+    },
+    {
+      "name": "reliable item",
+      "args": [
+        "@conn",
+        8
+      ]
+    },
+    {
+      "name": "reliable timestamp wraps",
+      "args": [
+        "@conn",
+        9
+      ],
+      "memory": [
+        {
+          "addr": "@item",
+          "offset": "0x8",
+          "u32": "0xfffffff0"
+        }
+      ],
+      "callees": {
+        "0x1002f9f0": {
+          "ret": 16
+        }
+      }
+    },
+    {
+      "name": "all active statistic lows carry",
+      "args": [
+        "@conn",
+        10
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x88",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x8c",
+          "u32": 3
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x1a0",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x1a4",
+          "u32": 5
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x198",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x19c",
+          "u32": 7
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x178",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x17c",
+          "u32": 9
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6bc",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "first acknowledged packet sets timers",
+      "args": [
+        "@conn",
+        11
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6bc",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "timer state already set",
+      "args": [
+        "@conn",
+        12
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6bc",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6c0",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "disconnect sequence marks sent",
+      "args": [
+        "@conn",
+        "0x10009"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d0",
+          "u16": 9
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 8
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "acknowledged disconnect closes despite sequence mismatch",
+      "args": [
+        "@conn",
+        8
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6cc",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d0",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6fc",
+          "u32": "@result"
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6f8",
+          "u32": "@event"
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "disconnect close with null result",
+      "args": [
+        "@conn",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d0",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6f8",
+          "u32": "@event"
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "disconnect close with null event",
+      "args": [
+        "@conn",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d0",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6fc",
+          "u32": "@result"
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "disconnect not sent",
+      "args": [
+        "@conn",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6fc",
+          "u32": "@result"
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6f8",
+          "u32": "@event"
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "disconnect ack does not match sent sequence",
+      "args": [
+        "@conn",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d0",
+          "u16": 4
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 6
+        }
+      ],
+      "callees": {
+        "0x10030ed0": {
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5187568,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "range": [
+          0,
+          131071
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@item",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@item",
+        "offset": "0x1c",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          2,
+          65535
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6bc",
+        "type": "int",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6c0",
+        "type": "int",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6c8",
+        "type": "int",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6cc",
+        "type": "int",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6d0",
+        "type": "u16",
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x488",
+        "type": "u16",
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x88",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x8c",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x1a0",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x1a4",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x198",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x19c",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x178",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x17c",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      }
+    ]
+  }
+}

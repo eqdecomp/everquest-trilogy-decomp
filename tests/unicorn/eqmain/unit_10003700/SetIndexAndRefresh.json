@@ -1,0 +1,256 @@
+{
+  "function": "SetIndexAndRefresh_guess",
+  "original": "0x10005e70",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "queue": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": 10
+        },
+        {
+          "offset": "0x30",
+          "u32": 4
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10005a00": {
+      "name": "FUN_10005a00",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "negative index, skipped",
+      "args": [
+        "@queue",
+        -1
+      ]
+    },
+    {
+      "name": "most negative index, skipped",
+      "args": [
+        "@queue",
+        -2147483648
+      ]
+    },
+    {
+      "name": "index 0, below count, stored",
+      "args": [
+        "@queue",
+        0
+      ]
+    },
+    {
+      "name": "index just below count, stored",
+      "args": [
+        "@queue",
+        9
+      ]
+    },
+    {
+      "name": "index equal to count, window start",
+      "args": [
+        "@queue",
+        10
+      ]
+    },
+    {
+      "name": "index at window top (count + cap - 1), not stored",
+      "args": [
+        "@queue",
+        13
+      ]
+    },
+    {
+      "name": "index one past window, stored",
+      "args": [
+        "@queue",
+        14
+      ]
+    },
+    {
+      "name": "index far past window, stored",
+      "args": [
+        "@queue",
+        2147483647
+      ]
+    },
+    {
+      "name": "empty window (count 0, cap 0), stored",
+      "args": [
+        "@queue",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x30",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "negative count (-3, cap 4), index 1 past window top 0, stored",
+      "args": [
+        "@queue",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": "0xfffffffd"
+        }
+      ]
+    },
+    {
+      "name": "count + cap - 1 wraps negative, index stored",
+      "args": [
+        "@queue",
+        2147483637
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x2c",
+          "u32": "0x7ffffff0"
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x30",
+          "u32": 32
+        }
+      ]
+    },
+    {
+      "name": "huge capacity wraps the window top negative, stored",
+      "args": [
+        "@queue",
+        20
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x30",
+          "u32": "0x7fffffff"
+        }
+      ]
+    },
+    {
+      "name": "negative capacity (-5), window top 4, index 12 stored",
+      "args": [
+        "@queue",
+        12
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x30",
+          "u32": "0xfffffffb"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 24176,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@queue"
+        ]
+      },
+      {
+        "choices": [
+          -2147483648,
+          -7,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          20,
+          31,
+          32,
+          2147483637,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@queue",
+        "offset": "0x2c",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -3,
+          -1,
+          0,
+          1,
+          2,
+          4,
+          7,
+          10,
+          2147483632,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@queue",
+        "offset": "0x30",
+        "type": "int",
+        "choices": [
+          -5,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4,
+          8,
+          32,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

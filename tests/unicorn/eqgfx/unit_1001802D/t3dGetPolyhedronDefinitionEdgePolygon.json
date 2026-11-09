@@ -1,0 +1,107 @@
+{
+  "function": "t3dGetPolyhedronDefinitionEdgePolygon",
+  "original": "0x10018cbf",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "polyhedron",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "polyhedron": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x18", "u32": 3},
+        {"offset": "0x1c", "u32": "@elements"}
+      ]
+    },
+    "elements": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@polyhedron", 1]
+    },
+    {
+      "name": "first element",
+      "args": ["@polyhedron", 0]
+    },
+    {
+      "name": "last element",
+      "args": ["@polyhedron", 2]
+    },
+    {
+      "name": "index equals count",
+      "args": ["@polyhedron", 3],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index past count",
+      "args": ["@polyhedron", 4],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero",
+      "args": ["@polyhedron", 0],
+      "memory": [{"addr": "@polyhedron", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "single element",
+      "args": ["@polyhedron", 0],
+      "memory": [{"addr": "@polyhedron", "offset": "0x18", "u32": 1}]
+    },
+    {
+      "name": "index all ones",
+      "args": ["@polyhedron", "0xffffffff"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index high bit set (unsigned compare)",
+      "args": ["@polyhedron", "0x80000000"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "huge count (unsigned compare)",
+      "args": ["@polyhedron", 1],
+      "memory": [{"addr": "@polyhedron", "offset": "0x18", "u32": "0x80000000"}]
+    },
+    {
+      "name": "index shift wraps to zero",
+      "args": ["@polyhedron", "0x08000000"],
+      "memory": [{"addr": "@polyhedron", "offset": "0x18", "u32": "0xffffffff"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 101567,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@polyhedron"
+        ]
+      },
+      {
+        "range": [-4, 40]
+      }
+    ],
+    "memory": [
+      {"addr": "@polyhedron", "offset": "0x18", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 8, 40, "0x7fffffff", "0x80000000", "0xffffffff"]}
+    ]
+  }
+}

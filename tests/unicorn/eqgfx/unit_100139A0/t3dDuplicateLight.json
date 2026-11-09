@@ -1,0 +1,392 @@
+{
+  "function": "t3dDuplicateLight",
+  "original": "0x1001414e",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderer",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceLight",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "renderer": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sourcelight": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 3
+        }
+      ]
+    },
+    "newlight": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@newlight"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: alloc ok, add ok, definition count 3 -> 4, copy returned",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ]
+    },
+    {
+      "name": "add returns 1: copy freed, returns null, definition count unchanged",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "add returns -1 (negative is still failure)",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "alloc returns null: no copy, no add, no free, returns null",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "add fails, source definition null: failure path never reads it",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@sourcelight",
+          "offset": "0x24",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "source dictionary key, flags 0xff, pendingDestroy set: all three zeroed in the copy",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@sourcelight",
+          "offset": "0x8",
+          "u32": "0x30004000"
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0xc",
+          "u8": 255
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0x10",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "frame wrap: frameValue 0xffffffff + baseFrame 1 -> adjustedFrame 0",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@renderer",
+          "offset": "0x8",
+          "u32": 1
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0x18",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "negative baseFrame: frameValue 2 + baseFrame -5 -> adjustedFrame 0xfffffffd",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@renderer",
+          "offset": "0x8",
+          "u32": "0xfffffffb"
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0x18",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "stale source adjustedFrame is recomputed: 5 + 10 -> 15",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@renderer",
+          "offset": "0x8",
+          "u32": 10
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0x18",
+          "u32": 5
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0x1c",
+          "u32": "0x99999999"
+        }
+      ]
+    },
+    {
+      "name": "definition count 0xffffffff wraps to 0 on add ok",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "add writes the copy's fields first: copy and zeroing happen before the call",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 8,
+              "hex": "efbeadde"
+            },
+            {
+              "arg": 1,
+              "offset": 12,
+              "hex": "01000000"
+            },
+            {
+              "arg": 1,
+              "offset": 16,
+              "hex": "02000000"
+            },
+            {
+              "arg": 1,
+              "offset": 28,
+              "hex": "78563412"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "zeros: source state all zero except definition",
+      "args": [
+        "@renderer",
+        "@sourcelight"
+      ],
+      "memory": [
+        {
+          "addr": "@sourcelight",
+          "size": 40,
+          "fill": "zero"
+        },
+        {
+          "addr": "@sourcelight",
+          "offset": "0x24",
+          "u32": "@definition"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 82254,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@renderer"
+        ]
+      },
+      {
+        "choices": [
+          "@sourcelight"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@renderer",
+        "offset": "0x8",
+        "type": "int"
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": "0x8",
+        "type": "u32"
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": "0xc",
+        "type": "u8"
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": "0x10",
+        "type": "int"
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": "0x14",
+        "type": "u32"
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": "0x18",
+        "type": "u32"
+      },
+      {
+        "addr": "@sourcelight",
+        "offset": "0x1c",
+        "type": "u32"
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x10",
+        "type": "int"
+      }
+    ]
+  }
+}

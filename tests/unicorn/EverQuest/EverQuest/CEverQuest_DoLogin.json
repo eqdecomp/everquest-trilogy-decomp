@@ -1,0 +1,347 @@
+{
+  "function": "CEverQuest_DoLogin_guess",
+  "original": "0x004d4676",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "hwnd",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "param_3": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "conn": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "display": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006b63f8",
+      "u8": 1
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": 0
+    },
+    {
+      "addr": "0x006e4de0",
+      "u32": "@display"
+    },
+    {
+      "addr": "0x00604904",
+      "size": 16,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x006b3198",
+      "u8": 0
+    }
+  ],
+  "callees": {
+    "0x004e013c": {
+      "name": "WorldAuthenticate",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004e041f": {
+      "name": "GetPlayerName",
+      "conv": "cdecl",
+      "args": [
+        "ignore"
+      ],
+      "ret": 1,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "426f6200"
+        }
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x004e0601": {
+      "name": "net_shutdown",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "user32.dll!ShowWindow": {
+      "name": "ShowWindow",
+      "conv": "stdcall",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 1
+    },
+    "user32.dll!UpdateWindow": {
+      "name": "UpdateWindow",
+      "conv": "stdcall",
+      "args": [
+        "int"
+      ],
+      "ret": 1
+    },
+    "0x0040940f": {
+      "name": "FUN_0040940f",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004c1703": {
+      "name": "DbgLog_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004dac29": {
+      "name": "CEverQuest::InitOverlays_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "no connection, state 0 goes on to the window and overlays",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "no connection, state 1 returns -1 and leaves the state",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "no connection, state 2 becomes 1 and returns -2",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": -2
+      }
+    },
+    {
+      "name": "no connection, state 3 goes on to the window and overlays",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "connection, name read ok, state 2 is ignored",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "callees": {
+        "0x004e013c": {
+          "name": "WorldAuthenticate_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@conn"
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "connection, name read fails: connection shut down and cleared",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "callees": {
+        "0x004e013c": {
+          "name": "WorldAuthenticate_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@conn"
+        },
+        "0x004e041f": {
+          "name": "GetPlayerName_guess",
+          "conv": "cdecl",
+          "args": [
+            "ignore"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "426f6200"
+            }
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    },
+    {
+      "name": "connection with bytes 1..3 zero (a small value), state 2 is ignored",
+      "args": [
+        "@self",
+        1,
+        65538,
+        "@param_3"
+      ],
+      "callees": {
+        "0x004e013c": {
+          "name": "WorldAuthenticate_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 64
+        }
+      },
+      "memory": [
+        {
+          "addr": "@self",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": -1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5064310,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {},
+      {
+        "choices": [
+          "@param_3"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "type": "int",
+        "range": [
+          -2,
+          4
+        ]
+      }
+    ]
+  }
+}

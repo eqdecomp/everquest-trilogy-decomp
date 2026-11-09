@@ -1,0 +1,352 @@
+{
+  "function": "t3dCreateSphereList",
+  "original": "0x1001b047",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "createInfo",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "createinfo": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@prototype"
+        }
+      ]
+    },
+    "prototype": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x24",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    },
+    "block": {
+      "size": "0x1c",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@block"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: allocation and registration succeed, definition counted",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ]
+    },
+    {
+      "name": "registration returns 1: block freed, NULL returned",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registration returns -1: any nonzero fails",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation returns NULL: NULL returned, nothing copied",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero prototype and definition: use count 0 becomes 1",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ],
+      "objects": {
+        "dictionary": {
+          "size": "0x100",
+          "fill": "random"
+        },
+        "createinfo": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x24",
+              "u32": "@prototype"
+            }
+          ]
+        },
+        "prototype": {
+          "size": "0x1c",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x18",
+              "u32": "@definition"
+            }
+          ]
+        },
+        "definition": {
+          "size": "0x24",
+          "fill": "zero"
+        },
+        "block": {
+          "size": "0x1c",
+          "fill": "random"
+        }
+      }
+    },
+    {
+      "name": "prototype dictionary key, flags, scaleData and localScale are overwritten in the copy",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ],
+      "objects": {
+        "dictionary": {
+          "size": "0x100",
+          "fill": "random"
+        },
+        "createinfo": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x24",
+              "u32": "@prototype"
+            }
+          ]
+        },
+        "prototype": {
+          "size": "0x1c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x8",
+              "u32": "0x30004000"
+            },
+            {
+              "offset": "0xc",
+              "u32": 1
+            },
+            {
+              "offset": "0x10",
+              "u32": "0x30008000"
+            },
+            {
+              "offset": "0x14",
+              "u32": "0x3f800000"
+            },
+            {
+              "offset": "0x18",
+              "u32": "@definition"
+            }
+          ]
+        },
+        "definition": {
+          "size": "0x24",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x10",
+              "u32": 5
+            }
+          ]
+        },
+        "block": {
+          "size": "0x1c",
+          "fill": "random"
+        }
+      }
+    },
+    {
+      "name": "use count 0xffffffff wraps to 0",
+      "args": [
+        "@dictionary",
+        "@createinfo"
+      ],
+      "objects": {
+        "dictionary": {
+          "size": "0x100",
+          "fill": "random"
+        },
+        "createinfo": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x24",
+              "u32": "@prototype"
+            }
+          ]
+        },
+        "prototype": {
+          "size": "0x1c",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x18",
+              "u32": "@definition"
+            }
+          ]
+        },
+        "definition": {
+          "size": "0x24",
+          "fill": "random",
+          "init": [
+            {
+              "offset": "0x10",
+              "u32": "0xffffffff"
+            }
+          ]
+        },
+        "block": {
+          "size": "0x1c",
+          "fill": "random"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 110663,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@createinfo"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@createinfo",
+        "offset": "0x24",
+        "type": "ptr",
+        "choices": [
+          "@prototype"
+        ]
+      },
+      {
+        "addr": "@prototype",
+        "offset": "0x8",
+        "size": 16
+      },
+      {
+        "addr": "@prototype",
+        "offset": "0x18",
+        "type": "ptr",
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x10",
+        "type": "int"
+      }
+    ]
+  }
+}

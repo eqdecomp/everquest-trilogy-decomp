@@ -1,0 +1,53 @@
+{
+  "function": "EQ_Columns_guess::MoveColumnBlockHorizontally_guess",
+  "original": "0x00433357",
+  "sources": ["src/EverQuest/EQ_Columns.cpp"],
+  "conv": "thiscall", "this": "@columns",
+  "args": [{"name": "dir", "type": "int"}], "ret": "void",
+  "objects": {"columns": {"size": "0x1300", "fill": "random", "init": [
+    {"offset": "0x9D4", "u32": -1}, {"offset": "0x9D8", "u32": 123},
+    {"offset": "0x9F4", "u32": 4}, {"offset": "0x9F8", "u32": 7}
+  ]}},
+  "callees": {
+    "0x004A46F6": {"conv": "cdecl", "args": ["int", "int"], "ret": 0},
+    "0x004333D6": {"conv": "thiscall", "args": ["int", "int", "int", "int", "int"], "ret": 1}
+  },
+  "cases": [
+    {"name": "ordinary left", "args": [-1]},
+    {"name": "ordinary right", "args": [1]},
+    {"name": "ordinary larger displacement", "args": [5]},
+    {"name": "ordinary zero preserves pending move", "args": [0], "callees": {"0x004333D6": null, "0x004A46F6": null}},
+    {"name": "blocked move clears pending but retains column", "args": [1], "callees": {"0x004333D6": {"conv": "thiscall", "args": ["int", "int", "int", "int", "int"], "ret": 0}}},
+    {"name": "negative success result is nonzero", "args": [-1], "callees": {"0x004333D6": {"conv": "thiscall", "args": ["int", "int", "int", "int", "int"], "ret": -1}}},
+    {"name": "left edge delegated to TryMove", "args": [-1], "memory": [{"addr": "@columns+0x9F4", "u32": 0}], "callees": {"0x004333D6": {"conv": "thiscall", "args": ["int", "int", "int", "int", "int"], "ret": 0}}},
+    {"name": "right edge delegated to TryMove", "args": [1], "memory": [{"addr": "@columns+0x9F4", "u32": 9}], "callees": {"0x004333D6": {"conv": "thiscall", "args": ["int", "int", "int", "int", "int"], "ret": 0}}},
+    {"name": "7e3 locks movement", "args": [1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x7E3"}], "callees": {"0x004333D6": null, "0x004A46F6": null}},
+    {"name": "7e3 zero still no-op", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x7E3"}], "callees": {"0x004333D6": null, "0x004A46F6": null}},
+    {"name": "7e2 neighbor moves", "args": [1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x7E2"}]},
+    {"name": "7e4 neighbor moves", "args": [-1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x7E4"}]},
+    {"name": "80b mirrors left", "args": [-1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x80B"}]},
+    {"name": "80b mirrors right", "args": [1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x80B"}]},
+    {"name": "80b zero no-op", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x80B"}], "callees": {"0x004333D6": null, "0x004A46F6": null}},
+    {"name": "80b minimum int negation", "args": [-2147483648], "memory": [{"addr": "@columns+0x9D4", "u32": "0x80B"}]},
+    {"name": "random zero moves left even with zero dir", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x849"}]},
+    {"name": "random one moves left", "args": [1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x849"}], "callees": {"0x004A46F6": {"conv": "cdecl", "args": ["int", "int"], "ret": 1}}},
+    {"name": "random two moves right", "args": [-1], "memory": [{"addr": "@columns+0x9D4", "u32": "0x849"}], "callees": {"0x004A46F6": {"conv": "cdecl", "args": ["int", "int"], "ret": 2}}},
+    {"name": "random four moves right", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x849"}], "callees": {"0x004A46F6": {"conv": "cdecl", "args": ["int", "int"], "ret": 4}}},
+    {"name": "negative random result moves right", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x849"}], "callees": {"0x004A46F6": {"conv": "cdecl", "args": ["int", "int"], "ret": -1}}},
+    {"name": "random move rejected", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x849"}], "callees": {"0x004333D6": {"conv": "thiscall", "args": ["int", "int", "int", "int", "int"], "ret": 0}}},
+    {"name": "848 neighbor does not randomize zero", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x848"}], "callees": {"0x004333D6": null, "0x004A46F6": null}},
+    {"name": "84a neighbor does not randomize zero", "args": [0], "memory": [{"addr": "@columns+0x9D4", "u32": "0x84A"}], "callees": {"0x004333D6": null, "0x004A46F6": null}},
+    {"name": "column addition wraps", "args": [1], "memory": [{"addr": "@columns+0x9F4", "u32": "0x7FFFFFFF"}]},
+    {"name": "column subtraction wraps", "args": [-1], "memory": [{"addr": "@columns+0x9F4", "u32": "0x80000000"}]}
+  ],
+  "fuzz": {
+    "seed": 4404055, "count": 120,
+    "args": [{"choices": [-2147483648, -5, -2, -1, 0, 1, 2, 5, 2147483647]}],
+    "memory": [
+      {"addr": "@columns+0x9D4", "type": "int", "choices": [-1, 0, 2018, 2019, 2020, 2058, 2059, 2060, 2120, 2121, 2122]},
+      {"addr": "@columns+0x9D8", "type": "int"},
+      {"addr": "@columns+0x9F4", "type": "int", "choices": [-2147483648, -1, 0, 1, 8, 9, 10, 2147483647]},
+      {"addr": "@columns+0x9F8", "type": "int", "choices": [-1, 0, 1, 10, 11, 12]}
+    ]
+  }
+}

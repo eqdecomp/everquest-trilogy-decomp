@@ -1,0 +1,255 @@
+{
+  "function": "EQ_HSlider_draw_guess",
+  "original": "0x004860e5",
+  "sources": [
+    "src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "slider",
+      "type": "ptr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "slider": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": 11},
+        {"offset": "0x28", "u32": 13},
+        {"offset": "0x70", "u32": "@element1"},
+        {"offset": "0xd0", "u16": 17},
+        {"offset": "0xd4", "u16": 19},
+        {"offset": "0x1cc", "u16": 65535},
+        {"offset": "0x1d8", "u32": 42},
+        {"offset": "0x1ec", "u32": 0}
+      ]
+    },
+    "element1": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 0},
+        {"offset": "0x20", "u32": 0}
+      ]
+    },
+    "element2": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u16": 1},
+        {"offset": "0x20", "u32": 0}
+      ]
+    },
+    "overlay_state": {
+      "size": "0xec0",
+      "fill": "zero"
+    },
+    "image_slot": {
+      "size": "0x14",
+      "fill": "zero"
+    },
+    "image_source": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 305419896}
+      ]
+    },
+    "setrect": {
+      "size": "0x1",
+      "fill": "zero"
+    },
+    "copyrect": {
+      "size": "0x1",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": "@overlay_state"},
+    {"addr": "0x006efc80", "u32": 320},
+    {"addr": "0x006efc84", "u32": 250},
+    {"addr": "0x00534248", "u32": "@setrect"},
+    {"addr": "0x00534240", "u32": "@copyrect"},
+    {"addr": "0x006b341c", "u32": "@image_slot"},
+    {"addr": "0x006e4e3c", "u32": "@image_source"},
+    {"addr": "0x006b38ac", "u32": "0x00720003"},
+    {"addr": "0x006b38a8", "u32": "0x00720002"},
+    {"addr": "0x006b37c0", "u32": "0x00720001"},
+    {"addr": "0x006b3640", "u32": "0x00720004"},
+    {"addr": "0x0053e16c", "cstr": "slider value %d"},
+    {"addr": "0x006e4e68", "u32": "0x00730001"},
+    {"addr": "0x006efdfc", "u32": 16711935}
+  ],
+  "callees": {
+    "0x004504ac": {
+      "name": "EQ_Overlay::IsActive_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 1
+    },
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x00419583": {
+      "name": "RectElement_guess::SetRect_Win32_guess",
+      "conv": "thiscall",
+      "args": ["int", "int"]
+    },
+    "@copyrect": {
+      "name": "CopyRect",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": 1
+    },
+    "0x004384b2": {
+      "name": "EQ_Image::draw_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int"]
+    },
+    "0x0048d21a": {
+      "name": "EQ_TextO::WriteTextHD_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int", "int", "int", "int", "int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "overlay inactive returns before touching slider",
+      "args": ["@slider", 0],
+      "callees": {
+        "0x004504ac": {
+          "name": "EQ_Overlay::IsActive_guess",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "draw with sentinel selector and no drag",
+      "args": ["@slider", 1]
+    },
+    {
+      "name": "drag clamps both coordinates high and walks one element",
+      "args": ["@slider", -1],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1ec", "u32": 1},
+        {"addr": "@slider", "offset": "0x24", "u32": 100},
+        {"addr": "@slider", "offset": "0x28", "u32": 120},
+        {"addr": "0x006efc80", "u32": 900},
+        {"addr": "0x006efc84", "u32": 800}
+      ]
+    },
+    {
+      "name": "drag clamps both coordinates low",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1ec", "u32": 1},
+        {"addr": "@slider", "offset": "0x24", "u32": 90},
+        {"addr": "@slider", "offset": "0x28", "u32": 110},
+        {"addr": "0x006efc80", "u32": 4294967295},
+        {"addr": "0x006efc84", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "drag keeps inclusive maximum boundaries",
+      "args": ["@slider", 3],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1ec", "u32": 1},
+        {"addr": "@slider", "offset": "0x24", "u32": 512},
+        {"addr": "@slider", "offset": "0x28", "u32": 416},
+        {"addr": "0x006efc80", "u32": 512},
+        {"addr": "0x006efc84", "u32": 416}
+      ]
+    },
+    {
+      "name": "selector one",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1cc", "u16": 1},
+        {"addr": "@slider", "offset": "0x1d8", "u32": 0}
+      ]
+    },
+    {
+      "name": "selector two",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1cc", "u16": 2},
+        {"addr": "@slider", "offset": "0x1d8", "u32": 2147483647}
+      ]
+    },
+    {
+      "name": "selector three",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1cc", "u16": 3}
+      ]
+    },
+    {
+      "name": "invalid selector skips optional image",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1cc", "u16": 4}
+      ]
+    },
+    {
+      "name": "selector zero skips optional image",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1cc", "u16": 0}
+      ]
+    },
+    {
+      "name": "two elements update in list order",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1ec", "u32": 1},
+        {"addr": "@element1", "offset": "0x14", "u16": 0},
+        {"addr": "@element1", "offset": "0x20", "u32": "@element2"},
+        {"addr": "@element2", "offset": "0x14", "u16": 2},
+        {"addr": "0x006efc80", "u32": 300},
+        {"addr": "0x006efc84", "u32": 200}
+      ]
+    },
+    {
+      "name": "drag x high with y low",
+      "args": ["@slider", 0],
+      "memory": [
+        {"addr": "@slider", "offset": "0x1ec", "u32": 1},
+        {"addr": "0x006efc80", "u32": 700},
+        {"addr": "0x006efc84", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4743397,
+    "count": 40,
+    "args": [
+      {"choices": ["@slider"]},
+      {"range": [-8, 8]}
+    ],
+    "memory": [
+      {"addr": "@slider", "offset": "0x24", "type": "int", "range": [-40, 700]},
+      {"addr": "@slider", "offset": "0x28", "type": "int", "range": [-40, 500]},
+      {"addr": "@slider", "offset": "0x70", "type": "ptr", "choices": ["0", "@element1"]},
+      {"addr": "@slider", "offset": "0x1cc", "type": "short", "choices": [-1, 0, 1, 2, 3, 4]},
+      {"addr": "@slider", "offset": "0x1d8", "type": "int", "range": [-2147483648, 2147483647]},
+      {"addr": "@slider", "offset": "0x1ec", "type": "int", "choices": [0, 1, 2]},
+      {"addr": "@element1", "offset": "0x14", "type": "short", "range": [0, 10]},
+      {"addr": "@element1", "offset": "0x20", "type": "ptr", "choices": ["0", "@element2"]},
+      {"addr": "0x006efc80", "type": "int", "range": [-80, 720]},
+      {"addr": "0x006efc84", "type": "int", "range": [-80, 520]}
+    ]
+  }
+}

@@ -1,0 +1,283 @@
+{
+  "function": "DestroyResourceAndDecrementRefCount_guess",
+  "original": "0x004fb960",
+  "sources": [
+    "src/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "blob": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "fz": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "one": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "two": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "zero": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "neg": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 4294967295
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "minint": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2147483648
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "maxint": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 2147483647
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "big": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1000
+        },
+        {
+          "offset": "0x8",
+          "u32": "@blob"
+        }
+      ]
+    },
+    "nodata": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    "selfobj": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x0badf00d"
+        },
+        {
+          "offset": "0x4",
+          "u32": 1
+        },
+        {
+          "offset": "0x8",
+          "u32": "@selfobj"
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x005360f4",
+      "from_image": "0x005360F4",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x005241f2": {
+      "name": "trigger_fatal_error_exit19_guess (slot 0 of the vtable at 0x005360f4)",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "count 1 -> 0 frees the data and calls slot 0 with 1",
+      "args": [
+        "@one"
+      ]
+    },
+    {
+      "name": "count 2 -> 1 frees the data and keeps",
+      "args": [
+        "@two"
+      ]
+    },
+    {
+      "name": "count 0 -> -1 keeps",
+      "args": [
+        "@zero"
+      ]
+    },
+    {
+      "name": "count -1 -> -2 keeps",
+      "args": [
+        "@neg"
+      ]
+    },
+    {
+      "name": "count INT_MIN -> INT_MAX keeps (the decrement wraps)",
+      "args": [
+        "@minint"
+      ]
+    },
+    {
+      "name": "count INT_MAX -> INT_MAX-1 keeps",
+      "args": [
+        "@maxint"
+      ]
+    },
+    {
+      "name": "count 1000 -> 999 keeps",
+      "args": [
+        "@big"
+      ]
+    },
+    {
+      "name": "count 1 -> 0 with a null data pointer still deletes(0) and calls slot 0",
+      "args": [
+        "@nodata"
+      ]
+    },
+    {
+      "name": "count 1 -> 0 with the data pointer at the object: delete sees the vtable as 0x0053610c",
+      "args": [
+        "@selfobj"
+      ],
+      "callees": {
+        "0x005218bb": {
+          "name": "operator_delete_guess",
+          "conv": "cdecl",
+          "args": [
+            "mem:4"
+          ]
+        }
+      }
+    },
+    {
+      "name": "null pointer faults on the first read of the data pointer",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5224800,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@fz"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@fz",
+        "offset": "0x4",
+        "type": "int"
+      },
+      {
+        "addr": "@fz",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@blob",
+          0
+        ]
+      }
+    ]
+  }
+}

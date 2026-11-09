@@ -1,0 +1,90 @@
+{
+  "function": "CDisplay::SetEyeMaterial",
+  "original": "0x004068DC",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "thiscall",
+  "this": "@display",
+  "args": ["ptr", "int", "int"],
+  "ret": "int",
+  "objects": {
+    "display": {"size": "0x2e00", "fill": "zero"},
+    "replacement": {"size": "0x2a0", "fill": "zero"},
+    "player": {"size": "0x134", "fill": "zero"},
+    "info": {"size": "0x2a0", "fill": "zero"},
+    "anim": {"size": "0x3a0", "fill": "zero"},
+    "hier": {"size": "0x20", "fill": "zero"},
+    "skin": {"size": "0x20", "fill": "zero"},
+    "palette": {"size": "0x40", "fill": "zero"},
+    "definition": {"size": "0x20", "fill": "zero"},
+    "get_skin": {"size": 16},
+    "get_palette": {"size": 16},
+    "get_count": {"size": 16},
+    "get_dictionary": {"size": 16},
+    "set_entry": {"size": 16}
+  },
+  "memory": [
+    {"addr": "0x006E5114", "u32": "@get_skin"},
+    {"addr": "0x006E5100", "u32": "@get_palette"},
+    {"addr": "0x006E5108", "u32": "@get_count"},
+    {"addr": "0x006E52E0", "u32": "@get_dictionary"},
+    {"addr": "0x006E513C", "u32": "@set_entry"},
+    {"addr": "@display+0x4", "u32": "0x11111111"},
+    {"addr": "@player+0x70", "u32": "@info"},
+    {"addr": "@player+0x9a", "u16": 1},
+    {"addr": "@info+0x178", "u32": "@anim"},
+    {"addr": "@info+0x250", "u32": "@hier"},
+    {"addr": "@info+0x298", "u32": 0},
+    {"addr": "@info+0x29c", "u32": 1},
+    {"addr": "@anim+0x39c", "u8": 1}
+  ],
+  "callees": {
+    "0x005224FB": {"name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "@get_skin": {"name": "s3dGetSkinAttachedToHierarchicalSprite", "conv": "cdecl", "args": ["int", "ptr"], "ret": "@skin"},
+    "@get_palette": {"name": "s3dGetDMSpriteMaterialPalette", "conv": "cdecl", "args": ["ptr"], "ret": "@palette"},
+    "@get_count": {"name": "s3dGetNumMaterialPaletteEntries", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 2},
+    "@get_dictionary": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition"},
+    "@set_entry": {"name": "s3dSetMaterialPaletteEntry", "conv": "cdecl", "args": ["ptr", "ptr", "int", "ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "null player", "args": [0, 0, 3], "expect": {"ret": 0}},
+    {"name": "no actor info", "args": ["@player", 0, 3], "memory": [{"addr": "@player+0x70", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "no animation set", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x178", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "null animation pointer with a nonzero preceding byte still returns", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x178", "u32": 0}, {"addr": "@info+0x177", "u8": 1}], "expect": {"ret": 0}},
+    {"name": "null animation pointer with a nonzero following byte still returns", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x178", "u32": 0}, {"addr": "@info+0x17c", "u8": 1}], "expect": {"ret": 0}},
+    {"name": "animation set lacks eye materials", "args": ["@player", 0, 3], "memory": [{"addr": "@anim+0x39c", "u8": 0}], "expect": {"ret": 0}},
+    {"name": "right eye index is negative at entry", "args": ["@player", 1, 3], "memory": [{"addr": "@info+0x29c", "u32": "0xffffffff"}], "expect": {"ret": 0}},
+    {"name": "sign-bit index is rejected before helper calls", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x29c", "u32": "0x80000000"}], "expect": {"ret": 0}},
+    {"name": "zero right index is accepted by the strict negative check", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x29c", "u32": 0}], "expect": {"ret": 1}},
+    {"name": "material sentinel rejected", "args": ["@player", 0, 255], "expect": {"ret": 0}},
+    {"name": "no hierarchical sprite", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x250", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "skin helper returns null", "args": ["@player", 0, 3], "callees": {"@get_skin": {"name": "skin", "conv": "cdecl", "args": ["int", "ptr"], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "palette helper returns null", "args": ["@player", 0, 3], "callees": {"@get_palette": {"name": "palette", "conv": "cdecl", "args": ["ptr"], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "left eye succeeds for low byte zero", "args": ["@player", 0, 3], "expect": {"ret": 1}},
+    {"name": "right eye succeeds for low byte one", "args": ["@player", 1, 3], "expect": {"ret": 1}},
+    {"name": "dictionary miss returns zero", "args": ["@player", 0, 3], "callees": {"@get_dictionary": {"name": "dictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "dictionary value one is still nonzero", "args": ["@player", 0, 3], "callees": {"@get_dictionary": {"name": "dictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 1}}, "expect": {"ret": 1}},
+    {"name": "upper argument bits do not change left/right byte flag", "args": ["@player", 257, 3], "expect": {"ret": 1}},
+    {"name": "left eye with high flag bits still uses the left material index", "args": ["@player", 256, 3], "expect": {"ret": 1}},
+    {"name": "left eye index equals entry count", "args": ["@player", 0, 3], "memory": [{"addr": "@info+0x298", "u32": 2}], "expect": {"ret": 0}},
+    {"name": "count helper returns zero", "args": ["@player", 0, 3], "callees": {"@get_count": {"name": "count", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "species race material offsets", "args": ["@player", 0, 7], "memory": [{"addr": "@player+0x9a", "u16": 6}], "expect": {"ret": 1}},
+    {"name": "race 9 adds one hundred", "args": ["@player", 0, 7], "memory": [{"addr": "@player+0x9a", "u16": 9}], "expect": {"ret": 1}},
+    {"name": "race 10 adds 0x50", "args": ["@player", 0, 7], "memory": [{"addr": "@player+0x9a", "u16": 10}], "expect": {"ret": 1}},
+    {"name": "race 0x80 adds 0x28", "args": ["@player", 0, 7], "memory": [{"addr": "@player+0x9a", "u16": 128}], "expect": {"ret": 1}},
+    {"name": "race 0x82 adds 0x3c", "args": ["@player", 0, 7], "memory": [{"addr": "@player+0x9a", "u16": 130}], "expect": {"ret": 1}},
+    {
+      "name": "actor info and display world are reloaded after helper calls",
+      "args": ["@player", 0, 3],
+      "memory": [
+        {"addr": "@replacement+0x298", "u32": 1},
+        {"addr": "@display+0x4", "u32": "0x11111111"}
+      ],
+      "callees": {
+        "@get_skin": {"name": "skin", "conv": "cdecl", "args": ["int", "ptr"], "ret": "@skin", "writes": [{"addr": "@player+0x70", "hex": "002e0060"}]},
+        "@get_count": {"name": "count", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 2, "writes": [{"addr": "@display+0x4", "hex": "22222222"}]},
+        "@get_dictionary": {"name": "dictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@definition", "writes": [{"addr": "@display+0x4", "hex": "33333333"}]}
+      }
+    }
+  ],
+  "fuzz": {"seed": 875680, "count": 30, "args": [{"choices": ["@player", 0]}, {"choices": [0, 1, 256, 257]}, {"range": [0, 260]}]}
+}

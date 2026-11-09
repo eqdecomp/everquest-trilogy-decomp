@@ -1,0 +1,45 @@
+{
+  "function": "showErrorDialog_guess",
+  "original": "0x004059D2",
+  "sources": ["src/EverQuest/login.cpp"],
+  "rewrite": "showErrorDialog_guess",
+  "conv": "cdecl",
+  "args": [
+    {"name": "instance", "type": "ptr"},
+    {"name": "parent", "type": "ptr"},
+    {"name": "title", "type": "u32"},
+    {"name": "body", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "dialogbox": {"size": "0x4", "fill": "zero"},
+    "instance": {"size": "0x4", "fill": "zero"},
+    "parent": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x00534260", "u32": "@dialogbox"},
+    {"addr": "0x0058FBAC", "u32": 0},
+    {"addr": "0x0058FBA8", "u32": 0}
+  ],
+  "callees": {
+    "@dialogbox": {"name": "DialogBoxParamA", "conv": "stdcall", "args": ["ptr", "ptr", "ptr", "ptr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "stores distinct title and body before modal call", "args": ["@instance", "@parent", "0x11112222", "0x33334444"]},
+    {"name": "zero pointers overwrite prior globals", "args": ["@instance", "@parent", 0, 0]},
+    {"name": "preserve high-bit pointer values", "args": ["@instance", "@parent", "0x80000001", "0xFEDCBA98"]},
+    {"name": "swapped values remain distinct", "args": ["@instance", "@parent", "0xABCD1234", "0x1234ABCD"]},
+    {"name": "modal helper mutations remain after stores", "args": ["@instance", "@parent", "0x55556666", "0x77778888"], "callees": {
+      "@dialogbox": {"name": "DialogBoxParamA", "conv": "stdcall", "args": ["ptr", "ptr", "ptr", "ptr", "int"], "ret": 0, "writes": [
+        {"addr": "0x0058FBAC", "hex": "efbeadde"},
+        {"addr": "0x0058FBA8", "hex": "0df0ad0b"}
+      ]}
+    }}
+  ],
+  "fuzz": {"seed": 10218542, "count": 30, "args": [
+    {"choices": ["@instance"]},
+    {"choices": ["@parent"]},
+    {"choices": [0, 1, 286335522, 2147483649, 4294967295]},
+    {"choices": [0, 2, 858997828, 4275878552, 2147483647]}
+  ]}
+}

@@ -1,0 +1,59 @@
+{
+  "function": "t3dSetRenderContextHybridColorModel",
+  "original": "0x1004328a",
+  "sources": ["src/eqgfx/unit_10042A22.c"],
+  "conv": "cdecl",
+  "args": [{"name": "renderContext", "type": "ptr"}, {"name": "enabled", "type": "int"}],
+  "ret": "int",
+  "max_insns": 2000000,
+  "objects": {"rendercontext": {"size": "0x44d8", "fill": "random", "init": [{"offset": "0x138", "u32": 0}, {"offset": "0x4d4", "u32": "0x12345678"}]}},
+  "memory": [
+    {"addr": "0x10076354", "f32": 1.0},
+    {"addr": "0x10076350", "f32": 1.0},
+    {"addr": "0x100762e8", "f32": 1.0},
+    {"addr": "0x1007634c", "f32": 0.0}
+  ],
+  "callees": {
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0},
+    "0x1004ec36": {"name": "t3dFloatTruncateToInt_guess", "conv": "cdecl", "args": [], "passthrough": true}
+  },
+  "cases": [
+    {
+      "name": "successful allocation fills table before writing enabled field",
+      "args": ["@rendercontext", 1],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@rendercontext+0x4d4"}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocation failure leaves enabled field unchanged",
+      "args": ["@rendercontext", 1],
+      "memory": [{"addr": "@rendercontext", "offset": "0x138", "u32": 0}, {"addr": "@rendercontext", "offset": "0x4d4", "u32": "0x12345678"}],
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "disabled with no table stores zero",
+      "args": ["@rendercontext", 0],
+      "memory": [{"addr": "@rendercontext", "offset": "0x138", "u32": 0}, {"addr": "@rendercontext", "offset": "0x4d4", "u32": "0x12345678"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "existing table skips allocation and stores nonzero flag",
+      "args": ["@rendercontext", -1],
+      "memory": [{"addr": "@rendercontext", "offset": "0x138", "u32": "@rendercontext+0x4d4"}, {"addr": "@rendercontext", "offset": "0x4d4", "u32": "0x87654321"}],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 275082,
+    "count": 32,
+    "args": [{"choices": ["@rendercontext"]}, {"choices": [0, 1, -1, 2, -2]}],
+    "memory": [
+      {"addr": "@rendercontext", "offset": "0x138", "type": "ptr", "choices": [0, "@rendercontext+0x4d4"]},
+      {"addr": "@rendercontext", "offset": "0x4d4", "type": "int", "range": [-2147483648, 2147483647]},
+      {"addr": "0x10076354", "type": "float", "choices": [-1.0, 0.0, 0.5, 1.0]},
+      {"addr": "0x10076350", "type": "float", "choices": [-1.0, 0.0, 0.5, 1.0]},
+      {"addr": "0x100762e8", "type": "float", "choices": [-1.0, 0.0, 0.5, 1.0]},
+      {"addr": "0x1007634c", "type": "float", "choices": [-1.0, 0.0, 0.5, 1.0]}
+    ]
+  }
+}

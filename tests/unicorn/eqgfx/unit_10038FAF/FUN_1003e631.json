@@ -1,0 +1,168 @@
+{
+  "function": "projectActiveVerticesWithFogToScreen_guess",
+  "original": "0x1003e631",
+  "sources": [
+    "src/eqgfx/unit_10038FAF.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "count", "type": "int"},
+    {"name": "nextIndex", "type": "int"},
+    {"name": "active", "type": "ptr"},
+    {"name": "pos", "type": "ptr"},
+    {"name": "shape", "type": "ptr"},
+    {"name": "tint", "type": "ptr"},
+    {"name": "xform", "type": "ptr"},
+    {"name": "out", "type": "ptr"},
+    {"name": "remap", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "active": {"size": "0x200", "fill": "zero", "init": [{"offset": "0x0", "u8": 1}]},
+    "pos": {"size": "0x200", "fill": "zero", "init": [{"offset": "0x0", "f32": 2.0}, {"offset": "0x4", "f32": 3.0}, {"offset": "0x8", "f32": 4.0}]},
+    "tint": {"size": "0x200", "fill": "zero", "init": [{"offset": "0x0", "u32": 17}, {"offset": "0x4", "u32": 34}, {"offset": "0x8", "u32": 51}]},
+    "shape": {"size": "0x200", "fill": "zero", "init": [{"offset": "0x6", "f32": 0.25}, {"offset": "0xa", "f32": 0.75}]},
+    "xform": {"size": "0x100", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": 128},
+      {"offset": "0x4", "f32": 0.5},
+      {"offset": "0x8", "f32": 1.0},
+      {"offset": "0xc", "f32": 0.125},
+      {"offset": "0x10", "f32": -0.25},
+      {"offset": "0x14", "f32": 320.0},
+      {"offset": "0x18", "f32": 240.0},
+      {"offset": "0x1c", "f32": 320.0},
+      {"offset": "0x20", "f32": 240.0},
+      {"offset": "0x24", "f32": 1.0},
+      {"offset": "0x28", "f32": 0.5}
+    ]},
+    "out": {"size": "0x200", "fill": "random"},
+    "remap": {"size": "0x200", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1004ec8d": {"name": "t3dFloatRoundToInt_guess", "conv": "cdecl", "args": ["float", "ignore"], "passthrough": true}
+  },
+  "cases": [
+    {
+      "name": "count zero returns out untouched",
+      "args": [0, 7, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"]
+    },
+    {
+      "name": "single inactive vert writes nothing",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "u8": 0},
+        {"addr": "@remap", "u32": 4660}
+      ]
+    },
+    {
+      "name": "single active vert, typical",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"]
+    },
+    {
+      "name": "active byte with high bit set is still active",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "u8": 128}
+      ]
+    },
+    {
+      "name": "zero depth divides to infinite rhw",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@pos", "offset": "0x8", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "inactive middle vert keeps its remap slot",
+      "args": [3, 10, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "memory": [
+        {"addr": "@active", "offset": "0x1", "u8": 0},
+        {"addr": "@active", "offset": "0x2", "u8": 2},
+        {"addr": "@remap", "offset": "0x4", "u32": 4660},
+        {"addr": "@pos", "offset": "0xc", "f32": 1.0},
+        {"addr": "@pos", "offset": "0x10", "f32": -1.0},
+        {"addr": "@pos", "offset": "0x14", "f32": 2.0},
+        {"addr": "@pos", "offset": "0x18", "f32": 0.5},
+        {"addr": "@pos", "offset": "0x1c", "f32": 0.25},
+        {"addr": "@pos", "offset": "0x20", "f32": 8.0},
+        {"addr": "@shape", "offset": "0x2e", "f32": 0.5},
+        {"addr": "@shape", "offset": "0x32", "f32": 1.5}
+      ]
+    },
+    {
+      "name": "fog above 255 clamps to alpha 0",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "2c010000"}]}
+      }
+    },
+    {
+      "name": "fog exactly 256 clamps to alpha 0",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "00010000"}]}
+      }
+    },
+    {
+      "name": "fog exactly 255 gives alpha 0",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "ff000000"}]}
+      }
+    },
+    {
+      "name": "fog 128 gives alpha 127",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "80000000"}]}
+      }
+    },
+    {
+      "name": "fog 1 gives alpha 254",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "01000000"}]}
+      }
+    },
+    {
+      "name": "fog 0 gives alpha 255",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}]}
+      }
+    },
+    {
+      "name": "fog -1 clamps to alpha 255",
+      "args": [1, 5, "@active", "@pos", "@shape", "@tint", "@xform", "@out", "@remap"],
+      "callees": {
+        "0x1004ec8d": {"name": "FUN_1004ec8d", "conv": "cdecl", "args": ["float", "ignore"], "writes": [{"arg": 1, "offset": 0, "hex": "ffffffff"}]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1003631,
+    "count": 40,
+    "args": [
+      {"range": [0, 10]},
+      {"range": [-4, 30]},
+      {"choices": ["@active"]},
+      {"choices": ["@pos"]},
+      {"choices": ["@shape"]},
+      {"choices": ["@tint"]},
+      {"choices": ["@xform"]},
+      {"choices": ["@out"]},
+      {"choices": ["@remap"]}
+    ],
+    "memory": [
+      {"addr": "@active", "type": "u8", "count": 12, "choices": [0, 1, 2, 128, 255]},
+      {"addr": "@pos", "type": "float", "count": 36, "range": [-30, 30]},
+      {"addr": "@tint", "type": "u32", "count": 36},
+      {"addr": "@shape", "offset": "0x6", "type": "float", "count": 12, "stride": 20, "range": [-4, 4]},
+      {"addr": "@shape", "offset": "0xa", "type": "float", "count": 12, "stride": 20, "range": [-4, 4]},
+      {"addr": "@xform", "offset": "0x0", "type": "u32", "range": [0, 255]},
+      {"addr": "@xform", "offset": "0x4", "type": "float", "range": [-100, 100]},
+      {"addr": "@xform", "offset": "0x8", "type": "float", "count": 9, "range": [-4, 4]}
+    ]
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "function": "EQMain_IsValidDate_guess",
+  "original": "0x10010e40",
+  "sources": [
+    "src/eqmain/unit_10010DC0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    }
+  ],
+  "ret": "char",
+  "objects": {
+    "text": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tiddata": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10033996": {
+      "name": "_strtok",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr"],
+      "passthrough": true
+    },
+    "0x10033861": {
+      "name": "_isdigit",
+      "conv": "cdecl",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x1003507e": {
+      "name": "_atoi",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "kernel32.dll!TlsGetValue": {
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": "@tiddata"
+    },
+    "kernel32.dll!GetLastError": {
+      "conv": "stdcall",
+      "ret": 0
+    },
+    "kernel32.dll!SetLastError": {
+      "conv": "stdcall",
+      "args": ["int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "empty", "args": [""], "expect": {"ret": 0}},
+    {"name": "delims_only", "args": ["//-."], "expect": {"ret": 0}},
+    {"name": "slash_only", "args": ["/"], "expect": {"ret": 0}},
+    {"name": "dot_only", "args": ["."], "expect": {"ret": 0}},
+    {"name": "one_token", "args": ["01"], "expect": {"ret": 0}},
+    {"name": "two_tokens", "args": ["01/02"], "expect": {"ret": 0}},
+    {"name": "delims_after_month", "args": ["01///"], "expect": {"ret": 0}},
+    {"name": "no_year_token", "args": ["01/02/"], "expect": {"ret": 0}},
+    {"name": "month_len1", "args": ["1/01/2000"], "expect": {"ret": 0}},
+    {"name": "month_len3", "args": ["123/01/2000"], "expect": {"ret": 0}},
+    {"name": "month_leading_space", "args": [" 01/02/2000"], "expect": {"ret": 0}},
+    {"name": "month_first_nondigit", "args": ["a1/01/2000"], "expect": {"ret": 0}},
+    {"name": "month_second_nondigit", "args": ["1a/01/2000"], "expect": {"ret": 0}},
+    {"name": "month_zero", "args": ["00/01/2000"], "expect": {"ret": 0}},
+    {"name": "month_13", "args": ["13/01/2000"], "expect": {"ret": 0}},
+    {"name": "month_99_day_99_year_9999", "args": ["99/99/9999"], "expect": {"ret": 0}},
+    {"name": "month_12", "args": ["12/01/2000"], "expect": {"ret": 1}},
+    {"name": "month_01_year_1900", "args": ["01/01/1900"], "expect": {"ret": 1}},
+    {"name": "dashes_09_09_1999", "args": ["09-09-1999"], "expect": {"ret": 1}},
+    {"name": "day_zero", "args": ["01/00/2000"], "expect": {"ret": 0}},
+    {"name": "day_32", "args": ["01/32/2000"], "expect": {"ret": 0}},
+    {"name": "day_31", "args": ["01/31/2000"], "expect": {"ret": 1}},
+    {"name": "day_len1", "args": ["01/1/2000"], "expect": {"ret": 0}},
+    {"name": "day_len3", "args": ["01/123/2000"], "expect": {"ret": 0}},
+    {"name": "day_first_nondigit", "args": ["01/a2/2000"], "expect": {"ret": 0}},
+    {"name": "day_second_nondigit", "args": ["01/2a/2000"], "expect": {"ret": 0}},
+    {"name": "year_len3", "args": ["01/02/200"], "expect": {"ret": 0}},
+    {"name": "year_len5", "args": ["01/02/20001"], "expect": {"ret": 0}},
+    {"name": "year_sign", "args": ["01/02/-200"], "expect": {"ret": 0}},
+    {"name": "year_nondigit_0", "args": ["01/02/a000"], "expect": {"ret": 0}},
+    {"name": "year_nondigit_1", "args": ["01/02/1a00"], "expect": {"ret": 0}},
+    {"name": "year_nondigit_2", "args": ["01/02/19a0"], "expect": {"ret": 0}},
+    {"name": "year_nondigit_3", "args": ["01/02/190a"], "expect": {"ret": 0}},
+    {"name": "year_1899", "args": ["01/02/1899"], "expect": {"ret": 0}},
+    {"name": "year_1900", "args": ["01/02/1900"], "expect": {"ret": 1}},
+    {"name": "year_2100", "args": ["12/31/2100"], "expect": {"ret": 1}},
+    {"name": "year_2101", "args": ["12/31/2101"], "expect": {"ret": 0}},
+    {"name": "mixed_delims", "args": ["01-02.2000"], "expect": {"ret": 1}},
+    {"name": "dot_then_slash", "args": ["01.02/2000"], "expect": {"ret": 1}},
+    {"name": "leading_and_double_delims", "args": ["/01//02///2000"], "expect": {"ret": 1}},
+    {"name": "trailing_delim", "args": ["01/02/2000/"], "expect": {"ret": 1}},
+    {"name": "extra_token", "args": ["01/02/2000/x"], "expect": {"ret": 1}},
+    {"name": "len15_extra_token", "args": ["01/02/2000/abcd"], "expect": {"ret": 1}},
+    {"name": "year_trailing_space", "args": ["01/02/2000 "], "expect": {"ret": 0}},
+    {"name": "typical_06_15_1985", "args": ["06/15/1985"], "expect": {"ret": 1}}
+  ],
+  "fuzz": {
+    "seed": 20261010,
+    "count": 40,
+    "args": [
+      {"choices": ["@text"]}
+    ],
+    "memory": [
+      {"addr": "@text", "type": "u8", "count": 2, "choices": [48, 48, 48, 49, 49, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97]},
+      {"addr": "@text", "offset": "0x2", "type": "u8", "choices": [47, 47, 45, 46], "p": 0.9},
+      {"addr": "@text", "offset": "0x3", "type": "u8", "count": 2, "choices": [48, 48, 49, 49, 50, 51, 52, 53, 54, 55, 56, 57]},
+      {"addr": "@text", "offset": "0x5", "type": "u8", "choices": [47, 47, 45, 46], "p": 0.9},
+      {"addr": "@text", "offset": "0x6", "type": "u8", "choices": [49, 49, 49, 50, 50, 48, 53]},
+      {"addr": "@text", "offset": "0x7", "type": "u8", "choices": [57, 57, 57, 48, 48, 56, 55]},
+      {"addr": "@text", "offset": "0x8", "type": "u8", "count": 2, "choices": [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]},
+      {"addr": "@text", "offset": "0xa", "type": "u8", "choices": [47, 48, 49, 32, 97], "p": 0.1}
+    ]
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "function": "EQMain_ReadEquName_guess",
+  "original": "0x1001a260",
+  "sources": [
+    "src/eqmain/unit_10018B60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u8",
+  "objects": {
+    "dst": {"size": "0x200", "fill": "random"},
+    "dst2": {"size": "0x200", "fill": "random"},
+    "file": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1003407f": {
+      "name": "fopen_guess",
+      "conv": "cdecl",
+      "args": ["cstr", "ptr"],
+      "ret": "@file"
+    },
+    "0x100342a2": {
+      "name": "fread_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "u32", "ptr"],
+      "ret": 1,
+      "writes": [{"arg": 0, "hex": "00"}]
+    },
+    "0x100343b9": {
+      "name": "fclose_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "fopen fails: base string copied, returns 0",
+      "args": ["@dst"],
+      "callees": {
+        "0x1003407f": {"name": "fopen_guess", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "first byte NUL: len 0 falls back",
+      "args": ["@dst"]
+    },
+    {
+      "name": "len 1: shortest copy",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "4100"}]}
+      }
+    },
+    {
+      "name": "len 2: count 3",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "414100"}]}
+      }
+    },
+    {
+      "name": "len 3: count 4",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "41414100"}]}
+      }
+    },
+    {
+      "name": "len 4: count 5",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "4141414100"}]}
+      }
+    },
+    {
+      "name": "len 7: count 8",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "4141414141414100"}]}
+      }
+    },
+    {
+      "name": "len 19: longest success",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "4141414141414141414141414141414141414100"}]}
+      }
+    },
+    {
+      "name": "20 bytes, no NUL: strlen runs past the local",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "4141414141414141414141414141414141414141"}]}
+      }
+    },
+    {
+      "name": "fread returns 0 but wrote data: result ignored",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 0, "writes": [{"arg": 0, "hex": "4100"}]}
+      }
+    },
+    {
+      "name": "fclose returns -1: result ignored",
+      "args": ["@dst"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "4100"}]},
+        "0x100343b9": {"name": "fclose_guess", "conv": "cdecl", "args": ["ptr"], "ret": -1}
+      }
+    },
+    {
+      "name": "len 3 into the second object",
+      "args": ["@dst2"],
+      "callees": {
+        "0x100342a2": {"name": "fread_guess", "conv": "cdecl", "args": ["ptr", "u32", "u32", "ptr"], "ret": 1, "writes": [{"arg": 0, "hex": "41414100"}]}
+      }
+    },
+    {
+      "name": "base string Dir copied after fopen fails",
+      "args": ["@dst"],
+      "memory": [
+        {"addr": "0x1004CE40", "cstr": "Dir"}
+      ],
+      "callees": {
+        "0x1003407f": {"name": "fopen_guess", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "empty base string copied after fopen fails",
+      "args": ["@dst"],
+      "memory": [
+        {"addr": "0x1004CE40", "u8": 0}
+      ],
+      "callees": {
+        "0x1003407f": {"name": "fopen_guess", "conv": "cdecl", "args": ["cstr", "ptr"], "ret": 0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5010000,
+    "count": 40,
+    "args": [
+      {"choices": ["@dst", "@dst2"]}
+    ],
+    "memory": [
+      {"addr": "0x1004CE40", "type": "u8", "count": 19, "range": [0, 40]},
+      {"addr": "0x1004CE53", "type": "u8", "choices": [0]}
+    ]
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "function": "GetChrWidths",
+  "original": "0x004eafd1",
+  "sources": [
+    "src/EverQuest/Win.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "abc": {
+      "size": "0xbf4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "0xfffffffe"},
+        {"offset": "0x4", "u32": 3},
+        {"offset": "0x8", "u32": 4},
+        {"offset": "0xc", "u32": 10},
+        {"offset": "0x10", "u32": 20},
+        {"offset": "0x14", "u32": "0xfffffffb"},
+        {"offset": "0x2f4", "u32": "0x7fffffff"},
+        {"offset": "0x2f8", "u32": 2},
+        {"offset": "0x2fc", "u32": 1},
+        {"offset": "0x5f4", "u32": 2},
+        {"offset": "0x5f8", "u32": 3},
+        {"offset": "0x5fc", "u32": 4}
+      ]
+    },
+    "widths": {
+      "size": "0x200",
+      "fill": "zero"
+    },
+    "select_object": {
+      "size": 1,
+      "fill": "zero"
+    },
+    "get_abc_widths": {
+      "size": 1,
+      "fill": "zero"
+    },
+    "get_last_error": {
+      "size": 1,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x00534024", "u32": "@select_object"},
+    {"addr": "0x0053400c", "u32": "@get_abc_widths"},
+    {"addr": "0x005341ac", "u32": "@get_last_error"},
+    {"addr": "0x00535858", "f64": 1.5}
+  ],
+  "callees": {
+    "0x00522fa3": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@abc", "@widths"]
+    },
+    "0x004c1703": {
+      "name": "FUN_004c1703",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "varargs": "printf"
+    },
+    "@select_object": {
+      "name": "SelectObject",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr"],
+      "ret": "0x00333300"
+    },
+    "@get_abc_widths": {
+      "name": "GetCharABCWidthsA",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32", "ptr"],
+      "ret": 1
+    },
+    "@get_last_error": {
+      "name": "GetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x12345678"
+    },
+    "0x005230dd": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "font null logs and returns null without allocating",
+      "args": ["0x00110000", 0, 5]
+    },
+    {
+      "name": "success maps 128 ABC entries in order including first, middle, last and overflow",
+      "args": ["0x00110000", "0x00220000", 5]
+    },
+    {
+      "name": "SelectObject null returns null before width query",
+      "args": ["0x00110000", "0x00220000", 5],
+      "callees": {
+        "@select_object": {"name": "SelectObject", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "SelectObject invalid handle sentinel returns null",
+      "args": ["0x00110000", "0x00220000", 5],
+      "callees": {
+        "@select_object": {"name": "SelectObject", "conv": "stdcall", "args": ["ptr", "ptr"], "ret": "0xffffffff"}
+      }
+    },
+    {
+      "name": "GetCharABCWidthsA false fills all 128 entries from scaled fallback",
+      "args": ["0x00110000", "0x00220000", 7],
+      "callees": {
+        "@get_abc_widths": {"name": "GetCharABCWidthsA", "conv": "stdcall", "args": ["ptr", "u32", "u32", "ptr"], "ret": 0},
+        "@get_last_error": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "GetCharABCWidthsA non-one result uses fallback",
+      "args": ["0x00110000", "0x00220000", -7],
+      "callees": {
+        "@get_abc_widths": {"name": "GetCharABCWidthsA", "conv": "stdcall", "args": ["ptr", "u32", "u32", "ptr"], "ret": 2},
+        "@get_last_error": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": "0x87654321"}
+      }
+    },
+    {
+      "name": "null ABC allocation takes fallback even when API reports success",
+      "args": ["0x00110000", "0x00220000", 9],
+      "callees": {
+        "0x00522fa3": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": [0, "@widths"]}
+      }
+    },
+    {
+      "name": "width table allocation failure logs and returns null",
+      "args": ["0x00110000", "0x00220000", 9],
+      "callees": {
+        "0x00522fa3": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": ["@abc", 0]}
+      }
+    },
+    {
+      "name": "first allocation null still allocates table then falls back",
+      "args": ["0x00110000", "0x00220000", 3],
+      "callees": {
+        "0x00522fa3": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": [0, "@widths"]},
+        "@get_abc_widths": {"name": "GetCharABCWidthsA", "conv": "stdcall", "args": ["ptr", "u32", "u32", "ptr"], "ret": 0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5156817,
+    "count": 30,
+    "args": [
+      {"choices": ["0x00110000"]},
+      {"choices": ["0x00220000"]},
+      {"range": [-100, 100]}
+    ],
+    "memory": [
+      {"addr": "@abc", "offset": "0x0", "type": "int", "range": [-10000, 10000], "count": 128, "stride": 12},
+      {"addr": "@abc", "offset": "0x4", "type": "u32", "range": [0, 10000], "count": 128, "stride": 12},
+      {"addr": "@abc", "offset": "0x8", "type": "int", "range": [-10000, 10000], "count": 128, "stride": 12}
+    ]
+  }
+}

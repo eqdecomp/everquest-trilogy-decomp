@@ -1,0 +1,184 @@
+{
+  "function": "t3dDagFadeIsComplete",
+  "original": "0x1001396d",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "fade",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "fade": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x130",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 100},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 10},
+        {"addr": "@sprite", "offset": "0x124", "u32": 5}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "no pending track ignores the bound",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 10},
+        {"addr": "@sprite", "offset": "0x18", "u32": 0},
+        {"addr": "@sprite", "offset": "0x120", "u32": 50},
+        {"addr": "@sprite", "offset": "0x124", "u32": 50}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "sum equals bound",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 15},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 10},
+        {"addr": "@sprite", "offset": "0x124", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sum one below bound",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 15},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 14},
+        {"addr": "@sprite", "offset": "0x124", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "sum above bound",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 15},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 20},
+        {"addr": "@sprite", "offset": "0x124", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative sum compares unsigned",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 5},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 0},
+        {"addr": "@sprite", "offset": "0x124", "u32": 4294967295}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "bound above INT_MAX",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 2147483648},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 0},
+        {"addr": "@sprite", "offset": "0x124", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "zero bound",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 0},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 0},
+        {"addr": "@sprite", "offset": "0x124", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sum wraps past INT_MAX",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 2147483647},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 1},
+        {"addr": "@sprite", "offset": "0x124", "u32": 2147483647}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sum wraps to 0xfffffffe under max bound",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 4294967295},
+        {"addr": "@sprite", "offset": "0x18", "u32": 1},
+        {"addr": "@sprite", "offset": "0x120", "u32": 2147483647},
+        {"addr": "@sprite", "offset": "0x124", "u32": 2147483647}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "any nonzero pending track is checked",
+      "args": ["@fade", "@sprite"],
+      "memory": [
+        {"addr": "@fade", "offset": "0x8", "u32": 3},
+        {"addr": "@sprite", "offset": "0x18", "u32": 4294967295},
+        {"addr": "@sprite", "offset": "0x120", "u32": 1},
+        {"addr": "@sprite", "offset": "0x124", "u32": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null fade with no pending track",
+      "args": [0, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x18", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 80237,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@fade"
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@fade", "offset": "0x8", "type": "u32", "choices": [0, 1, 2, 100, 2147483647, 2147483648, 4294967295]},
+      {"addr": "@sprite", "offset": "0x18", "type": "u32", "choices": [0, 0, 1, 4096, 4294967295]},
+      {"addr": "@sprite", "offset": "0x120", "type": "int", "choices": [0, 1, -1, 2147483647, -2147483648, 5, 40]},
+      {"addr": "@sprite", "offset": "0x124", "type": "int", "range": [-8, 64]}
+    ]
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "function": "t3dSetCurrentDagFrameTransformation",
+  "original": "0x1001382d",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dagObject",
+      "type": "ptr"
+    },
+    {
+      "name": "scale",
+      "type": "float"
+    },
+    {
+      "name": "heading",
+      "type": "float"
+    },
+    {
+      "name": "pitch",
+      "type": "float"
+    },
+    {
+      "name": "roll",
+      "type": "float"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "dagobject": {
+      "size": "0x148",
+      "fill": "random"
+    },
+    "position": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1004f89a": {
+      "name": "t3dEulerToQuaternion",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "float",
+        "float",
+        "ptr"
+      ],
+      "writes": [{"arg": 3, "offset": 0, "hex": "0000803f0000803e000000bf0000003e"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: distinct heading, pitch and roll; scale 2.0; position (1, 2, 3)",
+      "args": [
+        "@dagobject",
+        2.0,
+        10.0,
+        20.0,
+        30.0,
+        "@position"
+      ],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "f32": 1.0},
+        {"addr": "@position", "offset": "0x4", "f32": 2.0},
+        {"addr": "@position", "offset": "0x8", "f32": 3.0}
+      ]
+    },
+    {
+      "name": "zeros: scale and angles 0.0, position all zero bits",
+      "args": [
+        "@dagobject",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        "@position"
+      ],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "u32": 0},
+        {"addr": "@position", "offset": "0x4", "u32": 0},
+        {"addr": "@position", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "negative zero scale is stored as its sign bit; negative angles",
+      "args": [
+        "@dagobject",
+        -0.0,
+        0.5,
+        -45.0,
+        90.0,
+        "@position"
+      ]
+    },
+    {
+      "name": "NaN, negative infinity and denormal position bits copied unchanged",
+      "args": [
+        "@dagobject",
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        "@position"
+      ],
+      "memory": [
+        {"addr": "@position", "offset": "0x0", "u32": "0x7fc00001"},
+        {"addr": "@position", "offset": "0x4", "u32": "0xff800000"},
+        {"addr": "@position", "offset": "0x8", "u32": "0x00000001"}
+      ]
+    },
+    {
+      "name": "edge magnitudes (denormal, huge) reach the callee unchanged",
+      "args": [
+        "@dagobject",
+        1e-40,
+        1e30,
+        -1e-40,
+        3.4e38,
+        "@position"
+      ]
+    },
+    {
+      "name": "infinite angles reach the callee unchanged",
+      "args": [
+        "@dagobject",
+        1.0,
+        1e400,
+        -1e400,
+        2.0,
+        "@position"
+      ]
+    },
+    {
+      "name": "position aliases the frame quaternion (+0x1c): the copy reads what the call just wrote",
+      "args": [
+        "@dagobject",
+        2.0,
+        10.0,
+        20.0,
+        30.0,
+        "@dagobject+0x1c"
+      ]
+    },
+    {
+      "name": "position aliases the frame scale (+0x38): the scale store comes before the copy",
+      "args": [
+        "@dagobject",
+        2.0,
+        10.0,
+        20.0,
+        30.0,
+        "@dagobject+0x38"
+      ],
+      "memory": [
+        {"addr": "@dagobject", "offset": "0x38", "u32": "0x11111111"},
+        {"addr": "@dagobject", "offset": "0x3c", "u32": "0x22222222"},
+        {"addr": "@dagobject", "offset": "0x40", "u32": "0x33333333"}
+      ]
+    },
+    {
+      "name": "position overlaps the destination from +0x30: forward dword copy reads each source first",
+      "args": [
+        "@dagobject",
+        2.0,
+        10.0,
+        20.0,
+        30.0,
+        "@dagobject+0x30"
+      ],
+      "memory": [
+        {"addr": "@dagobject", "offset": "0x30", "u32": "0x01010101"},
+        {"addr": "@dagobject", "offset": "0x34", "u32": "0x02020202"}
+      ]
+    },
+    {
+      "name": "position overlaps the destination from +0x28 (quaternion tail): forward copy smears",
+      "args": [
+        "@dagobject",
+        2.0,
+        10.0,
+        20.0,
+        30.0,
+        "@dagobject+0x28"
+      ],
+      "memory": [
+        {"addr": "@dagobject", "offset": "0x28", "u32": "0x01010101"},
+        {"addr": "@dagobject", "offset": "0x2c", "u32": "0x02020202"},
+        {"addr": "@dagobject", "offset": "0x30", "u32": "0x03030303"}
+      ]
+    },
+    {
+      "name": "position is the frame position itself: a self-copy",
+      "args": [
+        "@dagobject",
+        2.0,
+        10.0,
+        20.0,
+        30.0,
+        "@dagobject+0x2c"
+      ],
+      "memory": [
+        {"addr": "@dagobject", "offset": "0x2c", "f32": 4.0},
+        {"addr": "@dagobject", "offset": "0x30", "f32": 5.0},
+        {"addr": "@dagobject", "offset": "0x34", "f32": 6.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 3150271,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dagobject"
+        ]
+      },
+      {},
+      {},
+      {},
+      {},
+      {
+        "choices": [
+          "@position",
+          "@dagobject+0x1c",
+          "@dagobject+0x28",
+          "@dagobject+0x2c",
+          "@dagobject+0x30",
+          "@dagobject+0x38"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@position", "type": "float", "count": 3},
+      {"addr": "@dagobject", "offset": "0x38", "type": "float", "count": 3}
+    ]
+  }
+}

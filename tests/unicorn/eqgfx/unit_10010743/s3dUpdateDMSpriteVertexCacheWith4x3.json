@@ -1,0 +1,146 @@
+{
+  "function": "s3dUpdateDMSpriteVertexCacheWith4x3",
+  "original": "0x10011051",
+  "sources": ["src/eqgfx/unit_10010743.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "sprite", "type": "ptr"},
+    {"name": "vertexMarker", "type": "int"},
+    {"name": "transform", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "sprite": {
+      "size": "0x38",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "f32": 1.25},
+        {"offset": "0x18", "f32": -2.5},
+        {"offset": "0x1c", "f32": 0.75},
+        {"offset": "0x24", "u32": "@detail"},
+        {"offset": "0x34", "u32": "@owner"}
+      ]
+    },
+    "owner": {"size": "0x18", "fill": "zero", "init": [{"offset": "0x14", "u32": "@cache"}]},
+    "cache": {
+      "size": "0xa8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 2},
+        {"offset": "0x4", "u32": "@baseVertices"}
+      ]
+    },
+    "baseVertices": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 1.0},
+        {"offset": "0x4", "f32": 2.0},
+        {"offset": "0x8", "f32": 3.0},
+        {"offset": "0xc", "f32": -4.0},
+        {"offset": "0x10", "f32": 5.0},
+        {"offset": "0x14", "f32": -6.0}
+      ]
+    },
+    "cacheOutput": {"size": "0x30", "fill": "random"},
+    "detail": {
+      "size": "0x38",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": 1},
+        {"offset": "0x34", "u32": "@sourceHolder"}
+      ]
+    },
+    "sourceHolder": {"size": "0x18", "fill": "zero", "init": [{"offset": "0x14", "u32": "@sourceList"}]},
+    "sourceList": {"size": "0xc", "fill": "zero", "init": [{"offset": "0x8", "u32": "@sourceTable"}]},
+    "sourceTable": {"size": "0x8", "fill": "zero", "init": [{"offset": "0x4", "u32": "@alternateVertices"}]},
+    "alternateVertices": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 10.0},
+        {"offset": "0x4", "f32": 20.0},
+        {"offset": "0x8", "f32": 30.0},
+        {"offset": "0xc", "f32": 40.0},
+        {"offset": "0x10", "f32": 50.0},
+        {"offset": "0x14", "f32": 60.0}
+      ]
+    },
+    "transform": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "f32": 1.0},
+        {"offset": "0x10", "f32": 1.0},
+        {"offset": "0x20", "f32": 1.0},
+        {"offset": "0x24", "f32": 5.5},
+        {"offset": "0x28", "f32": -6.5},
+        {"offset": "0x2c", "f32": 7.5}
+      ]
+    },
+    "outdebug": {"size": "0x1", "fill": "zero"}
+  },
+  "memory": [{"addr": "0x100760c4", "u32": "@outdebug"}],
+  "callees": {
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@cacheOutput"},
+    "@outdebug": {"name": "OutputDebugStringA", "conv": "stdcall", "args": ["cstr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "zero vertex count returns without allocation or writes",
+      "args": ["@sprite", 11, "@transform"],
+      "memory": [{"addr": "@cache", "offset": "0x0", "u32": 0}]
+    },
+    {
+      "name": "null cache skips work after following the owner",
+      "args": ["@sprite", 12, "@transform"],
+      "memory": [{"addr": "@owner", "offset": "0x14", "u32": 0}]
+    },
+    {
+      "name": "allocation success and fallback source transforms two vertices",
+      "args": ["@sprite", -17, "@transform"],
+      "memory": [{"addr": "@sprite", "offset": "0x24", "u32": 0}]
+    },
+    {
+      "name": "detail source list with zero count falls back to cache vertices",
+      "args": ["@sprite", 0, "@transform"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@cacheOutput"}}
+    },
+    {
+      "name": "nonzero detail count selects indexed vertex array",
+      "args": ["@sprite", "0x12345678", "@transform"],
+      "memory": [{"addr": "@sourceList", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "existing cache avoids allocation and handles one vertex",
+      "args": ["@sprite", 1, "@transform"],
+      "memory": [
+        {"addr": "@cache", "offset": "0x0", "u32": 1},
+        {"addr": "@cache", "offset": "0xa4", "u32": "@cacheOutput"},
+        {"addr": "@sourceList", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "allocation failure reports the string and returns error",
+      "args": ["@sprite", 1, "@transform"],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}}
+    }
+  ],
+  "fuzz": {
+    "seed": 69713,
+    "count": 32,
+    "args": [
+      {"choices": ["@sprite"]},
+      {"range": [-2147483648, 2147483647]},
+      {"choices": ["@transform"]}
+    ],
+    "memory": [
+      {"addr": "@cache", "offset": "0x0", "type": "int", "range": [-2, 5]},
+      {"addr": "@cache", "offset": "0xa4", "type": "ptr", "choices": [0, "@cacheOutput"]},
+      {"addr": "@sourceList", "offset": "0x4", "type": "int", "range": [0, 1]},
+      {"addr": "@baseVertices", "type": "float", "count": 12, "choices": [-100.0, -2.5, 0.0, 3.125, 100.0]},
+      {"addr": "@alternateVertices", "type": "float", "count": 12, "choices": [-100.0, -2.5, 0.0, 3.125, 100.0]},
+      {"addr": "@transform", "type": "float", "count": 12, "choices": [-2.0, -0.5, 0.0, 0.75, 2.0]}
+    ]
+  }
+}

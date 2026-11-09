@@ -1,0 +1,118 @@
+{
+  "function": "t3dFreePCloudInstBase",
+  "original": "0x10041adf",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "instance",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "instance": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "buffer": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@instance",
+      "offset": "0xc",
+      "u32": "@buffer"
+    }
+  ],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "non-null base is freed with base+0xc, returns 0",
+      "args": [
+        "@instance"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null base skips the free, returns 0",
+      "args": [
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "a nonzero +0x8 is not the freed pointer (+0xc=0)",
+      "args": [
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x8",
+          "u32": "@buffer"
+        },
+        {
+          "addr": "@instance",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null instance faults like the original (no null guard)",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 269023,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@instance"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@instance",
+        "offset": "0xc",
+        "type": "u32",
+        "choices": [
+          "@buffer",
+          0
+        ]
+      }
+    ]
+  }
+}

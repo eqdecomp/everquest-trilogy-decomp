@@ -1,0 +1,168 @@
+{
+  "function": "record_remove_matching_guess",
+  "original": "0x10030ff0",
+  "sources": [
+    "src/eqmain/unit_10030FF0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "record", "type": "ptr"},
+    {"name": "key", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "record": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 3}
+      ]
+    },
+    "a": {"size": "0x40", "fill": "random", "init": [{"offset": "0x8", "u32": 7}]},
+    "b": {"size": "0x40", "fill": "random", "init": [{"offset": "0x8", "u32": 9}]},
+    "c": {"size": "0x40", "fill": "random", "init": [{"offset": "0x8", "u32": 7}]},
+    "d": {"size": "0x40", "fill": "random", "init": [{"offset": "0x0", "u32": 5}, {"offset": "0x8", "u32": 4}]},
+    "z": {"size": "0x40", "fill": "random", "init": [{"offset": "0x8", "u32": 0}]},
+    "neg": {"size": "0x40", "fill": "random", "init": [{"offset": "0x8", "u32": "0xffffffff"}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e130": {
+      "name": "FUN_1002e130",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": ["@a", "@b", "@c", "@d", "@z", "@a"]
+    },
+    "0x10028a90": {
+      "name": "FUN_10028a90",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x1002df20": {
+      "name": "FUN_1002df20",
+      "conv": "cdecl",
+      "args": ["ptr", "int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty record: no pops, returns 0",
+      "args": ["@record", 7],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one node, match is freed",
+      "args": ["@record", 7],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 1}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@a"]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "one node, no match goes back to tail",
+      "args": ["@record", 7],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 1}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@b"]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three nodes, first and last match (order witness)",
+      "args": ["@record", 7],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "three nodes, only middle matches",
+      "args": ["@record", 9],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "three nodes, none match",
+      "args": ["@record", 9],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@c", "@a"]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three nodes, all match",
+      "args": ["@record", 7],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@c", "@a"]}
+      },
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "count read once: each pop zeroes the count",
+      "args": ["@record", 7],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@b", "@c"], "writes": [{"arg": 0, "offset": 16, "hex": "00000000"}]}
+      },
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "four pops, list shorter: last entry repeats",
+      "args": ["@record", 7],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 4}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@b", "@a"]}
+      },
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "five pops cycle through the list",
+      "args": ["@record", 7],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 5}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@b", "@c", "@b", "@a"]}
+      },
+      "expect": {"ret": 3}
+    },
+    {
+      "name": "key 0 matches a zero dword at +0x8",
+      "args": ["@record", 0],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 2}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@z", "@a"]}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "compare is at +0x8 only: +0x0 equal to key does not match",
+      "args": ["@record", 5],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 1}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@d"]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "key -1 matches 0xffffffff",
+      "args": ["@record", -1],
+      "memory": [{"addr": "@record", "offset": "0x10", "u32": 2}],
+      "callees": {
+        "0x1002e130": {"name": "FUN_1002e130", "conv": "cdecl", "args": ["ptr"], "ret": ["@neg", "@a"]}
+      },
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 4871033,
+    "count": 40,
+    "args": [
+      {"choices": ["@record"]},
+      {"range": [0, 3]}
+    ],
+    "memory": [
+      {"addr": "@record", "offset": "0x10", "type": "u32", "range": [0, 6]},
+      {"addr": "@a", "offset": "0x8", "type": "u32", "range": [0, 3]},
+      {"addr": "@b", "offset": "0x8", "type": "u32", "range": [0, 3]},
+      {"addr": "@c", "offset": "0x8", "type": "u32", "range": [0, 3]},
+      {"addr": "@d", "offset": "0x8", "type": "u32", "range": [0, 3]},
+      {"addr": "@z", "offset": "0x8", "type": "u32", "range": [0, 3]}
+    ]
+  }
+}

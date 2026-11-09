@@ -1,0 +1,234 @@
+{
+  "function": "PackFileSystem_guess::PackFileSystem_ReadPackFileData_guess",
+  "original": "0x10052a90",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/verify.cpp"
+  ],
+  "rewrite": "PackFileSystem_guess::PackFileSystem_ReadPackFileData_guess",
+  "conv": "thiscall",
+  "this": "@packfilesystem",
+  "args": [
+    {
+      "name": "dest",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "packfilesystem": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@packbuffer" }
+      ]
+    },
+    "packbuffer": {
+      "size": "0x201c",
+      "fill": "random",
+      "init": [
+        { "offset": "0x0", "u32": "@vtable" },
+        { "offset": "0x2008", "u32": 64 },
+        { "offset": "0x200c", "u32": 0 },
+        { "offset": "0x2010", "u32": 0 },
+        { "offset": "0x2018", "u32": "@owner" }
+      ]
+    },
+    "vtable": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@refill" }
+      ]
+    },
+    "refill": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "owner": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x8", "u32": "@ownerName" },
+        { "offset": "0xc", "u32": 1 }
+      ]
+    },
+    "ownerName": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "dest": {
+      "size": "0x5000",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    { "addr": "@ownerName", "cstr": "fixture.pack" },
+    { "addr": "0x100fc014", "u32": 0 },
+    { "addr": "0x100fbc10", "size": "0x200", "fill": "zero" }
+  ],
+  "callees": {
+    "@refill": {
+      "name": "packfs_refill",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 8192
+    },
+    "0x100549a0": {
+      "name": "verifyConditionOrFatalError_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "end equals position",
+      "args": ["@dest", 8],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 12 },
+        { "addr": "@packbuffer", "offset": "0x200c", "u32": 12 }
+      ]
+    },
+    {
+      "name": "position past end wraps available count",
+      "args": ["@dest", 1],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 3 },
+        { "addr": "@packbuffer", "offset": "0x200c", "u32": 4 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 0 }
+      ]
+    },
+    {
+      "name": "zero request",
+      "args": ["@dest", 0]
+    },
+    {
+      "name": "single trailing byte",
+      "args": ["@dest", 1],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 16 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 9 }
+      ]
+    },
+    {
+      "name": "word copy",
+      "args": ["@dest", 8],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 32 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 0 }
+      ]
+    },
+    {
+      "name": "two words and three trailing bytes",
+      "args": ["@dest", 11],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 32 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 4 }
+      ]
+    },
+    {
+      "name": "available bytes clamp request",
+      "args": ["@dest", 9],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 3 },
+        { "addr": "@packbuffer", "offset": "0x200c", "u32": 0 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 5 }
+      ]
+    },
+    {
+      "name": "refill at block boundary",
+      "args": ["@dest", 2],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 16 },
+        { "addr": "@packbuffer", "offset": "0x200c", "u32": 0 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8192 },
+        { "addr": "0x100fc014", "u32": 0 }
+      ]
+    },
+    {
+      "name": "copy across block boundary with named owner",
+      "args": ["@dest", 8],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 16 },
+        { "addr": "@packbuffer", "offset": "0x200c", "u32": 0 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8190 },
+        { "addr": "0x100fc014", "u32": 63 }
+      ]
+    },
+    {
+      "name": "refill with no owner",
+      "args": ["@dest", 1],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 4 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8192 },
+        { "addr": "@packbuffer", "offset": "0x2018", "u32": 0 }
+      ]
+    },
+    {
+      "name": "refill with disabled owner",
+      "args": ["@dest", 1],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 4 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8192 },
+        { "addr": "@owner", "offset": "0xc", "u32": 0 }
+      ]
+    },
+    {
+      "name": "refill result above read ahead size",
+      "args": ["@dest", 3],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 3 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8192 }
+      ],
+      "callees": {
+        "@refill": {
+          "name": "packfs_refill",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 8193
+        }
+      }
+    },
+    {
+      "name": "skip full line table",
+      "args": ["@dest", 2],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 4 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8192 },
+        { "addr": "0x100fc014", "u32": 64 }
+      ]
+    },
+    {
+      "name": "two refills in one read",
+      "args": ["@dest", 8194],
+      "memory": [
+        { "addr": "@packbuffer", "offset": "0x2008", "u32": 12288 },
+        { "addr": "@packbuffer", "offset": "0x200c", "u32": 0 },
+        { "addr": "@packbuffer", "offset": "0x2010", "u32": 8192 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 338576,
+    "count": 32,
+    "args": [
+      { "choices": ["@dest"] },
+      { "choices": [0, 1, 2, 3, 4, 7, 8, 9, 15, 31, 64, 8191, 8192, 8193, 8194] }
+    ],
+    "memory": [
+      { "addr": "@packbuffer", "offset": "0x2008", "type": "u32", "choices": [0, 1, 4, 8, 32, 64, 8192, 8193, 8704, 12288] },
+      { "addr": "@packbuffer", "offset": "0x200c", "type": "u32", "choices": [0, 1, 4, 8, 31, 64, 8191, 8192, 8448] },
+      { "addr": "@packbuffer", "offset": "0x2010", "type": "u32", "choices": [0, 1, 4, 7, 8, 8189, 8190, 8191, 8192] },
+      { "addr": "@packbuffer", "offset": "0x2018", "type": "ptr", "choices": ["@owner", 0] },
+      { "addr": "@owner", "offset": "0xc", "type": "u32", "choices": [0, 1] },
+      { "addr": "0x100fc014", "type": "u32", "choices": [0, 1, 63, 64, 65] }
+    ]
+  }
+}

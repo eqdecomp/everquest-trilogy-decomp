@@ -1,0 +1,412 @@
+{
+  "function": "PollDeviceData_guess",
+  "original": "0x004021b0",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@device"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@data"
+        }
+      ]
+    },
+    "device": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vtable"
+        }
+      ]
+    },
+    "vtable": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": "@acquire"
+        },
+        {
+          "offset": "0x28",
+          "u32": "@getdata"
+        }
+      ]
+    },
+    "data": {
+      "size": "0x80",
+      "fill": "random"
+    },
+    "acquire": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "getdata": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "node": {
+      "size": "0x14",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@getdata": {
+      "name": "GetDeviceData",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "mem:4",
+        "u32"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 3,
+          "offset": 0,
+          "hex": "00000000"
+        }
+      ]
+    },
+    "@acquire": {
+      "name": "Acquire",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@node"
+    },
+    "0x0040229e": {
+      "name": "AppendValue_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "get succeeds with zero events",
+      "args": [
+        "@param_1"
+      ]
+    },
+    {
+      "name": "get succeeds with one event",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "01000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "get succeeds with two events",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "02000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "get fails and acquire fails",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": -1
+        },
+        "@acquire": {
+          "name": "Acquire",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "get fails then acquire succeeds with zero events",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": [
+            -1,
+            0
+          ],
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "get fails then acquire succeeds with two events",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": [
+            -1,
+            0
+          ],
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "02000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "retry result ignored while count is nonzero",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": [
+            -1,
+            -2147483648
+          ],
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "02000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "minimum negative get and acquire results",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": -2147483648
+        },
+        "@acquire": {
+          "name": "Acquire",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": -2147483648
+        }
+      }
+    },
+    {
+      "name": "maximum nonnegative get result",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": 2147483647,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "01000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "operator new returns null",
+      "args": [
+        "@param_1"
+      ],
+      "callees": {
+        "@getdata": {
+          "name": "GetDeviceData",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "mem:4",
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 3,
+              "offset": 0,
+              "hex": "01000000"
+            }
+          ]
+        },
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4202928,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          "@data",
+          0,
+          "0x7a0000"
+        ]
+      }
+    ]
+  }
+}

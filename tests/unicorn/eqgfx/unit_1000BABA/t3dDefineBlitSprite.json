@@ -1,0 +1,73 @@
+{
+  "function": "t3dDefineBlitSprite",
+  "original": "0x1000cdc8",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "name", "type": "cstr"},
+    {"name": "simpleSprite", "type": "ptr"},
+    {"name": "reference", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {"size": "0x100", "fill": "zero"},
+    "simplesprite": {"size": "0x20", "fill": "zero"},
+    "reference": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": 5}]},
+    "existing": {"size": "0x18", "fill": "zero"},
+    "newdefinition": {"size": "0x18", "fill": "zero"},
+    "namebuffer": {"size": "0x100", "fill": "zero"},
+    "newblit": {"size": "0x70", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0},
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@newdefinition", "@namebuffer", "@newblit"]},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1000e334": {"name": "t3dRemoveEntryFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"]}
+  },
+  "cases": [
+    {"name": "new definition succeeds and increments the reference", "args": ["@context", "blit", "@simplesprite", "@reference"]},
+    {"name": "empty name succeeds with a one-byte name allocation", "args": ["@context", "", "@simplesprite", "@reference"]},
+    {"name": "existing type 7 is returned without allocation", "args": ["@context", "known", "@simplesprite", "@reference"], "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}}, "memory": [{"addr": "@existing", "u32": 7}]},
+    {"name": "existing type 6 is rejected", "args": ["@context", "known", "@simplesprite", "@reference"], "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}}, "memory": [{"addr": "@existing", "u32": 6}]},
+    {"name": "existing type 8 is rejected", "args": ["@context", "known", "@simplesprite", "@reference"], "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}}, "memory": [{"addr": "@existing", "u32": 8}]},
+    {"name": "existing type zero is rejected", "args": ["@context", "known", "@simplesprite", "@reference"], "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}}, "memory": [{"addr": "@existing", "u32": 0}]},
+    {"name": "existing all-bits type is rejected", "args": ["@context", "known", "@simplesprite", "@reference"], "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": "@existing"}}, "memory": [{"addr": "@existing", "u32": 4294967295}]},
+    {"name": "definition allocation fails", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}}},
+    {"name": "name allocation fails and frees the definition", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@newdefinition", 0]}}},
+    {"name": "definition initialize returns positive failure", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 1}}},
+    {"name": "definition initialize returns negative failure", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}}},
+    {"name": "dictionary add returns minus one", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}}},
+    {"name": "dictionary add returns integer minimum", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -2147483648}}},
+    {"name": "dictionary add returns zero and sprite initialization succeeds", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}}},
+    {"name": "dictionary add returns positive success", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 2147483647}}},
+    {"name": "sprite allocation fails after dictionary insertion", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@newdefinition", "@namebuffer", 0]}}},
+    {"name": "sprite initialize returns positive failure and removes the entry", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, 1]}}},
+    {"name": "sprite initialize returns negative failure", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, -1]}}},
+    {"name": "sprite initialize returns integer minimum", "args": ["@context", "name", "@simplesprite", "@reference"], "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, -2147483648]}}},
+    {"name": "reference count starts at zero", "args": ["@context", "name", "@simplesprite", "@reference"], "memory": [{"addr": "@reference", "offset": "0x10", "u32": 0}]},
+    {"name": "reference count starts at minus one", "args": ["@context", "name", "@simplesprite", "@reference"], "memory": [{"addr": "@reference", "offset": "0x10", "u32": 4294967295}]},
+    {"name": "reference count wraps from integer maximum", "args": ["@context", "name", "@simplesprite", "@reference"], "memory": [{"addr": "@reference", "offset": "0x10", "u32": 2147483647}]},
+    {"name": "null simple sprite is stored without checking", "args": ["@context", "name", 0, "@reference"]},
+    {"name": "distinct simple sprite pointer is retained", "args": ["@context", "name", "@existing", "@reference"]}
+  ],
+  "fuzz": {
+    "seed": 52680,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]},
+      {},
+      {"choices": ["@simplesprite"]},
+      {"choices": ["@reference"]}
+    ],
+    "memory": [
+      {"addr": "@reference", "offset": "0x10", "type": "int", "range": [-8, 2147483647]}
+    ]
+  }
+}

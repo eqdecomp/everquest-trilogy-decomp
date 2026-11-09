@@ -1,0 +1,132 @@
+{
+  "function": "FreeAllocatedValue_guess",
+  "original": "0x004019fb",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": 0
+        }
+      ]
+    },
+    "resource": {
+      "size": "0x8",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004010d1": {
+      "name": "ClearFirstDword_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x0040108d": {
+      "name": "FUN_0040108d",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "zero field still calls first helper",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x4",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "small nonzero field takes cleanup path",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x4",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "high-bit pointer cleanup ordering",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x4",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "resource pointer cleanup ordering",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x4",
+          "u32": "@resource"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4200955,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": [
+          0,
+          1,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff",
+          "@resource"
+        ]
+      }
+    ]
+  }
+}

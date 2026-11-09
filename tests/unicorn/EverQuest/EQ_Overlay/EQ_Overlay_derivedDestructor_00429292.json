@@ -1,0 +1,210 @@
+{
+  "function": "EQ_CharacterCreationOverlay_guess::~EQ_CharacterCreationOverlay_guess",
+  "original": "0x00429292",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x12345678"
+        },
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x10",
+          "u32": "0x89abcdef"
+        },
+        {
+          "offset": "0x70",
+          "u32": "@empty_buttons"
+        }
+      ]
+    },
+    "self_zero": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x70",
+          "u32": "@empty_buttons"
+        }
+      ]
+    },
+    "self_edges": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0xffffffff"
+        },
+        {
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        },
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x70",
+          "u32": "@empty_buttons"
+        }
+      ]
+    },
+    "self_high_bit": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0x5353a8"
+        },
+        {
+          "offset": "0x10",
+          "u32": "0x80000000"
+        },
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x70",
+          "u32": "@empty_buttons"
+        }
+      ]
+    },
+    "empty_buttons": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "n1": {
+      "size": "0x28",
+      "fill": "zero"
+    },
+    "x": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x00450463": {
+      "name": "EQ_Overlay::DelButtons",
+      "passthrough": true
+    },
+    "0x0045005d": {
+      "name": "EQ_Overlay::~EQ_Overlay_guess",
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "random fields overwritten",
+      "args": [
+        "@self",
+        1
+      ]
+    },
+    {
+      "name": "zero object and edx",
+      "args": [
+        "@self_zero",
+        0
+      ]
+    },
+    {
+      "name": "all bits set and edx",
+      "args": [
+        "@self_edges",
+        "0xffffffff"
+      ]
+    },
+    {
+      "name": "already installed vtable with high bit state",
+      "args": [
+        "@self_high_bit",
+        "0x80000000"
+      ]
+    },
+    {
+      "name": "list head aliases this vtable slot; walk stops at zeroed vtable slot",
+      "args": [
+        "@x+32",
+        1
+      ],
+      "memory": [
+        {"addr": "@x", "offset": "0x20", "u32": "@n1"},
+        {"addr": "@x", "offset": "0x90", "u32": "@x"},
+        {"addr": "0x005353C8", "u32": 0}
+      ],
+      "callees": {
+        "0x0040101D": {
+          "args": [],
+          "conv": "thiscall"
+        },
+        "0x005218BB": {
+          "args": ["ptr"],
+          "conv": "cdecl"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4362892,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@self",
+          "@self_zero",
+          "@self_edges",
+          "@self_high_bit"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

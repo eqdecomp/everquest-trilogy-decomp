@@ -1,0 +1,302 @@
+{
+  "function": "logParserError_guess",
+  "original": "0x1002902b",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "parser",
+      "type": "ptr"
+    },
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "formatValue",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "parser": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x08",
+          "u32": 0
+        },
+        {
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    "sourceName": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "cstr": "parser.txt"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1006991d": {
+      "name": "__vsnprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "u32",
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x10028f2e": {
+      "name": "getObjectPointerFromOffset_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "0x710000"
+    },
+    "0x1002655d": {
+      "name": "getValueAtOffset12_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@sourceName"
+    },
+    "0x10028f39": {
+      "name": "getLineNumberFromObject_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x100698cc": {
+      "name": "__snprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "u32",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x10026280": {
+      "name": "_t3dParseOnError",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null parser skips context and count",
+      "args": [
+        0,
+        "parse failed: %d",
+        11
+      ]
+    },
+    {
+      "name": "parser without source context increments count",
+      "args": [
+        "@parser",
+        "missing token %d",
+        22
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x08",
+          "u32": 4
+        },
+        {
+          "addr": "@parser",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "source context without line number",
+      "args": [
+        "@parser",
+        "bad field %d",
+        33
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x08",
+          "u32": 2
+        },
+        {
+          "addr": "@parser",
+          "offset": "0x1c",
+          "u32": 4660
+        }
+      ]
+    },
+    {
+      "name": "source context with line number",
+      "args": [
+        "@parser",
+        "unexpected value %d",
+        44
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x08",
+          "u32": 0
+        },
+        {
+          "addr": "@parser",
+          "offset": "0x1c",
+          "u32": 305419896
+        }
+      ],
+      "callees": {
+        "0x10028f39": {
+          "name": "getLineNumberFromObject_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 17
+        }
+      }
+    },
+    {
+      "name": "count increment wraps signed boundary",
+      "args": [
+        "@parser",
+        "boundary %d",
+        -5
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x08",
+          "u32": "0x7fffffff"
+        },
+        {
+          "addr": "@parser",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "count increment wraps unsigned boundary",
+      "args": [
+        "@parser",
+        "boundary %d",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x08",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@parser",
+          "offset": "0x1c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "context output truncates at buffer boundary",
+      "args": [
+        "@parser",
+        "%0255d",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@parser",
+          "offset": "0x08",
+          "u32": 99
+        },
+        {
+          "addr": "@parser",
+          "offset": "0x1c",
+          "u32": 48879
+        }
+      ],
+      "callees": {
+        "0x10028f39": {
+          "name": "getLineNumberFromObject_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 31
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 167979,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@parser"
+        ]
+      },
+      {
+        "choices": [
+          "parse error",
+          "bad token %d",
+          "unexpected value %d"
+        ]
+      },
+      {
+        "range": [
+          -1000,
+          1000
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@parser",
+        "offset": "0x08",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@parser",
+        "offset": "0x1c",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4660,
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

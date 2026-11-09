@@ -1,0 +1,843 @@
+{
+  "function": "rx_validate_fragment_arrival_guess",
+  "original": "0x1002ef70",
+  "sources": [
+    "src/eqmain/Network/rdp/rx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "info",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "random"
+    },
+    "info": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u16": 4660
+        },
+        {
+          "offset": "0xa",
+          "u16": 17185
+        }
+      ]
+    },
+    "msg": {
+      "size": "0x60",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u16": 1911
+        },
+        {
+          "offset": "0x14",
+          "u16": 1365
+        }
+      ]
+    },
+    "stats": {
+      "size": "0x290",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100498b4",
+      "u32": "@stats"
+    }
+  ],
+  "callees": {
+    "0x1002e0c0": {
+      "name": "rdp_list_find_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:2"
+      ],
+      "ret": "@msg"
+    },
+    "0x1002de30": {
+      "name": "rdp_validate_fragment_consistency_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002aa20": {
+      "name": "rdp_format_sockaddr_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "mem:16"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "312e322e332e343a3500"
+        }
+      ]
+    },
+    "0x1002fa10": {
+      "name": "rdp_discard_log_append_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "varargs": "printf"
+    }
+  },
+  "cases": [
+    {
+      "name": "last fragment, found, consistent: rc 0",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 256
+        }
+      ]
+    },
+    {
+      "name": "full 0x200 fragment, not last, found, consistent: rc 0",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "not last, short: bad fragment, rc 2",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        }
+      ]
+    },
+    {
+      "name": "index equals count, full: bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "index above count: bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 5
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "count 1 (index+1 == count): bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 1
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "count 0: bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "two fragments, first, full: good (count 2)",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "two fragments, first, short: bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        }
+      ]
+    },
+    {
+      "name": "last of two, short: good",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 1
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        }
+      ]
+    },
+    {
+      "name": "unsigned compare: index 1 of count 0x8000, full: good",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 1
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 32768
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "u16 edge: index 0xfffe of count 0xffff, short: good",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 65534
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 65535
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        }
+      ]
+    },
+    {
+      "name": "u16 edge: index 0xffff of count 0xffff, full: bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 65535
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 65535
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "data_len 0x8200 is not 0x200: bad",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 33280
+        }
+      ]
+    },
+    {
+      "name": "big count, full, not last: good",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 16
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 256
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ]
+    },
+    {
+      "name": "list miss on the last fragment: rc 0, no check",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 256
+        }
+      ],
+      "callees": {
+        "0x1002e0c0": {
+          "name": "rdp_list_find_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:2"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "consistency 2 on the last fragment: logged, counted, rc 2",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 256
+        }
+      ],
+      "callees": {
+        "0x1002de30": {
+          "name": "rdp_validate_fragment_consistency_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2
+        }
+      }
+    },
+    {
+      "name": "consistency 1 on the last of two: logged, rc 1",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 1
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        }
+      ],
+      "callees": {
+        "0x1002de30": {
+          "name": "rdp_validate_fragment_consistency_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "consistency -1: logged, rc -1 (nonzero, not positive)",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 512
+        }
+      ],
+      "callees": {
+        "0x1002de30": {
+          "name": "rdp_validate_fragment_consistency_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "stats 0x110 carries into its high word (fragment size fail)",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 256
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x110",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x114",
+          "u32": 7
+        }
+      ],
+      "callees": {
+        "0x1002de30": {
+          "name": "rdp_validate_fragment_consistency_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2
+        }
+      }
+    },
+    {
+      "name": "stats 0xf8 carries into its high word (bad fragment)",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        },
+        {
+          "addr": "@stats",
+          "offset": "0xf8",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0xfc",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "conn 0xd4 wraps to 0 (bad fragment)",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 0
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 511
+        },
+        {
+          "addr": "@conn",
+          "offset": "0xd4",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "conn 0xe0 wraps to 0 (fragment size fail)",
+      "args": [
+        "@conn",
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@info",
+          "offset": "0xc",
+          "u16": 2
+        },
+        {
+          "addr": "@info",
+          "offset": "0xe",
+          "u16": 3
+        },
+        {
+          "addr": "@info",
+          "offset": "0x14",
+          "u16": 256
+        },
+        {
+          "addr": "@conn",
+          "offset": "0xe0",
+          "u32": 4294967295
+        }
+      ],
+      "callees": {
+        "0x1002de30": {
+          "name": "rdp_validate_fragment_consistency_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 192368,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "choices": [
+          "@info"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@info",
+        "offset": "0x8",
+        "type": "u16"
+      },
+      {
+        "addr": "@info",
+        "offset": "0xa",
+        "type": "u16"
+      },
+      {
+        "addr": "@info",
+        "offset": "0xc",
+        "type": "u16",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@info",
+        "offset": "0xe",
+        "type": "u16",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@info",
+        "offset": "0x14",
+        "type": "u16",
+        "choices": [
+          512,
+          511,
+          0,
+          256,
+          513,
+          33280
+        ]
+      },
+      {
+        "addr": "@msg",
+        "offset": "0x10",
+        "type": "u16"
+      },
+      {
+        "addr": "@msg",
+        "offset": "0x14",
+        "type": "u16"
+      },
+      {
+        "addr": "@stats",
+        "offset": "0xf8",
+        "type": "u32",
+        "choices": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x110",
+        "type": "u32",
+        "choices": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

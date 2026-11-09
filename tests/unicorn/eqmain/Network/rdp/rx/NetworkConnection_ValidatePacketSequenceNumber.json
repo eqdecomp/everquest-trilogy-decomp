@@ -1,0 +1,358 @@
+{
+  "function": "NetworkConnection_ValidatePacketSequenceNumber_guess",
+  "original": "0x1002eda0",
+  "sources": [
+    "src/eqmain/Network/rdp/rx.c",
+    "src/eqmain/Network/rdp/log.c",
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "seq",
+      "type": "short"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "random"
+    },
+    "stats": {
+      "size": "0x400",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100498b4",
+      "u32": "@stats"
+    }
+  ],
+  "callees": {
+    "0x10036900": {
+      "name": "__allshl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__allshl": "0x10036900"
+  },
+  "cases": [
+    {
+      "name": "dup: diff 0 (newest packet again), mask empty",
+      "args": ["@conn", 50],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dup: diff 0 needs no mask bit (mask full)",
+      "args": ["@conn", 50],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x464", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dup: diff -1, bit 0 set",
+      "args": ["@conn", 49],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 1},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: diff -1, bit 0 clear (other bits set)",
+      "args": ["@conn", 49],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": "0xfffffffe"},
+        {"addr": "@conn", "offset": "0x464", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dup: diff -32, bit 31 (low dword top bit, shift 31)",
+      "args": ["@conn", 18],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": "0x80000000"},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dup: diff -33, bit 32 (high dword bit 0, shift 32)",
+      "args": ["@conn", 17],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 1}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: diff -40, bit 39 clear (low dword full, high dword 0)",
+      "args": ["@conn", 10],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dup: diff -41, bit 40 (high dword bit 8, shift 40)",
+      "args": ["@conn", 9],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": "0x100"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dup: diff -64, bit 63 (high dword top bit, shift 63)",
+      "args": ["@conn", -14],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": "0x80000000"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: diff -64, bit 63 clear",
+      "args": ["@conn", -14],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x464", "u32": "0x7fffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "window: diff -65 (mask full, not consulted)",
+      "args": ["@conn", -15],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x464", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "window: diff -32768 (far behind)",
+      "args": ["@conn", -32768],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: diff +1 (ahead)",
+      "args": ["@conn", 51],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "accept: diff +64 (ahead, mask not consulted)",
+      "args": ["@conn", 64],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": "0xffffffff"},
+        {"addr": "@conn", "offset": "0x464", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "accept: diff +0x1000 (edge of the window ahead)",
+      "args": ["@conn", 4096],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "window: diff +0x1001 (just past the window ahead)",
+      "args": ["@conn", 4097],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "window: diff +0x7fff (diff + 0x40 wraps negative)",
+      "args": ["@conn", 32767],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "window: diff wraps to +0x7fff (recv 0x8001, seq 0)",
+      "args": ["@conn", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": "0x8001"},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: recv 0xffff, seq 0 (diff +1 after 16-bit wrap)",
+      "args": ["@conn", 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": "0xffff"},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dup: recv 0xffff, seq -1 (diff 0 after 16-bit wrap)",
+      "args": ["@conn", -1],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": "0xffff"},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dup: recv 0, seq -1 (diff -1, bit 0 set)",
+      "args": ["@conn", -1],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": 1},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: diff -1, bit 0 clear, bit 1 set (shift must be 0)",
+      "args": ["@conn", 49],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 2},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dup: diff -2, bit 1 set (shift 1)",
+      "args": ["@conn", 48],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 2},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "accept: diff -2, bit 0 set only (shift must be 1)",
+      "args": ["@conn", 48],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 1},
+        {"addr": "@conn", "offset": "0x464", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dup counter carry: stats+0xe8 low dword all ones",
+      "args": ["@conn", 50],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0},
+        {"addr": "@stats", "offset": "0xe8", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0xec", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "dup counter overflow: stats+0xe8 all ones",
+      "args": ["@conn", 50],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0},
+        {"addr": "@stats", "offset": "0xe8", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0xec", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "window counter carry: stats+0xe0 low dword all ones",
+      "args": ["@conn", 4097],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 0},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0},
+        {"addr": "@stats", "offset": "0xe0", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0xe4", "u32": 0}
+      ],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "window counter overflow: stats+0xe0 all ones",
+      "args": ["@conn", -15],
+      "memory": [
+        {"addr": "@conn", "offset": "0x458", "u16": 50},
+        {"addr": "@conn", "offset": "0x460", "u32": 0},
+        {"addr": "@conn", "offset": "0x464", "u32": 0},
+        {"addr": "@stats", "offset": "0xe0", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0xe4", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 191904,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "range": [-130, 130]
+      }
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x458", "type": "u16", "range": [0, 130]},
+      {"addr": "@conn", "offset": "0x460", "type": "u32"},
+      {"addr": "@conn", "offset": "0x464", "type": "u32"},
+      {"addr": "@stats", "offset": "0xe0", "type": "u32", "choices": [0, 1, 4294967294, 4294967295], "p": 0.5},
+      {"addr": "@stats", "offset": "0xe8", "type": "u32", "choices": [0, 1, 4294967294, 4294967295], "p": 0.5}
+    ]
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "function": "t3dInterpolateVector_guess",
+  "original": "0x10012336",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "start",
+      "type": "ptr"
+    },
+    {
+      "name": "end",
+      "type": "ptr"
+    },
+    {
+      "name": "blend",
+      "type": "float"
+    },
+    {
+      "name": "result",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX evidence: 5/5 direct callers overwrite EAX before reading it; the original RETs without a fresh result value",
+  "objects": {
+    "start": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "end": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "result": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical (random objects)",
+      "args": ["@start", "@end", 1.5, "@result"]
+    },
+    {
+      "name": "blend zero (random objects)",
+      "args": ["@start", "@end", 0.0, "@result"]
+    },
+    {
+      "name": "all three equal, blend ignored: infinity blend still copies start, lerp would be NaN",
+      "args": ["@start", "@end", 1e999, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.5},
+        {"addr": "@start", "offset": "0x4", "f32": -2.25},
+        {"addr": "@start", "offset": "0x8", "f32": 3.0},
+        {"addr": "@end", "offset": "0x0", "f32": 1.5},
+        {"addr": "@end", "offset": "0x4", "f32": -2.25},
+        {"addr": "@end", "offset": "0x8", "f32": 3.0}
+      ]
+    },
+    {
+      "name": "all three equal -0.0: copy keeps the sign bit, lerp would not",
+      "args": ["@start", "@end", 1.0, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": -0.0},
+        {"addr": "@start", "offset": "0x4", "f32": -0.0},
+        {"addr": "@start", "offset": "0x8", "f32": -0.0},
+        {"addr": "@end", "offset": "0x0", "f32": -0.0},
+        {"addr": "@end", "offset": "0x4", "f32": -0.0},
+        {"addr": "@end", "offset": "0x8", "f32": -0.0}
+      ]
+    },
+    {
+      "name": "equal endpoints, plain blend",
+      "args": ["@start", "@end", 2.5, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 4.0},
+        {"addr": "@start", "offset": "0x4", "f32": -1.0},
+        {"addr": "@start", "offset": "0x8", "f32": 0.5},
+        {"addr": "@end", "offset": "0x0", "f32": 4.0},
+        {"addr": "@end", "offset": "0x4", "f32": -1.0},
+        {"addr": "@end", "offset": "0x8", "f32": 0.5}
+      ]
+    },
+    {
+      "name": "x differs, y and z equal: lerp",
+      "args": ["@start", "@end", 0.5, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 5.0},
+        {"addr": "@start", "offset": "0x8", "f32": 9.0},
+        {"addr": "@end", "offset": "0x0", "f32": 3.0},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 9.0}
+      ]
+    },
+    {
+      "name": "x equal, y differs, z equal: lerp",
+      "args": ["@start", "@end", -0.25, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 5.0},
+        {"addr": "@start", "offset": "0x8", "f32": 9.0},
+        {"addr": "@end", "offset": "0x0", "f32": 1.0},
+        {"addr": "@end", "offset": "0x4", "f32": 6.0},
+        {"addr": "@end", "offset": "0x8", "f32": 9.0}
+      ]
+    },
+    {
+      "name": "x and y equal, z differs: lerp",
+      "args": ["@start", "@end", 1.0, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 5.0},
+        {"addr": "@start", "offset": "0x8", "f32": 9.0},
+        {"addr": "@end", "offset": "0x0", "f32": 1.0},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 10.0}
+      ]
+    },
+    {
+      "name": "all three differ: lerp",
+      "args": ["@start", "@end", 0.5, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 2.0},
+        {"addr": "@start", "offset": "0x8", "f32": 3.0},
+        {"addr": "@end", "offset": "0x0", "f32": 4.0},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 6.0}
+      ]
+    },
+    {
+      "name": "NaN endpoints compare unordered (ZF set): copy path, payload kept",
+      "args": ["@start", "@end", 2.0, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": NaN},
+        {"addr": "@start", "offset": "0x4", "f32": 5.0},
+        {"addr": "@start", "offset": "0x8", "f32": 6.0},
+        {"addr": "@end", "offset": "0x0", "f32": NaN},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 6.0}
+      ]
+    },
+    {
+      "name": "infinity endpoints, blend 0: lerp gives NaN, copy would not run",
+      "args": ["@start", "@end", 0.0, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1e999},
+        {"addr": "@start", "offset": "0x4", "f32": 1.0},
+        {"addr": "@start", "offset": "0x8", "f32": 1.0},
+        {"addr": "@end", "offset": "0x0", "f32": 2.0},
+        {"addr": "@end", "offset": "0x4", "f32": 1.0},
+        {"addr": "@end", "offset": "0x8", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "result aliases start: in-place lerp",
+      "args": ["@start", "@end", 0.5, "@start"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 2.0},
+        {"addr": "@start", "offset": "0x8", "f32": 3.0},
+        {"addr": "@end", "offset": "0x0", "f32": 4.0},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 6.0}
+      ]
+    },
+    {
+      "name": "result aliases end: in-place lerp",
+      "args": ["@start", "@end", 0.5, "@end"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 2.0},
+        {"addr": "@start", "offset": "0x8", "f32": 3.0},
+        {"addr": "@end", "offset": "0x0", "f32": 4.0},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 6.0}
+      ]
+    },
+    {
+      "name": "result overlaps start at +4: store order witness",
+      "args": ["@start", "@end", 0.5, "@start+0x4"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": 1.0},
+        {"addr": "@start", "offset": "0x4", "f32": 2.0},
+        {"addr": "@start", "offset": "0x8", "f32": 3.0},
+        {"addr": "@end", "offset": "0x0", "f32": 4.0},
+        {"addr": "@end", "offset": "0x4", "f32": 5.0},
+        {"addr": "@end", "offset": "0x8", "f32": 6.0}
+      ]
+    },
+    {
+      "name": "start aliases end, all equal: copy path",
+      "args": ["@start", "@start", 1.5, "@result"],
+      "memory": [
+        {"addr": "@start", "offset": "0x0", "f32": -3.5},
+        {"addr": "@start", "offset": "0x4", "f32": 0.25},
+        {"addr": "@start", "offset": "0x8", "f32": 7.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 74550,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@start"
+        ]
+      },
+      {
+        "choices": [
+          "@end"
+        ]
+      },
+      {
+        "choices": [
+          0.0,
+          0.5,
+          1.0,
+          -1.0,
+          2.5
+        ]
+      },
+      {
+        "choices": [
+          "@result"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@start", "offset": "0x0", "type": "float", "choices": [-0.0, 2.5]},
+      {"addr": "@start", "offset": "0x4", "type": "float", "choices": [-0.0, 2.5]},
+      {"addr": "@start", "offset": "0x8", "type": "float", "choices": [-0.0, 2.5]},
+      {"addr": "@end", "offset": "0x0", "type": "float", "choices": [-0.0, 2.5]},
+      {"addr": "@end", "offset": "0x4", "type": "float", "choices": [-0.0, 2.5]},
+      {"addr": "@end", "offset": "0x8", "type": "float", "choices": [-0.0, 2.5]}
+    ]
+  }
+}

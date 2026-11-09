@@ -1,0 +1,237 @@
+{
+  "function": "PackFsMap_guess::erase_guess",
+  "original": "0x10010a10",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [
+    {
+      "name": "x",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "leaf": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "ll": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "l": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@ll"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "rl": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "rr": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "r": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@rl"},
+        {"offset": "0x8", "u32": "@rr"}
+      ]
+    },
+    "rnode": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "@leaf"}
+      ]
+    },
+    "x": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@l"},
+        {"offset": "0x8", "u32": "@r"}
+      ]
+    },
+    "x2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf40"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "f0": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "f1": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "f2": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "f3": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    },
+    "f4": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x1004cf30"},
+        {"offset": "0x8", "u32": "0x1004cf30"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1004cf18", "u32": "0x1004cf30"},
+    {"addr": "0x1004cf30", "size": 48, "fill": "zero"},
+    {"addr": "0x1004cf50", "u32": "@l"},
+    {"addr": "0x1004cf58", "u32": "@leaf"}
+  ],
+  "callees": {
+    "0x10010a10": {
+      "name": "PackFsMap_guess::erase_guess",
+      "conv": "thiscall",
+      "args": ["ptr"]
+    },
+    "0x10033800": {
+      "name": "FUN_10033800",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "nil root (the nil node's own address): nothing freed",
+      "args": ["0x1004cf30"]
+    },
+    {
+      "name": "single leaf: one free",
+      "args": ["@leaf"]
+    },
+    {
+      "name": "left chain only: l then ll",
+      "args": ["@l"]
+    },
+    {
+      "name": "right child only: leaf, then rnode",
+      "args": ["@rnode"]
+    },
+    {
+      "name": "typical: right subtree first (rr, r, rl), then x, l, ll",
+      "args": ["@x"]
+    },
+    {
+      "name": "nil global moved by the first free: the loop re-reads it, so only x2 is freed",
+      "args": ["@x2"],
+      "callees": {
+        "0x10033800": {
+          "name": "FUN_10033800",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {"addr": "0x1004cf18", "hex": "40cf0410"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "right free rewrites the left link: left is read after the recursion (leaf, then the node at 0x1004cf50 only)",
+      "args": ["0x1004cf50"],
+      "callees": {
+        "0x10033800": {
+          "name": "FUN_10033800",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {"addr": "0x1004cf50", "hex": "30cf0410"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "ESI and EDI hold junk at entry: the cursor is set from x before its first read",
+      "args": ["@x"],
+      "regs": {"esi": "0x1004cf60", "edi": "0x1004cf60"}
+    },
+    {
+      "name": "ESI begins at nil while x is a leaf: the cursor must be initialized from x",
+      "args": ["@leaf"],
+      "regs": {"esi": "0x1004cf30", "edi": "0x1004cf60"}
+    }
+  ],
+  "fuzz": {
+    "seed": 1001010,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@f0", "@f1", "@f2", "@f3", "@f4", "0x1004cf30"]
+      }
+    ],
+    "memory": [
+      {"addr": "@f0", "offset": "0x0", "type": "u32", "choices": ["@f1", "@f2", "@f3", "@f4", "0x1004cf30"]},
+      {"addr": "@f0", "offset": "0x8", "type": "u32", "choices": ["@f1", "@f2", "@f3", "@f4", "0x1004cf30"]},
+      {"addr": "@f1", "offset": "0x0", "type": "u32", "choices": ["@f2", "@f3", "@f4", "0x1004cf30"]},
+      {"addr": "@f1", "offset": "0x8", "type": "u32", "choices": ["@f2", "@f3", "@f4", "0x1004cf30"]},
+      {"addr": "@f2", "offset": "0x0", "type": "u32", "choices": ["@f3", "@f4", "0x1004cf30"]},
+      {"addr": "@f2", "offset": "0x8", "type": "u32", "choices": ["@f3", "@f4", "0x1004cf30"]},
+      {"addr": "@f3", "offset": "0x0", "type": "u32", "choices": ["@f4", "0x1004cf30"]},
+      {"addr": "@f3", "offset": "0x8", "type": "u32", "choices": ["@f4", "0x1004cf30"]}
+    ]
+  }
+}

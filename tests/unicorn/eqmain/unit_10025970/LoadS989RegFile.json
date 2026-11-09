@@ -1,0 +1,336 @@
+{
+  "function": "LoadS989RegFile_guess",
+  "original": "0x10025a40",
+  "sources": [
+    "src/eqmain/unit_10025970.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "param_2": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "param_1_alt": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "param_2_alt": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "path": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 0,
+          "cstr": "C:/EverQuest/s989reg.txt"
+        }
+      ]
+    },
+    "file": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "buf": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "0x58585841"
+        },
+        {
+          "offset": 4,
+          "u32": "0x58585858"
+        }
+      ]
+    },
+    "processed": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 0,
+          "cstr": "abc"
+        }
+      ]
+    },
+    "dup": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 0,
+          "cstr": "abc"
+        }
+      ]
+    },
+    "empty": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "empty_dup": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100210f0": {
+      "name": "FUN_100210f0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@path"
+    },
+    "0x1003407f": {
+      "name": "FUN_1003407f",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "ptr"
+      ],
+      "ret": "@file"
+    },
+    "0x100345ed": {
+      "name": "_fseek",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "long",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x10033e8f": {
+      "name": "_ftell",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 5
+    },
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@buf"
+    },
+    "0x100342a2": {
+      "name": "_fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "ptr"
+      ],
+      "ret": 5,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "48656c6c6f"
+        }
+      ]
+    },
+    "0x100343b9": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": [
+        "mem:8"
+      ],
+      "ret": "@processed"
+    },
+    "0x1003396b": {
+      "name": "__strdup",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@dup"
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "opens-reads-and-copies",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "open-returns-null",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "0x1003407f": {
+          "name": "FUN_1003407f",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "open-returns-minus-one",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "0x1003407f": {
+          "name": "FUN_1003407f",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first-byte-zero-closes-and-leaks",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty-file",
+      "args": [
+        "@param_1",
+        "@param_2"
+      ],
+      "callees": {
+        "0x10033e8f": {
+          "name": "_ftell",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        },
+        "0x100342a2": {
+          "name": "_fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int",
+            "ptr"
+          ],
+          "ret": 0
+        },
+        "0x10021110": {
+          "name": "FUN_10021110",
+          "conv": "cdecl",
+          "args": [
+            "mem:8"
+          ],
+          "ret": "@empty"
+        },
+        "0x1003396b": {
+          "name": "__strdup",
+          "conv": "cdecl",
+          "args": [
+            "cstr"
+          ],
+          "ret": "@empty_dup"
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 10025040,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@param_1",
+          "@param_1_alt"
+        ]
+      },
+      {
+        "choices": [
+          "@param_2",
+          "@param_2_alt"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@buf",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          65,
+          255
+        ]
+      }
+    ]
+  }
+}

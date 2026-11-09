@@ -1,0 +1,227 @@
+{
+  "function": "EQMain_PushSlotString_guess",
+  "original": "0x10017590",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "str",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "long": {
+      "size": "0x400"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1004ECF0",
+      "size": 2540,
+      "fill": "random"
+    },
+    {
+      "addr": "0x1004F6DC",
+      "size": 4,
+      "fill": "random"
+    },
+    {
+      "addr": "0x1004F87C",
+      "u16": 0
+    },
+    {
+      "addr": "0x1004F87E",
+      "u16": 23130
+    },
+    {
+      "addr": "@long",
+      "cstr": "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
+    }
+  ],
+  "cases": [
+    {
+      "name": "empty string into slot 0 (count 0)",
+      "args": [
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "abc into slot 0 (count 0)",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "middle slot (count 3)",
+      "args": [
+        "middle"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 3
+        }
+      ]
+    },
+    {
+      "name": "last free slot (count 9), mirror becomes 10",
+      "args": [
+        "nine"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 9
+        }
+      ]
+    },
+    {
+      "name": "count 10 (full): shift slots 1..9 down, string to slot 9, mirror keeps 10",
+      "args": [
+        "ten"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 10
+        }
+      ]
+    },
+    {
+      "name": "count 11 (above full): shift, mirror keeps 11",
+      "args": [
+        "eleven"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 11
+        }
+      ]
+    },
+    {
+      "name": "count 32767: the largest signed count takes the shift path",
+      "args": [
+        "max"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 32767
+        }
+      ]
+    },
+    {
+      "name": "count -1 (signed, below 10): slot -1 is below the table, mirror becomes 0",
+      "args": [
+        "neg"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "count -2 (signed, below 10): slot -2 is below the table, mirror becomes -1",
+      "args": [
+        "neg2"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 65534
+        }
+      ]
+    },
+    {
+      "name": "long string at count 0: overflows slots 0..2",
+      "args": [
+        "@long"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "long string at count 9: the copy overwrites the count word, so the mirror is re-read",
+      "args": [
+        "@long"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 9
+        }
+      ]
+    },
+    {
+      "name": "long string at count 10: the copy overwrites the count word, so the mirror keeps the entry count",
+      "args": [
+        "@long"
+      ],
+      "memory": [
+        {
+          "addr": "0x1004F87C",
+          "u16": 10
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 10017590,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "",
+          "a",
+          "ab",
+          "abc",
+          "abcd",
+          "abcde",
+          "0123456789",
+          "the quick brown fox",
+          "line 42: ok!"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1004F87C",
+        "type": "short",
+        "range": [
+          -2,
+          12
+        ]
+      },
+      {
+        "addr": "0x1004F87E",
+        "size": 2
+      },
+      {
+        "addr": "0x1004ECF0",
+        "size": 2540
+      }
+    ]
+  }
+}

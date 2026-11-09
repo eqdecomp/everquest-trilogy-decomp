@@ -1,0 +1,143 @@
+{
+  "function": "get_min_packet_time_guess",
+  "original": "0x004f7e50",
+  "sources": [
+    "src/Network/rdp/list.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "list", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "list": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@h"},
+        {"offset": "0x8", "u32": 3}
+      ]
+    },
+    "h": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@d"}
+      ]
+    },
+    "d": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 500}
+      ]
+    },
+    "a": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 400}
+      ]
+    },
+    "b": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 600}
+      ]
+    },
+    "c": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 300}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@a", "@b", "@c", "@a"]},
+    "0x004f54c0": {"name": "list_add_tail_guess", "conv": "cdecl", "args": ["ptr", "ptr"]}
+  },
+  "cases": [
+    {
+      "name": "empty count returns head data time, no calls",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 0}]
+    },
+    {
+      "name": "three items, min is last",
+      "args": ["@list"]
+    },
+    {
+      "name": "one item smaller",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}]
+    },
+    {
+      "name": "one item larger keeps start",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@b"]}
+      }
+    },
+    {
+      "name": "equal time keeps start",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}, {"addr": "@a", "offset": "0x10", "u32": 500}]
+    },
+    {
+      "name": "difference by one",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}, {"addr": "@a", "offset": "0x10", "u32": 499}]
+    },
+    {
+      "name": "difference by one other way",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}, {"addr": "@a", "offset": "0x10", "u32": 501}]
+    },
+    {
+      "name": "wraparound: huge start vs small item is not smaller",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}, {"addr": "@d", "offset": "0x10", "u32": "0xfffffff0"}, {"addr": "@a", "offset": "0x10", "u32": 5}]
+    },
+    {
+      "name": "wraparound: signed diff overflow",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}, {"addr": "@d", "offset": "0x10", "u32": "0x7fffffff"}, {"addr": "@a", "offset": "0x10", "u32": "0x80000000"}]
+    },
+    {
+      "name": "wraparound: diff exactly 0x80000000",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 1}, {"addr": "@d", "offset": "0x10", "u32": "0x80000000"}, {"addr": "@a", "offset": "0x10", "u32": 0}]
+    },
+    {
+      "name": "four items, running min order matters",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x8", "u32": 4}],
+      "callees": {
+        "0x004f5500": {"name": "list_remove_head_guess", "conv": "cdecl", "args": ["ptr"], "ret": ["@b", "@a", "@b", "@c"]}
+      }
+    },
+    {
+      "name": "null head reads address 0x10 (faults on both)",
+      "args": ["@list"],
+      "memory": [{"addr": "@list", "offset": "0x0", "u32": 0}, {"addr": "@list", "offset": "0x8", "u32": 0}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5209680,
+    "count": 40,
+    "args": [
+      {"choices": ["@list"]}
+    ],
+    "memory": [
+      {"addr": "@list", "offset": "0x8", "type": "u32", "range": [0, 4]},
+      {"addr": "@d", "offset": "0x10", "type": "u32"},
+      {"addr": "@a", "offset": "0x10", "type": "u32"},
+      {"addr": "@b", "offset": "0x10", "type": "u32", "choices": [0, 1, 500, 2147483647, 2147483648, 4294967295]},
+      {"addr": "@c", "offset": "0x10", "type": "u32"}
+    ]
+  }
+}

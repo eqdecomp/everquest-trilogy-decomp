@@ -1,0 +1,329 @@
+{
+  "function": "t3dSetSkyRegionAmbientScaler",
+  "original": "0x10019869",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "levelOfDetailIndex",
+      "type": "u32"
+    },
+    {
+      "name": "renderMethodIndex",
+      "type": "u32"
+    },
+    {
+      "name": "ambientScaler",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 40
+        },
+        {
+          "offset": "0x8",
+          "u32": 3
+        },
+        {
+          "offset": "0xc",
+          "u32": "@loddata"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@methods"
+        }
+      ]
+    },
+    "loddata": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 3
+        },
+        {
+          "offset": "0x4",
+          "u32": "@refs"
+        },
+        {
+          "offset": "0x8",
+          "u32": 2
+        },
+        {
+          "offset": "0xc",
+          "u32": "@refs"
+        },
+        {
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "offset": "0x14",
+          "u32": "@refs"
+        }
+      ]
+    },
+    "refs": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "offset": "0x14",
+          "u32": 2
+        },
+        {
+          "offset": "0x20",
+          "u32": 1
+        },
+        {
+          "offset": "0x2c",
+          "u32": 3
+        }
+      ]
+    },
+    "methods": {
+      "size": "0x140",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical mapped method write",
+      "args": [
+        "@region",
+        1,
+        1,
+        1.5
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "first LOD and method",
+      "args": [
+        "@region",
+        0,
+        0,
+        0.0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "last valid LOD",
+      "args": [
+        "@region",
+        2,
+        0,
+        -4.25
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "wrong state type",
+      "args": [
+        "@region",
+        0,
+        0,
+        1.0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x0",
+          "u32": 39
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "LOD index at action count",
+      "args": [
+        "@region",
+        3,
+        0,
+        2.0
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "LOD index above unsigned range",
+      "args": [
+        "@region",
+        4294967295,
+        0,
+        2.0
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "render method index at count",
+      "args": [
+        "@region",
+        1,
+        2,
+        2.0
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "render method index above unsigned range",
+      "args": [
+        "@region",
+        1,
+        4294967295,
+        2.0
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "zero action count boundary",
+      "args": [
+        "@region",
+        0,
+        0,
+        2.0
+      ],
+      "memory": [
+        {
+          "addr": "@state",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "zero render method count boundary",
+      "args": [
+        "@region",
+        0,
+        0,
+        2.0
+      ],
+      "memory": [
+        {
+          "addr": "@loddata",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 104553,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      },
+      {
+        "range": [
+          0,
+          5
+        ]
+      },
+      {
+        "range": [
+          0,
+          4
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@state",
+        "offset": "0x0",
+        "type": "u32",
+        "choices": [
+          40,
+          39,
+          0
+        ]
+      },
+      {
+        "addr": "@state",
+        "offset": "0x8",
+        "type": "u32",
+        "range": [
+          0,
+          4
+        ]
+      },
+      {
+        "addr": "@loddata",
+        "offset": "0x0",
+        "type": "u32",
+        "count": 3,
+        "stride": 8,
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@refs",
+        "offset": "0x8",
+        "type": "u32",
+        "count": 4,
+        "stride": 12,
+        "range": [
+          0,
+          3
+        ]
+      }
+    ]
+  }
+}

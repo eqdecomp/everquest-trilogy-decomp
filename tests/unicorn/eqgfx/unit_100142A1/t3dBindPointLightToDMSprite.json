@@ -1,0 +1,293 @@
+{
+  "function": "t3dBindPointLightToDMSprite",
+  "original": "0x10014891",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "sharedObject",
+      "type": "ptr"
+    },
+    {
+      "name": "boundObject",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "light": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0f",
+          "u8": 0
+        },
+        {
+          "offset": "0x34",
+          "u32": 0
+        },
+        {
+          "offset": "0x38",
+          "u32": 0
+        }
+      ]
+    },
+    "sharedobject": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "boundobject": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100aad7c",
+      "u32": 10
+    }
+  ],
+  "callees": {
+    "0x1001494d": {
+      "name": "t3dUnbindPointLight",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10014995": {
+      "name": "t3dUpdateBoundPointLight",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@context",
+        "@light",
+        "@sharedobject",
+        "@boundobject"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "shared null",
+      "args": [
+        "@context",
+        "@light",
+        0,
+        "@boundobject"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "bound null",
+      "args": [
+        "@context",
+        "@light",
+        "@sharedobject",
+        0
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "both null",
+      "args": [
+        "@context",
+        "@light",
+        0,
+        0
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "flags already set",
+      "args": [
+        "@context",
+        "@light",
+        "@sharedobject",
+        "@boundobject"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x0f",
+          "u8": 8
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flags other bits",
+      "args": [
+        "@context",
+        "@light",
+        "@sharedobject",
+        "@boundobject"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x0f",
+          "u8": 247
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "count wrap",
+      "args": [
+        "@context",
+        "@light",
+        "@sharedobject",
+        "@boundobject"
+      ],
+      "memory": [
+        {
+          "addr": "0x100aad7c",
+          "u32": 4294967295
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "overwrite preset pointers",
+      "args": [
+        "@context",
+        "@light",
+        "@sharedobject",
+        "@boundobject"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x34",
+          "u32": 2863311530
+        },
+        {
+          "addr": "@light",
+          "offset": "0x38",
+          "u32": 572662306
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 84113,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@light"
+        ]
+      },
+      {
+        "choices": [
+          "@sharedobject",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@boundobject",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@light",
+        "offset": "0x0f",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          8,
+          247,
+          255
+        ]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x34",
+        "type": "u32",
+        "range": [
+          0,
+          65536
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@light",
+        "offset": "0x38",
+        "type": "u32",
+        "range": [
+          0,
+          65536
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "0x100aad7c",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "function": "CreateSlider_guess",
+  "original": "0x10006950",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "owner", "type": "ptr"},
+    {"name": "x", "type": "int"},
+    {"name": "y", "type": "int"},
+    {"name": "w", "type": "int"},
+    {"name": "h", "type": "int"},
+    {"name": "surface", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {"size": "0x40", "fill": "zero", "init": [{"offset": "0xc", "u32": "@srcsurf"}]},
+    "srcsurf": {"size": "0x10", "fill": "zero"},
+    "givensurf": {"size": "0x10", "fill": "zero"},
+    "slider": {"size": "0x74", "fill": "zero"},
+    "wrapper": {"size": "0x10", "fill": "zero", "init": [{"offset": "0xc", "u32": "@iface"}]},
+    "iface": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": "@vtbl"}]},
+    "vtbl": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x14", "u32": "@blt"}]},
+    "blt": {"size": "0x10", "fill": "zero"},
+    "sbup1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 14}, {"offset": "0x4", "u32": 6}]},
+    "sbup2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 8}, {"offset": "0x4", "u32": 9}]},
+    "sbdown1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 15}, {"offset": "0x4", "u32": 7}]},
+    "sbdown2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 5}, {"offset": "0x4", "u32": 4}]},
+    "sbthumb": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 3}, {"offset": "0x4", "u32": 2}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@slider"
+    },
+    "0x10006d80": {
+      "name": "FUN_10006d80",
+      "conv": "cdecl",
+      "args": ["int", "int", "int"],
+      "ret": "@wrapper"
+    },
+    "0x10007ae0": {
+      "name": "FUN_10007ae0",
+      "conv": "cdecl",
+      "args": ["cstr", "int"],
+      "ret": ["@sbup1", "@sbup2", "@sbdown1", "@sbdown2", "@sbthumb"]
+    },
+    "0x100067e0": {
+      "name": "FUN_100067e0",
+      "conv": "cdecl",
+      "args": ["int"],
+      "ret": 0
+    },
+    "0x10028340": {
+      "name": "FUN_10028340",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "ptr"],
+      "ret": 0
+    },
+    "@blt": {
+      "name": "Blt",
+      "conv": "stdcall",
+      "args": ["ptr", "mem:16", "ptr", "mem:16", "u32", "mem:12"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null owner",
+      "args": [0, 10, 20, 16, 12, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null owner, given surface",
+      "args": [0, 10, 20, 16, 12, "@givensurf"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "malloc fails",
+      "args": ["@owner", 10, 20, 16, 12, 0],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "given surface",
+      "args": ["@owner", 10, 20, 16, 12, "@givensurf"]
+    },
+    {
+      "name": "typical",
+      "args": ["@owner", 10, 20, 16, 12, 0]
+    },
+    {
+      "name": "stale stack slot under the dest rect's top (harness stack at 0x7f0eff8c)",
+      "args": ["@owner", 10, 20, 16, 12, 0],
+      "memory": [{"addr": "0x7f0eff90", "u32": 305419896}]
+    },
+    {
+      "name": "zero size",
+      "args": ["@owner", 10, 20, 0, 0, 0]
+    },
+    {
+      "name": "negative origin and size",
+      "args": ["@owner", -5, -7, -3, -4, 0]
+    },
+    {
+      "name": "origin, unit size, given surface",
+      "args": ["@owner", 0, 0, 1, 1, "@givensurf"]
+    },
+    {
+      "name": "large origin and size",
+      "args": ["@owner", 1000, 2000, 300, 200, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 26960,
+    "count": 40,
+    "args": [
+      {"choices": ["@owner", 0]},
+      {"range": [-4, 30]},
+      {"range": [-4, 30]},
+      {"range": [-4, 30]},
+      {"range": [-4, 30]},
+      {"choices": ["@givensurf", 0]}
+    ],
+    "memory": [
+      {"addr": "@sbup1", "offset": "0x0", "type": "int", "range": [-4, 40]},
+      {"addr": "@sbup1", "offset": "0x4", "type": "int", "range": [-4, 40]},
+      {"addr": "@sbdown1", "offset": "0x0", "type": "int", "range": [-4, 40]},
+      {"addr": "@sbdown1", "offset": "0x4", "type": "int", "range": [-4, 40]}
+    ]
+  }
+}

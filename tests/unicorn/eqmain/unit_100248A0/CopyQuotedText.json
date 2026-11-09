@@ -1,0 +1,173 @@
+{
+  "function": "CopyQuotedText_guess",
+  "original": "0x10024d30",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "text",
+      "type": "ptr"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "src": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x7f", "u8": 125}
+      ]
+    },
+    "out": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "quoted field then x returns past the closing quote",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"ab\"x"}]
+    },
+    {
+      "name": "closing quote then close brace returns zero",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"ab\"}"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one-character field then close brace returns zero at odd offset",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"a\"}"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "open brace stops the scan with no copy",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "{\"ab\"x"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "close brace stops the scan with no copy",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "}\"ab\"x"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "scan skips plain text to the quote",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "xyz\"ab\"q"}]
+    },
+    {
+      "name": "close brace before a quote ends the scan",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "ab}\"cd\"x"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "open brace after plain text ends the scan",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "xy{\"ab\"}"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "open brace before close brace (first stop wins)",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "{}\"ab\"x"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "open brace inside a field is copied",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"a{b\"x"}]
+    },
+    {
+      "name": "close brace inside a field ends the copy with no NUL",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"ab}cd\"x"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty field then text",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"\"q"}]
+    },
+    {
+      "name": "empty field then close brace",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"\"}"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "quote then close brace copies nothing",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"}"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "field cut off by close brace has no NUL",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"ab}"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "closing quote followed by another quote",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"ab\"\"x"}]
+    },
+    {
+      "name": "closing quote followed by NUL",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"ab\""}]
+    },
+    {
+      "name": "one character field",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"a\"x"}]
+    },
+    {
+      "name": "no stop character runs to the sentinel",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "abcdef"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "scan starts on the sentinel",
+      "args": ["@src+0x7f", "@out"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "long field of 40 letters",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN\"q"}]
+    },
+    {
+      "name": "digits and punctuation inside a field",
+      "args": ["@src", "@out"],
+      "memory": [{"addr": "@src", "cstr": "\"x 1,2:3\"q"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 7310421,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@src", "@src+0x3", "@src+0x20", "@src+0x7f"]
+      },
+      {
+        "choices": ["@out", "@out+0x10"]
+      }
+    ],
+    "memory": [
+      {"addr": "@src", "type": "u8", "count": 40, "choices": [34, 34, 34, 125, 123, 97, 98, 32, 120, 0]}
+    ]
+  }
+}

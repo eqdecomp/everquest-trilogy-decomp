@@ -1,0 +1,356 @@
+{
+  "function": "connection_record_arrival",
+  "original": "0x004f1ce0",
+  "sources": [
+    "src/Network/rdp/connection.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x800",
+      "fill": "random",
+      "init": [
+        {"offset": "0x77c", "u32": 0},
+        {"offset": "0x780", "u32": 0}
+      ]
+    },
+    "param_2": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0", "u16": 0},
+        {"offset": "8", "u16": "0x1234"},
+        {"offset": "0x12", "u16": 0},
+        {"offset": "0x14", "u16": 0}
+      ]
+    },
+    "param_3": {
+      "size": 4,
+      "fill": "random",
+      "init": [{"offset": 0, "u32": "0xdeadbeef"}]
+    },
+    "stats": {"size": "0x80", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x0057f698", "u32": "@stats"}
+  ],
+  "callees": {
+    "0x004f59c0": {
+      "name": "NetworkConnection_update_connection_last_activity_time_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x004f3ac0": {
+      "name": "NetworkConnection_Disconnect_guess",
+      "conv": "cdecl",
+      "args": ["int", "int"]
+    },
+    "0x004f3d40": {
+      "name": "NetworkConnection_handle_disconnect_request_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    },
+    "0x004f59d0": {
+      "name": "rx_record_seqnum_arrival_guess",
+      "conv": "cdecl",
+      "args": ["int", "ptr"]
+    },
+    "0x004f2cd0": {
+      "name": "tx_record_ack_arrival",
+      "conv": "cdecl",
+      "args": ["int", "ptr"]
+    },
+    "0x004f5f70": {
+      "name": "NetworkConnection_process_sequence_number_guess",
+      "conv": "cdecl",
+      "args": ["int", "u16"],
+      "ret": 0
+    },
+    "0x004f3e10": {
+      "name": "tx_set_delayed_ack_guess",
+      "conv": "cdecl",
+      "args": ["int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "unsequenced payload increments packets and bytes",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 3},
+        {"addr": "@param_2", "offset": "0x14", "u16": 9}
+      ]
+    },
+    {
+      "name": "unsequenced empty payload still accounts packet size",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 4},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0}
+      ]
+    },
+    {
+      "name": "connected remote disconnect exits before packet recorders",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x77c", "u32": 1},
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"}
+      ]
+    },
+    {
+      "name": "remote disconnect flag ignored while disconnected",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x77c", "u32": 0},
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"}
+      ]
+    },
+    {
+      "name": "disconnect request with zero request state",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0400"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 2}
+      ]
+    },
+    {
+      "name": "disconnect request suppressed by nonzero request state",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x780", "u32": 1},
+        {"addr": "@param_2", "offset": 0, "u16": "0x0400"}
+      ]
+    },
+    {
+      "name": "sequenced packet accepted and delayed ack scheduled",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": 8, "u16": "0x3344"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 1},
+        {"addr": "@param_2", "offset": "0x14", "u16": 7}
+      ],
+      "callees": {
+        "0x004f5f70": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "sequenced duplicate packet takes duplicate counters",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": 0}
+      ],
+      "callees": {
+        "0x004f5f70": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "accepted counters wrap low words",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x12", "u16": 1},
+        {"addr": "@param_2", "offset": "0x14", "u16": 32},
+        {"addr": "@stats", "offset": "0x50", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x54", "u32": 7},
+        {"addr": "@stats", "offset": "0x58", "u32": "0xfffffff0"},
+        {"addr": "@stats", "offset": "0x5c", "u32": 9},
+        {"addr": "@param_1", "offset": "0x90", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x94", "u32": "0xfffffff0"}
+      ],
+      "callees": {
+        "0x004f5f70": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "duplicate counters wrap low words",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x0200"},
+        {"addr": "@param_2", "offset": "0x12", "u16": "0xffff"},
+        {"addr": "@param_2", "offset": "0x14", "u16": "0xffff"},
+        {"addr": "@stats", "offset": "0x60", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x64", "u32": 11},
+        {"addr": "@stats", "offset": "0x68", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x6c", "u32": 12},
+        {"addr": "@param_1", "offset": "0x98", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x9c", "u32": "0xffffffff"}
+      ],
+      "callees": {
+        "0x004f5f70": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 2
+        }
+      }
+    },
+    {
+      "name": "unsequenced counters wrap and total size wraps",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": "0xffff"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 1},
+        {"addr": "@stats", "offset": "0x40", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x44", "u32": 13},
+        {"addr": "@stats", "offset": "0x48", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x4c", "u32": 14},
+        {"addr": "@stats", "offset": "0x70", "u32": "0xffffffff"},
+        {"addr": "@stats", "offset": "0x74", "u32": 15},
+        {"addr": "@param_1", "offset": "0x88", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0x8c", "u32": "0xffffffff"},
+        {"addr": "@param_1", "offset": "0xa0", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "result output aliases packet flags and clears them before dispatch",
+      "args": ["@param_1", "@param_2", "@param_2"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x8200"},
+        {"addr": "@param_2", "offset": "0x14", "u16": 4}
+      ]
+    },
+    {
+      "name": "result output aliases connected state before disconnect test",
+      "args": ["@param_1", "@param_2", "@param_1+0x77c"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x77c", "u32": 1},
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"}
+      ]
+    },
+    {
+      "name": "activity callback state is checked before disconnect decision",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": "0x8000"}
+      ],
+      "callees": {
+        "0x004f59c0": {
+          "name": "NetworkConnection_update_connection_last_activity_time_guess",
+          "conv": "cdecl",
+          "args": ["int"],
+          "writes": [{"arg": 0, "offset": 1916, "hex": "01000000"}]
+        }
+      }
+    },
+    {
+      "name": "rx recorder changes flags before later packet classification",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": 2}
+      ],
+      "callees": {
+        "0x004f59d0": {
+          "name": "rx_record_seqnum_arrival_guess",
+          "conv": "cdecl",
+          "args": ["int", "ptr"],
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "0002"},
+            {"arg": 1, "offset": 8, "hex": "7856"},
+            {"arg": 1, "offset": 20, "hex": "0500"}
+          ]
+        },
+        "0x004f5f70": {
+          "name": "NetworkConnection_process_sequence_number_guess",
+          "conv": "cdecl",
+          "args": ["int", "u16"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "rx recorder high disconnect bit is not rechecked",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x14", "u16": 3}
+      ],
+      "callees": {
+        "0x004f59d0": {
+          "name": "rx_record_seqnum_arrival_guess",
+          "conv": "cdecl",
+          "args": ["int", "ptr"],
+          "writes": [{"arg": 1, "offset": 0, "hex": "0080"}]
+        }
+      }
+    },
+    {
+      "name": "stats count may alias and change the global pointer before byte count",
+      "args": ["@param_1", "@param_2", "@param_3"],
+      "memory": [
+        {"addr": "@param_2", "offset": 0, "u16": 0},
+        {"addr": "@param_2", "offset": "0x12", "u16": 1},
+        {"addr": "@param_2", "offset": "0x14", "u16": 1},
+        {"addr": "0x0057f698", "u32": "0x0057f658"},
+        {"addr": "0x0057f69c", "u32": 0},
+        {"addr": "0x0057f6a0", "u32": 16},
+        {"addr": "0x0057f6a4", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5151517,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1"]},
+      {"choices": ["@param_2"]},
+      {"choices": ["@param_3"]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x77c", "type": "u32", "choices": [0, 1, "0xffffffff"]},
+      {"addr": "@param_1", "offset": "0x780", "type": "u32", "choices": [0, 1]},
+      {"addr": "@param_1", "offset": "0x88", "type": "u32"},
+      {"addr": "@param_1", "offset": "0x8c", "type": "u32"},
+      {"addr": "@param_1", "offset": "0x90", "type": "u32"},
+      {"addr": "@param_1", "offset": "0x94", "type": "u32"},
+      {"addr": "@param_1", "offset": "0x98", "type": "u32"},
+      {"addr": "@param_1", "offset": "0x9c", "type": "u32"},
+      {"addr": "@param_1", "offset": "0xa0", "type": "u32"},
+      {"addr": "@param_2", "offset": 0, "type": "u16", "choices": [0, "0x200", "0x400", "0x8000", "0x8200", "0x8400", "0xffff"]},
+      {"addr": "@param_2", "offset": 8, "type": "u16"},
+      {"addr": "@param_2", "offset": "0x12", "type": "u16"},
+      {"addr": "@param_2", "offset": "0x14", "type": "u16", "choices": [0, 1, 4, "0xffff"]},
+      {"addr": "@stats", "offset": "0x40", "type": "u32"},
+      {"addr": "@stats", "offset": "0x44", "type": "u32"},
+      {"addr": "@stats", "offset": "0x48", "type": "u32"},
+      {"addr": "@stats", "offset": "0x4c", "type": "u32"},
+      {"addr": "@stats", "offset": "0x50", "type": "u32"},
+      {"addr": "@stats", "offset": "0x54", "type": "u32"},
+      {"addr": "@stats", "offset": "0x58", "type": "u32"},
+      {"addr": "@stats", "offset": "0x5c", "type": "u32"},
+      {"addr": "@stats", "offset": "0x60", "type": "u32"},
+      {"addr": "@stats", "offset": "0x64", "type": "u32"},
+      {"addr": "@stats", "offset": "0x68", "type": "u32"},
+      {"addr": "@stats", "offset": "0x6c", "type": "u32"},
+      {"addr": "@stats", "offset": "0x70", "type": "u32"},
+      {"addr": "@stats", "offset": "0x74", "type": "u32"}
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "function": "s3dParsePatchLighting",
+  "original": "0x100262a7",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "lightingState",
+      "type": "u32"
+    },
+    {
+      "name": "filePath",
+      "type": "int"
+    }
+  ],
+  "ret": "u32",
+  "objects": {},
+  "memory": [
+    {"addr": "0x100AADEC", "u32": "0x12345678"},
+    {"addr": "0x100AADF0", "u32": 0},
+    {"addr": "0x10087200", "size": 8, "fill": "zero"}
+  ],
+  "callees": {
+    "0x10068328": {"name": "fclose_guess", "conv": "cdecl", "args": ["u32"], "ret": 0},
+    "0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["int", "ptr"], "ret": "0x12340"}
+  },
+  "cases": [
+    {
+      "name": "zero-path-clears-existing-file",
+      "args": [
+        "0x10203040",
+        0
+      ],
+      "memory": [{"addr": "0x100AADF0", "u32": "0x23450000"}]
+    },
+    {
+      "name": "zero-path-without-existing-file",
+      "args": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "path-opens",
+      "args": ["0xAABBCCDD", 1]
+    },
+    {
+      "name": "path-open-fails",
+      "args": ["0x55667788", 7],
+      "callees": {"0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["int", "ptr"], "ret": 0}}
+    },
+    {
+      "name": "close-then-open",
+      "args": ["0xFFFFFFFF", -1],
+      "memory": [{"addr": "0x100AADF0", "u32": "0x34560000"}]
+    },
+    {
+      "name": "close-then-open-fails",
+      "args": ["0x01020304", 12],
+      "memory": [{"addr": "0x100AADF0", "u32": "0x45670000"}],
+      "callees": {"0x10068412": {"name": "openFileWithPath_guess", "conv": "cdecl", "args": ["int", "ptr"], "ret": 0}}
+    }
+  ],
+  "fuzz": {
+    "seed": 156327,
+    "count": 32,
+    "args": [
+      {},
+      {"choices": [0, -1, 1, 12]}
+    ],
+    "memory": [
+      {"addr": "0x100AADF0", "type": "u32", "choices": [0, "0x100000", "0xABCDEF00"]}
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "function": "NextByte_guess",
+  "original": "0x100250c0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u8",
+  "objects": {
+    "buf": {
+      "size": "0x2200",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u8": 66},
+        {"offset": "0xfe", "u8": 68},
+        {"offset": "0xff", "u8": 67},
+        {"offset": "0x100", "u8": 65},
+        {"offset": "0x101", "u8": 69},
+        {"offset": "0x102", "u8": 0},
+        {"offset": "0x20fe", "u8": 70},
+        {"offset": "0x20ff", "u8": 90},
+        {"offset": "0x2100", "u8": 119}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x1012B91C", "u32": "0x0"},
+    {"addr": "0x1012B914", "u32": "@buf+0x100"}
+  ],
+  "callees": {},
+  "cases": [
+    {"name": "first byte, cursor 0", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x0"}], "expect": {"ret": 65}},
+    {"name": "cursor 1", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x1"}], "expect": {"ret": 69}},
+    {"name": "zero byte", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x2"}], "expect": {"ret": 0}},
+    {"name": "cursor 0x1ffe (next 0x1fff)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x1ffe"}], "expect": {"ret": 70}},
+    {"name": "cursor 0x1fff (next 0x2000, last index)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x1fff"}], "expect": {"ret": 90}},
+    {"name": "cursor 0x2000 (next 0x2001, refused)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x2000"}], "expect": {"ret": 0}},
+    {"name": "cursor 0x2001 (refused)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x2001"}], "expect": {"ret": 0}},
+    {"name": "cursor 0x8000 (refused)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x8000"}], "expect": {"ret": 0}},
+    {"name": "cursor 0x7ffffffe (next 0x7fffffff, refused)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0x7ffffffe"}], "expect": {"ret": 0}},
+    {"name": "cursor 0xffffff00 (next negative signed: loads buf+0)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0xffffff00"}], "expect": {"ret": 66}},
+    {"name": "cursor 0xffffffff (next 0)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0xffffffff"}], "expect": {"ret": 67}},
+    {"name": "cursor 0xfffffffe (next -1 signed)", "args": [],
+     "memory": [{"addr": "0x1012B91C", "u32": "0xfffffffe"}], "expect": {"ret": 68}}
+  ],
+  "fuzz": {
+    "seed": 151744,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1012B91C", "type": "u32",
+       "choices": ["0x0", "0x1", "0x7f", "0x80", "0xfe", "0xff", "0x100", "0x1234", "0x1ffe", "0x1fff",
+                   "0x2000", "0x2001", "0x2100", "0x8000", "0x10000", "0x7ffffffe",
+                   "0xfffffff0", "0xffffff00", "0xfffffffe", "0xffffffff"]},
+      {"addr": "0x1012B914", "type": "u32", "choices": ["@buf+0x100", "@buf+0x200"]},
+      {"addr": "@buf", "size": 8704}
+    ]
+  }
+}

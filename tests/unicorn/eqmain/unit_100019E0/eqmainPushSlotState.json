@@ -1,0 +1,221 @@
+{
+  "function": "eqmainPushSlotState_guess",
+  "original": "0x10001b60",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": "0x11110001"},
+        {"offset": "0x20", "u32": "0x11110002"},
+        {"offset": "0x24", "u32": "0x11110003"}
+      ]
+    },
+    "msg": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "cstr": "slot stack full"}
+      ]
+    },
+    "slotbuf": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004CE30", "u32": 0},
+    {"addr": "0x1004CEB8", "u32": "@obj"},
+    {"addr": "0x10055A78", "u32": "@msg"},
+    {"addr": "0x1004CEC4", "u32": "0x11110011"},
+    {"addr": "0x1004CE6C", "u32": "0x11110022"},
+    {"addr": "0x1004CD7C", "u32": "0x11110033"}
+  ],
+  "callees": {
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": ["cstr"]
+    },
+    "0x10006d80": {
+      "name": "FUN_10006d80",
+      "conv": "cdecl",
+      "args": ["int", "int", "int"],
+      "ret": "@slotbuf"
+    },
+    "0x10006c20": {
+      "name": "FUN_10006c20",
+      "conv": "cdecl",
+      "args": ["int", "int", "int", "int", "int", "int", "int", "int", "u32"],
+      "ret": 0
+    },
+    "0x10028330": {
+      "name": "ClearRecord3_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "index 0 pushes into slot 0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 0}
+      ]
+    },
+    {
+      "name": "index 1 pushes into slot 1 (typical)",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 1}
+      ]
+    },
+    {
+      "name": "index 2 pushes into slot 2 and leaves index 3",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 2}
+      ]
+    },
+    {
+      "name": "index 3 is full: only the message goes to 0x100278a0, nothing else changes",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 3}
+      ]
+    },
+    {
+      "name": "index 4 is past the full mark and still pushes",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 4}
+      ]
+    },
+    {
+      "name": "index -1 pushes below slot 0",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "0x10006d80 moves the index to 2: the slot pointer and the copy use the new index",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 1}
+      ],
+      "callees": {
+        "0x10006d80": {
+          "name": "FUN_10006d80",
+          "conv": "cdecl",
+          "args": ["int", "int", "int"],
+          "ret": "@slotbuf",
+          "writes": [{"addr": "0x1004ce30", "hex": "02000000"}]
+        }
+      }
+    },
+    {
+      "name": "0x10006d80 replaces the object: the call, the copy and the clear use the new one",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 0},
+        {"addr": "0x1004CDE0", "u32": "0x22220001"},
+        {"addr": "0x1004CDE4", "u32": "0x22220002"},
+        {"addr": "0x1004CDE8", "u32": "0x22220003"}
+      ],
+      "callees": {
+        "0x10006d80": {
+          "name": "FUN_10006d80",
+          "conv": "cdecl",
+          "args": ["int", "int", "int"],
+          "ret": "@slotbuf",
+          "writes": [{"addr": "0x1004ceb8", "hex": "c4cd0410"}]
+        }
+      }
+    },
+    {
+      "name": "0x10006c20 moves the index to 2: the record copy uses the new index",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 0}
+      ],
+      "callees": {
+        "0x10006c20": {
+          "name": "FUN_10006c20",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "int", "int", "int", "u32"],
+          "ret": 0,
+          "writes": [{"addr": "0x1004ce30", "hex": "02000000"}]
+        }
+      }
+    },
+    {
+      "name": "0x10006c20 replaces the object: the copy and the clear use the new one",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 0},
+        {"addr": "0x1004CDE0", "u32": "0x22220001"},
+        {"addr": "0x1004CDE4", "u32": "0x22220002"},
+        {"addr": "0x1004CDE8", "u32": "0x22220003"}
+      ],
+      "callees": {
+        "0x10006c20": {
+          "name": "FUN_10006c20",
+          "conv": "cdecl",
+          "args": ["int", "int", "int", "int", "int", "int", "int", "int", "u32"],
+          "ret": 0,
+          "writes": [{"addr": "0x1004ceb8", "hex": "c4cd0410"}]
+        }
+      }
+    },
+    {
+      "name": "0x10006d80 returns null: null is stored and passed on",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 0}
+      ],
+      "callees": {
+        "0x10006d80": {
+          "name": "FUN_10006d80",
+          "conv": "cdecl",
+          "args": ["int", "int", "int"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zero current values and zero record",
+      "args": [],
+      "memory": [
+        {"addr": "0x1004CE30", "u32": 2},
+        {"addr": "0x1004CEC4", "u32": 0},
+        {"addr": "0x1004CE6C", "u32": 0},
+        {"addr": "0x1004CD7C", "u32": 0},
+        {"addr": "@obj", "offset": "0x1c", "u32": 0},
+        {"addr": "@obj", "offset": "0x20", "u32": 0},
+        {"addr": "@obj", "offset": "0x24", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 7008,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004CE30", "type": "int", "range": [-3, 6]},
+      {"addr": "0x1004CEC4", "type": "u32"},
+      {"addr": "0x1004CE6C", "type": "u32"},
+      {"addr": "0x1004CD7C", "type": "u32"},
+      {"addr": "0x1004CEB8", "type": "ptr", "choices": ["@obj"]},
+      {"addr": "0x10055A78", "type": "ptr", "choices": ["@msg"]},
+      {"addr": "@obj", "offset": "0x1c", "type": "u32", "count": 3}
+    ]
+  }
+}

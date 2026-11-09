@@ -1,0 +1,66 @@
+{
+  "function": "initializeNodeArray_guess",
+  "original": "0x1004ea13",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "block": {"size": "0x8d04", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x100f3ff4", "u32": "@block"},
+    {"addr": "0x10076284", "f32": 0.0}
+  ],
+  "callees": {
+    "0x1004e99d": {"name": "buildBinaryTree_guess", "conv": "cdecl", "args": ["int", "int", "int"], "passthrough": true}
+  },
+  "rewrite_inline": ["__allshl", "__alldiv"],
+  "cases": [
+    {"name": "random tables", "args": [], "expect": {"ret": 1}},
+    {"name": "zero divisor at index 0", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x1000", "f32": 0.0}], "expect": {"ret": 1}},
+    {"name": "zero divisor at index 5", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x1014", "f32": 0.0}], "expect": {"ret": 1}},
+    {"name": "zero divisor at index 127", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x11fc", "f32": 0.0}], "expect": {"ret": 1}},
+    {"name": "negative zero divisor", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x1014", "f32": -0.0}], "expect": {"ret": 1}},
+    {"name": "zero dividend at index 5", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x1814", "f32": 0.0}], "expect": {"ret": 1}},
+    {"name": "denormal divisor", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x1014", "f32": 1.4e-45}], "expect": {"ret": 1}},
+    {"name": "negative sine and cos at indices 0 and 1", "args": [],
+     "memory": [{"addr": "@block", "offset": "0x0", "hex": "00f0ffff"},
+                {"addr": "@block", "offset": "0x4", "hex": "00f0ffff"},
+                {"addr": "@block", "offset": "0x800", "hex": "00f8ffff"},
+                {"addr": "@block", "offset": "0x804", "hex": "00f8ffff"}], "expect": {"ret": 1}},
+    {"name": "stale registers: loop index must start at 0", "args": [],
+     "regs": {"eax": 64, "ebx": 64, "ecx": 64, "edx": 64, "esi": 64, "edi": 64},
+     "expect": {"ret": 1}},
+    {"name": "stale registers at the loop limit", "args": [],
+     "regs": {"eax": 128, "ebx": 128, "ecx": 128, "edx": 128, "esi": 128, "edi": 128},
+     "expect": {"ret": 1}},
+    {"name": "callee returns error", "args": [],
+     "callees": {"0x1004e99d": {"name": "buildBinaryTree_guess", "conv": "cdecl",
+                                "args": ["int", "int", "int"], "ret": -10293}},
+     "expect": {"ret": -10293}}
+  ],
+  "fuzz": {
+    "seed": 322067,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@block", "offset": "0x0", "type": "int", "count": 128, "stride": 4,
+       "choices": [-30000, -2048, -1024, 1024, 2048, 30000]},
+      {"addr": "@block", "offset": "0x800", "type": "int", "count": 128, "stride": 4,
+       "choices": [-30000, -2048, -1024, 1024, 2048, 30000]},
+      {"addr": "@block", "offset": "0x1000", "type": "float", "count": 128, "stride": 4,
+       "choices": [0.0, -0.0, 0.5, -2.0, 100000.0, 3.0]},
+      {"addr": "@block", "offset": "0x1800", "type": "float", "count": 128, "stride": 4,
+       "choices": [0.25, -3.0, 7.5, 0.0, -0.001]}
+    ]
+  }
+}

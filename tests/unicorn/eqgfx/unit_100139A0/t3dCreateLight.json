@@ -1,0 +1,151 @@
+{
+  "function": "t3dCreateLight",
+  "original": "0x100140f2",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "renderer", "type": "ptr" },
+    { "name": "definition", "type": "ptr" }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "renderer": {
+      "size": "0x0c",
+      "fill": "zero",
+      "init": [ { "offset": "0x8", "u32": 37 } ]
+    },
+    "definition": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x10", "u32": 4 },
+        { "offset": "0x20", "u32": "@template" }
+      ]
+    },
+    "template": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "hex": "7856341201000000efcdab89a5c3e1870200000010000000200000002c00000034000000380000003c0000004000000044000000" }
+      ]
+    },
+    "light": { "size": "0x28", "fill": "random" },
+    "light2": { "size": "0x28", "fill": "random" }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [ "u32" ],
+      "ret": "@light"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [ "ptr", "ptr" ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [ "ptr" ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical success copies ten words then increments reference count",
+      "args": [ "@renderer", "@definition" ]
+    },
+    {
+      "name": "allocation failure returns null before reading inputs",
+      "args": [ 0, 0 ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [ "u32" ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "registration failure frees the allocation and returns null",
+      "args": [ "@renderer", "@definition" ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [ "ptr", "ptr" ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "negative registration result is also failure",
+      "args": [ "@renderer", "@definition" ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [ "ptr", "ptr" ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "reference count zero increments to one and copied padding is cleared",
+      "args": [ "@renderer", "@definition" ],
+      "memory": [
+        { "addr": "@definition", "offset": "0x10", "u32": 0 },
+        { "addr": "@template", "hex": "00000000ffffffffaabbccdda5c3e1870200000010000000200000002c00000034000000380000003c0000004000000044000000" }
+      ]
+    },
+    {
+      "name": "reference count wrap and frame sum wrap at unsigned boundary",
+      "args": [ "@renderer", "@definition" ],
+      "memory": [
+        { "addr": "@renderer", "offset": "0x8", "u32": 1 },
+        { "addr": "@definition", "offset": "0x10", "u32": 2147483647 },
+        { "addr": "@template", "hex": "010000000200000003000000ffffffff0500000006000000ffffffff12345678000000010000000200000003000000" }
+      ]
+    },
+    {
+      "name": "second returned allocation address preserves the returned pointer",
+      "args": [ "@renderer", "@definition" ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [ "u32" ],
+          "ret": "@light2"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 82162,
+    "count": 32,
+    "args": [
+      { "choices": [ "@renderer" ] },
+      { "choices": [ "@definition" ] }
+    ],
+    "memory": [
+      {
+        "addr": "@renderer",
+        "offset": "0x8",
+        "type": "u32",
+        "choices": [ 0, 1, 37, 2147483647, 4294967295 ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x10",
+        "type": "int",
+        "choices": [ -1, 0, 1, 17, 2147483647 ]
+      },
+      { "addr": "@template", "size": 40 }
+    ]
+  }
+}

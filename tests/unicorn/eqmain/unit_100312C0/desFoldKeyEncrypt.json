@@ -1,0 +1,118 @@
+{
+  "function": "desFoldKeyEncrypt_guess",
+  "original": "0x10031340",
+  "sources": [
+    "src/eqmain/unit_100312C0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "param_2": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "s_empty": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "s_1": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "A"}]
+    },
+    "s_8": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "ABCDEFGH"}]
+    },
+    "s_9": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "ABCDEFGHI"}]
+    },
+    "s_16": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "0123456789abcdef"}]
+    },
+    "s_17": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "0123456789abcdefg"}]
+    },
+    "s_40": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn"}]
+    },
+    "s_hi": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "hex": "ff80c0e0f0f8fcfe7f3f1f0f07030101"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x1013ca78", "u32": 1}
+  ],
+  "callees": {
+    "0x10031800": {
+      "name": "FUN_10031800",
+      "conv": "cdecl",
+      "args": ["mem:8"]
+    },
+    "0x10031860": {
+      "name": "FUN_10031860",
+      "conv": "cdecl",
+      "args": ["mem:8", "ignore"],
+      "ret": 0
+    },
+    "0x10031b40": {
+      "name": "FUN_10031b40",
+      "conv": "cdecl",
+      "args": ["mem:48", "mem:8", "int", "ignore", "mem:8"]
+    }
+  },
+  "cases": [
+    {"name": "empty string: loop guard skips", "args": ["@s_empty", "@param_2"]},
+    {"name": "one byte", "args": ["@s_1", "@param_2"]},
+    {"name": "8 bytes: branch 1 only", "args": ["@s_8", "@param_2"]},
+    {"name": "9 bytes: byte 8 takes branch 2", "args": ["@s_9", "@param_2"]},
+    {"name": "16 bytes: branch 2 for bytes 8..15", "args": ["@s_16", "@param_2"]},
+    {"name": "17 bytes: byte 16 back to branch 1", "args": ["@s_17", "@param_2"]},
+    {"name": "40 bytes: key index wraps", "args": ["@s_40", "@param_2"]},
+    {"name": "high bit bytes", "args": ["@s_hi", "@param_2"]},
+    {"name": "flag cleared on entry", "args": ["@s_9", "@param_2"], "memory": [{"addr": "0x1013ca78", "u32": 0}]},
+    {"name": "flag other value", "args": ["@s_17", "@param_2"], "memory": [{"addr": "0x1013ca78", "u32": 7}]}
+  ],
+  "fuzz": {
+    "seed": 201536,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@param_1"]
+      },
+      {
+        "choices": ["@param_2"]
+      }
+    ],
+    "memory": [
+      {"addr": "@param_1", "type": "u8", "range": [0, 255], "count": 40},
+      {"addr": "@param_1", "offset": "0x28", "type": "u8", "range": [0, 0]},
+      {"addr": "0x1013ca78", "type": "u32", "range": [0, 3]}
+    ]
+  }
+}

@@ -1,0 +1,418 @@
+{
+  "function": "s3dCalcBMInfoAllocSize_guess",
+  "original": "0x1000b570",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "count",
+      "type": "u32"
+    },
+    {
+      "name": "names",
+      "type": "ptr"
+    },
+    {
+      "name": "flag",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "table": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "s0": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "s1": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "s2": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "s3": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@s0",
+      "cstr": "alpha"
+    },
+    {
+      "addr": "@s1",
+      "cstr": ""
+    },
+    {
+      "addr": "@s2",
+      "cstr": "a longer string"
+    },
+    {
+      "addr": "@s3",
+      "cstr": "b"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "flag zero: returns 0 without reading count or table (both null)",
+      "args": [
+        "abc",
+        2,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag zero, null param_1, huge count: still 0",
+      "args": [
+        0,
+        1000,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "flag -1 is nonzero: count 1 path, plus param_1",
+      "args": [
+        "abc",
+        1,
+        "@table",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s3"
+        }
+      ],
+      "expect": {
+        "ret": 154
+      }
+    },
+    {
+      "name": "count 1, null param_1: 0x95 + strlen(entry), no +1",
+      "args": [
+        0,
+        1,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s0"
+        }
+      ],
+      "expect": {
+        "ret": 154
+      }
+    },
+    {
+      "name": "count 1, empty param_1 (non-null) adds 0 + 1",
+      "args": [
+        "",
+        1,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s0"
+        }
+      ],
+      "expect": {
+        "ret": 155
+      }
+    },
+    {
+      "name": "count 1, empty table string: 0x95 alone",
+      "args": [
+        0,
+        1,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s1"
+        }
+      ],
+      "expect": {
+        "ret": 149
+      }
+    },
+    {
+      "name": "count 0: else path 0x94, loop body skipped",
+      "args": [
+        0,
+        0,
+        "@table",
+        1
+      ],
+      "expect": {
+        "ret": 148
+      }
+    },
+    {
+      "name": "count 0 with param_1: 0x94 + strlen + 1",
+      "args": [
+        "ab",
+        0,
+        "@table",
+        1
+      ],
+      "expect": {
+        "ret": 151
+      }
+    },
+    {
+      "name": "count 2: 0x94 + 4*2 + (strlen+1) per entry",
+      "args": [
+        0,
+        2,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x4",
+          "u32": "@s3"
+        }
+      ],
+      "expect": {
+        "ret": 164
+      }
+    },
+    {
+      "name": "count 2 with param_1 counted last",
+      "args": [
+        "xy",
+        2,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x4",
+          "u32": "@s3"
+        }
+      ],
+      "expect": {
+        "ret": 167
+      }
+    },
+    {
+      "name": "count 3, out-of-order lengths: per-entry stride witness",
+      "args": [
+        0,
+        3,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s3"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x4",
+          "u32": "@s1"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x8",
+          "u32": "@s0"
+        }
+      ],
+      "expect": {
+        "ret": 169
+      }
+    },
+    {
+      "name": "count 4, four empty strings: 0x94 + 16 + 1 each",
+      "args": [
+        0,
+        4,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s1"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x4",
+          "u32": "@s1"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x8",
+          "u32": "@s1"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@s1"
+        }
+      ],
+      "expect": {
+        "ret": 168
+      }
+    },
+    {
+      "name": "count 4, descending lengths: long string first",
+      "args": [
+        0,
+        4,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s2"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x4",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x8",
+          "u32": "@s1"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@s3"
+        }
+      ],
+      "expect": {
+        "ret": 189
+      }
+    },
+    {
+      "name": "count 5: loop continues past four entries",
+      "args": [
+        0,
+        5,
+        "@table",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x0",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x4",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x8",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0xc",
+          "u32": "@s0"
+        },
+        {
+          "addr": "@table",
+          "offset": "0x10",
+          "u32": "@s3"
+        }
+      ],
+      "expect": {
+        "ret": 194
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 46448,
+    "count": 48,
+    "args": [
+      {
+        "choices": [
+          0,
+          "",
+          "x",
+          "ab",
+          "abcde"
+        ]
+      },
+      {
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "choices": [
+          "@table"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@table",
+        "type": "u32",
+        "count": 8,
+        "choices": [
+          "@s0",
+          "@s1",
+          "@s2",
+          "@s3"
+        ]
+      }
+    ]
+  }
+}

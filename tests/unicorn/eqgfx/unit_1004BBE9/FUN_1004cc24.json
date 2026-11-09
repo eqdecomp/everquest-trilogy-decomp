@@ -1,0 +1,646 @@
+{
+  "function": "t3dReadDibFromFile_guess",
+  "original": "0x1004cc24",
+  "sources": [
+    "src/eqgfx/unit_1004BBE9.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "fileName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "buf": {
+      "size": "0x20000",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100a3434",
+      "from_image": "0x100A3434",
+      "image_size": 2
+    }
+  ],
+  "callees": {
+    "kernel32.dll!_lopen": {
+      "name": "_lopen",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "int"
+      ],
+      "ret": 5
+    },
+    "kernel32.dll!_lread": {
+      "name": "_lread",
+      "conv": "stdcall",
+      "args": [
+        "int",
+        "ignore",
+        "uint"
+      ],
+      "ret": [
+        14,
+        16
+      ],
+      "writes": [
+        {
+          "arg": 1,
+          "offset": 0,
+          "hex": "424d1e000000"
+        }
+      ]
+    },
+    "kernel32.dll!_lclose": {
+      "name": "_lclose",
+      "conv": "stdcall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@buf"
+    },
+    "0x1004cb7a": {
+      "name": "getFirstValueFromPointer_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 40
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "abc"
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "open_fails",
+      "args": [
+        "missing.bmp"
+      ],
+      "callees": {
+        "kernel32.dll!_lopen": {
+          "name": "_lopen",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "open_handle_zero",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lopen": {
+          "name": "_lopen",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "open_handle_minus_two",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lopen": {
+          "name": "_lopen",
+          "conv": "stdcall",
+          "args": [
+            "cstr",
+            "int"
+          ],
+          "ret": -2
+        }
+      }
+    },
+    {
+      "name": "header_short_read",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": 13,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d1e000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bad_signature",
+      "args": [
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3434",
+          "u16": 19779
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "alloc_fails",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero_payload",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": 14,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d0e000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "payload_below_chunk",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            32767
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d05800000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "payload_exact_chunk",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            32768
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d0e800000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "payload_chunk_plus_one",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            32768,
+            1
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d0f800000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "payload_two_chunks",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            32768,
+            32768
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d0e000100"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "short_read_mid_payload",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            16
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d2e000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "read_error_mid_payload",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            "0xffffffff"
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d2e000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "read_error_second_chunk",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            32768,
+            0
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d0e000100"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "size_below_header",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "kernel32.dll!_lread": {
+          "name": "_lread",
+          "conv": "stdcall",
+          "args": [
+            "int",
+            "ignore",
+            "uint"
+          ],
+          "ret": [
+            14,
+            "0xffffffff"
+          ],
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "424d05000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "header_size_0b",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 11
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "header_size_0c",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 12
+        }
+      }
+    },
+    {
+      "name": "header_size_0d",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 13
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "header_size_0e",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 14
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "header_size_0f",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 15
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "header_size_10",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 16
+        }
+      }
+    },
+    {
+      "name": "header_size_zero",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "header_size_huge",
+      "args": [
+        "abc"
+      ],
+      "callees": {
+        "0x1004cb7a": {
+          "name": "getFirstValueFromPointer_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": "0xffffffff"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 314404,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x100a3434",
+        "type": "u16",
+        "choices": [
+          19778,
+          19778,
+          19779,
+          0
+        ]
+      }
+    ]
+  }
+}

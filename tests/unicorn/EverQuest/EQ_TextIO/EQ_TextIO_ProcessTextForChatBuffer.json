@@ -1,0 +1,214 @@
+{
+  "function": "GetRawTextLine_owner_guess::EQ_TextIO_ProcessTextForChatBuffer_guess",
+  "original": "0x0048cfd9",
+  "sources": ["src/EverQuest/EQ_TextIO.cpp"],
+  "conv": "thiscall",
+  "this": "@getrawtextline_owner",
+  "args": [
+    {"name": "param_1", "type": "cstr"},
+    {"name": "param_2", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "getrawtextline_owner": {"size": "0x4", "fill": "zero"},
+    "buffer": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e20cc", "u32": "@buffer"},
+    {"addr": "0x006e20d4", "u32": "@buffer+0x100"},
+    {"addr": "0x006e20d8", "u32": "@buffer+0x4"},
+    {"addr": "0x006e20e0", "u32": "@buffer+0x20"},
+    {"addr": "0x006e20dc", "u32": "@buffer+0x20"}
+  ],
+  "callees": {
+    "0x0048d0c4": {
+      "name": "GetRawTextLine",
+      "conv": "thiscall",
+      "args": ["cstr", "ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null_buffer_returns_zero",
+      "args": ["abc", 7],
+      "memory": [{"addr": "0x006e20cc", "u32": 0}]
+    },
+    {"name": "ordinary_nonempty_record", "args": ["abc", 305419896]},
+    {"name": "empty_string_record", "args": ["", 0]},
+    {
+      "name": "end_one_byte_above_required",
+      "args": ["abc", 5],
+      "memory": [{"addr": "0x006e20d4", "u32": "@buffer+0x2a"}]
+    },
+    {
+      "name": "end_equal_boundary_enters_when_write_equals_read",
+      "args": ["abc", 6],
+      "memory": [
+        {"addr": "0x006e20d4", "u32": "@buffer+0x29"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"}
+      ]
+    },
+    {
+      "name": "end_equal_wraps_then_commits",
+      "args": ["abc", 6],
+      "memory": [
+        {"addr": "0x006e20d4", "u32": "@buffer+0x29"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x40"}
+      ]
+    },
+    {
+      "name": "end_below_required_wraps_then_commits",
+      "args": ["abc", 7],
+      "memory": [
+        {"addr": "0x006e20d4", "u32": "@buffer+0x28"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x40"}
+      ]
+    },
+    {
+      "name": "write_before_read_scans_without_wrapping",
+      "args": ["abc", 8],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x10"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x40"}
+      ]
+    },
+    {
+      "name": "write_before_read_scan_failure",
+      "args": ["abc", 9],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x8"}
+      ]
+    },
+    {
+      "name": "read_minus_one_equal_to_space_boundary",
+      "args": ["abc", 10],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x2d"}
+      ]
+    },
+    {
+      "name": "read_minus_one_one_past_space_boundary",
+      "args": ["abc", 10],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x2e"}
+      ]
+    },
+    {
+      "name": "write_equal_read_does_not_scan",
+      "args": ["same", 10],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x4"}
+      ]
+    },
+    {
+      "name": "cleanup_success_then_commit",
+      "args": ["abc", 11],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x4"}
+      ],
+      "callees": {
+        "0x0048d0c4": {
+          "name": "GetRawTextLine_guess",
+          "conv": "thiscall",
+          "args": ["cstr", "ptr", "ptr"],
+          "ret": 1,
+          "writes": [{"arg": 1, "offset": 0, "hex": "ffffff7f"}]
+        }
+      }
+    },
+    {
+      "name": "cleanup_repeats_before_failure",
+      "args": ["abc", 12],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x4"}
+      ],
+      "callees": {
+        "0x0048d0c4": {
+          "name": "GetRawTextLine_guess",
+          "conv": "thiscall",
+          "args": ["cstr", "ptr", "ptr"],
+          "ret": [1, 0]
+        }
+      }
+    },
+    {
+      "name": "cleanup_order_when_cursor_moves_before_read",
+      "args": ["abc", 15],
+      "memory": [
+        {"addr": "0x006e20cc", "u32": "0x006e2e00"},
+        {"addr": "0x006e20d4", "u32": "0x006e2f00"},
+        {"addr": "0x006e20d8", "u32": "0x006e2e20"},
+        {"addr": "0x006e20e0", "u32": "0x006e2e20"},
+        {"addr": "0x006e20dc", "u32": "0x006e2e04"},
+        {"addr": "0x006e2e00", "size": 256, "fill": "zero"}
+      ],
+      "callees": {
+        "0x0048d0c4": {
+          "name": "GetRawTextLine_guess",
+          "conv": "thiscall",
+          "args": ["cstr", "ptr", "ptr"],
+          "ret": [1, 0],
+          "writes": [{"arg": 1, "offset": 0, "hex": "102e6e00"}]
+        }
+      }
+    },
+    {
+      "name": "cleanup_stops_when_cursor_precedes_buffer",
+      "args": ["abc", 13],
+      "memory": [
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x8"}
+      ],
+      "callees": {
+        "0x0048d0c4": {
+          "name": "GetRawTextLine_guess",
+          "conv": "thiscall",
+          "args": ["cstr", "ptr", "ptr"],
+          "ret": 1,
+          "writes": [{"arg": 1, "offset": 0, "hex": "00000000"}]
+        }
+      }
+    },
+    {
+      "name": "wrap_then_cleanup_success",
+      "args": ["abc", 14],
+      "memory": [
+        {"addr": "0x006e20d4", "u32": "@buffer+0x28"},
+        {"addr": "0x006e20d8", "u32": "@buffer+0x8"},
+        {"addr": "0x006e20dc", "u32": "@buffer+0x4"}
+      ],
+      "callees": {
+        "0x0048d0c4": {
+          "name": "GetRawTextLine_guess",
+          "conv": "thiscall",
+          "args": ["cstr", "ptr", "ptr"],
+          "ret": 1,
+          "writes": [{"arg": 1, "offset": 0, "hex": "ffffff7f"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4771801,
+    "count": 30,
+    "args": [
+      {"choices": ["", "x", "abc", "long-chat-line"]},
+      {"range": [-4, 20]}
+    ],
+    "memory": [
+      {"addr": "0x006e20cc", "type": "ptr", "choices": [0, "@buffer"]},
+      {"addr": "0x006e20d4", "type": "ptr", "choices": ["@buffer+0x10", "@buffer+0x18", "@buffer+0x28", "@buffer+0x60", "@buffer+0x100"]},
+      {"addr": "0x006e20d8", "type": "ptr", "choices": ["@buffer+0x4", "@buffer+0x8", "@buffer+0x20", "@buffer+0x40", "@buffer+0x80"]},
+      {"addr": "0x006e20e0", "type": "ptr", "choices": ["@buffer", "@buffer+0x8", "@buffer+0x20", "@buffer+0x40", "@buffer+0xc0"]},
+      {"addr": "0x006e20dc", "type": "ptr", "choices": ["@buffer+0x4", "@buffer+0x8", "@buffer+0x20", "@buffer+0x80"]}
+    ]
+  }
+}

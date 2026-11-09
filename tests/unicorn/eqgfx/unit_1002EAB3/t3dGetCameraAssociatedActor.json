@@ -1,0 +1,162 @@
+{
+  "function": "t3dGetCameraAssociatedActor",
+  "original": "0x1002f461",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "scene",
+      "type": "ptr"
+    },
+    {
+      "name": "camera",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "scene": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {"offset": "0x17c", "u32": "@actorTable"}
+      ]
+    },
+    "camera": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x50", "u32": 1}
+      ]
+    },
+    "actorTable": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@actor0"},
+        {"offset": "0x04", "u32": "@actor1"},
+        {"offset": "0x08", "u32": "@actor2"},
+        {"offset": "0x0c", "u32": 0},
+        {"offset": "0x3c", "u32": "@actor15"}
+      ]
+    },
+    "actor0": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "actor1": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "actor2": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "actor15": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: camera index 2 selects actor2",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": 2}
+      ]
+    },
+    {
+      "name": "index 0: the table's first entry",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": 0}
+      ]
+    },
+    {
+      "name": "index 1: the second entry",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": 1}
+      ]
+    },
+    {
+      "name": "index 15: the last set entry",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": 15}
+      ]
+    },
+    {
+      "name": "index 16: an unset slot reads 0",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": 16}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index -1: 0 without reading the table (the table pointer is unmapped)",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@scene", "offset": "0x17c", "u32": "0xdead0000"},
+        {"addr": "@camera", "offset": "0x50", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 0x80000000: the most negative index returns 0 (signed compare)",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@scene", "offset": "0x17c", "u32": "0xdead0000"},
+        {"addr": "@camera", "offset": "0x50", "u32": "0x80000000"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index 0x40000000: index * 4 wraps to 0 in 32 bits, so table[0]",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": "0x40000000"}
+      ]
+    },
+    {
+      "name": "ordering: a negative index returns 0 before the scene is touched (scene null)",
+      "args": [0, "@camera"],
+      "memory": [
+        {"addr": "@camera", "offset": "0x50", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zeroed camera: index 0 selects actor0",
+      "args": ["@scene", "@camera"],
+      "memory": [
+        {"addr": "@camera", "size": 256, "fill": "zero"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002461,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@scene"
+        ]
+      },
+      {
+        "choices": [
+          "@camera"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@camera", "offset": "0x50", "type": "int", "range": [-4, 40]},
+      {"addr": "@actorTable", "type": "ptr", "choices": ["@actor0", "@actor1", "@actor2", "@actor15", 0], "count": 16, "stride": 4}
+    ]
+  }
+}

@@ -1,0 +1,281 @@
+{
+  "function": "s3dConvertVertexColorChannels_guess",
+  "original": "0x1004d726",
+  "sources": [
+    "src/eqgfx/unit_1004BBE9.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sourcePoints",
+      "type": "ptr"
+    },
+    {
+      "name": "pointCount",
+      "type": "int"
+    },
+    {
+      "name": "vertexEnabled",
+      "type": "cstr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "sourcepoints": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100762e8",
+      "from_image": "0x100762E8",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x1004ec8d": {
+      "name": "t3dFloatRoundToInt_guess",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "zero count returns end pointer",
+      "args": [
+        "@sourcepoints",
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "negative count skips loop",
+      "args": [
+        "@sourcepoints",
+        -2,
+        ""
+      ]
+    },
+    {
+      "name": "single disabled point returns flag pointer",
+      "args": [
+        "@sourcepoints",
+        1,
+        ""
+      ]
+    },
+    {
+      "name": "zero channel values",
+      "args": [
+        "@sourcepoints",
+        1,
+        "x"
+      ],
+      "objects": {
+        "sourcepoints": {
+          "init": [
+            {
+              "offset": "0x0",
+              "f32": 0.0
+            },
+            {
+              "offset": "0x4",
+              "f32": 0.0
+            },
+            {
+              "offset": "0x8",
+              "f32": 0.0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "signed, in-range, and upper-bit clamps",
+      "args": [
+        "@sourcepoints",
+        1,
+        "x"
+      ],
+      "objects": {
+        "sourcepoints": {
+          "init": [
+            {
+              "offset": "0x0",
+              "f32": -1.0
+            },
+            {
+              "offset": "0x4",
+              "f32": 1.0
+            },
+            {
+              "offset": "0x8",
+              "f32": 2.0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "rounding boundaries",
+      "args": [
+        "@sourcepoints",
+        1,
+        "x"
+      ],
+      "objects": {
+        "sourcepoints": {
+          "init": [
+            {
+              "offset": "0x0",
+              "f32": 0.5
+            },
+            {
+              "offset": "0x4",
+              "f32": 254.5
+            },
+            {
+              "offset": "0x8",
+              "f32": 255.5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "interleaved enabled and disabled points",
+      "args": [
+        "@sourcepoints",
+        3,
+        "\u0001\u0000\u0001"
+      ],
+      "objects": {
+        "sourcepoints": {
+          "init": [
+            {
+              "offset": "0x0",
+              "f32": 0.01
+            },
+            {
+              "offset": "0x4",
+              "f32": 0.5
+            },
+            {
+              "offset": "0x8",
+              "f32": 1.0
+            },
+            {
+              "offset": "0xc",
+              "f32": -1.0
+            },
+            {
+              "offset": "0x10",
+              "f32": 2.0
+            },
+            {
+              "offset": "0x14",
+              "f32": 3.0
+            },
+            {
+              "offset": "0x18",
+              "f32": 0.25
+            },
+            {
+              "offset": "0x1c",
+              "f32": 0.75
+            },
+            {
+              "offset": "0x20",
+              "f32": 1.25
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "three enabled points preserve component order",
+      "args": [
+        "@sourcepoints",
+        3,
+        "xyz"
+      ],
+      "objects": {
+        "sourcepoints": {
+          "init": [
+            {
+              "offset": "0x0",
+              "f32": 0.0
+            },
+            {
+              "offset": "0x4",
+              "f32": 0.25
+            },
+            {
+              "offset": "0x8",
+              "f32": 0.5
+            },
+            {
+              "offset": "0xc",
+              "f32": 0.75
+            },
+            {
+              "offset": "0x10",
+              "f32": 1.0
+            },
+            {
+              "offset": "0x14",
+              "f32": 1.25
+            },
+            {
+              "offset": "0x18",
+              "f32": 1.5
+            },
+            {
+              "offset": "0x1c",
+              "f32": 1.75
+            },
+            {
+              "offset": "0x20",
+              "f32": 2.0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1004726,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@sourcepoints"
+        ]
+      },
+      {
+        "range": [
+          -2,
+          10
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@sourcepoints",
+        "offset": "0x0",
+        "type": "float",
+        "range": [
+          -2,
+          2
+        ],
+        "count": 30
+      }
+    ]
+  }
+}

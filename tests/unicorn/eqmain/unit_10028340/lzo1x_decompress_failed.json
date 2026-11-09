@@ -1,0 +1,298 @@
+{
+  "function": "lzo1x_decompress_failed_guess",
+  "original": "0x100284b0",
+  "sources": [
+    "src/eqmain/unit_10028340.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "in",
+      "type": "ptr"
+    },
+    {
+      "name": "in_len",
+      "type": "u32"
+    },
+    {
+      "name": "out",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "inbuf": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "outbuf": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x100284e0": {
+      "name": "lzo1x_decompress_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "ptr",
+        "mem:4",
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "decoder returns 0 (marker ends at in + in_len)",
+      "args": [
+        "@inbuf",
+        16,
+        "@outbuf"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "decoder returns -8 (input left over)",
+      "args": [
+        "@inbuf",
+        16,
+        "@outbuf"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": -8
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "decoder returns -4 (ran past input)",
+      "args": [
+        "@inbuf",
+        16,
+        "@outbuf"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": -4
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "decoder returns 1 (any nonzero is an error)",
+      "args": [
+        "@inbuf",
+        16,
+        "@outbuf"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "decoder returns 0x100 (positive nonzero)",
+      "args": [
+        "@inbuf",
+        16,
+        "@outbuf"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": 256
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "in_len 0x10020 passes 0x20 (low 16 bits only)",
+      "args": [
+        "@inbuf",
+        "0x10020",
+        "@outbuf"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "in_len 0x10000 passes 0",
+      "args": [
+        "@inbuf",
+        "0x10000",
+        "@outbuf"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "in_len 0xffffffff passes 0xffff",
+      "args": [
+        "@inbuf",
+        "0xffffffff",
+        "@outbuf"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": -4
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "in_len 0x80000000 passes 0",
+      "args": [
+        "@inbuf",
+        "0x80000000",
+        "@outbuf"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "in_len 0 (empty stream) with decoder error",
+      "args": [
+        "@inbuf",
+        0,
+        "@outbuf"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": -8
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "in and out offsets pass through unchanged",
+      "args": [
+        "@inbuf+0x10",
+        16,
+        "@outbuf+0x40"
+      ],
+      "callees": {
+        "0x100284e0": {
+          "name": "lzo1x_decompress_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "ptr",
+            "mem:4",
+            "int"
+          ],
+          "ret": -8
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "null pointers pass through unchecked",
+      "args": [
+        0,
+        1,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 165040,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@inbuf",
+          "@inbuf+0x10"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@outbuf",
+          "@outbuf+0x40"
+        ]
+      }
+    ]
+  }
+}

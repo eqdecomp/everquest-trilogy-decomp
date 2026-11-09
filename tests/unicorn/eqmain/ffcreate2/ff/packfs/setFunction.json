@@ -1,0 +1,156 @@
+{
+  "function": "PackFsFunctionHolder_guess::setFunction_guess",
+  "original": "0x100103e0",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@holder",
+  "args": [
+    {
+      "name": "argument_guess",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "holder": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "fobj": {
+      "size": "0xc",
+      "fill": "random"
+    },
+    "old": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@fobj"
+    }
+  },
+  "fault_ok": "operator_new returns 0: the original clears the holder, then increments the refcount at +4 of the null object (access violation at address 4); the rewrite does the same",
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        1
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "minus_one",
+      "args": [
+        -1
+      ]
+    },
+    {
+      "name": "int_max",
+      "args": [
+        2147483647
+      ]
+    },
+    {
+      "name": "int_min",
+      "args": [
+        -2147483648
+      ]
+    },
+    {
+      "name": "zeros_holder_preset",
+      "args": [
+        0
+      ],
+      "objects": {
+        "holder": {
+          "size": "0x4",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "@old"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "typical_holder_preset",
+      "args": [
+        1
+      ],
+      "objects": {
+        "holder": {
+          "size": "0x4",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "@old"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "alloc_fails",
+      "args": [
+        5
+      ],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "alloc_fails_callee_writes_holder",
+      "args": [
+        5
+      ],
+      "callees": {
+        "0x100338e5": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@holder",
+              "hex": "11223344"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 66528,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": []
+  }
+}

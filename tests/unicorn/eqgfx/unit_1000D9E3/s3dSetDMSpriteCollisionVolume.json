@@ -1,0 +1,223 @@
+{
+  "function": "s3dSetDMSpriteCollisionVolume",
+  "original": "0x1001070b",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "sourceVolume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@oldvolume"
+        }
+      ]
+    },
+    "sourcevolume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "oldvolume": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "newvolume": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@newvolume"
+    },
+    "0x1001d5a1": {
+      "name": "t3dDestroyVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: duplicate, destroy the old volume, store the new one",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ]
+    },
+    {
+      "name": "null old volume is still passed to destroy",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ],
+      "memory": [
+        {
+          "addr": "@sprite",
+          "offset": "0x2c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "duplicate fails: error code, sprite untouched, no destroy",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null sprite is not read when the duplicate fails",
+      "args": [
+        "@context",
+        0,
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "null context is forwarded to both callees",
+      "args": [
+        0,
+        "@sprite",
+        "@sourcevolume"
+      ]
+    },
+    {
+      "name": "null source volume is forwarded to the duplicate",
+      "args": [
+        "@context",
+        "@sprite",
+        0
+      ]
+    },
+    {
+      "name": "null source volume, duplicate fails",
+      "args": [
+        "@context",
+        "@sprite",
+        0
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "duplicate returns the old volume: destroy still runs, then store",
+      "args": [
+        "@context",
+        "@sprite",
+        "@sourcevolume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "name": "t3dDuplicateVolume",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@oldvolume"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 67339,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@sprite"
+        ]
+      },
+      {
+        "choices": [
+          "@sourcevolume",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@sprite",
+        "offset": "0x2c",
+        "type": "ptr",
+        "choices": [
+          "@oldvolume",
+          "@newvolume",
+          0
+        ]
+      }
+    ]
+  }
+}

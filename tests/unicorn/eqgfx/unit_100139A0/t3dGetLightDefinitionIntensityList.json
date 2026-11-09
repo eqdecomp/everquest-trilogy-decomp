@@ -1,0 +1,114 @@
+{
+  "function": "t3dGetLightDefinitionIntensityList",
+  "original": "0x10013fc0",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "intensityList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x1c",
+      "fill": "zero"
+    },
+    "intensitylist": {
+      "size": "0x500",
+      "fill": "random"
+    },
+    "payloadA": {
+      "size": "0x500",
+      "fill": "random"
+    },
+    "payloadB": {
+      "size": "0x500",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero count: destination is untouched",
+      "args": [
+        "@definition",
+        "@intensitylist"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0x18", "u32": "@payloadA"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "one element: copy inline four bytes",
+      "args": [
+        "@definition",
+        "@intensitylist"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x18", "u32": "0x44332211"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two elements: pointer-backed ordered copy",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 2},
+        {"addr": "@definition", "offset": "0x18", "u32": "@payloadA"},
+        {"addr": "@payloadA", "hex": "1122334455667788"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "three elements: use alternate source and copy twelve bytes",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 3},
+        {"addr": "@definition", "offset": "0x18", "u32": "@payloadB"},
+        {"addr": "@payloadB", "hex": "a1b2c3d4e5f60718293a4b5c"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0xff: boundary-sized pointer-backed copy",
+      "args": ["@definition", "@intensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "0xff"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@payloadA"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 81856,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "choices": [
+          "@intensitylist"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "u32", "range": [0, 64]},
+      {"addr": "@definition", "offset": "0x18", "type": "ptr", "choices": ["@payloadA", "@payloadB"]}
+    ]
+  }
+}

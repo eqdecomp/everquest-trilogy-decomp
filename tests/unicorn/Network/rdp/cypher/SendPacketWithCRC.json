@@ -1,0 +1,207 @@
+{
+  "function": "SendPacketWithCRC_guess",
+  "original": "0x004f7760",
+  "sources": [
+    "src/Network/rdp/cypher.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "param_1", "type": "u32" },
+    { "name": "param_2", "type": "int" },
+    { "name": "param_3", "type": "int" },
+    { "name": "param_4", "type": "ptr" },
+    { "name": "param_5", "type": "int" },
+    { "name": "param_6", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "desc": {
+      "size": "0x20",
+      "init": [
+        { "offset": "0x0", "u32": "@src0" },
+        { "offset": "0x4", "u32": 0 },
+        { "offset": "0x8", "u32": "@src1" },
+        { "offset": "0xc", "u32": 0 },
+        { "offset": "0x10", "u32": "@src2" },
+        { "offset": "0x14", "u32": 0 },
+        { "offset": "0x18", "u32": "@src3" },
+        { "offset": "0x1c", "u32": 0 }
+      ]
+    },
+    "src0": {
+      "size": "0x20",
+      "init": [{ "offset": 0, "hex": "112233445566778899AABBCCDDEEFF00102030405060708090A0B0C0D0E0F000" }]
+    },
+    "src1": {
+      "size": "0x20",
+      "init": [{ "offset": 0, "hex": "A1A2A3A4A5A6A7A8B1B2B3B4B5B6B7B8C1C2C3C4C5C6C7C8D1D2D3D4D5D6D7D8" }]
+    },
+    "src2": {
+      "size": "0x20",
+      "init": [{ "offset": 0, "hex": "3141592653589793238462643383279500000000000000000000000000000000" }]
+    },
+    "src3": {
+      "size": "0x20",
+      "init": [{ "offset": 0, "hex": "DEADBEEFCAFEBABE0123456789ABCDEF00000000000000000000000000000000" }]
+    },
+    "param_4": { "size": "0x100", "fill": "random" }
+  },
+  "callees": {
+    "0x004f6380": {
+      "name": "calculate_crc32_checksum_guess",
+      "conv": "cdecl",
+      "args": ["u32", "mem:64", "u32"],
+      "ret": 305419896
+    },
+    "0x00500398": {
+      "name": "htonl",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 2018915346
+    },
+    "0x00522ead": {
+      "name": "_rand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": [17, 34, 51, 68, 85, 102, 119, 136]
+    },
+    "0x004f6630": {
+      "name": "rdp_encode",
+      "conv": "cdecl",
+      "args": ["mem:64", "int"]
+    },
+    "0x00500392": {
+      "name": "sendto",
+      "conv": "stdcall",
+      "args": ["u32", "mem:96", "int", "int", "ptr", "int"],
+      "ret": 0
+    },
+    "0x005003da": {
+      "name": "WSAGetLastError",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 10035
+    }
+  },
+  "cases": [
+    {
+      "name": "empty no checksum",
+      "args": [1, "@desc", 0, "@param_4", 0, 0],
+      "callees": { "0x00500392": { "ret": 0 } }
+    },
+    {
+      "name": "zero byte segment",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "callees": { "0x00500392": { "ret": 0 } }
+    },
+    {
+      "name": "one byte tail",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 1 }],
+      "callees": { "0x00500392": { "ret": 1 } }
+    },
+    {
+      "name": "two byte tail",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 2 }],
+      "callees": { "0x00500392": { "ret": 2 } }
+    },
+    {
+      "name": "three byte tail",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 3 }],
+      "callees": { "0x00500392": { "ret": 3 } }
+    },
+    {
+      "name": "one dword",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 4 }],
+      "callees": { "0x00500392": { "ret": 4 } }
+    },
+    {
+      "name": "dword and tail",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 7 }],
+      "callees": { "0x00500392": { "ret": 7 } }
+    },
+    {
+      "name": "two segment ordering",
+      "args": [1, "@desc", 2, "@param_4", 0, 0],
+      "memory": [
+        { "addr": "@desc", "offset": "0x4", "u32": 3 },
+        { "addr": "@desc", "offset": "0xc", "u32": 5 }
+      ],
+      "callees": { "0x00500392": { "ret": 8 } }
+    },
+    {
+      "name": "three segment ordering with unaligned start",
+      "args": [1, "@desc", 3, "@param_4", 0, 0],
+      "memory": [
+        { "addr": "@desc", "offset": "0x4", "u32": 4 },
+        { "addr": "@desc", "offset": "0xc", "u32": 3 },
+        { "addr": "@desc", "offset": "0x14", "u32": 2 }
+      ],
+      "callees": { "0x00500392": { "ret": 9 } }
+    },
+    {
+      "name": "crc only",
+      "args": [1, "@desc", 1, "@param_4", 0, 1],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 3 }],
+      "callees": { "0x00500392": { "ret": 7 } }
+    },
+    {
+      "name": "crc plus encryption padding below boundary",
+      "args": [1, "@desc", 1, "@param_4", 1, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 3 }],
+      "callees": { "0x00500392": { "ret": 8 } }
+    },
+    {
+      "name": "crc plus encryption at boundary",
+      "args": [1, "@desc", 1, "@param_4", 1, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 4 }],
+      "callees": { "0x00500392": { "ret": 16 } }
+    },
+    {
+      "name": "crc plus encryption both flags",
+      "args": [1, "@desc", 1, "@param_4", 1, 1],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 5 }],
+      "callees": { "0x00500392": { "ret": 16 } }
+    },
+    {
+      "name": "special send error",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 4 }],
+      "callees": {
+        "0x00500392": { "ret": 0 },
+        "0x005003da": { "ret": 10035 }
+      }
+    },
+    {
+      "name": "other send error",
+      "args": [1, "@desc", 1, "@param_4", 0, 0],
+      "memory": [{ "addr": "@desc", "offset": "0x4", "u32": 4 }],
+      "callees": {
+        "0x00500392": { "ret": 0 },
+        "0x005003da": { "ret": 10060 }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5207904,
+    "count": 35,
+    "args": [
+      { "choices": [1, 270544960] },
+      { "choices": ["@desc"] },
+      { "range": [0, 4] },
+      { "choices": ["@param_4"] },
+      { "choices": [0, 1] },
+      { "choices": [0, 1] }
+    ],
+    "memory": [
+      { "addr": "@desc", "offset": "0x4", "type": "u32", "range": [0, 16] },
+      { "addr": "@desc", "offset": "0xc", "type": "u32", "range": [0, 16] },
+      { "addr": "@desc", "offset": "0x14", "type": "u32", "range": [0, 16] },
+      { "addr": "@desc", "offset": "0x1c", "type": "u32", "range": [0, 16] }
+    ]
+  }
+}

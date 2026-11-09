@@ -1,0 +1,171 @@
+{
+  "function": "t3dEulerToQuaternionDeg",
+  "original": "0x1004f96f",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "xAngleDeg",
+      "type": "float"
+    },
+    {
+      "name": "yAngleDeg",
+      "type": "float"
+    },
+    {
+      "name": "zAngleDeg",
+      "type": "float"
+    },
+    {
+      "name": "quaternion",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "quaternion": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "startup": {
+      "size": "0x10000",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100F3FF4",
+      "u32": "@startup"
+    }
+  ],
+  "callees": {
+    "0x1004f89a": {
+      "name": "t3dEulerToQuaternion",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "float",
+        "float",
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: distinct signed angles per axis",
+      "args": [45.0, -30.0, 90.0, "@quaternion"]
+    },
+    {
+      "name": "zeros",
+      "args": [0.0, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "negative zeros keep their sign",
+      "args": [-0.0, -0.0, -0.0, "@quaternion"]
+    },
+    {
+      "name": "half turn about x",
+      "args": [180.0, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "full turn about y",
+      "args": [0.0, 360.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "only x: x must reach the first slot",
+      "args": [30.0, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "only y: y must reach the second slot",
+      "args": [0.0, 45.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "only z: z must reach the third slot",
+      "args": [0.0, 0.0, 90.0, "@quaternion"]
+    },
+    {
+      "name": "ordering: x, y, z distinct and signed",
+      "args": [10.0, -20.0, 30.0, "@quaternion"]
+    },
+    {
+      "name": "all three at 90 degrees (128 table units)",
+      "args": [90.0, 90.0, 90.0, "@quaternion"]
+    },
+    {
+      "name": "one degree each (scale rounding)",
+      "args": [1.0, 1.0, 1.0, "@quaternion"]
+    },
+    {
+      "name": "beyond one turn in both directions",
+      "args": [1000.0, -1000.0, 3600.0, "@quaternion"]
+    },
+    {
+      "name": "negative beyond -360",
+      "args": [-400.0, -0.5, -0.25, "@quaternion"]
+    },
+    {
+      "name": "fractions",
+      "args": [0.1, 0.25, -0.5, "@quaternion"]
+    },
+    {
+      "name": "tiny normal angles",
+      "args": [1.0e-30, 2.0e-30, 3.0e-30, "@quaternion"]
+    },
+    {
+      "name": "denormal input angles",
+      "args": [1.0e-39, -1.0e-39, 1.0e-39, "@quaternion"]
+    },
+    {
+      "name": "large finite angle (scaled value stays finite)",
+      "args": [1.0e30, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "overflow to +infinity on x",
+      "args": [3.0e38, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "overflow to -infinity on y",
+      "args": [0.0, -3.0e38, 0.0, "@quaternion"]
+    },
+    {
+      "name": "+infinity input",
+      "args": [Infinity, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "-infinity input",
+      "args": [0.0, -Infinity, 0.0, "@quaternion"]
+    },
+    {
+      "name": "NaN input",
+      "args": [NaN, 0.0, 0.0, "@quaternion"]
+    },
+    {
+      "name": "NaN input on z",
+      "args": [0.0, 0.0, NaN, "@quaternion"]
+    }
+  ],
+  "fuzz": {
+    "seed": 325999,
+    "count": 40,
+    "args": [
+      {
+        "range": [-720, 720]
+      },
+      {
+        "range": [-720, 720]
+      },
+      {
+        "range": [-720, 720]
+      },
+      {
+        "choices": [
+          "@quaternion"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

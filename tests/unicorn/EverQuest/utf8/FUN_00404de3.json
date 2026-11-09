@@ -1,0 +1,302 @@
+{
+  "function": "RecreateInstance_guess",
+  "original": "0x00404de3",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0xa4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@owner"
+        },
+        {
+          "offset": "0xa0",
+          "u32": "@old_resource"
+        }
+      ]
+    },
+    "owner": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "old_resource": {
+      "size": 4,
+      "fill": "zero"
+    },
+    "payload": {
+      "size": 8,
+      "fill": "zero",
+      "init": [
+        {
+          "offset": 4,
+          "f32": 1.25
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x005345b8",
+      "from_image": "0x005345B8",
+      "image_size": 4
+    }
+  ],
+  "callees": {
+    "0x00402e9c": {
+      "name": "DestroyT3DOverlay_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    },
+    "0x00402d2d": {
+      "name": "CreateSizedOverlayBlock_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "positive increment writes second callee result",
+      "args": [
+        "@param_1",
+        "0x12345678",
+        "@payload"
+      ],
+      "memory": [
+        {
+          "addr": "0x005345b8",
+          "from_image": "0x005345B8",
+          "image_size": 4
+        },
+        {
+          "addr": "@payload",
+          "offset": 4,
+          "f32": -2.0
+        }
+      ],
+      "callees": {
+        "0x00402d2d": {
+          "name": "FUN_00402d2d",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": "0x11223344"
+        }
+      }
+    },
+    {
+      "name": "fractional negative increment",
+      "args": [
+        "@param_1",
+        0,
+        "@payload"
+      ],
+      "memory": [
+        {
+          "addr": "0x005345b8",
+          "f32": -0.5
+        },
+        {
+          "addr": "@payload",
+          "offset": 4,
+          "f32": 0.75
+        }
+      ]
+    },
+    {
+      "name": "zero increment preserves an ordinary value",
+      "args": [
+        "@param_1",
+        1,
+        "@payload"
+      ],
+      "memory": [
+        {
+          "addr": "0x005345b8",
+          "f32": 0.0
+        },
+        {
+          "addr": "@payload",
+          "offset": 4,
+          "f32": 9.25
+        }
+      ]
+    },
+    {
+      "name": "finite boundary addition",
+      "args": [
+        "@param_1",
+        2,
+        "@payload"
+      ],
+      "memory": [
+        {
+          "addr": "0x005345b8",
+          "f32": 3.402823466e+38
+        },
+        {
+          "addr": "@payload",
+          "offset": 4,
+          "f32": 3.402823466e+38
+        }
+      ],
+      "callees": {
+        "0x00402d2d": {
+          "name": "FUN_00402d2d",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": "0x7f00a55a"
+        }
+      }
+    },
+    {
+      "name": "first call writes the float before it is incremented",
+      "args": [
+        "@param_1",
+        3,
+        "@payload"
+      ],
+      "memory": [
+        {
+          "addr": "0x005345b8",
+          "from_image": "0x005345B8",
+          "image_size": 4
+        },
+        {
+          "addr": "@payload",
+          "offset": 4,
+          "f32": 100.0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0xa0",
+          "u32": "@payload"
+        }
+      ],
+      "callees": {
+        "0x00402e9c": {
+          "name": "FUN_00402e9c",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 4,
+              "hex": "00004040"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "second call receives the original argument pointer",
+      "args": [
+        "@param_1",
+        4,
+        "@payload"
+      ],
+      "memory": [
+        {
+          "addr": "0x005345b8",
+          "f32": -3.25
+        },
+        {
+          "addr": "@payload",
+          "offset": 4,
+          "f32": 12.5
+        }
+      ],
+      "callees": {
+        "0x00402d2d": {
+          "name": "FUN_00402d2d",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": "0x76543210"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4214243,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          "0xffffffff"
+        ]
+      },
+      {
+        "choices": [
+          "@payload"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0xa0",
+        "type": "ptr",
+        "choices": [
+          "@old_resource",
+          "@payload"
+        ]
+      },
+      {
+        "addr": "@payload",
+        "offset": 4,
+        "type": "float",
+        "range": [
+          -100000,
+          100000
+        ]
+      },
+      {
+        "addr": "0x005345b8",
+        "type": "float",
+        "range": [
+          -10,
+          10
+        ]
+      }
+    ]
+  }
+}

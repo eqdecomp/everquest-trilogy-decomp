@@ -1,0 +1,360 @@
+{
+  "function": "traverseBspTree_guess",
+  "original": "0x1000110a",
+  "sources": [
+    "src/eqgfx/unit_10001000.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "tree", "type": "ptr" },
+    { "name": "query_point", "type": "ptr" },
+    { "name": "tolerance", "type": "float" },
+    { "name": "visit_leaf", "type": "ptr" },
+    { "name": "visit_data", "type": "int" }
+  ],
+  "ret": "int",
+  "objects": {
+    "tree": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0c", "u32": "@node_root" },
+        { "offset": "0x24", "u32": "@leaf_objects" },
+        { "offset": "0x38", "u32": 8 },
+        { "offset": "0x3c", "u32": "@stack" }
+      ]
+    },
+    "query_point": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "node_root": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": 1 }
+      ]
+    },
+    "node_front": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": 2 }
+      ]
+    },
+    "node_back": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": 3 }
+      ]
+    },
+    "node_inner": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x10", "u32": "@node_inner_front" },
+        { "offset": "0x14", "u32": "@node_inner_back" }
+      ]
+    },
+    "node_inner_front": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": 4 }
+      ]
+    },
+    "node_inner_back": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x18", "u32": 5 }
+      ]
+    },
+    "node_layer_1": { "size": "0x1c", "fill": "zero" },
+    "node_layer_2": { "size": "0x1c", "fill": "zero" },
+    "node_layer_3": { "size": "0x1c", "fill": "zero" },
+    "node_layer_4": { "size": "0x1c", "fill": "zero" },
+    "leaf_objects": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x00", "u32": "@surface_1" },
+        { "offset": "0x04", "u32": "@surface_2" },
+        { "offset": "0x08", "u32": "@surface_3" },
+        { "offset": "0x0c", "u32": "@surface_4" },
+        { "offset": "0x10", "u32": "@surface_5" }
+      ]
+    },
+    "surface_1": { "size": "0x04", "fill": "zero" },
+    "surface_2": { "size": "0x04", "fill": "zero" },
+    "surface_3": { "size": "0x04", "fill": "zero" },
+    "surface_4": { "size": "0x04", "fill": "zero" },
+    "surface_5": { "size": "0x04", "fill": "zero" },
+    "visitor": { "size": "0x04", "fill": "zero" },
+    "stack": { "size": "0x80", "fill": "zero" }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": "@stack"
+    },
+    "@visitor": {
+      "name": "fixture_visit_leaf",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "int"],
+      "ret": [0, 0, 0, 0]
+    }
+  },
+  "cases": [
+    {
+      "name": "root is null: no callback and zero result",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [{ "addr": "@tree", "offset": "0x0c", "u32": 0 }]
+    },
+    {
+      "name": "root leaf: visits the one-based surface entry",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7]
+    },
+    {
+      "name": "strictly below negative tolerance: follows back only",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": -0.75 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "exactly negative tolerance: visits front before saved back",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": -0.5 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "inside tolerance: saves back and visits front first",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "exactly positive tolerance: saves back inclusively",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.5 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "strictly above positive tolerance: follows front only",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.75 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "overlap with null back: no stack entry",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 7],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": 0 },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "nonzero callback result stops traversal and is returned",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 11],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ],
+      "callees": { "@visitor": { "name": "fixture_visit_leaf", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 19 } }
+    },
+    {
+      "name": "second callback result stops after front then back",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 13],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ],
+      "callees": { "@visitor": { "name": "fixture_visit_leaf", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": [0, -23] } }
+    },
+    {
+      "name": "zero capacity grows by one slot before saving back",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 17],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@tree", "offset": "0x38", "u32": 0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "reallocation failure returns the allocation error",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 17],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@tree", "offset": "0x38", "u32": 0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ],
+      "callees": { "0x10050c8c": { "name": "t3dReallocateMemory", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0 } }
+    },
+    {
+      "name": "nested overlap uses a last-in first-out pending-node stack",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 19],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_inner" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "pending stack grows again when a nested split reaches capacity",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 23],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@tree", "offset": "0x38", "u32": 1 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_inner" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "capacity four grows by its quarter when a fifth branch is saved",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 25],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@tree", "offset": "0x38", "u32": 4 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_layer_1" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 },
+        { "addr": "@node_layer_1", "offset": "0x10", "u32": "@node_layer_2" },
+        { "addr": "@node_layer_1", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_layer_1", "offset": "0x18", "u32": 0 },
+        { "addr": "@node_layer_2", "offset": "0x10", "u32": "@node_layer_3" },
+        { "addr": "@node_layer_2", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_layer_2", "offset": "0x18", "u32": 0 },
+        { "addr": "@node_layer_3", "offset": "0x10", "u32": "@node_layer_4" },
+        { "addr": "@node_layer_3", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_layer_3", "offset": "0x18", "u32": 0 },
+        { "addr": "@node_layer_4", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_layer_4", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_layer_4", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "pending capacity stays cached when a callback changes the tree field",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 27],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@tree", "offset": "0x38", "u32": 0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_inner" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ],
+      "callees": {
+        "@visitor": {
+          "name": "fixture_visit_leaf",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": [0, 0, 0],
+          "writes": [{ "arg": 0, "offset": 56, "hex": "00000000" }]
+        }
+      }
+    },
+    {
+      "name": "leaf index two uses the first table entry",
+      "args": ["@tree", "@query_point", 3.0, "@visitor", 29],
+      "memory": [{ "addr": "@node_root", "offset": "0x18", "u32": 2 }]
+    },
+    {
+      "name": "leaf index five uses the fifth table entry",
+      "args": ["@tree", "@query_point", 3.0, "@visitor", 31],
+      "memory": [{ "addr": "@node_root", "offset": "0x18", "u32": 5 }]
+    },
+    {
+      "name": "plane offset contributes when the normal dot product is zero",
+      "args": ["@tree", "@query_point", 0.5, "@visitor", 37],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.0 },
+        { "addr": "@node_root", "offset": "0x0c", "f32": 0.75 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    },
+    {
+      "name": "all query coordinates contribute at the positive boundary",
+      "args": ["@tree", "@query_point", 0.25, "@visitor", 41],
+      "memory": [
+        { "addr": "@query_point", "offset": "0x00", "f32": 0.25 },
+        { "addr": "@query_point", "offset": "0x04", "f32": 0.5 },
+        { "addr": "@query_point", "offset": "0x08", "f32": 1.25 },
+        { "addr": "@query_point", "offset": "0x0c", "f32": 7.0 },
+        { "addr": "@node_root", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@node_root", "offset": "0x04", "f32": 2.0 },
+        { "addr": "@node_root", "offset": "0x08", "f32": -1.0 },
+        { "addr": "@node_root", "offset": "0x10", "u32": "@node_front" },
+        { "addr": "@node_root", "offset": "0x14", "u32": "@node_back" },
+        { "addr": "@node_root", "offset": "0x18", "u32": 0 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4362,
+    "count": 40,
+    "args": [
+      { "choices": ["@tree"] },
+      { "choices": ["@query_point"] },
+      { "range": [-1, 1] },
+      { "choices": ["@visitor"] },
+      { "range": [-8, 64] }
+    ],
+    "memory": [
+      { "addr": "@query_point", "offset": "0x00", "type": "float", "range": [-1, 1] },
+      { "addr": "@query_point", "offset": "0x04", "type": "float", "range": [-1, 1] },
+      { "addr": "@query_point", "offset": "0x08", "type": "float", "range": [-1, 1] },
+      { "addr": "@query_point", "offset": "0x0c", "type": "float", "range": [-1, 1] },
+      { "addr": "@tree", "offset": "0x38", "type": "u32", "choices": [0, 1, 2, 4, 8] },
+      { "addr": "@node_root", "offset": "0x00", "type": "float", "range": [-1, 1] },
+      { "addr": "@node_root", "offset": "0x04", "type": "float", "range": [-1, 1] },
+      { "addr": "@node_root", "offset": "0x08", "type": "float", "range": [-1, 1] },
+      { "addr": "@node_root", "offset": "0x0c", "type": "float", "range": [-1, 1] },
+      { "addr": "@node_root", "offset": "0x10", "type": "ptr", "choices": [0, "@node_front", "@node_inner"] },
+      { "addr": "@node_root", "offset": "0x14", "type": "ptr", "choices": [0, "@node_back", "@node_inner_back"] },
+      { "addr": "@node_root", "offset": "0x18", "type": "u32", "choices": [0, 1, 2, 3, 4, 5] }
+    ]
+  }
+}

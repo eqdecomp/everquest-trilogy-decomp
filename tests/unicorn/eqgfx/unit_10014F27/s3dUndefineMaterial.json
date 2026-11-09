@@ -1,0 +1,228 @@
+{
+  "function": "s3dUndefineMaterial",
+  "original": "0x10016dcb",
+  "sources": [
+    "src/eqgfx/unit_10014F27.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "material",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "material": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@dictKey"},
+        {"offset": "0xc", "u8": 0},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0x24", "u32": 0}
+      ]
+    },
+    "dictKey": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x2c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 1}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1001b94a": {
+      "name": "t3dDestroySimpleSprite",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: use count 0, no sprite, no dictionary entry, memory freed",
+      "args": ["@context", "@material"]
+    },
+    {
+      "name": "use count 1: error code 0xffff3d3e, nothing called, nothing touched",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0x10", "u32": 1}]
+    },
+    {
+      "name": "use count 0xffffffff: any nonzero count is an error",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0x10", "u32": 4294967295}]
+    },
+    {
+      "name": "use count 0x80000000: the top bit alone is an error",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0x10", "u32": 2147483648}]
+    },
+    {
+      "name": "use count 2 with a live sprite and flags 0x1f: error, sprite and entry untouched",
+      "args": ["@context", "@material"],
+      "memory": [
+        {"addr": "@material", "offset": "0x10", "u32": 2},
+        {"addr": "@material", "offset": "0x24", "u32": "@sprite"},
+        {"addr": "@material", "offset": "0xc", "u8": 31}
+      ]
+    },
+    {
+      "name": "live sprite (first dword 1): unshared, then destroyed with the material's sprite",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0x24", "u32": "@sprite"}]
+    },
+    {
+      "name": "live sprite, first dword 0x80000000: still live (nonzero)",
+      "args": ["@context", "@material"],
+      "memory": [
+        {"addr": "@material", "offset": "0x24", "u32": "@sprite"},
+        {"addr": "@sprite", "offset": "0x0", "u32": 2147483648}
+      ]
+    },
+    {
+      "name": "sprite first dword 0: pointer kept, not unshared or destroyed",
+      "args": ["@context", "@material"],
+      "memory": [
+        {"addr": "@material", "offset": "0x24", "u32": "@sprite"},
+        {"addr": "@sprite", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "flag 0x01: dictionary entry removed (key at +0x8) before FUN_10015d81, then freed",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0xc", "u8": 1}]
+    },
+    {
+      "name": "flag 0x20: not freed, FUN_10015d81 result still returned",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0xc", "u8": 32}]
+    },
+    {
+      "name": "flags 0x21: entry removed, not freed",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0xc", "u8": 33}]
+    },
+    {
+      "name": "flags 0xde: bits 0 and 5 clear, the other bits do nothing: freed, no dictionary call",
+      "args": ["@context", "@material"],
+      "memory": [{"addr": "@material", "offset": "0xc", "u8": 222}]
+    },
+    {
+      "name": "live sprite with flags 0x21: unshare, destroy, dictionary, FUN_10015d81, no free",
+      "args": ["@context", "@material"],
+      "memory": [
+        {"addr": "@material", "offset": "0x24", "u32": "@sprite"},
+        {"addr": "@material", "offset": "0xc", "u8": 33}
+      ]
+    },
+    {
+      "name": "dictionary flag with a null key: removal still called, with key 0",
+      "args": ["@context", "@material"],
+      "memory": [
+        {"addr": "@material", "offset": "0x8", "u32": 0},
+        {"addr": "@material", "offset": "0xc", "u8": 1}
+      ]
+    },
+    {
+      "name": "FUN_10015d81 returns -1: passed through as the result",
+      "args": ["@context", "@material"],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "FUN_10015d81 returns 0 with a live sprite and flag 0x20: result 0, sprite destroyed",
+      "args": ["@context", "@material"],
+      "memory": [
+        {"addr": "@material", "offset": "0x24", "u32": "@sprite"},
+        {"addr": "@material", "offset": "0xc", "u8": 32}
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 93643,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@material"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@material", "offset": "0x10", "type": "u32", "choices": [0, 0, 0, 0, 1, 2, 2147483648, 4294967295]},
+      {"addr": "@material", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@material", "offset": "0x8", "type": "ptr", "choices": ["@dictKey", 0]},
+      {"addr": "@material", "offset": "0x24", "type": "ptr", "choices": ["@sprite", 0]},
+      {"addr": "@sprite", "offset": "0x0", "type": "u32", "choices": [0, 1, 2147483648, 4294967295]}
+    ]
+  }
+}

@@ -1,0 +1,273 @@
+{
+  "function": "ToggleLogging_guess",
+  "original": "0x004aa100",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "command",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006e2050",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "off prefix clears an active flag",
+      "args": [
+        17,
+        "off"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "off is case insensitive and accepts a suffix",
+      "args": [
+        0,
+        "OFF now"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 9
+        }
+      ]
+    },
+    {
+      "name": "on prefix sets the flag",
+      "args": [
+        -1,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "on is case insensitive and accepts a suffix",
+      "args": [
+        5,
+        "ON now"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty command toggles zero to one",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty command toggles one to zero",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "unknown command toggles zero to one",
+      "args": [
+        0,
+        "maybe"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "unknown command toggles one to zero",
+      "args": [
+        0,
+        "maybe"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "two letter off prefix is not a match",
+      "args": [
+        0,
+        "of"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "one letter prefix toggles without matching",
+      "args": [
+        0,
+        "o"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "other initial flag values use integer subtraction",
+      "args": [
+        0,
+        "toggle"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 2
+        }
+      ]
+    },
+    {
+      "name": "negative flag toggles to two",
+      "args": [
+        0,
+        "toggle"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "off overwrites a nonzero flag",
+      "args": [
+        0,
+        "off"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "on overwrites a nonzero flag",
+      "args": [
+        0,
+        "on"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e2050",
+          "u32": 7
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4890880,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          17
+        ]
+      },
+      {
+        "choices": [
+          "off",
+          "OFF",
+          "offx",
+          "on",
+          "ON",
+          "onx",
+          "",
+          "o",
+          "of",
+          "ox",
+          "toggle",
+          "anything"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e2050",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4294967295,
+          2147483648
+        ]
+      }
+    ]
+  }
+}

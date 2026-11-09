@@ -1,0 +1,137 @@
+{
+  "function": "s3dInitializeDMSpriteFrameTable_guess",
+  "original": "0x1000fca0",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "@table"}
+      ]
+    },
+    "table": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "u16": 4},
+        {"offset": "0x0a", "u16": "0x5a5a"},
+        {"offset": "0x7c", "u32": "@bytes"}
+      ]
+    },
+    "bytes": {
+      "size": "0x200",
+      "fill": "random"
+    },
+    "bytes2": {
+      "size": "0x200",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@bytes", "offset": "0x000", "u8": "0x5a"},
+    {"addr": "@bytes", "offset": "0x001", "u8": "0x5b"},
+    {"addr": "@bytes", "offset": "0x002", "u8": "0x5c"},
+    {"addr": "@bytes", "offset": "0x003", "u8": "0x5d"},
+    {"addr": "@bytes", "offset": "0x004", "u8": "0x5e"},
+    {"addr": "@bytes", "offset": "0x005", "u8": "0x5f"},
+    {"addr": "@bytes", "offset": "0x0fe", "u8": "0x6e"},
+    {"addr": "@bytes", "offset": "0x0ff", "u8": "0x6f"},
+    {"addr": "@bytes", "offset": "0x100", "u8": "0x70"},
+    {"addr": "@bytes2", "offset": "0x000", "u8": "0x7a"},
+    {"addr": "@bytes2", "offset": "0x001", "u8": "0x7b"},
+    {"addr": "@bytes2", "offset": "0x002", "u8": "0x7c"},
+    {"addr": "@bytes2", "offset": "0x003", "u8": "0x7d"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: the 4-byte count fills the first 4 bytes with 1",
+      "args": ["@definition"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null frame table: no memset at all",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x18", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0: nothing is written",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@table", "offset": "0x08", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 1: only the first byte",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@table", "offset": "0x08", "u16": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0xff: the last byte is 0xfe",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@table", "offset": "0x08", "u16": "0xff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 0x100: fills exactly one buffer",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@table", "offset": "0x08", "u16": "0x100"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "u16 count: the dword's high half at +0xa is ignored",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@table", "offset": "0x08", "u32": "0x00010003"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "the target comes from the table: @bytes2",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@table", "offset": "0x08", "u16": 3},
+        {"addr": "@table", "offset": "0x7c", "u32": "@bytes2"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 64672,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x18", "type": "u32", "choices": [0, "@table"]},
+      {"addr": "@table", "offset": "0x08", "type": "u16", "range": [0, "0x100"]},
+      {"addr": "@table", "offset": "0x7c", "type": "u32", "choices": ["@bytes", "@bytes2"]}
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "function": "t3dSetCompositeSpriteComponentSprite",
+  "original": "0x1000da06",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "compositeSprite",
+      "type": "ptr"
+    },
+    {
+      "name": "componentIndex",
+      "type": "u32"
+    },
+    {
+      "name": "componentSprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "compositesprite": {
+      "size": "0x3c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x28", "u32": "@components"},
+        {"offset": "0x38", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": 3}
+      ]
+    },
+    "components": {
+      "size": "0x3c0",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@oldspritezero"},
+        {"offset": "0xa0", "u32": "@oldsprite3d"},
+        {"offset": "0x140", "u32": "@oldspriteodd"},
+        {"offset": "0x1e0", "u32": "@oldspritezero"},
+        {"offset": "0x280", "u32": "@oldsprite3d"},
+        {"offset": "0x320", "u32": "@oldspriteodd"}
+      ]
+    },
+    "oldspritezero": {
+      "size": "0x14",
+      "fill": "zero"
+    },
+    "oldsprite3d": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 12}
+      ]
+    },
+    "oldspriteodd": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 5}
+      ]
+    },
+    "componentsprite": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 12}
+      ]
+    },
+    "dbsprite": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 7}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x10076000", "size": 16, "fill": "zero"},
+    {"addr": "0x100f401c", "u32": 0}
+  ],
+  "callees": {
+    "kernel32.dll!DebugBreak": {
+      "name": "DebugBreak",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 0,
+      "writes": [{"addr": "0x10076008", "hex": "dddddddd"}]
+    },
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{"addr": "0x10076000", "hex": "11111111"}]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"addr": "0x10076004", "hex": "22222222"}]
+    }
+  },
+  "cases": [
+    {"name": "index 0, empty old, 3d new", "args": ["@compositesprite", 0, "@componentsprite"], "expect": {"ret": 0}},
+    {"name": "index 1, 3d old and new, unshare then share", "args": ["@compositesprite", 1, "@componentsprite"], "expect": {"ret": 0}},
+    {"name": "index 1, null new falls back to the empty component", "args": ["@compositesprite", 1, 0], "expect": {"ret": 0}},
+    {"name": "null new, empty component is 3d", "args": ["@compositesprite", 0, 0], "memory": [{"addr": "0x100f401c", "u32": 12}], "expect": {"ret": 0}},
+    {"name": "null new, empty component mistyped", "args": ["@compositesprite", 0, 0], "memory": [{"addr": "0x100f401c", "u32": 7}], "expect": {"ret": 0}},
+    {"name": "mistyped old sprite DebugBreaks", "args": ["@compositesprite", 2, "@componentsprite"], "expect": {"ret": 0}},
+    {"name": "mistyped new sprite DebugBreaks", "args": ["@compositesprite", 0, "@dbsprite"], "expect": {"ret": 0}},
+    {"name": "mistyped old and new", "args": ["@compositesprite", 2, "@dbsprite"], "expect": {"ret": 0}},
+    {"name": "index at the component count", "args": ["@compositesprite", 3, "@componentsprite"], "expect": {"ret": -49858}},
+    {"name": "index past the component count", "args": ["@compositesprite", 4, "@componentsprite"], "expect": {"ret": -49858}}
+  ],
+  "fuzz": {
+    "seed": 55814,
+    "count": 50,
+    "args": [
+      {"choices": ["@compositesprite"]},
+      {"range": [0, 5]},
+      {"choices": ["@componentsprite", "@dbsprite", 0]}
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x18", "type": "u32", "range": [0, 5]},
+      {"addr": "@components", "offset": "0x0", "type": "ptr", "choices": ["@oldspritezero", "@oldsprite3d", "@oldspriteodd"]},
+      {"addr": "@components", "offset": "0xa0", "type": "ptr", "choices": ["@oldspritezero", "@oldsprite3d", "@oldspriteodd"]},
+      {"addr": "@components", "offset": "0x140", "type": "ptr", "choices": ["@oldspritezero", "@oldsprite3d", "@oldspriteodd"]},
+      {"addr": "@components", "offset": "0x1e0", "type": "ptr", "choices": ["@oldspritezero", "@oldsprite3d", "@oldspriteodd"]},
+      {"addr": "@components", "offset": "0x280", "type": "ptr", "choices": ["@oldspritezero", "@oldsprite3d", "@oldspriteodd"]},
+      {"addr": "@components", "offset": "0x320", "type": "ptr", "choices": ["@oldspritezero", "@oldsprite3d", "@oldspriteodd"]},
+      {"addr": "@oldspritezero", "type": "u32", "choices": [0, 12, 5]},
+      {"addr": "@oldsprite3d", "type": "u32", "choices": [0, 12, 5]},
+      {"addr": "@oldspriteodd", "type": "u32", "choices": [0, 12, 5]},
+      {"addr": "@componentsprite", "type": "u32", "choices": [0, 12, 5]},
+      {"addr": "@dbsprite", "type": "u32", "choices": [0, 12, 5]},
+      {"addr": "0x100f401c", "type": "u32", "choices": [0, 12, 5]}
+    ]
+  }
+}

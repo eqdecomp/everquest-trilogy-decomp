@@ -1,0 +1,89 @@
+{
+  "function": "s3dApplyPositivePlaneContribution_guess",
+  "original": "0x1004de48",
+  "sources": [
+    "src/eqgfx/unit_1004BBE9.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "planeCoefficients", "type": "ptr"},
+    {"name": "contributionScale", "type": "ptr"},
+    {"name": "sourceVertices", "type": "ptr"},
+    {"name": "destinationVertices", "type": "ptr"},
+    {"name": "vertexCount", "type": "int"},
+    {"name": "vertexEnabled", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "planecoefficients": {"size": "0x100", "fill": "zero"},
+    "contributionscale": {"size": "0x100", "fill": "zero"},
+    "sourcevertices": {"size": "0x200", "fill": "zero"},
+    "destinationvertices": {"size": "0x200", "fill": "zero"},
+    "enabledflags": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10076284", "f32": 0.0}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "mixed-positive-negative-disabled-zero",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@destinationvertices", 4, "@enabledflags"],
+      "memory": [
+        {"addr": "@planecoefficients", "hex": "00 00 80 3f 00 00 00 40 00 00 40 40"},
+        {"addr": "@contributionscale", "hex": "00 00 00 40 00 00 40 40 00 00 80 40"},
+        {"addr": "@sourcevertices", "hex": "00 00 80 bf 00 00 80 bf 00 00 80 bf 00 00 80 3f 00 00 80 3f 00 00 80 3f 00 00 c8 c2 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"},
+        {"addr": "@destinationvertices", "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"},
+        {"addr": "@enabledflags", "hex": "01 01 00 01 00 00 00 00"}
+      ]
+    },
+    {
+      "name": "all-disabled",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@destinationvertices", 3, "@enabledflags"],
+      "memory": [
+        {"addr": "@planecoefficients", "hex": "00 00 80 3f 00 00 00 40 00 00 40 40"},
+        {"addr": "@sourcevertices", "hex": "00 00 80 bf 00 00 00 00 00 00 00 00 00 00 80 bf 00 00 00 00 00 00 00 00 00 00 80 bf 00 00 00 00 00 00 00 00"},
+        {"addr": "@destinationvertices", "hex": "00 00 80 3f 00 00 00 40 00 00 40 40 00 00 80 40 00 00 a0 40 00 00 c0 40 00 00 e0 40 00 00 00 41 00 00 10 41"},
+        {"addr": "@enabledflags", "hex": "00 00 00 00"}
+      ]
+    },
+    {
+      "name": "strict-zero-boundary",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@destinationvertices", 1, "@enabledflags"],
+      "memory": [
+        {"addr": "@planecoefficients", "hex": "00 00 80 3f 00 00 00 00 00 00 00 00"},
+        {"addr": "@contributionscale", "hex": "00 00 80 7f 00 00 80 3f 00 00 80 3f"},
+        {"addr": "@sourcevertices", "hex": "00 00 00 00 00 00 00 00 00 00 00 00"},
+        {"addr": "@destinationvertices", "hex": "00 00 a0 40 00 00 c0 40 00 00 e0 40"},
+        {"addr": "@enabledflags", "hex": "01 00"}
+      ]
+    },
+    {
+      "name": "zero-count-still-reads-coefficients",
+      "args": ["@planecoefficients", "@contributionscale", "@sourcevertices", "@destinationvertices", 0, "@enabledflags"],
+      "memory": [
+        {"addr": "@planecoefficients", "hex": "00 00 80 3f 00 00 00 40 00 00 40 40"},
+        {"addr": "@contributionscale", "hex": "00 00 00 40 00 00 40 40 00 00 80 40"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 319048,
+    "count": 40,
+    "args": [
+      {"choices": ["@planecoefficients"]},
+      {"choices": ["@contributionscale"]},
+      {"choices": ["@sourcevertices"]},
+      {"choices": ["@destinationvertices"]},
+      {"range": [0, 8]},
+      {"choices": ["@enabledflags"]}
+    ],
+    "memory": [
+      {"addr": "@planecoefficients", "type": "float", "count": 3, "range": [-10, 10]},
+      {"addr": "@contributionscale", "type": "float", "count": 3, "range": [-10, 10]},
+      {"addr": "@sourcevertices", "type": "float", "count": 24, "range": [-20, 20]},
+      {"addr": "@destinationvertices", "type": "float", "count": 24, "range": [-20, 20]},
+      {"addr": "@enabledflags", "type": "u8", "count": 16, "choices": [0, 1, 127, 255]}
+    ]
+  }
+}

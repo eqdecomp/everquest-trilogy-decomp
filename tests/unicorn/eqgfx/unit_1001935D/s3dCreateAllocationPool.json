@@ -1,0 +1,286 @@
+{
+  "function": "s3dCreateAllocationPool",
+  "original": "0x1001996c",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "poolManager",
+      "type": "ptr"
+    },
+    {
+      "name": "dataSize",
+      "type": "u32"
+    },
+    {
+      "name": "mode",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "manager": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "allocation": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "rewrite_aliases": {
+    "_ftol": "0x1004ec36"
+  },
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocation"
+    },
+    "0x1004ec36": {
+      "name": "_ftol",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10019ae9": {
+      "name": "s3dLinkAllocationPoolBlock_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: registered, linked, returned",
+      "args": [
+        "@manager",
+        256,
+        0
+      ]
+    },
+    {
+      "name": "mode 1 stores flags 0x10",
+      "args": [
+        "@manager",
+        256,
+        1
+      ]
+    },
+    {
+      "name": "mode 2 leaves flags zero",
+      "args": [
+        "@manager",
+        256,
+        2
+      ]
+    },
+    {
+      "name": "mode -1 leaves flags zero",
+      "args": [
+        "@manager",
+        256,
+        -1
+      ]
+    },
+    {
+      "name": "size 0 scales to 0",
+      "args": [
+        "@manager",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "size 1 scales to a fraction (truncation)",
+      "args": [
+        "@manager",
+        1,
+        0
+      ]
+    },
+    {
+      "name": "size 6 scales to 1.5 (truncation, not rounding)",
+      "args": [
+        "@manager",
+        6,
+        0
+      ]
+    },
+    {
+      "name": "size 7 scales to 1.75",
+      "args": [
+        "@manager",
+        7,
+        0
+      ]
+    },
+    {
+      "name": "size 0x80000000 is unsigned (no sign extension)",
+      "args": [
+        "@manager",
+        "0x80000000",
+        0
+      ]
+    },
+    {
+      "name": "size 0xffffffd0 wraps size + 0x30 to 0",
+      "args": [
+        "@manager",
+        "0xffffffd0",
+        0
+      ]
+    },
+    {
+      "name": "size 0xffffffff",
+      "args": [
+        "@manager",
+        "0xffffffff",
+        1
+      ]
+    },
+    {
+      "name": "null manager",
+      "args": [
+        0,
+        256,
+        1
+      ]
+    },
+    {
+      "name": "allocation fails: returns 0, nothing else called",
+      "args": [
+        "@manager",
+        256,
+        1
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registration returns -1: freed, returns 0",
+      "args": [
+        "@manager",
+        256,
+        1
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registration returns 1: freed, returns 0",
+      "args": [
+        "@manager",
+        256,
+        0
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "registration returns 0x100: freed, returns 0",
+      "args": [
+        "@manager",
+        256,
+        1
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 256
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 104812,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@manager",
+          0
+        ]
+      },
+      {},
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          -1,
+          1,
+          16
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "function": "PackFsStringReference_guess::copyStringReference_guess",
+  "original": "0x10007620",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfsstringreference",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "packfsstringreference": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": "@old"}, {"offset": "0x4", "u32": 4660}]
+    },
+    "source": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": "@shared"}, {"offset": "0x4", "u32": 3735928559}]
+    },
+    "srcnull": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 2864434397}]
+    },
+    "srcmax": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": "@shared_max"}, {"offset": "0x4", "u32": 305419896}]
+    },
+    "srcsign": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [{"offset": "0x0", "u32": "@shared_sign"}, {"offset": "0x4", "u32": 2271560481}]
+    },
+    "shared": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 5}]
+    },
+    "shared_max": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 4294967295}]
+    },
+    "shared_sign": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 2147483647}]
+    },
+    "old": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": 2}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10007fe0": {
+      "name": "PackFsSharedPtr_guess::updateSharedPointer_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@source"
+      ]
+    },
+    {
+      "name": "zero extra",
+      "args": [
+        "@source"
+      ],
+      "init": [{"addr": "@source", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "null shared pointer in source",
+      "args": [
+        "@srcnull"
+      ]
+    },
+    {
+      "name": "refcount all ones wraps to zero",
+      "args": [
+        "@srcmax"
+      ]
+    },
+    {
+      "name": "refcount sign boundary",
+      "args": [
+        "@srcsign"
+      ]
+    },
+    {
+      "name": "this holds no object",
+      "args": [
+        "@source"
+      ],
+      "init": [{"addr": "@packfsstringreference", "offset": "0x0", "u32": 0}]
+    },
+    {
+      "name": "this already holds the source object",
+      "args": [
+        "@source"
+      ],
+      "init": [{"addr": "@packfsstringreference", "offset": "0x0", "u32": "@shared"}]
+    },
+    {
+      "name": "source is this",
+      "args": [
+        "@packfsstringreference"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 30240,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@source",
+          "@srcnull",
+          "@srcmax",
+          "@srcsign",
+          "@packfsstringreference"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@source", "offset": "0x0", "type": "ptr", "choices": ["@shared", "@shared_max", "@shared_sign", 0]},
+      {"addr": "@source", "offset": "0x4", "type": "u32"},
+      {"addr": "@packfsstringreference", "offset": "0x0", "type": "ptr", "choices": ["@old", "@shared", "@shared_max", 0]},
+      {"addr": "@packfsstringreference", "offset": "0x4", "type": "u32"},
+      {"addr": "@shared", "offset": "0x4", "type": "u32", "choices": [0, 1, 2, 5, 2147483647, 4294967295]},
+      {"addr": "@old", "offset": "0x4", "type": "u32", "choices": [0, 1, 2, 4294967295]}
+    ]
+  }
+}

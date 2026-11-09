@@ -1,0 +1,276 @@
+{
+  "function": "process_network_message_guess",
+  "original": "0x004ef2a0",
+  "sources": [
+    "src/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    { "name": "param_1", "type": "int" },
+    { "name": "param_2", "type": "int" },
+    { "name": "param_3", "type": "int" }
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": { "size": "0x600", "fill": "zero", "init": [{ "offset": "0xa4", "u32": "@queue" }] },
+    "conn": { "size": "0x490", "fill": "zero" },
+    "msg": { "size": "0x80", "fill": "zero" },
+    "queued_a": { "size": "0x80", "fill": "zero" },
+    "queued_b": { "size": "0x80", "fill": "zero" },
+    "pending_msg": { "size": "0x80", "fill": "zero" },
+    "active_ctx": { "size": "0x60", "fill": "zero", "init": [{ "offset": "0x54", "u32": 1 }] },
+    "queue": { "size": "0x20", "fill": "zero" },
+    "enter_cs": { "size": 1, "fill": "zero" },
+    "leave_cs": { "size": 1, "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "0x00534194", "u32": "@enter_cs" },
+    { "addr": "0x00534190", "u32": "@leave_cs" }
+  ],
+  "callees": {
+    "0x004f6350": { "name": "markMessageForPendingProcessing_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 0 },
+    "0x004f61b0": { "name": "add_message_to_sorted_queue_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 0 },
+    "0x004f61e0": { "name": "dequeue_message_by_sequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 0 },
+    "0x004f4ac0": { "name": "fast_free_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0 },
+    "0x004f4b60": { "name": "clearMessageContext_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0 },
+    "@enter_cs": { "name": "EnterCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0 },
+    "0x004f54c0": { "name": "list_add_tail_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0 },
+    "0x004f5420": { "name": "signalMessageProcessing_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0 },
+    "@leave_cs": { "name": "LeaveCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0 },
+    "0x004f6240": { "name": "validateAndUpdateMessageSequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 1 },
+    "0x004f6330": { "name": "clearAndReturnPendingMessage_guess", "conv": "cdecl", "args": ["int"], "ret": "@pending_msg" }
+  },
+  "cases": [
+    {
+      "name": "pending flag precedes other message flags, then drains connection pending message",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 29184 },
+        { "addr": "@conn", "offset": "0x184", "u16": 7 },
+        { "addr": "@conn", "offset": "0x484", "u16": 1 },
+        { "addr": "@conn", "offset": "0x486", "u16": 7 },
+        { "addr": "@conn", "offset": "0x488", "u32": 1 }
+      ]
+    },
+    {
+      "name": "pending flag alone",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [{ "addr": "@msg", "offset": "0x14", "u16": 16384 }]
+    },
+    {
+      "name": "plain message with active context is freed",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x10", "u32": "@active_ctx" },
+        { "addr": "@msg", "offset": "0x14", "u16": 0 }
+      ]
+    },
+    {
+      "name": "plain message is appended and signals empty queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 0 },
+        { "addr": "@queue", "offset": "0x8", "u32": 0 }
+      ]
+    },
+    {
+      "name": "plain message is appended without signaling nonempty queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 0 },
+        { "addr": "@queue", "offset": "0x8", "u32": 305419896 }
+      ]
+    },
+    {
+      "name": "sorted branch drains inactive then active queued messages in order",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4608 },
+        { "addr": "@msg", "offset": "0x1e", "u8": 5 },
+        { "addr": "@queued_b", "offset": "0x10", "u32": "@active_ctx" }
+      ],
+      "callees": {
+        "0x004f61e0": { "name": "dequeue_message_by_sequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": ["@queued_a", "@queued_b", 0] }
+      }
+    },
+    {
+      "name": "sorted branch appends to count-one queue without signaling",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4608 },
+        { "addr": "@queue", "offset": "0x8", "u32": 1 }
+      ],
+      "callees": {
+        "0x004f61e0": { "name": "dequeue_message_by_sequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": ["@queued_a", 0] }
+      }
+    },
+    {
+      "name": "sorted branch appends and signals null queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4608 },
+        { "addr": "@rdp", "offset": "0xa4", "u32": 0 }
+      ],
+      "callees": {
+        "0x004f61e0": { "name": "dequeue_message_by_sequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": ["@queued_a", 0] }
+      }
+    },
+    {
+      "name": "plain message appends and signals null queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 0 },
+        { "addr": "@rdp", "offset": "0xa4", "u32": 0 }
+      ]
+    },
+    {
+      "name": "valid unordered message appends and signals null queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4096 },
+        { "addr": "@rdp", "offset": "0xa4", "u32": 0 }
+      ]
+    },
+    {
+      "name": "pending message appends and signals null queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 16384 },
+        { "addr": "@rdp", "offset": "0xa4", "u32": 0 },
+        { "addr": "@conn", "offset": "0x484", "u16": 1 },
+        { "addr": "@conn", "offset": "0x184", "u16": 3 },
+        { "addr": "@conn", "offset": "0x486", "u16": 3 },
+        { "addr": "@conn", "offset": "0x488", "u32": 1 }
+      ]
+    },
+    {
+      "name": "sorted branch frees active queued message",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4608 },
+        { "addr": "@msg", "offset": "0x1e", "u8": 255 },
+        { "addr": "@queued_a", "offset": "0x10", "u32": "@active_ctx" }
+      ],
+      "callees": {
+        "0x004f61e0": { "name": "dequeue_message_by_sequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": ["@queued_a", 0] }
+      }
+    },
+    {
+      "name": "sorted dequeue replaces the entire low byte of an odd message pointer",
+      "args": ["@rdp", "@conn", "@msg+0x1"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x15", "u16": 4608 },
+        { "addr": "@msg", "offset": "0x1f", "u8": 0 }
+      ],
+      "callees": {
+        "0x004f61e0": { "name": "dequeue_message_by_sequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": ["@queued_a", 0] }
+      }
+    },
+    {
+      "name": "unordered sequence validation rejects message",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [{ "addr": "@msg", "offset": "0x14", "u16": 4096 }],
+      "callees": {
+        "0x004f6240": { "name": "validateAndUpdateMessageSequence_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 0 }
+      }
+    },
+    {
+      "name": "valid unordered message with active context is freed",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x10", "u32": "@active_ctx" },
+        { "addr": "@msg", "offset": "0x14", "u16": 4096 }
+      ]
+    },
+    {
+      "name": "valid unordered message is appended and signals empty queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4096 },
+        { "addr": "@queue", "offset": "0x8", "u32": 0 }
+      ]
+    },
+    {
+      "name": "valid unordered message does not signal nonempty queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 4096 },
+        { "addr": "@queue", "offset": "0x8", "u32": 1 }
+      ]
+    },
+    {
+      "name": "pending connection gate rejects when count is zero",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 16384 },
+        { "addr": "@conn", "offset": "0x484", "u16": 0 },
+        { "addr": "@conn", "offset": "0x488", "u32": 1 }
+      ]
+    },
+    {
+      "name": "pending connection gate rejects sequence mismatch",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 16384 },
+        { "addr": "@conn", "offset": "0x484", "u16": 1 },
+        { "addr": "@conn", "offset": "0x184", "u16": 8 },
+        { "addr": "@conn", "offset": "0x486", "u16": 7 },
+        { "addr": "@conn", "offset": "0x488", "u32": 1 }
+      ]
+    },
+    {
+      "name": "pending connection gate rejects null pending pointer",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 16384 },
+        { "addr": "@conn", "offset": "0x484", "u16": 1 },
+        { "addr": "@conn", "offset": "0x184", "u16": 7 },
+        { "addr": "@conn", "offset": "0x486", "u16": 7 },
+        { "addr": "@conn", "offset": "0x488", "u32": 0 }
+      ]
+    },
+    {
+      "name": "pending message with active context is freed after main branch",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 16384 },
+        { "addr": "@conn", "offset": "0x484", "u16": 1 },
+        { "addr": "@conn", "offset": "0x184", "u16": 3 },
+        { "addr": "@conn", "offset": "0x486", "u16": 3 },
+        { "addr": "@conn", "offset": "0x488", "u32": 1 },
+        { "addr": "@pending_msg", "offset": "0x10", "u32": "@active_ctx" }
+      ]
+    },
+    {
+      "name": "pending message is appended and signals empty queue",
+      "args": ["@rdp", "@conn", "@msg"],
+      "memory": [
+        { "addr": "@msg", "offset": "0x14", "u16": 16384 },
+        { "addr": "@conn", "offset": "0x484", "u16": 1 },
+        { "addr": "@conn", "offset": "0x184", "u16": 3 },
+        { "addr": "@conn", "offset": "0x486", "u16": 3 },
+        { "addr": "@conn", "offset": "0x488", "u32": 1 },
+        { "addr": "@queue", "offset": "0x8", "u32": 0 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5173920,
+    "count": 40,
+    "args": [
+      { "choices": ["@rdp"] },
+      { "choices": ["@conn"] },
+      { "choices": ["@msg"] }
+    ],
+    "memory": [
+      { "addr": "@msg", "offset": "0x14", "type": "u16", "choices": [0, 512, 4096, 4608, 16384, 16896, 20480, 65535] },
+      { "addr": "@msg", "offset": "0x10", "type": "ptr", "choices": [0, "@active_ctx"] },
+      { "addr": "@active_ctx", "offset": "0x54", "type": "u32", "choices": [0, 1] },
+      { "addr": "@conn", "offset": "0x484", "type": "u16", "choices": [0, 1] },
+      { "addr": "@conn", "offset": "0x184", "type": "u16", "choices": [0, 1, 2] },
+      { "addr": "@conn", "offset": "0x486", "type": "u16", "choices": [0, 1, 2] },
+      { "addr": "@conn", "offset": "0x488", "type": "u32", "choices": [0, 1] },
+      { "addr": "@queue", "offset": "0x8", "type": "u32", "choices": [0, 1] }
+    ]
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "function": "t3dDefineAI",
+  "original": "0x1000b44f",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "name", "type": "cstr"},
+    {"name": "value", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {"size": "0x100", "fill": "random"},
+    "ai": {"size": "0x20", "fill": "random"},
+    "nameCopy": {"size": "0x100", "fill": "random"},
+    "existing": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": 26}]}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": 0},
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@ai", "@nameCopy"]},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": 0},
+    "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": 0},
+    "0x10015d81": {"name": "t3dFreeObjectPoolSlot_guess", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "new AI: lookup misses, both allocations succeed, list and dictionary adds succeed: returns the new AI",
+      "args": ["@context", "abc", 1]
+    },
+    {
+      "name": "existing AI of type 0x1a is returned as is, nothing allocated",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}}
+    },
+    {
+      "name": "existing entry of type 0x1b is not returned: returns 0, nothing allocated",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}},
+      "memory": [{"addr": "@existing", "offset": "0x0", "u32": 27}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "existing entry of type 0 is not returned: returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}},
+      "memory": [{"addr": "@existing", "offset": "0x0", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "AI allocation fails: returns 0 after one allocation, nothing else is called",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": [0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "name copy allocation fails: the AI is freed, returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@ai", 0]}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty name: 1-byte copy, list and dictionary adds succeed, returns the new AI",
+      "args": ["@context", "", 0]
+    },
+    {
+      "name": "long name: copy and dictionary add succeed, returns the new AI",
+      "args": ["@context", "a name of about forty characters, longer than a dword of text", 3]
+    },
+    {
+      "name": "value INT_MAX is stored as given",
+      "args": ["@context", "abc", 2147483647]
+    },
+    {
+      "name": "value -1 is stored as given",
+      "args": ["@context", "abc", -1]
+    },
+    {
+      "name": "list add returns 1: AI and key freed, dictionary add not called, returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list add returns -1: any nonzero is a failure",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": -1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "list add returns INT_MIN: nonzero is a failure",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": -2147483648}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary add returns 1: FUN_10015d81 runs, key and AI freed, returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary add returns -1: same cleanup, returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": -1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary add returns INT_MIN: same cleanup, returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": -2147483648}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary add returns INT_MAX: nonzero is a failure, returns 0",
+      "args": ["@context", "abc", 1],
+      "callees": {"0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "mem:20"], "ret": 2147483647}},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 46159,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]},
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

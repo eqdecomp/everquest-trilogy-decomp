@@ -1,0 +1,308 @@
+{
+  "function": "t3dAddDirectionalLightToZone",
+  "original": "0x100210cf",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "zone",
+      "type": "ptr"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "zone": {
+      "size": "0x360",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": "@regionTable"},
+        {"offset": "0x354", "u32": "@scratch"}
+      ]
+    },
+    "regionTable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@actor0"},
+        {"offset": "0x4", "u32": "@actor1"},
+        {"offset": "0x8", "u32": "@actor2"},
+        {"offset": "0xc", "u32": "@actor3"}
+      ]
+    },
+    "actor0": {"size": "0x80", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@pla0"}]},
+    "actor1": {"size": "0x80", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@pla1"}]},
+    "actor2": {"size": "0x80", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@pla2"}]},
+    "actor3": {"size": "0x80", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@pla3"}]},
+    "pla0": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x14", "u32": 8}, {"offset": "0x18", "u32": "@lists0"}]},
+    "pla1": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x14", "u32": 8}, {"offset": "0x18", "u32": "@lists1"}]},
+    "pla2": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x14", "u32": 8}, {"offset": "0x18", "u32": "@lists2"}]},
+    "pla3": {"size": "0x20", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x14", "u32": 8}, {"offset": "0x18", "u32": "@lists3"}]},
+    "lists0": {"size": "0x40", "fill": "random"},
+    "lists1": {"size": "0x40", "fill": "random"},
+    "lists2": {"size": "0x40", "fill": "random"},
+    "lists3": {"size": "0x40", "fill": "random"},
+    "scratch": {"size": "0x40", "fill": "zero"},
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x24", "u32": 2},
+        {"offset": "0x28", "u32": 4},
+        {"offset": "0x2c", "u32": "@entries"}
+      ]
+    },
+    "entries": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 1},
+        {"offset": "0x4", "u32": 3}
+      ]
+    },
+    "region": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u32": 2},
+        {"offset": "0x1c", "u32": "@regionList"}
+      ]
+    },
+    "regionList": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@ri0"},
+        {"offset": "0x4", "u32": "@ri1"},
+        {"offset": "0x8", "u32": "@ri2"},
+        {"offset": "0xc", "u32": "@ri3"}
+      ]
+    },
+    "ri0": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": 0}]},
+    "ri1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": 1}]},
+    "ri2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": 2}]},
+    "ri3": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": 3}]},
+    "grow0": {"size": "0x80", "fill": "zero"},
+    "grow1": {"size": "0x80", "fill": "zero"},
+    "grow2": {"size": "0x80", "fill": "zero"},
+    "grow3": {"size": "0x80", "fill": "zero"},
+    "grow4": {"size": "0x80", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": ["@grow0", "@grow1", "@grow2", "@grow3", "@grow4"]
+    },
+    "0x100679f0": {
+      "name": "FID_conflict:_memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: entries 1 3, region 0 1 adds 0 and prepends the light to region 0",
+      "args": ["@zone", "@light", "@region"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "new indices 0 and 2 fill the entries (capacity 4 full)",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@ri1", "offset": "0x4", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "new indices 0 and 2, entries have room",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@light", "offset": "0x28", "u32": 8}, {"addr": "@ri1", "offset": "0x4", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "every region index already listed: nothing added",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@ri0", "offset": "0x4", "u32": 1}, {"addr": "@ri1", "offset": "0x4", "u32": 3}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no regions",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@region", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no entries: the new indices become the entries",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@light", "offset": "0x24", "u32": 0}, {"addr": "@ri1", "offset": "0x4", "u32": 3}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no entries and no regions",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@light", "offset": "0x24", "u32": 0}, {"addr": "@region", "offset": "0x14", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "new indices all after the entries (forward merge copies the tail)",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@entries", "offset": "0x0", "u32": 0},
+        {"addr": "@entries", "offset": "0x4", "u32": 1},
+        {"addr": "@ri0", "offset": "0x4", "u32": 2},
+        {"addr": "@ri1", "offset": "0x4", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "new indices all before the entries (scratch runs out first)",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@entries", "offset": "0x0", "u32": 2},
+        {"addr": "@entries", "offset": "0x4", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unsorted region list: the scratch runs out first, region 0 is the only new index",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [{"addr": "@ri0", "offset": "0x4", "u32": 3}, {"addr": "@ri1", "offset": "0x4", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entries realloc fails",
+      "args": ["@zone", "@light", "@region"],
+      "callees": {
+        "0x10050c8c": {"name": "t3dReallocateMemory", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}
+      },
+      "memory": [{"addr": "@ri1", "offset": "0x4", "u32": 2}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "region list realloc fails",
+      "args": ["@zone", "@light", "@region"],
+      "callees": {
+        "0x10050c8c": {"name": "t3dReallocateMemory", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}
+      },
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@region", "offset": "0x14", "u32": 1},
+        {"addr": "@pla0", "offset": "0x10", "u32": 2},
+        {"addr": "@pla0", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "full region list grows to 3 slots",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@region", "offset": "0x14", "u32": 1},
+        {"addr": "@pla0", "offset": "0x10", "u32": 2},
+        {"addr": "@pla0", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "two full region lists grow",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@ri1", "offset": "0x4", "u32": 2},
+        {"addr": "@pla0", "offset": "0x10", "u32": 2},
+        {"addr": "@pla0", "offset": "0x14", "u32": 2},
+        {"addr": "@pla2", "offset": "0x10", "u32": 2},
+        {"addr": "@pla2", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "second region list realloc fails",
+      "args": ["@zone", "@light", "@region"],
+      "callees": {
+        "0x10050c8c": {"name": "t3dReallocateMemory", "conv": "cdecl", "args": ["ptr", "u32"], "ret": ["@grow0", 0]}
+      },
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@ri1", "offset": "0x4", "u32": 2},
+        {"addr": "@pla0", "offset": "0x10", "u32": 2},
+        {"addr": "@pla0", "offset": "0x14", "u32": 2},
+        {"addr": "@pla2", "offset": "0x10", "u32": 2},
+        {"addr": "@pla2", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "entries and one region list grow",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@ri1", "offset": "0x4", "u32": 2},
+        {"addr": "@pla0", "offset": "0x10", "u32": 2},
+        {"addr": "@pla0", "offset": "0x14", "u32": 2}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "prepend to a list with three entries (copies them up one slot)",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@region", "offset": "0x14", "u32": 1},
+        {"addr": "@ri0", "offset": "0x4", "u32": 2},
+        {"addr": "@pla2", "offset": "0x10", "u32": 3}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "prepend to an empty list (no copy)",
+      "args": ["@zone", "@light", "@region"],
+      "memory": [
+        {"addr": "@light", "offset": "0x28", "u32": 8},
+        {"addr": "@region", "offset": "0x14", "u32": 1},
+        {"addr": "@ri0", "offset": "0x4", "u32": 0},
+        {"addr": "@pla0", "offset": "0x10", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 135375,
+    "count": 40,
+    "args": [
+      {"choices": ["@zone"]},
+      {"choices": ["@light"]},
+      {"choices": ["@region"]}
+    ],
+    "memory": [
+      {"addr": "@light", "offset": "0x24", "type": "u32", "range": [0, 6]},
+      {"addr": "@light", "offset": "0x28", "type": "u32", "range": [0, 12]},
+      {"addr": "@entries", "type": "u32", "range": [0, 5], "count": 8},
+      {"addr": "@region", "offset": "0x14", "type": "u32", "range": [0, 4]},
+      {"addr": "@ri0", "offset": "0x4", "type": "u32", "range": [0, 3]},
+      {"addr": "@ri1", "offset": "0x4", "type": "u32", "range": [0, 3]},
+      {"addr": "@ri2", "offset": "0x4", "type": "u32", "range": [0, 3]},
+      {"addr": "@ri3", "offset": "0x4", "type": "u32", "range": [0, 3]},
+      {"addr": "@pla0", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@pla0", "offset": "0x14", "type": "u32", "range": [0, 6]},
+      {"addr": "@pla1", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@pla1", "offset": "0x14", "type": "u32", "range": [0, 6]},
+      {"addr": "@pla2", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@pla2", "offset": "0x14", "type": "u32", "range": [0, 6]},
+      {"addr": "@pla3", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@pla3", "offset": "0x14", "type": "u32", "range": [0, 6]}
+    ]
+  }
+}

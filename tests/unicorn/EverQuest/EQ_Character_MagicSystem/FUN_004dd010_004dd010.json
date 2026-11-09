@@ -1,0 +1,121 @@
+{
+  "function": "ClickedPlayer",
+  "original": "0x004dd010",
+  "sources": [
+    "src/EverQuest/EQ_Character_MagicSystem.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "x",
+      "type": "short"
+    },
+    {
+      "name": "y",
+      "type": "short"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "display": {"size": "0x10", "fill": "zero"},
+    "players": {"size": "0x10", "fill": "zero"},
+    "actor_a": {"size": "0x10", "fill": "zero"},
+    "actor_b": {"size": "0x10", "fill": "zero"},
+    "result": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4de0", "u32": "@display"},
+    {"addr": "0x006e4d58", "u32": "@players"}
+  ],
+  "callees": {
+    "0x0041125d": {
+      "name": "CDisplay::PickActorOnScreen_guess",
+      "conv": "thiscall",
+      "args": ["int", "int", "int"],
+      "ret": "0x00710000"
+    },
+    "0x004b14bf": {
+      "name": "EQPlayer::is_player_actor",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "ret": "0x00730000"
+    }
+  },
+  "cases": [
+    {
+      "name": "asymmetric ordered coordinates",
+      "args": [4660, -9029],
+      "expect": {"ret": "0x00730000"}
+    },
+    {
+      "name": "short sign boundaries",
+      "args": [-32768, 32767]
+    },
+    {
+      "name": "reverse coordinate order",
+      "args": [-4660, 9029]
+    },
+    {
+      "name": "high argument bits truncate to signed shorts",
+      "args": [74565, -74565]
+    },
+    {
+      "name": "null actor is still passed to second callee",
+      "args": [1, -1],
+      "callees": {
+        "0x0041125d": {
+          "name": "CDisplay::PickActorOnScreen_guess",
+          "conv": "thiscall",
+          "args": ["int", "int", "int"],
+          "ret": 0
+        },
+        "0x004b14bf": {
+          "name": "EQPlayer::is_player_actor_guess",
+          "conv": "thiscall",
+          "args": ["ptr"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null receivers remain call arguments",
+      "args": [0, 1],
+      "memory": [
+        {"addr": "0x006e4de0", "u32": 0},
+        {"addr": "0x006e4d58", "u32": 0}
+      ],
+      "callees": {
+        "0x0041125d": {
+          "name": "CDisplay::PickActorOnScreen_guess",
+          "conv": "thiscall",
+          "args": ["int", "int", "int"],
+          "ret": "0x00720000"
+        },
+        "0x004b14bf": {
+          "name": "EQPlayer::is_player_actor_guess",
+          "conv": "thiscall",
+          "args": ["ptr"],
+          "ret": "0x00720000"
+        }
+      },
+      "expect": {"ret": "0x00720000"}
+    },
+    {
+      "name": "zero coordinates",
+      "args": [0, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5099536,
+    "count": 40,
+    "args": [
+      {"range": [-32768, 32767]},
+      {"range": [-32768, 32767]}
+    ],
+    "memory": [
+      {"addr": "0x006e4de0", "type": "ptr", "choices": [0, "@display", "@actor_a"]},
+      {"addr": "0x006e4d58", "type": "ptr", "choices": [0, "@players", "@actor_b"]}
+    ]
+  }
+}

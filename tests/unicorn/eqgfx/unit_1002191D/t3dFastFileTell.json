@@ -1,0 +1,230 @@
+{
+  "function": "t3dFastFileTell",
+  "original": "0x1002191d",
+  "sources": [
+    "src/eqgfx/unit_1002191D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "file",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "file": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@data" },
+        { "offset": "0x4", "u32": "@data2" }
+      ]
+    },
+    "file2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@data2" },
+        { "offset": "0x4", "u32": 0 }
+      ]
+    },
+    "data": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@handle_wrong" },
+        { "offset": "0x4", "u32": "0xdeadbeef" },
+        { "offset": "0x8", "u32": "@handle" },
+        { "offset": "0xc", "u32": "0xcafebabe" }
+      ]
+    },
+    "data2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@handle" },
+        { "offset": "0x4", "u32": 0 },
+        { "offset": "0x8", "u32": "@handle2" },
+        { "offset": "0xc", "u32": 0 }
+      ]
+    },
+    "handle": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@buffer" },
+        { "offset": "0x4", "u32": 0 },
+        { "offset": "0x8", "u32": "0xdeadbeef" },
+        { "offset": "0xc", "u32": "0xcafebabe" }
+      ]
+    },
+    "handle2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@buffer2" },
+        { "offset": "0x4", "u32": 0 },
+        { "offset": "0x8", "u32": "0xdeadbeef" },
+        { "offset": "0xc", "u32": "0xcafebabe" }
+      ]
+    },
+    "handle_wrong": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": "@buffer_wrong" },
+        { "offset": "0x4", "u32": 0 },
+        { "offset": "0x8", "u32": 0 },
+        { "offset": "0xc", "u32": 0 }
+      ]
+    },
+    "handle_nobuf": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 0 },
+        { "offset": "0x4", "u32": "@buffer_wrong" }
+      ]
+    },
+    "buffer": {
+      "size": "0x2010",
+      "fill": "random",
+      "init": [
+        { "offset": "0x2008", "u32": "0xa0a0a0a0" },
+        { "offset": "0x200c", "u32": "0x11111111" }
+      ]
+    },
+    "buffer2": {
+      "size": "0x2010",
+      "fill": "random",
+      "init": [
+        { "offset": "0x2008", "u32": "0xb0b0b0b0" },
+        { "offset": "0x200c", "u32": "0x22222222" }
+      ]
+    },
+    "buffer_wrong": {
+      "size": "0x2010",
+      "fill": "random",
+      "init": [
+        { "offset": "0x2008", "u32": "0xc0c0c0c0" },
+        { "offset": "0x200c", "u32": "0x33333333" }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10052d00": {
+      "name": "getFilePosition_guess",
+      "conv": "fastcall",
+      "args": ["ptr"],
+      "ret": "0x11111111"
+    }
+  },
+  "cases": [
+    {
+      "name": "null file: -1 without touching the callee",
+      "args": [0],
+      "expect": { "ret": -1 }
+    },
+    {
+      "name": "typical: file -> data -> handle(+0x8) -> buffer, callee's 0x11111111 returned",
+      "args": ["@file"],
+      "expect": { "ret": "0x11111111" }
+    },
+    {
+      "name": "callee returns 0 (result is its EAX, not a constant)",
+      "args": ["@file"],
+      "callees": {
+        "0x10052d00": { "name": "getFilePosition_guess", "conv": "fastcall", "args": ["ptr"], "ret": 0 }
+      },
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "callee returns all ones",
+      "args": ["@file"],
+      "callees": {
+        "0x10052d00": { "name": "getFilePosition_guess", "conv": "fastcall", "args": ["ptr"], "ret": "0xffffffff" }
+      },
+      "expect": { "ret": "0xffffffff" }
+    },
+    {
+      "name": "callee returns a sign-bit value (int, not truncated)",
+      "args": ["@file"],
+      "callees": {
+        "0x10052d00": { "name": "getFilePosition_guess", "conv": "fastcall", "args": ["ptr"], "ret": "0x80000000" }
+      },
+      "expect": { "ret": "0x80000000" }
+    },
+    {
+      "name": "callee returns 0x76543210, different from the fixture default",
+      "args": ["@file"],
+      "callees": {
+        "0x10052d00": { "name": "getFilePosition_guess", "conv": "fastcall", "args": ["ptr"], "ret": "0x76543210" }
+      },
+      "expect": { "ret": "0x76543210" }
+    },
+    {
+      "name": "handle has no buffer: -1, callee skipped (its 0x11111111 never read)",
+      "args": ["@file"],
+      "memory": [{ "addr": "@data", "offset": "0x8", "u32": "@handle_nobuf" }],
+      "expect": { "ret": -1 }
+    },
+    {
+      "name": "buffer check reads the handle's +0x0 (a zero there wins over +0x4)",
+      "args": ["@file"],
+      "memory": [
+        { "addr": "@handle", "offset": "0x0", "u32": 0 },
+        { "addr": "@handle", "offset": "0x4", "u32": "@buffer_wrong" }
+      ],
+      "expect": { "ret": -1 }
+    },
+    {
+      "name": "second file (file2 -> data2 -> handle2): the callee is handed @handle2",
+      "args": ["@file2"],
+      "expect": { "ret": "0x11111111" }
+    },
+    {
+      "name": "argument field is +0x0, not +0x4 (which names the second file)",
+      "args": ["@file"],
+      "memory": [
+        { "addr": "@file", "offset": "0x0", "u32": "@data2" },
+        { "addr": "@file", "offset": "0x4", "u32": "@data" }
+      ],
+      "expect": { "ret": "0x11111111" }
+    },
+    {
+      "name": "handle comes from data's +0x8, not +0x0/+0xc: the callee is handed @handle",
+      "args": ["@file"],
+      "memory": [
+        { "addr": "@data", "offset": "0x0", "u32": "@handle_wrong" },
+        { "addr": "@data", "offset": "0xc", "u32": "@handle_wrong" }
+      ],
+      "expect": { "ret": "0x11111111" }
+    },
+    {
+      "name": "data's +0x8 names handle_wrong: the callee is handed @handle_wrong",
+      "args": ["@file"],
+      "memory": [{ "addr": "@data", "offset": "0x8", "u32": "@handle_wrong" }],
+      "expect": { "ret": "0x11111111" }
+    }
+  ],
+  "fuzz": {
+    "seed": 424242,
+    "count": 40,
+    "args": [
+      { "choices": ["@file", "@file2", 0] }
+    ],
+    "memory": [
+      { "addr": "@file", "offset": "0x0", "type": "u32", "choices": ["@data", "@data2"] },
+      { "addr": "@file", "offset": "0x4", "type": "u32", "choices": ["@data2", 0] },
+      { "addr": "@data", "offset": "0x8", "type": "u32", "choices": ["@handle", "@handle2", "@handle_nobuf", "@handle_wrong"] },
+      { "addr": "@data2", "offset": "0x8", "type": "u32", "choices": ["@handle", "@handle2", "@handle_nobuf", "@handle_wrong"] },
+      { "addr": "@handle", "offset": "0x0", "type": "u32", "choices": ["@buffer", "@buffer2", "@buffer_wrong", 0] },
+      { "addr": "@handle2", "offset": "0x0", "type": "u32", "choices": ["@buffer", "@buffer2", "@buffer_wrong", 0] },
+      { "addr": "@buffer", "offset": "0x200c", "type": "u32", "choices": [0, 1, "0xffffffff", "0x80000000", "0x11111111"] },
+      { "addr": "@buffer2", "offset": "0x200c", "type": "u32", "choices": [0, 7, "0xffffffff", "0x22222222"] },
+      { "addr": "@buffer_wrong", "offset": "0x200c", "type": "u32", "choices": [0, "0x33333333", "0xffffffff"] }
+    ]
+  }
+}

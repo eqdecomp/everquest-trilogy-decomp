@@ -1,0 +1,92 @@
+{
+  "function": "t3dFreeMemory",
+  "original": "0x10050cbb",
+  "sources": [
+    "src/eqgfx/unit_10050AA7.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "memory",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX evidence: 0/759 direct call sites read EAX after the call, and the only RET follows a call whose result callers discard; the wrapper returns nothing.",
+  "objects": {
+    "memory": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100681db": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_free": "0x100681db"
+  },
+  "cases": [
+    {
+      "name": "heap block",
+      "args": [
+        "@memory"
+      ]
+    },
+    {
+      "name": "pointer into the middle of the block",
+      "args": [
+        "@memory+0x40"
+      ]
+    },
+    {
+      "name": "pointer just past the block",
+      "args": [
+        "@memory+0x100"
+      ]
+    },
+    {
+      "name": "null pointer is forwarded too (no null check in the original)",
+      "args": [
+        0
+      ]
+    },
+    {
+      "name": "garbage caller registers: only the stack argument reaches _free",
+      "args": [
+        "@memory"
+      ],
+      "regs": {
+        "eax": 287454020,
+        "ebx": 3735928559,
+        "ecx": 3405691582,
+        "edx": 1953784209,
+        "esi": 2155424692,
+        "edi": 4277009102
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 330939,
+    "count": 40,
+    "args": [
+      {
+        "type": "ptr",
+        "choices": [
+          "@memory",
+          "@memory+0x40",
+          "@memory+0x80",
+          "@memory+0x100",
+          0
+        ]
+      }
+    ]
+  }
+}

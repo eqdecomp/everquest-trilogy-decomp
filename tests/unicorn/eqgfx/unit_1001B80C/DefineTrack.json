@@ -1,0 +1,162 @@
+{
+  "function": "DefineTrack_guess",
+  "original": "0x1001c7cc",
+  "sources": ["src/eqgfx/unit_1001B80C.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "name", "type": "cstr"},
+    {"name": "frame_count", "type": "u32"},
+    {"name": "frame_data", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {"size": "0x100", "fill": "zero"},
+    "frame_data": {"size": "0x100", "fill": "zero"},
+    "debug_fn": {"size": "0x10", "fill": "zero"},
+    "existing": {"size": "0x28", "fill": "zero"},
+    "definition": {"size": "0x28", "fill": "zero"},
+    "name_buffer": {"size": "0x200", "fill": "zero"},
+    "default_instance": {"size": "0x38", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x100760c4", "u32": "@debug_fn"}
+  ],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": 0
+    },
+    "@debug_fn": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": ["cstr"],
+      "ret": 0
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@definition", "@name_buffer", "@default_instance"]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "writes": [{"arg": 0, "offset": 0, "hex": "efbeadde"}]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 1, "offset": 4, "hex": "a5a5a5a5"}]
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "existing definition tag returns same pointer",
+      "args": ["@context", "existing", 2, "@frame_data"],
+      "callees": {
+        "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}
+      },
+      "memory": [{"addr": "@existing", "offset": "0", "u32": 21}]
+    },
+    {
+      "name": "existing object with another tag is rejected",
+      "args": ["@context", "existing", 2, "@frame_data"],
+      "callees": {
+        "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}
+      },
+      "memory": [{"addr": "@existing", "offset": "0", "u32": 22}]
+    },
+    {
+      "name": "definition allocation fails",
+      "args": ["@context", "tag", 2, "@frame_data"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "tag key allocation fails after initializing definition",
+      "args": ["@context", "tag", 2, "@frame_data"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", 0]}
+      }
+    },
+    {
+      "name": "definition list registration fails",
+      "args": ["@context", "tag", 2, "@frame_data"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}
+      }
+    },
+    {
+      "name": "dictionary insertion fails",
+      "args": ["@context", "tag", 2, "@frame_data"],
+      "callees": {
+        "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}
+      }
+    },
+    {
+      "name": "default instance allocation fails after dictionary insertion",
+      "args": ["@context", "tag", 2, "@frame_data"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@definition", "@name_buffer", 0]}
+      }
+    },
+    {
+      "name": "default instance list registration fails and rolls back",
+      "args": ["@context", "tag", 2, "@frame_data"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, -1]}
+      }
+    },
+    {
+      "name": "zero frames set default target to zero",
+      "args": ["@context", "", 0, "@frame_data"]
+    },
+    {
+      "name": "one frame set default target to zero",
+      "args": ["@context", "a", 1, "@frame_data"]
+    },
+    {
+      "name": "two frames keep default target one",
+      "args": ["@context", "ab", 2, "@frame_data"]
+    },
+    {
+      "name": "larger unsigned frame count keeps default target one",
+      "args": ["@context", "walk", 4294967295, "@frame_data"]
+    }
+  ],
+  "fuzz": {
+    "seed": 116684,
+    "count": 30,
+    "args": [
+      {"choices": ["@context"]},
+      {},
+      {"range": [0, 4294967295]},
+      {"choices": ["@frame_data"]}
+    ],
+    "memory": []
+  }
+}

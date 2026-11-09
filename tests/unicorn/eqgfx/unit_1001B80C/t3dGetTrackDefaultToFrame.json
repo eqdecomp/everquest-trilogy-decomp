@@ -1,0 +1,92 @@
+{
+  "function": "t3dGetTrackDefaultToFrame",
+  "original": "0x1001d0f5",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "frame",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u16",
+  "objects": {
+    "frame": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical: returns the word at +0x1A, not the one at +0x18",
+      "args": [
+        "@frame"
+      ],
+      "memory": [
+        {"addr": "@frame", "offset": "0x18", "u16": 4369},
+        {"addr": "@frame", "offset": "0x1A", "u16": 8738}
+      ],
+      "expect": {"ret": 8738}
+    },
+    {
+      "name": "zero word at +0x1A with a nonzero +0x18",
+      "args": [
+        "@frame"
+      ],
+      "memory": [
+        {"addr": "@frame", "offset": "0x18", "u16": 48879},
+        {"addr": "@frame", "offset": "0x1A", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sign bit set at +0x1A is zero-extended, not sign-extended",
+      "args": [
+        "@frame"
+      ],
+      "memory": [
+        {"addr": "@frame", "offset": "0x1A", "u16": 32768}
+      ],
+      "expect": {"ret": 32768}
+    },
+    {
+      "name": "all ones at +0x1A",
+      "args": [
+        "@frame"
+      ],
+      "memory": [
+        {"addr": "@frame", "offset": "0x1A", "u16": 65535}
+      ],
+      "expect": {"ret": 65535}
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@frame"
+      ],
+      "objects": {
+        "frame": {"size": "0x20", "fill": "zero"}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 119029,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@frame"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@frame", "offset": "0x18", "type": "u16"},
+      {"addr": "@frame", "offset": "0x1A", "type": "u16"}
+    ]
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "function": "closeFileHandle_guess",
+  "original": "0x1002642d",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "source": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "CloseHandle": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100760AC", "u32": "@CloseHandle"}
+  ],
+  "callees": {
+    "@CloseHandle": {
+      "name": "CloseHandle",
+      "conv": "stdcall",
+      "args": ["ptr"],
+      "ret": 1
+    },
+    "0x10021838": {
+      "name": "t3dFastFileClose",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10068328": {
+      "name": "_fclose",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "sourceType 0: t3dFastFileClose(file)",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x4", "u32": "0xdeadbeef"}, {"offset": "0x8", "u32": "0x12345678"}]}}
+    },
+    {
+      "name": "sourceType 1: CloseHandle(file)",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 1}, {"offset": "0x4", "u32": "0xdeadbeef"}, {"offset": "0x8", "u32": "0x0badf00d"}]}}
+    },
+    {
+      "name": "sourceType 2: _fclose(file)",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 2}, {"offset": "0x4", "u32": "0xdeadbeef"}, {"offset": "0x8", "u32": "0x33334444"}]}}
+    },
+    {
+      "name": "sourceType 3: no close, returns",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 3}, {"offset": "0x8", "u32": "0x55556666"}]}}
+    },
+    {
+      "name": "sourceType -1: no close, returns",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": "0xffffffff"}, {"offset": "0x8", "u32": "0x55556666"}]}}
+    },
+    {
+      "name": "sourceType 0x80000000: no close, returns",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x80000000"}, {"offset": "0x8", "u32": "0x55556666"}]}}
+    },
+    {
+      "name": "sourceType 0x7fffffff: no close, returns",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": "0x7fffffff"}, {"offset": "0x8", "u32": "0x55556666"}]}}
+    },
+    {
+      "name": "sourceType 4: no close, returns",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 4}, {"offset": "0x8", "u32": "0x55556666"}]}}
+    },
+    {
+      "name": "sourceType 0, null file",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 0}, {"offset": "0x8", "u32": 0}]}}
+    },
+    {
+      "name": "sourceType 1, null file",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 1}, {"offset": "0x8", "u32": 0}]}}
+    },
+    {
+      "name": "sourceType 2, null file",
+      "args": ["@source"],
+      "objects": {"source": {"size": "0x100", "fill": "zero", "init": [{"offset": "0x0", "u32": 2}, {"offset": "0x8", "u32": 0}]}}
+    }
+  ],
+  "fuzz": {
+    "seed": 156717,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@source", "offset": "0x0", "type": "int", "range": [-4, 8]},
+      {"addr": "@source", "offset": "0x8", "type": "u32"}
+    ]
+  }
+}

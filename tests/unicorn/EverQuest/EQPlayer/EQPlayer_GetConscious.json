@@ -1,0 +1,228 @@
+{
+  "function": "EQPlayer_GetConscious_guess",
+  "original": "0x004b3dba",
+  "sources": [
+    "src/EverQuest/EQPlayer.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "edx",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x74",
+          "u32": "@char_info"
+        }
+      ]
+    },
+    "char_info": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x76",
+          "u8": 2
+        }
+      ]
+    },
+    "other": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "everquest": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@param_1"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x00590154",
+      "u32": 305419896
+    }
+  ],
+  "callees": {
+    "0x004a3d01": {
+      "name": "EQTRACE_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ]
+    },
+    "0x004c70cb": {
+      "name": "CEverQuest::refreshVial_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004b45cb": {
+      "name": "EQPlayer_ChangeStance_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "nonlocal player still gets standing stance",
+      "args": [
+        "@param_1",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4d8c",
+          "u32": "@other"
+        }
+      ]
+    },
+    {
+      "name": "local player with no character info traces and returns",
+      "args": [
+        "@param_1",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x74",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "local state below threshold",
+      "args": [
+        "@param_1",
+        2
+      ],
+      "memory": [
+        {
+          "addr": "@char_info",
+          "offset": "0x76",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "state equals threshold enters conscious path",
+      "args": [
+        "@param_1",
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@char_info",
+          "offset": "0x76",
+          "u8": 3
+        }
+      ]
+    },
+    {
+      "name": "largest positive signed state enters conscious path",
+      "args": [
+        "@param_1",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@char_info",
+          "offset": "0x76",
+          "u8": 127
+        }
+      ]
+    },
+    {
+      "name": "high-bit state is signed less than threshold",
+      "args": [
+        "@param_1",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@char_info",
+          "offset": "0x76",
+          "u8": 128
+        }
+      ]
+    },
+    {
+      "name": "all bits set is signed less than threshold",
+      "args": [
+        "@param_1",
+        6
+      ],
+      "memory": [
+        {
+          "addr": "@char_info",
+          "offset": "0x76",
+          "u8": 255
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4931002,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "range": [
+          -4,
+          4
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4d8c",
+        "type": "ptr",
+        "choices": [
+          "@param_1",
+          "@other"
+        ]
+      },
+      {
+        "addr": "@char_info",
+        "offset": "0x76",
+        "type": "char",
+        "range": [
+          -128,
+          127
+        ]
+      }
+    ]
+  }
+}

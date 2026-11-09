@@ -1,0 +1,299 @@
+{
+  "function": "BltColorFillRgb_guess",
+  "original": "0x10006b90",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "wrap": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@surf"
+        }
+      ]
+    },
+    "surf": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt"
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@blt"
+        }
+      ]
+    },
+    "blt": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055a8c",
+      "u32": "0x7a0000"
+    }
+  ],
+  "callees": {
+    "0x10007e60": {
+      "name": "FUN_10007e60",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "i32",
+        "u32"
+      ],
+      "ret": 305420031
+    },
+    "@blt": {
+      "name": "Blt",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr",
+        "ptr",
+        "u32",
+        "mem:84"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null wrapper: colour still converted, nothing blitted",
+      "args": [
+        0,
+        "0x00123456"
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null wrapper, black",
+      "args": [
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "blt ok, red",
+      "args": [
+        "@wrap",
+        "0x000000ff"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "blt ok, green",
+      "args": [
+        "@wrap",
+        "0x0000ff00"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "blt ok, blue",
+      "args": [
+        "@wrap",
+        "0x00ff0000"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "blt ok, white",
+      "args": [
+        "@wrap",
+        "0x00ffffff"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "blt ok, high byte ignored",
+      "args": [
+        "@wrap",
+        "0xff123456"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "blt ok, typical",
+      "args": [
+        "@wrap",
+        "0x00a0b0c0"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "blt fails (HRESULT -1): logs, result low byte cleared",
+      "args": [
+        "@wrap",
+        "0x00abcdef"
+      ],
+      "callees": {
+        "@blt": {
+          "name": "Blt",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr",
+            "ptr",
+            "u32",
+            "mem:84"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 305419776
+      }
+    },
+    {
+      "name": "blt fails (DDERR_SURFACELOST 0x887601c2): logs, result low byte cleared",
+      "args": [
+        "@wrap",
+        1
+      ],
+      "callees": {
+        "@blt": {
+          "name": "Blt",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr",
+            "ptr",
+            "u32",
+            "mem:84"
+          ],
+          "ret": -2005532222
+        }
+      },
+      "expect": {
+        "ret": 305419776
+      }
+    },
+    {
+      "name": "blt fails, logger result 0xff: low byte cleared to zero",
+      "args": [
+        "@wrap",
+        0
+      ],
+      "callees": {
+        "@blt": {
+          "name": "Blt",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr",
+            "ptr",
+            "u32",
+            "mem:84"
+          ],
+          "ret": -1
+        },
+        "0x100278a0": {
+          "name": "FUN_100278a0",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "i32",
+            "u32"
+          ],
+          "ret": 255
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "colour converter result wider than 16 bits: dwFillColor keeps the low 16 (0xabcd)",
+      "args": [
+        "@wrap",
+        "0x00123456"
+      ],
+      "callees": {
+        "0x10007e60": {
+          "name": "FUN_10007e60",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "u32",
+            "u32"
+          ],
+          "ret": 305441741
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 27536,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          "@wrap"
+        ]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

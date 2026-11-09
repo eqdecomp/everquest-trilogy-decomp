@@ -1,0 +1,94 @@
+{
+  "function": "FUN_004043db_guess",
+  "original": "0x004043db",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "param_2", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x0040119e": {
+      "name": "next_prime_guess",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 0
+    },
+    "0x004011ca": {
+      "name": "ReserveBufferCapacity_guess",
+      "conv": "thiscall",
+      "args": ["u32"]
+    },
+    "0x00404416": {
+      "name": "box_draw_fill_insert_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "u32", "mem:4"]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero request and zero returned size",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": 0},
+        {"addr": "@self", "offset": "0x10", "u32": "0x76543210"}
+      ],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 0}}
+    },
+    {
+      "name": "one request becomes three",
+      "args": ["@self", 1, 1],
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": "0x60001000"},
+        {"addr": "@self", "offset": "0x10", "u32": 1}
+      ],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": 3}}
+    },
+    {
+      "name": "high bit request and returned size",
+      "args": ["@self", 17, "0x80000000"],
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": "0x60002004"},
+        {"addr": "@self", "offset": "0x10", "u32": "0xffffffff"}
+      ],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": "0x80000001"}}
+    },
+    {
+      "name": "maximum request ignores EDX",
+      "args": ["@self", -1, "0xffffffff"],
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": 0},
+        {"addr": "@self", "offset": "0x10", "u32": "0x12345678"}
+      ],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": "0xfffffffc"}}
+    },
+    {
+      "name": "distinct EDX value and nonzero insertion position",
+      "args": ["@self", 305419896, 127],
+      "memory": [
+        {"addr": "@self", "offset": "0x8", "u32": "0x60003008"},
+        {"addr": "@self", "offset": "0x10", "u32": "0xdeadbeef"}
+      ],
+      "callees": {"0x0040119e": {"name": "next_prime_guess", "conv": "stdcall", "args": ["u32"], "ret": "0x60004000"}}
+    }
+  ],
+  "fuzz": {
+    "seed": 4211675,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [-2147483648, 2147483647]},
+      {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x8", "type": "u32", "choices": [0, "0x60001000", "0x60002004", "0xffffffff"]},
+      {"addr": "@self", "offset": "0x10", "type": "u32", "choices": [0, 1, "0x12345678", "0xffffffff"]}
+    ]
+  }
+}

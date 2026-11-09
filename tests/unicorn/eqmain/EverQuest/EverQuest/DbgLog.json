@@ -1,0 +1,285 @@
+{
+  "function": "DisconnectAndClearConnection_guess",
+  "original": "0x10021440",
+  "sources": [
+    "src/eqmain/EverQuest/EverQuest.cpp"
+  ],
+  "_harness": "Both callees are stubbed by address. connection_send_guess (0x1002c010) records its args; the third is the 4-byte local whose address is passed, which must read 5 at the call. FUN_1002db50 (0x1002db50) records (connection, 10000, NULL, NULL). The frame is 4 bytes, no alloca or EH. Globals: the connection dword at 0x10125848 and the flag byte at 0x1012584C; the neighbour bytes 0x1012584D..F are checked for stray writes.",
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x10125848",
+      "u32": 0
+    },
+    {
+      "addr": "0x1012584C",
+      "u8": 0
+    },
+    {
+      "addr": "0x1012584D",
+      "hex": "aabbcc"
+    }
+  ],
+  "callees": {
+    "0x1002c010": {
+      "name": "connection_send_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "mem:4",
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1002db50": {
+      "name": "FUN_1002db50",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "flag clear, no connection: nothing sent, nothing closed",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "flag clear, connection set: only the close runs and clears it",
+      "args": [
+        42
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 4660
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "flag set, no connection: sent on NULL, no close",
+      "args": [
+        1
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "flag set, connection set: sent (the local is 5, not the argument), then closed",
+      "args": [
+        7
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 4660
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "flag 0x80: any nonzero byte counts as set",
+      "args": [
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 128
+        }
+      ]
+    },
+    {
+      "name": "flag 0xff with a connection",
+      "args": [
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 22136
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "send replaces the connection: the close reads the new value (reloaded after the call)",
+      "args": [
+        1
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 4660
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 1
+        }
+      ],
+      "callees": {
+        "0x1002c010": {
+          "name": "connection_send_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "mem:4",
+            "u32",
+            "u32",
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x10125848",
+              "hex": "99990000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "send clears the connection: no close runs",
+      "args": [
+        2
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 4660
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 1
+        }
+      ],
+      "callees": {
+        "0x1002c010": {
+          "name": "connection_send_guess",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "mem:4",
+            "u32",
+            "u32",
+            "u32"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x10125848",
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "connection 0xffffffff with the flag set",
+      "args": [
+        305419896
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 4294967295
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "only the flag byte is written: neighbour bytes kept",
+      "args": [
+        3
+      ],
+      "memory": [
+        {
+          "addr": "0x10125848",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012584C",
+          "u8": 1
+        },
+        {
+          "addr": "0x1012584D",
+          "hex": "112233"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 136256,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x10125848",
+        "type": "u32",
+        "choices": [0, 0, 0, 4660, 22136, 305419896, 4294967295]
+      },
+      {
+        "addr": "0x1012584C",
+        "type": "u8",
+        "choices": [0, 0, 1, 2, 127, 128, 255]
+      },
+      {
+        "addr": "0x1012584D",
+        "size": 3
+      }
+    ]
+  }
+}

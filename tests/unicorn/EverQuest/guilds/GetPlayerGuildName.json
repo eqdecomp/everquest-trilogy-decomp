@@ -1,0 +1,175 @@
+{
+  "function": "GetPlayerGuildName",
+  "original": "0x004E00F6",
+  "sources": [
+    "src/EverQuest/guilds.cpp"
+  ],
+  "rewrite": "GetPlayerGuildName",
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "id",
+      "type": "short"
+    }
+  ],
+  "ret": "ptr",
+  "callees": {
+    "0x004DFE8D": {
+      "name": "FindGuildIndex",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": -1
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006E541C",
+      "u8": 66
+    },
+    {
+      "addr": "0x006E5494",
+      "u8": 0
+    },
+    {
+      "addr": "0x006E54D0",
+      "u8": 65
+    },
+    {
+      "addr": "0x00576004",
+      "from_image": "0x00576004",
+      "image_size": 14
+    }
+  ],
+  "cases": [
+    {
+      "name": "only minus one returned index is sentinel",
+      "args": [
+        65535
+      ],
+      "expect": {
+        "ret": "0x00576004"
+      },
+      "callees": {
+        "0x004DFE8D": {
+          "name": "FindGuildIndex_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "negative index before table",
+      "args": [
+        -32768
+      ],
+      "expect": {
+        "ret": "0x006E541C"
+      },
+      "callees": {
+        "0x004DFE8D": {
+          "name": "FindGuildIndex_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": -2
+        }
+      }
+    },
+    {
+      "name": "empty guild name uses fallback",
+      "args": [
+        4
+      ],
+      "expect": {
+        "ret": "0x00576004"
+      },
+      "callees": {
+        "0x004DFE8D": {
+          "name": "FindGuildIndex_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "helper updates returned row before the name check",
+      "args": [
+        7
+      ],
+      "expect": {
+        "ret": "0x006E5494"
+      },
+      "callees": {
+        "0x004DFE8D": {
+          "name": "FindGuildIndex_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "0x006E5494",
+              "hex": "47"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nonempty guild row one",
+      "args": [
+        1
+      ],
+      "expect": {
+        "ret": "0x006E54D0"
+      },
+      "callees": {
+        "0x004DFE8D": {
+          "name": "FindGuildIndex_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 41975096,
+    "count": 30,
+    "args": [
+      {
+        "range": [
+          -32768,
+          32767
+        ]
+      }
+    ],
+    "callees": {
+      "0x004DFE8D": {
+        "name": "FindGuildIndex_guess",
+        "conv": "cdecl",
+        "args": [
+          "int"
+        ],
+        "ret": [
+          -1,
+          0,
+          1,
+          -2
+        ]
+      }
+    }
+  }
+}

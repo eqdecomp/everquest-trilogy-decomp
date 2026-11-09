@@ -1,0 +1,94 @@
+{
+  "function": "EnqueueOwnedRecord_guess",
+  "original": "0x10005d20",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "cstr"},
+    {"name": "param_5", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {"size": "0x40", "fill": "random", "init": [{"offset": "0x1c", "u32": "0x12345678"}]},
+    "rec": {"size": "0x20", "fill": "random"},
+    "copy": {"size": "0x10", "fill": "random"}
+  },
+  "callees": {
+    "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@rec"},
+    "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": "@copy"},
+    "0x10028330": {"name": "ClearRecord3_guess", "conv": "cdecl", "args": ["ptr"], "passthrough": true},
+    "0x10028340": {"name": "FUN_10028340", "conv": "cdecl", "args": ["ptr", "int", "ptr"], "ret": 0}
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e",
+    "__strdup": "0x1003396b"
+  },
+  "cases": [
+    {
+      "name": "typical record: owner dword, copied string, list at owner+0x14",
+      "args": [5, "@owner", 17, "abc", 34]
+    },
+    {
+      "name": "malloc fails: no copy, no list insert, returns 0",
+      "args": [5, "@owner", 17, "abc", 34],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty string and zero values",
+      "args": [0, "@owner", 0, "", 0]
+    },
+    {
+      "name": "strdup failure is stored unchecked",
+      "args": [0, "@owner", 3, "x", 4],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "strdup rewrites owner dword 0x1c, which is read after the copy",
+      "args": [0, "@owner", 3, "x", 4],
+      "callees": {
+        "0x1003396b": {"name": "__strdup", "conv": "cdecl", "args": ["cstr"], "ret": "@copy",
+                       "writes": [{"addr": "@owner+0x1c", "hex": "78563412"}]}
+      }
+    },
+    {
+      "name": "owner dword all ones and minimum int values",
+      "args": [-1, "@owner", -2147483648, "max", -2147483648],
+      "memory": [{"addr": "@owner", "offset": "0x1c", "u32": 4294967295}]
+    },
+    {
+      "name": "long string and maximum unsigned values",
+      "args": [7, "@owner", 4294967295, "0123456789abcdefghijklmnopqrstuvwxyz", 4294967295]
+    },
+    {
+      "name": "FUN_10028340 result is ignored",
+      "args": [1, "@owner", 2, "ret", 3],
+      "callees": {
+        "0x10028340": {"name": "FUN_10028340", "conv": "cdecl", "args": ["ptr", "int", "ptr"], "ret": 3735928559}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 23840,
+    "count": 40,
+    "args": [
+      {},
+      {"choices": ["@owner"]},
+      {},
+      {"choices": ["", "a", "abc", "hello world", "0123456789abcdefghijklmnopqrstuvwxyz"]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@owner", "offset": "0x1c", "type": "u32"}
+    ]
+  }
+}

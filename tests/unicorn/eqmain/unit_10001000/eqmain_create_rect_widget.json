@@ -1,0 +1,242 @@
+{
+  "function": "eqmain_create_rect_widget_guess",
+  "original": "0x10001680",
+  "sources": [
+    "src/eqmain/unit_10001000.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "int"
+    },
+    {
+      "name": "param_5",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "widget": {
+      "size": "0x2c",
+      "fill": "random"
+    },
+    "msg": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x10055a64",
+      "u32": "@msg"
+    },
+    {
+      "addr": "@msg",
+      "cstr": "owner is NULL"
+    }
+  ],
+  "callees": {
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x1003342e": {
+      "name": "_malloc",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@widget"
+    },
+    "0x10028340": {
+      "name": "FUN_10028340",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ]
+    },
+    "0x10004ec0": {
+      "name": "FUN_10004ec0",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "rewrite_aliases": {
+    "_malloc": "0x1003342e"
+  },
+  "cases": [
+    {
+      "name": "NULL owner: FUN_100278a0 gets the message and NULL comes back",
+      "args": [
+        0,
+        10,
+        20,
+        30,
+        40
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "NULL owner with all-zero arguments",
+      "args": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "malloc fails: NULL, and the list insert and FUN_10004ec0 are skipped",
+      "args": [
+        "@owner",
+        10,
+        20,
+        30,
+        40
+      ],
+      "callees": {
+        "0x1003342e": {
+          "name": "_malloc",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "typical rectangle: x and y at +0x0c and +0x10, right and bottom at +0x14 and +0x18",
+      "args": [
+        "@owner",
+        100,
+        200,
+        640,
+        480
+      ]
+    },
+    {
+      "name": "zero rectangle at the origin",
+      "args": [
+        "@owner",
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "right and bottom edges wrap past 2^31",
+      "args": [
+        "@owner",
+        2147483647,
+        -1,
+        1,
+        -2147483648
+      ]
+    },
+    {
+      "name": "owner + 0x1c wraps past 2^32 (list head 0x0000000c)",
+      "args": [
+        -16,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "name": "negative origin and size",
+      "args": [
+        "@owner",
+        -10,
+        -20,
+        -30,
+        5
+      ]
+    },
+    {
+      "name": "FUN_10028340 overwrites +0x18 and +0x1c: both must be stored before the call",
+      "args": [
+        "@owner",
+        100,
+        200,
+        640,
+        480
+      ],
+      "callees": {
+        "0x10028340": {
+          "name": "FUN_10028340",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "writes": [
+            {
+              "arg": 2,
+              "offset": 24,
+              "hex": "efbeadde"
+            },
+            {
+              "arg": 2,
+              "offset": 28,
+              "hex": "11223344"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5760,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          "@owner"
+        ]
+      },
+      {},
+      {},
+      {},
+      {}
+    ],
+    "memory": []
+  }
+}

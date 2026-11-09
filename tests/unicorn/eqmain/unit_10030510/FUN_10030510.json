@@ -1,0 +1,137 @@
+{
+  "function": "InvokeThreadCallback_guess",
+  "original": "0x10030510",
+  "sources": [
+    "src/eqmain/unit_10030510.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "start",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "start": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@fn"
+        },
+        {
+          "offset": "0xc",
+          "u32": "0x12345678"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@fn": {
+      "name": "startFn",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "0x0badf00d"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: callback gets the +0xc value, function returns 0 not the callback result",
+      "args": [
+        "@start"
+      ]
+    },
+    {
+      "name": "zero argument",
+      "args": [
+        "@start"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "all-ones argument, callback returns -1",
+      "args": [
+        "@start"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0xc",
+          "u32": "0xffffffff"
+        }
+      ],
+      "callees": {
+        "@fn": {
+          "name": "startFn",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "argument is the record itself",
+      "args": [
+        "@start"
+      ],
+      "memory": [
+        {
+          "addr": "@start",
+          "offset": "0xc",
+          "u32": "@start"
+        }
+      ]
+    },
+    {
+      "name": "callback returns 0",
+      "args": [
+        "@start"
+      ],
+      "callees": {
+        "@fn": {
+          "name": "startFn",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 197904,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@start"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@start",
+        "offset": "0xc",
+        "type": "u32"
+      }
+    ]
+  }
+}

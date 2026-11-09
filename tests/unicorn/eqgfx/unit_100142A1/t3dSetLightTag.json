@@ -1,0 +1,532 @@
+{
+  "function": "t3dSetLightTag",
+  "original": "0x100142a1",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "light",
+      "type": "ptr"
+    },
+    {
+      "name": "tag",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "oldKey": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "copy": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@copy"
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10068160": {
+      "name": "strlen",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "tag null, not listed, no old tag: only the tag is cleared",
+      "args": [
+        "@dictionary",
+        "@light",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag null, not listed: the old tag is freed and cleared",
+      "args": [
+        "@dictionary",
+        "@light",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag null, listed: removed from the dictionary, then the old tag freed",
+      "args": [
+        "@dictionary",
+        "@light",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag null, listed, no old tag: removed with a null key anyway",
+      "args": [
+        "@dictionary",
+        "@light",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag null, flags 0xfe (bit 0 clear): not removed, old tag still freed",
+      "args": [
+        "@dictionary",
+        "@light",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 254
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag set, copy fails, listed: -49858 and the light is left alone",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "tag set, copy fails, not listed, no old tag: -49858 and nothing changes",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "tag set, not listed, no old tag: the copy becomes the tag",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag set, not listed, old tag: freed after the copy is allocated",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag set, listed, tag not in the dictionary: removed, freed, copied, then added",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag set, listed, tag already in the dictionary: not added again",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "callees": {
+        "0x1000e7fe": {
+          "name": "t3dGetPointerFromDictionary",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "cstr"
+          ],
+          "ret": "@light"
+        }
+      },
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag set, flags 0xfe (bit 0 clear): no dictionary calls at all",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 254
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "tag set, flags 0x0f (bit 0 set with other bits): dictionary calls happen",
+      "args": [
+        "@dictionary",
+        "@light",
+        "abc"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 15
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty tag, listed, no old tag: a one-byte copy",
+      "args": [
+        "@dictionary",
+        "@light",
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "long tag, listed, old tag: the copy is strlen + 1 bytes",
+      "args": [
+        "@dictionary",
+        "@light",
+        "a longer light tag name, past sixteen characters"
+      ],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0x8",
+          "u32": "@oldKey"
+        },
+        {
+          "addr": "@light",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 82593,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@light"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "",
+          "a",
+          "abc",
+          "light tag",
+          "a longer light tag name, past sixteen characters"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@light",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@oldKey"
+        ]
+      },
+      {
+        "addr": "@light",
+        "offset": "0xc",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          15,
+          128,
+          254,
+          255
+        ]
+      }
+    ]
+  }
+}

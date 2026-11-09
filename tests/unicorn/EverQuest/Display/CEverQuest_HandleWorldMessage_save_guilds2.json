@@ -1,0 +1,212 @@
+{
+  "function": "CEverQuest_HandleWorldMessage_save_guilds2_guess",
+  "original": "0x0049602c",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "msg",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "msg": {
+      "size": "0x8",
+      "fill": "random"
+    },
+    "top": {
+      "size": "0x134",
+      "fill": "random"
+    },
+    "pl": {
+      "size": "0x134",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x70",
+          "u32": "@actor"
+        }
+      ]
+    },
+    "actor": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "display": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4d58",
+      "u32": "@top"
+    },
+    {
+      "addr": "0x006e4de0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x004b1416": {
+      "name": "EQPlayer::GetPlayerFromID_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": "@pl"
+    },
+    "0x00411b7b": {
+      "name": "CDisplay::UpdateNameSprite",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "player with actor info: store value, update name sprite",
+      "args": [
+        "@msg"
+      ]
+    },
+    {
+      "name": "player not found",
+      "args": [
+        "@msg"
+      ],
+      "callees": {
+        "0x004b1416": {
+          "name": "EQPlayer::GetPlayerFromID_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "player without actor info",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "player is the list head",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@top",
+          "offset": "0x70",
+          "u32": "@actor"
+        }
+      ],
+      "callees": {
+        "0x004b1416": {
+          "name": "EQPlayer::GetPlayerFromID_guess",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": "@top"
+        }
+      }
+    },
+    {
+      "name": "boundary ids and values",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@msg",
+          "offset": 0,
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "@msg",
+          "offset": 4,
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "zero id and value",
+      "args": [
+        "@msg"
+      ],
+      "memory": [
+        {
+          "addr": "@msg",
+          "offset": 0,
+          "u32": 0
+        },
+        {
+          "addr": "@msg",
+          "offset": 4,
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4808748,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@msg"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@pl",
+        "offset": "0x70",
+        "type": "u32",
+        "choices": [
+          0,
+          "@actor"
+        ]
+      },
+      {
+        "addr": "@msg",
+        "offset": 0,
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4660,
+          "0x7fffffff",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@msg",
+        "offset": 4,
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0xdeadbeef",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

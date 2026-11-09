@@ -1,0 +1,102 @@
+{
+  "function": "s3dGetDMSpriteDefinitionBoundingRadius",
+  "original": "0x100102ff",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "definition": {
+      "size": "0x1c",
+      "fill": "random"
+    },
+    "vertexSet": {
+      "size": "0x34",
+      "fill": "random"
+    },
+    "frameSet": {
+      "size": "0x5c",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "vertex set radius wins over the frame set radius",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "@vertexSet"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@frameSet"},
+        {"addr": "@vertexSet", "offset": "0x30", "f32": 12.5},
+        {"addr": "@frameSet", "offset": "0x58", "f32": -3.75}
+      ]
+    },
+    {
+      "name": "null vertex set falls back to the frame set radius",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0x18", "u32": "@frameSet"},
+        {"addr": "@frameSet", "offset": "0x58", "f32": 7.25}
+      ]
+    },
+    {
+      "name": "zero vertex radius is still the vertex set's answer",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": "@vertexSet"},
+        {"addr": "@definition", "offset": "0x18", "u32": "@frameSet"},
+        {"addr": "@vertexSet", "offset": "0x30", "f32": 0.0},
+        {"addr": "@frameSet", "offset": "0x58", "f32": 1.0}
+      ]
+    },
+    {
+      "name": "large negative frame radius",
+      "args": [
+        "@definition"
+      ],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0x18", "u32": "@frameSet"},
+        {"addr": "@frameSet", "offset": "0x58", "f32": -340282350000000000000000000000000000000.0}
+      ]
+    },
+    {
+      "name": "null definition faults in the original and the rewrite",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 66303,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x14", "type": "ptr", "choices": ["@vertexSet", 0]},
+      {"addr": "@definition", "offset": "0x18", "type": "ptr", "choices": ["@frameSet"]},
+      {"addr": "@vertexSet", "offset": "0x30", "type": "float"},
+      {"addr": "@frameSet", "offset": "0x58", "type": "float"}
+    ]
+  }
+}

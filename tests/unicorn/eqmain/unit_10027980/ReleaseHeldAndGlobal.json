@@ -1,0 +1,383 @@
+{
+  "function": "ReleaseHeldAndGlobal_guess",
+  "original": "0x100280a0",
+  "sources": [
+    "src/eqmain/unit_10027980.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "a1",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "held": {
+      "size": "0x8",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "@vt"
+        }
+      ]
+    },
+    "gcom": {
+      "size": "0x8",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "@vt"
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x30",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@release"
+        },
+        {
+          "offset": "0x20",
+          "u32": "@slot8"
+        }
+      ]
+    },
+    "release": {
+      "size": "0x10"
+    },
+    "slot8": {
+      "size": "0x10"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@slot8": {
+      "name": "IUnknown slot 8 (0x20)",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "@release": {
+      "name": "IUnknown::Release",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "nothing held, global null",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "nothing held, global set, Release returns 1 (kept)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": "@gcom"
+        }
+      ],
+      "callees": {
+        "@release": {
+          "name": "IUnknown::Release",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "nothing held, global set, Release returns 0 (cleared)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": "@gcom"
+        }
+      ]
+    },
+    {
+      "name": "held, global null",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@held"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "held, global set, both Release return 0 (both cleared)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@held"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": "@gcom"
+        }
+      ]
+    },
+    {
+      "name": "held, global set, Release 0 then 1 (global kept)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@held"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": "@gcom"
+        }
+      ],
+      "callees": {
+        "@release": {
+          "name": "IUnknown::Release",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "held, global set, Release 1 then 0 (held ignores its result)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@held"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": "@gcom"
+        }
+      ],
+      "callees": {
+        "@release": {
+          "name": "IUnknown::Release",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "held, global null, Release returns 1 (held still cleared)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@held"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "@release": {
+          "name": "IUnknown::Release",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "held and global are the same object",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@gcom"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": "@gcom"
+        }
+      ],
+      "callees": {
+        "@release": {
+          "name": "IUnknown::Release",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "slot 8 retargets self+4 (the reload after it is kept)",
+      "args": [
+        "@self",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x4",
+          "u32": "@held"
+        },
+        {
+          "addr": "0x1012c7bc",
+          "u32": 0
+        },
+        {
+          "addr": "0x1012c7c0",
+          "u32": "@vt"
+        }
+      ],
+      "callees": {
+        "@slot8": {
+          "name": "IUnknown slot 8 (0x20)",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@self+0x4",
+              "hex": "c0c71210"
+            }
+          ]
+        },
+        "@release": {
+          "name": "IUnknown::Release",
+          "conv": "stdcall",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 164000,
+    "count": 48,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0x4",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@held",
+          "@gcom"
+        ]
+      },
+      {
+        "addr": "0x1012c7bc",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@gcom",
+          "@held"
+        ]
+      }
+    ]
+  }
+}

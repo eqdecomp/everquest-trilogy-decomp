@@ -1,0 +1,106 @@
+{
+  "function": "AppendText_guess",
+  "original": "0x00438aaf",
+  "sources": [
+    "src/EverQuest/EQ_ItemData.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dst",
+      "type": "ptr"
+    },
+    {
+      "name": "src",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "dst": {
+      "size": "0x400",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty dst copies src",
+      "args": ["@dst", "abc"]
+    },
+    {
+      "name": "empty dst, empty src",
+      "args": ["@dst", ""]
+    },
+    {
+      "name": "non-empty dst appends with two spaces",
+      "args": ["@dst", "world"],
+      "objects": {
+        "dst": {"size": "0x400", "fill": "zero", "init": [{"offset": "0x0", "cstr": "hello"}]}
+      }
+    },
+    {
+      "name": "non-empty dst, empty src",
+      "args": ["@dst", ""],
+      "objects": {
+        "dst": {"size": "0x400", "fill": "zero", "init": [{"offset": "0x0", "cstr": "hello"}]}
+      }
+    },
+    {
+      "name": "one char dst",
+      "args": ["@dst", "x"],
+      "objects": {
+        "dst": {"size": "0x400", "fill": "zero", "init": [{"offset": "0x0", "cstr": "a"}]}
+      }
+    },
+    {
+      "name": "dst starts with space",
+      "args": ["@dst", "y"],
+      "objects": {
+        "dst": {"size": "0x400", "fill": "zero", "init": [{"offset": "0x0", "cstr": " "}]}
+      }
+    },
+    {
+      "name": "dst with percent signs (arg only, not format)",
+      "args": ["@dst", "%s%d"],
+      "objects": {
+        "dst": {"size": "0x400", "fill": "zero", "init": [{"offset": "0x0", "cstr": "50%"}]}
+      }
+    },
+    {
+      "name": "dst has stale bytes after its terminator",
+      "args": ["@dst", "tail"],
+      "objects": {
+        "dst": {"size": "0x400", "fill": "zero", "init": [{"offset": "0x0", "cstr": "ab"}, {"offset": "0x10", "cstr": "stale"}]}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4426415,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dst"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@dst",
+        "offset": 0,
+        "type": "u8",
+        "choices": [0, 65, 32, 37, 122]
+      },
+      {
+        "addr": "@dst",
+        "offset": 1,
+        "type": "u8",
+        "count": 8,
+        "choices": [0, 66, 99, 32, 37]
+      }
+    ]
+  }
+}

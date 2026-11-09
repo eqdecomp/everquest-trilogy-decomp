@@ -1,0 +1,168 @@
+{
+  "function": "EQ_Overlay_derivedDestructor_004189F8_guess",
+  "original": "0x004189f8",
+  "sources": [
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "0xdeadbeef"
+        },
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x70",
+          "u32": "@button_state"
+        },
+        {
+          "offset": "0x16c",
+          "u32": "@button_state"
+        }
+      ]
+    },
+    "button_state": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x20",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x00450463": {
+      "name": "EQ_Overlay::DelButtons",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x0045005d": {
+      "name": "EQ_Overlay::~EQ_Overlay_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c"
+  },
+  "cases": [
+    {
+      "name": "ordering witness and vtable overwrite",
+      "args": [
+        "@param_1"
+      ]
+    },
+    {
+      "name": "zero initial vtable",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "maximum initial vtable",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "unaligned this pointer",
+      "args": [
+        "@param_1+0x1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x71",
+          "u32": "@button_state"
+        }
+      ]
+    },
+    {
+      "name": "last valid dword",
+      "args": [
+        "@param_1+0xfc"
+      ]
+    },
+    {
+      "name": "button list head unmapped: DelButtons faults while the cleanup state is 0",
+      "args": [
+        "@param_1"
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x70",
+          "u32": "0x70000000"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4295160,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@param_1",
+          "@param_1+0x1",
+          "@param_1+0xfc"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

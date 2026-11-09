@@ -1,0 +1,340 @@
+{
+  "function": "t3dSetActorLight",
+  "original": "0x1000ad12",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "lightValue",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "actor": {
+      "size": "0x110",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "0x1234abcd"
+        },
+        {
+          "offset": "0x54",
+          "u32": 0
+        }
+      ]
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@old_value"
+        }
+      ]
+    },
+    "new_light": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "old_value": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 3
+        }
+      ]
+    },
+    "lightvalue": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 5
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100144dc": {
+      "name": "t3dDestroyPointLight",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10014356": {
+      "name": "t3dCreatePointLightEx",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr",
+        "float",
+        "int"
+      ],
+      "ret": "@new_light"
+    }
+  },
+  "cases": [
+    {
+      "name": "no light, nonzero value: the new light's +0x30 takes the actor's +4 and the actor points at the light",
+      "args": [
+        "@context",
+        "@actor",
+        "@lightvalue"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no light, zero value: nothing created, nothing called",
+      "args": [
+        "@context",
+        "@actor",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "no light, create fails: 0xffff3d3e and the actor keeps no light",
+      "args": [
+        "@context",
+        "@actor",
+        "@lightvalue"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10014356": {
+          "name": "t3dCreatePointLightEx",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr",
+            "float",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "light, zero value: the light is destroyed and the actor's light cleared",
+      "args": [
+        "@context",
+        "@actor",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": "@light"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "light, new value: old value count 3 -> 2, new value count 5 -> 6, light stores the new value",
+      "args": [
+        "@context",
+        "@actor",
+        "@lightvalue"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": "@light"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "light, its own value again: released then retained, count stays 3",
+      "args": [
+        "@context",
+        "@actor",
+        "@old_value"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": "@light"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "light, new value, old value count 1: drops to 0 (boundary)",
+      "args": [
+        "@context",
+        "@actor",
+        "@lightvalue"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": "@light"
+        },
+        {
+          "addr": "@old_value",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "light whose old value object overlaps the actor's light field: the release lowers the actor's light pointer, which the re-read then uses",
+      "args": [
+        "@context",
+        "@actor",
+        "@lightvalue"
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x54",
+          "u32": "@light"
+        },
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u32": "@actor+0x44"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 44306,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@lightvalue",
+          "@old_value",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x54",
+        "type": "ptr",
+        "choices": [
+          "@light",
+          0
+        ]
+      },
+      {
+        "addr": "@actor",
+        "offset": "0x04",
+        "type": "u32",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@light",
+        "offset": "0x10",
+        "type": "ptr",
+        "choices": [
+          "@old_value",
+          "@lightvalue"
+        ]
+      },
+      {
+        "addr": "@old_value",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@lightvalue",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          0,
+          8
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,327 @@
+{
+  "function": "Assist_guess",
+  "original": "0x004ab26d",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "command",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "top": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "writeprofile": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x80",
+          "u32": 305419896
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4db8",
+      "u32": 0
+    },
+    {
+      "addr": "0x006e4dc4",
+      "u32": 0
+    },
+    {
+      "addr": "0x006e4dbc",
+      "u32": 0
+    },
+    {
+      "addr": "0x00534188",
+      "u32": "@writeprofile"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006e4d58",
+      "u32": "@top"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@player"
+    }
+  ],
+  "callees": {
+    "0x004a49bd": {
+      "name": "allowslashcommand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 1
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004d061a": {
+      "name": "FUN_004d061a",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004b146a": {
+      "name": "EQPlayer::get_player_partial_name",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "@writeprofile": {
+      "name": "WritePrivateProfileStringA",
+      "conv": "stdcall",
+      "args": [
+        "cstr",
+        "cstr",
+        "cstr",
+        "cstr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "slash command denied",
+      "args": [
+        7,
+        "Target"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "first global gate",
+      "args": [
+        0,
+        "Target"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4db8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "second global gate",
+      "args": [
+        0,
+        "Target"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dc4",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "third global gate",
+      "args": [
+        0,
+        "Target"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dbc",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "empty command without target shows help",
+      "args": [
+        0,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty command sends current target id",
+      "args": [
+        0,
+        ""
+      ]
+    },
+    {
+      "name": "nonempty unknown target returns without sending",
+      "args": [
+        1,
+        "Missing"
+      ]
+    },
+    {
+      "name": "auto attack on comparison is case insensitive",
+      "args": [
+        2,
+        "oN"
+      ]
+    },
+    {
+      "name": "auto attack off comparison is case insensitive",
+      "args": [
+        3,
+        "oFf"
+      ]
+    },
+    {
+      "name": "matched player sends ordinary spawn id",
+      "args": [
+        4,
+        "Aria"
+      ],
+      "callees": {
+        "0x004b146a": {
+          "ret": "@player"
+        }
+      }
+    },
+    {
+      "name": "matched player sends zero spawn id",
+      "args": [
+        5,
+        "Zero"
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x80",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004b146a": {
+          "ret": "@player"
+        }
+      }
+    },
+    {
+      "name": "matched player sends high bit spawn id",
+      "args": [
+        6,
+        "Boundary"
+      ],
+      "memory": [
+        {
+          "addr": "@player",
+          "offset": "0x80",
+          "u32": 4294967295
+        }
+      ],
+      "callees": {
+        "0x004b146a": {
+          "ret": "@player"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4895341,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          -3,
+          3
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "a",
+          "ON",
+          "OFF",
+          "on",
+          "off",
+          "Missing",
+          "Ari"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4db8",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "0x006e4dc4",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "0x006e4dbc",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,335 @@
+{
+  "function": "t3dUndefineParticleCloud",
+  "original": "0x1003ff76",
+  "sources": [
+    "src/eqgfx/unit_1003FE47.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "instance",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "instance": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 74565
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "not defined: state 0 leaves the flags, entry and shared object alone",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 0},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": -49852}
+    },
+    {
+      "name": "not defined: state 2",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 2},
+        {"addr": "@instance", "offset": "0xc", "u8": 255},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": -49852}
+    },
+    {
+      "name": "not defined: state 0x10001 (low word is 1, the compare is on the whole dword)",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 65537},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": -49852}
+    },
+    {
+      "name": "not defined: state -1",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": "0xffffffff"},
+        {"addr": "@instance", "offset": "0xc", "u8": 0},
+        {"addr": "@instance", "offset": "0x8", "u32": 0},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": -49852}
+    },
+    {
+      "name": "defined, nothing to undo: only the callee and the instance are freed",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 0},
+        {"addr": "@instance", "offset": "0x8", "u32": 0},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "defined, shared object only",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 0},
+        {"addr": "@instance", "offset": "0x8", "u32": 0},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "defined, entry freed only (flags bit 0 clear)",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 0},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "defined, dictionary entry removed (flags bit 0 set)",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "defined, every step (unshare, remove, callee, free entry, free instance)",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "flags bit 1 alone does not remove the entry",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 2},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "flags 0xfe (bit 0 clear) does not remove the entry",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 254},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "flags 0xff removes the entry",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 255},
+        {"addr": "@instance", "offset": "0x8", "u32": 0},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "dictionary entry removed with a null entry (the removal is not guarded)",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": 0},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "null dictionary is passed through to the removal and the callee",
+      "args": [
+        0,
+        "@instance"
+      ],
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": 74565}
+    },
+    {
+      "name": "the callee's -1 is returned unchanged",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      },
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 0},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": 0}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "the callee's 0 is returned, not the not-defined code",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {"addr": "@instance", "offset": "0x10", "u32": 1},
+        {"addr": "@instance", "offset": "0xc", "u8": 1},
+        {"addr": "@instance", "offset": "0x8", "u32": "0x0a000200"},
+        {"addr": "@instance", "offset": "0x90", "u32": "0x0a000100"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 262006,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary",
+          0
+        ]
+      },
+      {
+        "choices": [
+          "@instance"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@instance", "offset": "0x10", "type": "int", "choices": [1, 1, 1, 0, 2, -1, 65537]},
+      {"addr": "@instance", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@instance", "offset": "0x8", "type": "ptr", "choices": [0, "0x0a000200", "0x0a000300"]},
+      {"addr": "@instance", "offset": "0x90", "type": "ptr", "choices": [0, "0x0a000100"]}
+    ]
+  }
+}

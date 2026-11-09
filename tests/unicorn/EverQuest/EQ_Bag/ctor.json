@@ -1,0 +1,107 @@
+{
+  "function": "EQ_Bag_guess::EQ_Bag_guess",
+  "original": "0x00416d0c",
+  "sources": ["src/EverQuest/EQ_Bag.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_bag",
+  "args": [{"name": "unused", "type": "int"}],
+  "ret": "ptr",
+  "objects": {
+    "eq_bag": {"size": "0x178", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x00591844", "size": "0x84", "fill": "random"},
+    {"addr": "0x005918f0", "u32": 0}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x00450049": {"name": "EQ_Overlay::EQ_Overlay_guess", "conv": "thiscall", "args": [], "ret": 0},
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1,
+      "writes": [{"arg": 0, "offset": 0, "hex": "0000000000000000c20000008f000000"}]
+    },
+    "0x00450168": {
+      "name": "EQ_Overlay::load_guess",
+      "conv": "thiscall",
+      "args": ["int", "int"],
+      "ret": 0
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "kernel32.dll!GetPrivateProfileStringA": {
+      "name": "GetPrivateProfileStringA",
+      "conv": "stdcall",
+      "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"],
+      "ret": 1,
+      "writes": [{"arg": 3, "offset": 0, "hex": "2a000000"}]
+    }
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "star-defaults", "args": [1], "memory": [{"addr": "0x005918f0", "u32": 0}]},
+    {
+      "name": "numeric-negative",
+      "args": [-1],
+      "memory": [{"addr": "0x005918f0", "u32": 0}],
+      "callees": {"kernel32.dll!GetPrivateProfileStringA": {
+        "name": "GetPrivateProfileStringA",
+        "conv": "stdcall",
+        "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"],
+        "ret": 1,
+        "writes": [{"arg": 3, "offset": 0, "hex": "2d313200"}]
+      }}
+    },
+    {
+      "name": "numeric-zero",
+      "args": [0],
+      "memory": [{"addr": "0x005918f0", "u32": 0}],
+      "callees": {"kernel32.dll!GetPrivateProfileStringA": {
+        "name": "GetPrivateProfileStringA",
+        "conv": "stdcall",
+        "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"],
+        "ret": 1,
+        "writes": [{"arg": 3, "offset": 0, "hex": "3000"}]
+      }}
+    },
+    {
+      "name": "first-character-star",
+      "args": [15],
+      "memory": [{"addr": "0x005918f0", "u32": 0}],
+      "callees": {"kernel32.dll!GetPrivateProfileStringA": {
+        "name": "GetPrivateProfileStringA",
+        "conv": "stdcall",
+        "args": ["cstr", "cstr", "cstr", "ignore", "u32", "cstr"],
+        "ret": 1,
+        "writes": [{"arg": 3, "offset": 0, "hex": "2a353500"}]
+      }}
+    },
+    {
+      "name": "guard-skips-table",
+      "args": [3],
+      "memory": [{"addr": "0x005918f0", "u32": 1}]
+    },
+    {
+      "name": "negative-guard-skips-table",
+      "args": [4],
+      "memory": [{"addr": "0x005918f0", "u32": 4294967295}]
+    }
+  ],
+  "fuzz": {
+    "seed": 4287756,
+    "count": 32,
+    "args": [{"range": [-2147483648, 2147483647]}],
+    "memory": [
+      {"addr": "0x00591844", "size": "0x84", "p": 1},
+      {"addr": "0x005918f0", "type": "u32", "choices": [0, 1, 4294967295], "p": 1}
+    ]
+  }
+}

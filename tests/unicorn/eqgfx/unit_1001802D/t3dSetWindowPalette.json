@@ -1,0 +1,183 @@
+{
+  "function": "t3dSetWindowPalette",
+  "original": "0x10018188",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "hwnd",
+      "type": "u32"
+    },
+    {
+      "name": "palette",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x440",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "gdi32.dll!UnrealizeObject": {
+      "name": "UnrealizeObject",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "gdi32.dll!DeleteObject": {
+      "name": "DeleteObject",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "gdi32.dll!CreatePalette": {
+      "name": "CreatePalette",
+      "conv": "stdcall",
+      "args": [
+        "mem:1028"
+      ],
+      "ret": 8738
+    },
+    "user32.dll!GetDC": {
+      "name": "GetDC",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 3340
+    },
+    "gdi32.dll!SelectPalette": {
+      "name": "SelectPalette",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr",
+        "int"
+      ],
+      "ret": 13107
+    },
+    "gdi32.dll!RealizePalette": {
+      "name": "RealizePalette",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 256
+    },
+    "user32.dll!ReleaseDC": {
+      "name": "ReleaseDC",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "entries unchanged: only unrealize, then select and realize",
+      "args": [
+        "0x00010234",
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x418", "u32": 0},
+        {"addr": "@palette", "offset": "0x41c", "u32": 4369}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entries changed: rebuild over an old handle",
+      "args": [
+        "0x00010234",
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x418", "u32": 1},
+        {"addr": "@palette", "offset": "0x41c", "u32": 4369}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "entries changed: no old handle",
+      "args": [
+        "0x00010234",
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x418", "u32": 1},
+        {"addr": "@palette", "offset": "0x41c", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "CreatePalette fails: returns the failure code, nothing selected",
+      "args": [
+        "0x00010234",
+        "@palette"
+      ],
+      "memory": [
+        {"addr": "@palette", "offset": "0x418", "u32": 1},
+        {"addr": "@palette", "offset": "0x41c", "u32": 4369}
+      ],
+      "callees": {
+        "gdi32.dll!CreatePalette": {
+          "name": "CreatePalette",
+          "conv": "stdcall",
+          "args": [
+            "mem:1028"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "zeros: null handle unrealized, flag clear",
+      "args": [
+        0,
+        "@palette"
+      ],
+      "objects": {
+        "palette": {
+          "size": "0x440",
+          "fill": "zero"
+        }
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 98696,
+    "count": 40,
+    "args": [
+      {
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {
+        "choices": [
+          "@palette"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@palette", "offset": "0x418", "type": "int", "choices": [0, 0, 1, -1, 2]},
+      {"addr": "@palette", "offset": "0x41c", "type": "u32", "choices": [0, 4369, 8738]},
+      {"addr": "@palette", "offset": "0x10", "size": 1028}
+    ]
+  }
+}

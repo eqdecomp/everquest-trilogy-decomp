@@ -1,0 +1,127 @@
+{
+  "function": "t3dGetRegionBoundingSphere",
+  "original": "0x100193fe",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "boundingSphere",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x30",
+      "fill": "random"
+    },
+    "boundingsphere": {
+      "size": "0x18",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "ascending words",
+      "args": [
+        "@region",
+        "@boundingsphere"
+      ],
+      "memory": [
+        {"addr": "@region", "offset": "0x10", "u32": "0x01020304"},
+        {"addr": "@region", "offset": "0x14", "u32": "0x11121314"},
+        {"addr": "@region", "offset": "0x18", "u32": "0x21222324"},
+        {"addr": "@region", "offset": "0x1c", "u32": "0x31323334"},
+        {"addr": "@region", "offset": "0x20", "u32": "0x41424344"}
+      ]
+    },
+    {
+      "name": "descending words",
+      "args": [
+        "@region",
+        "@boundingsphere"
+      ],
+      "memory": [
+        {"addr": "@region", "offset": "0x10", "u32": "0xfedcba98"},
+        {"addr": "@region", "offset": "0x14", "u32": "0x88776655"},
+        {"addr": "@region", "offset": "0x18", "u32": "0x44332211"},
+        {"addr": "@region", "offset": "0x1c", "u32": "0x10000001"},
+        {"addr": "@region", "offset": "0x20", "u32": "0x00000002"}
+      ]
+    },
+    {
+      "name": "word boundaries",
+      "args": ["@region", "@boundingsphere"],
+      "memory": [
+        {"addr": "@region", "offset": "0x10", "u32": "0x00000000"},
+        {"addr": "@region", "offset": "0x14", "u32": "0xffffffff"},
+        {"addr": "@region", "offset": "0x18", "u32": "0x80000000"},
+        {"addr": "@region", "offset": "0x1c", "u32": "0x7fffffff"},
+        {"addr": "@region", "offset": "0x20", "u32": "0xaaaaaaaa"},
+        {"addr": "@boundingsphere", "offset": "0x14", "u32": "0xdeadbeef"}
+      ]
+    },
+    {
+      "name": "destination before source overlap",
+      "args": ["@region", "@region+0xc"],
+      "memory": [
+        {"addr": "@region", "offset": "0x10", "u32": "0x12345678"},
+        {"addr": "@region", "offset": "0x14", "u32": "0x87654321"},
+        {"addr": "@region", "offset": "0x18", "u32": "0x0badf00d"},
+        {"addr": "@region", "offset": "0x1c", "u32": "0xc001d00d"},
+        {"addr": "@region", "offset": "0x20", "u32": "0x76543210"}
+      ]
+    },
+    {
+      "name": "destination after source overlap",
+      "args": ["@region", "@region+0x14"],
+      "memory": [
+        {"addr": "@region", "offset": "0x10", "u32": "0x12345678"},
+        {"addr": "@region", "offset": "0x14", "u32": "0x87654321"},
+        {"addr": "@region", "offset": "0x18", "u32": "0x0badf00d"},
+        {"addr": "@region", "offset": "0x1c", "u32": "0xc001d00d"},
+        {"addr": "@region", "offset": "0x20", "u32": "0x76543210"}
+      ]
+    },
+    {
+      "name": "identical source and destination",
+      "args": ["@region", "@region+0x10"],
+      "memory": [
+        {"addr": "@region", "offset": "0x10", "u32": "0x01010101"},
+        {"addr": "@region", "offset": "0x14", "u32": "0x02020202"},
+        {"addr": "@region", "offset": "0x18", "u32": "0x03030303"},
+        {"addr": "@region", "offset": "0x1c", "u32": "0x04040404"},
+        {"addr": "@region", "offset": "0x20", "u32": "0x05050505"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 103422,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@region"
+        ]
+      },
+      {
+        "choices": [
+          "@boundingsphere",
+          "@region+0xc",
+          "@region+0x14"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@region", "offset": "0x10", "type": "u32", "count": 5}
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "function": "toggleAudioDeviceState_guess",
+  "original": "0x004e7cd3",
+  "sources": [
+    "src/EverQuest/Win.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x006ece40",
+      "u32": 2779096485
+    }
+  ],
+  "callees": {
+    "0x004e7c5e": {
+      "name": "StopVoiceRecognitionListening_guess",
+      "conv": "cdecl",
+      "args": [],
+      "writes": [
+        {
+          "addr": "0x006ece40",
+          "hex": "00000000"
+        }
+      ]
+    },
+    "0x004e7be7": {
+      "name": "StartVoiceRecognitionListening_guess",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "writes": [
+        {
+          "addr": "0x006ece40",
+          "hex": "01000000"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero-start",
+      "args": [305419896],
+      "memory": [{"addr": "0x006ece40", "u32": 0}]
+    },
+    {
+      "name": "one-stop",
+      "args": [0],
+      "memory": [{"addr": "0x006ece40", "u32": 1}]
+    },
+    {
+      "name": "other-nonzero-stop",
+      "args": [4294967295],
+      "memory": [{"addr": "0x006ece40", "u32": 2147483648}]
+    },
+    {
+      "name": "high-bit-stop",
+      "args": [2147483648],
+      "memory": [{"addr": "0x006ece40", "u32": 305419896}]
+    },
+    {
+      "name": "all-bits-stop",
+      "args": [4294967295],
+      "memory": [{"addr": "0x006ece40", "u32": 4294967295}]
+    },
+    {
+      "name": "zero-start-zero-arg",
+      "args": [0],
+      "memory": [{"addr": "0x006ece40", "u32": 0}]
+    },
+    {
+      "name": "zero-start-return-after-callee-write",
+      "args": [2309737967],
+      "memory": [{"addr": "0x006ece40", "u32": 0}],
+      "callees": {
+        "0x004e7be7": {
+          "name": "startAudioDevice_guess",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "writes": [{"addr": "0x006ece40", "hex": "78563412"}]
+        }
+      }
+    },
+    {
+      "name": "nonzero-stop-return-after-callee-write",
+      "args": [2309737967],
+      "memory": [{"addr": "0x006ece40", "u32": 2147483648}],
+      "callees": {
+        "0x004e7c5e": {
+          "name": "stopAudioDevice_guess",
+          "conv": "cdecl",
+          "args": [],
+          "writes": [{"addr": "0x006ece40", "hex": "40302010"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5143763,
+    "count": 30,
+    "args": [
+      {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {
+        "addr": "0x006ece40",
+        "type": "u32",
+        "choices": [0, 1, 2, 2147483648, 4294967295]
+      }
+    ]
+  }
+}

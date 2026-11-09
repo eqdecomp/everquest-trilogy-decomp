@@ -1,0 +1,249 @@
+{
+  "function": "GetSourcePosition_guess",
+  "original": "0x10026525",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "source": {
+      "size": "0x0c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x08",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    "set_file_pointer": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100760A0",
+      "u32": "@set_file_pointer"
+    }
+  ],
+  "callees": {
+    "0x100693f7": {
+      "name": "_ftell",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": -1
+    },
+    "@set_file_pointer": {
+      "name": "SetFilePointer",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32"
+      ],
+      "ret": "0x456789AB"
+    },
+    "0x1002191d": {
+      "name": "t3dFastFileTell",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "0x3456789A"
+    }
+  },
+  "cases": [
+    {
+      "name": "mode zero uses fast file tell",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": 0
+        },
+        {
+          "addr": "@source",
+          "offset": "0x08",
+          "u32": "0x12345678"
+        }
+      ],
+      "expect": {
+        "ret": "0x3456789A"
+      }
+    },
+    {
+      "name": "mode one uses current SetFilePointer position",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": 1
+        },
+        {
+          "addr": "@source",
+          "offset": "0x08",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": "0x456789AB"
+      }
+    },
+    {
+      "name": "mode two uses ftell",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": 2
+        },
+        {
+          "addr": "@source",
+          "offset": "0x08",
+          "u32": "0xFFFFFFFF"
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFFFFFF"
+      }
+    },
+    {
+      "name": "mode immediately above two is invalid",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFFFFFF"
+      }
+    },
+    {
+      "name": "mode immediately below zero is invalid",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": "0xFFFFFFFF"
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFFFFFF"
+      }
+    },
+    {
+      "name": "largest positive mode is invalid",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": "0x7FFFFFFF"
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFFFFFF"
+      }
+    },
+    {
+      "name": "minimum signed mode is invalid",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": "0x80000000"
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFFFFFF"
+      }
+    },
+    {
+      "name": "mode four is invalid after mode two",
+      "args": [
+        "@source"
+      ],
+      "memory": [
+        {
+          "addr": "@source",
+          "offset": "0x00",
+          "u32": 4
+        }
+      ],
+      "expect": {
+        "ret": "0xFFFFFFFF"
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 156965,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@source"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@source",
+        "offset": "0x00",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          "0x7FFFFFFF",
+          "0x80000000",
+          "0xFFFFFFFF"
+        ]
+      },
+      {
+        "addr": "@source",
+        "offset": "0x08",
+        "type": "u32",
+        "choices": [
+          0,
+          "0x12345678",
+          "0xFFFFFFFF"
+        ]
+      }
+    ]
+  }
+}

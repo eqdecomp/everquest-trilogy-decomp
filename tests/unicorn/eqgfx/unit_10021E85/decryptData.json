@@ -1,0 +1,195 @@
+{
+  "function": "decryptData_guess",
+  "original": "0x100223f5",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dst",
+      "type": "ptr"
+    },
+    {
+      "name": "src",
+      "type": "ptr"
+    },
+    {
+      "name": "size",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "EAX evidence: 0/8 call sites read EAX after the call, 7 overwrite it first, and the RET heuristic found no fresh EAX write (one arithmetic on EAX, reused); the original ends POP EDI/POP ESI/RET with EAX holding its last use",
+  "memory": [
+    {
+      "addr": "0x10087078",
+      "hex": "1122334455667788"
+    }
+  ],
+  "cases": [
+    {
+      "name": "size 0: neither loop runs, dst untouched",
+      "args": ["@dst", "@src", 0]
+    },
+    {
+      "name": "null pointers with size 0: no dereference",
+      "args": [0, 0, 0]
+    },
+    {
+      "name": "size 1: one tail byte, key byte 0",
+      "args": ["@dst", "@src", 1]
+    },
+    {
+      "name": "size 2: two tail bytes, key bytes 0-1",
+      "args": ["@dst", "@src", 2]
+    },
+    {
+      "name": "size 3: three tail bytes, key bytes 0-2",
+      "args": ["@dst", "@src", 3]
+    },
+    {
+      "name": "size 4: one dword through key word 0, tail skipped",
+      "args": ["@dst", "@src", 4]
+    },
+    {
+      "name": "size 5: one dword, then the tail continues at key byte 4",
+      "args": ["@dst", "@src", 5]
+    },
+    {
+      "name": "size 6: one dword + 2 bytes at key bytes 4-5",
+      "args": ["@dst", "@src", 6]
+    },
+    {
+      "name": "size 7: one dword + 3 bytes at key bytes 4-6",
+      "args": ["@dst", "@src", 7]
+    },
+    {
+      "name": "size 8: two dwords (key words 0,1), no tail",
+      "args": ["@dst", "@src", 8]
+    },
+    {
+      "name": "size 9: two dwords, the tail is back at key byte 0",
+      "args": ["@dst", "@src", 9]
+    },
+    {
+      "name": "size 11: two dwords + 3 bytes at key bytes 0-2",
+      "args": ["@dst", "@src", 11]
+    },
+    {
+      "name": "size 12: three dwords, key word 0 reused (the wrap)",
+      "args": ["@dst", "@src", 12]
+    },
+    {
+      "name": "size 13: three dwords + 1 byte at key byte 4",
+      "args": ["@dst", "@src", 13]
+    },
+    {
+      "name": "size 15: three dwords + 3 bytes at key bytes 4-6",
+      "args": ["@dst", "@src", 15]
+    },
+    {
+      "name": "size 16: four dwords, no tail",
+      "args": ["@dst", "@src", 16]
+    },
+    {
+      "name": "size 17: four dwords + 1 byte at key byte 0",
+      "args": ["@dst", "@src", 17]
+    },
+    {
+      "name": "size 63: 15 dwords + 3 bytes, odd word count leaves the tail at key byte 4",
+      "args": ["@dst", "@src", 63]
+    },
+    {
+      "name": "size 64: 16 dwords, no tail",
+      "args": ["@dst", "@src", 64]
+    },
+    {
+      "name": "size 65: 16 dwords + 1 byte, even count leaves the tail at key byte 0",
+      "args": ["@dst", "@src", 65]
+    },
+    {
+      "name": "size 67: 16 dwords + 3 bytes at key bytes 0-2",
+      "args": ["@dst", "@src", 67]
+    },
+    {
+      "name": "size 0x40 no tail after a full buffer, dst beyond the used part untouched",
+      "args": ["@dst", "@src", "0x40"]
+    },
+    {
+      "name": "in place: dst == src, size 7",
+      "args": ["@dst", "@dst", 7]
+    },
+    {
+      "name": "in place: dst == src, size 64",
+      "args": ["@dst", "@dst", 64]
+    },
+    {
+      "name": "unaligned dst and src, size 10 (one dword + 2 tail bytes unaligned)",
+      "args": ["@dst+1", "@src+1", 10]
+    },
+    {
+      "name": "forward overlap by one byte, size 8",
+      "args": ["@src+1", "@src", 8]
+    },
+    {
+      "name": "different key bytes: the key is read from 0x10087078, not a constant",
+      "args": ["@dst", "@src", 12],
+      "memory": [
+        {
+          "addr": "0x10087078",
+          "hex": "deadbeefcafebabe"
+        }
+      ]
+    },
+    {
+      "name": "garbage EDX/EBX/ESI/EDI at entry: both loop bounds are computed by the code, so the result is unchanged",
+      "args": ["@dst", "@src", 80],
+      "regs": {
+        "edx": "0x7fff0000",
+        "ebx": "0x7fff0000",
+        "esi": "0x7fff0000",
+        "edi": "0x7fff0000"
+      }
+    },
+    {
+      "name": "second dst buffer: writes land at the passed dst",
+      "args": ["@dst2", "@src", 9]
+    }
+  ],
+  "objects": {
+    "dst": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "dst2": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "src": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "fuzz": {
+    "seed": 100223,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@dst", "@dst2"]
+      },
+      {
+        "choices": ["@src", "@dst"]
+      },
+      {
+        "range": [0, 80]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x10087078",
+        "size": 8
+      }
+    ]
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "function": "UseAbilityByNumber_guess",
+  "original": "0x004aaf76",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "abilityText",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "abilities": {
+      "size": "0x1010",
+      "fill": "zero"
+    },
+    "target": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "profile": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "everquest": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4e44",
+      "u32": "@abilities"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    },
+    {
+      "addr": "0x006e4da8",
+      "u32": "@profile"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    }
+  ],
+  "callees": {
+    "0x004a49bd": {
+      "name": "allowslashcommand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 0
+    },
+    "0x0041d790": {
+      "name": "UseSkill",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "ptr"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "slash command denied before parsing",
+      "args": [
+        0,
+        "1"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "empty input prints both usage lines in order",
+      "args": [
+        1,
+        ""
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "first table entry",
+      "args": [
+        2,
+        "1"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xff4",
+          "u16": 4660
+        }
+      ]
+    },
+    {
+      "name": "last entry in lower table range",
+      "args": [
+        3,
+        "6"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xffe",
+          "u16": 43981
+        }
+      ]
+    },
+    {
+      "name": "first entry in upper table range",
+      "args": [
+        4,
+        "7"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xfec",
+          "u16": 9029
+        }
+      ]
+    },
+    {
+      "name": "last entry in upper table range is disabled",
+      "args": [
+        5,
+        "10"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xff2",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "first index above range prints help",
+      "args": [
+        6,
+        "11"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "zero input is not lower-bound checked",
+      "args": [
+        7,
+        "0"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xff2",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "nonnumeric input converts to zero and selects preceding entry",
+      "args": [
+        8,
+        "abc"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xff2",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "negative input selects before the first entry",
+      "args": [
+        9,
+        "-1"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xff0",
+          "u16": 1
+        }
+      ]
+    },
+    {
+      "name": "disabled first table entry returns silently",
+      "args": [
+        10,
+        "1"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@abilities",
+          "offset": "0xff4",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "out of range on upper side prints help",
+      "args": [
+        11,
+        "20"
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "ret": 1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4894582,
+    "count": 30,
+    "args": [
+      {
+        "range": [
+          -3,
+          3
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "abc",
+          "0",
+          "1",
+          "2",
+          "6",
+          "7",
+          "10",
+          "11",
+          "-1",
+          "-20",
+          "25",
+          "999"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@abilities",
+        "offset": "0xfc0",
+        "type": "u16",
+        "count": 32,
+        "range": [
+          0,
+          65535
+        ]
+      }
+    ]
+  }
+}

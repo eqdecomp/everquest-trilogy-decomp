@@ -1,0 +1,171 @@
+{
+  "function": "t3dCalculateHeadingPitchRollFromCoefficients",
+  "original": "0x1004f049",
+  "sources": [
+    "src/eqgfx/unit_1004E6D2.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "coefficients",
+      "type": "ptr"
+    },
+    {
+      "name": "heading",
+      "type": "ptr"
+    },
+    {
+      "name": "pitch",
+      "type": "ptr"
+    },
+    {
+      "name": "roll",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "coefficients": {
+      "size": "0x24",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "f32": 0.5},
+        {"offset": "0x04", "f32": 0.25},
+        {"offset": "0x08", "f32": 0.125},
+        {"offset": "0x0c", "f32": -0.1},
+        {"offset": "0x10", "f32": 0.2},
+        {"offset": "0x14", "f32": 0.3},
+        {"offset": "0x20", "f32": 0.4}
+      ]
+    },
+    "heading": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "pitch": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "roll": {
+      "size": "0x4",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x10076284", "u32": 0}
+  ],
+  "callees": {
+    "0x1004ef68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": ["float"],
+      "ret_float": 2.0
+    },
+    "0x1004ecf9": {
+      "name": "t3dAngleArcTangentFloat",
+      "conv": "cdecl",
+      "args": ["float", "float", "ignore"],
+      "ret_float": [0.25, 0.5, 0.75]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: horizontal nonzero, reciprocal path",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "horizontal zero, z nonzero: heading from -m[3], m[4], roll zeroed",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "callees": {
+        "0x1004ef68": {"name": "t3dFloatSqrt", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "z and horizontal zero: all three angles zeroed, ret -1",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "memory": [{"addr": "@coefficients", "offset": "0x8", "f32": 0.0}],
+      "callees": {
+        "0x1004ef68": {"name": "t3dFloatSqrt", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}
+      },
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "z zero, horizontal nonzero: still the reciprocal path",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "memory": [{"addr": "@coefficients", "offset": "0x8", "f32": 0.0}]
+    },
+    {
+      "name": "z NaN compares equal to 0 (unordered FCOMP sets ZF)",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "memory": [{"addr": "@coefficients", "offset": "0x8", "u32": 2143289344}]
+    },
+    {
+      "name": "z NaN and horizontal zero: both tests read equal, ret -1",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "memory": [{"addr": "@coefficients", "offset": "0x8", "u32": 2143289344}],
+      "callees": {
+        "0x1004ef68": {"name": "t3dFloatSqrt", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}
+      },
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "negative z and horizontal zero",
+      "args": ["@coefficients", "@heading", "@pitch", "@roll"],
+      "memory": [{"addr": "@coefficients", "offset": "0x8", "f32": -0.75}],
+      "callees": {
+        "0x1004ef68": {"name": "t3dFloatSqrt", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}
+      },
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "heading aliases pitch: pitch is stored first, heading last",
+      "args": ["@coefficients", "@heading", "@heading", "@roll"]
+    },
+    {
+      "name": "pitch aliases roll: roll is stored last",
+      "args": ["@coefficients", "@heading", "@pitch", "@pitch"]
+    },
+    {
+      "name": "heading aliases m[5]: roll reads the value just stored",
+      "args": ["@coefficients", "@coefficients+0x14", "@pitch", "@roll"]
+    },
+    {
+      "name": "heading aliases m[3]: horizontal-zero path reads m[3] and m[4] before the store",
+      "args": ["@coefficients", "@coefficients+0xc", "@pitch", "@roll"],
+      "callees": {
+        "0x1004ef68": {"name": "t3dFloatSqrt", "conv": "cdecl", "args": ["float"], "ret_float": 0.0}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 323657,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@coefficients"
+        ]
+      },
+      {
+        "choices": [
+          "@heading"
+        ]
+      },
+      {
+        "choices": [
+          "@pitch"
+        ]
+      },
+      {
+        "choices": [
+          "@roll"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@coefficients", "type": "float", "count": 9, "choices": [0.0, 0.5, -0.5, 1.0, -1.0, 0.25, -2.0, 3.0]}
+    ]
+  }
+}

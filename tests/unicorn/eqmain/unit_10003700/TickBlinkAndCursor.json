@@ -1,0 +1,174 @@
+{
+  "function": "TickBlinkAndCursor_guess",
+  "original": "0x10003a00",
+  "_stack_slot": "The cursor case seeds 0x7f0eff68..0x7f0eff88 nonzero to cover local_80.left across the harness's entry-ESP convention; the function initializes the other live locals before use.",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "onode": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@unit"}, {"offset": "0x8", "u32": 0}]},
+    "onode2": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@unit2"}, {"offset": "0x8", "u32": 0}]},
+    "unit": {"size": "0x40", "fill": "random", "init": [{"offset": "0xc", "u32": "@usurf"}, {"offset": "0x10", "u32": "@ctl"}, {"offset": "0x1c", "u32": "@inode"}]},
+    "unit2": {"size": "0x40", "fill": "random", "init": [{"offset": "0xc", "u32": "@usurf"}, {"offset": "0x10", "u32": 0}, {"offset": "0x1c", "u32": "@inode2"}]},
+    "inode": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@item"}, {"offset": "0x8", "u32": 0}]},
+    "inode2": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@item2"}, {"offset": "0x8", "u32": 0}]},
+    "item": {"size": "0x40", "fill": "random", "init": [{"offset": "0x0", "u32": 1}, {"offset": "0x34", "u32": 0}, {"offset": "0x38", "u32": 0}]},
+    "item2": {"size": "0x40", "fill": "random", "init": [{"offset": "0x0", "u32": 1}, {"offset": "0x34", "u32": 0}, {"offset": "0x38", "u32": 0}]},
+    "ctl": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": "@ctlvt"}]},
+    "ctlvt": {"size": "0x40", "fill": "random", "init": [{"offset": "0x2c", "u32": "@ctl_m"}]},
+    "usurf": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": "@surfvt"}]},
+    "surf1": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": "@surfvt"}]},
+    "surf2": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": "@surfvt"}]},
+    "surfvt": {"size": "0x40", "fill": "random", "init": [{"offset": "0x14", "u32": "@blt"}]},
+    "ctl_m": {"size": "0x10", "fill": "zero"},
+    "blt": {"size": "0x10", "fill": "zero"},
+    "g88": {"size": "0x20", "fill": "random", "init": [{"offset": "0xc", "u32": "@surf1"}]},
+    "g9c": {"size": "0x20", "fill": "random", "init": [{"offset": "0x0", "u32": 100}, {"offset": "0x4", "u32": 80}, {"offset": "0xc", "u32": "@surf2"}]}
+  },
+  "memory": [
+    {"addr": "0x1004CE90", "u32": "@onode"},
+    {"addr": "0x1004CEC4", "u32": 0},
+    {"addr": "0x1004CE78", "u8": 0},
+    {"addr": "0x1004CE88", "u32": "@g88"},
+    {"addr": "0x1004CE9C", "u32": "@g9c"}
+  ],
+  "callees": {
+    "winmm.dll!timeGetTime": {"conv": "stdcall", "args": [], "ret": 2000},
+    "0x10004ec0": {"name": "FUN_10004ec0", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                "writes": [{"arg": 0, "offset": 0, "hex": "6400000032000000"}]},
+    "@ctl_m": {"name": "ctl_slot_2c", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 0},
+    "@blt": {"name": "IDirectDrawSurface_Blt", "conv": "stdcall",
+             "args": ["ptr", "mem:16", "ptr", "mem:16", "u32", "mem:12"], "ret": 0}
+  },
+  "cases": [
+    {"name": "empty unit list", "memory": [{"addr": "0x1004CE90", "u32": 0}]},
+    {"name": "unit without items or control", "memory": [
+      {"addr": "@unit", "offset": "0x1c", "u32": 0},
+      {"addr": "@unit", "offset": "0x10", "u32": 0}]},
+    {"name": "cursor off, control slot 0x2C called, no focus"},
+    {"name": "cursor on, cursor at (100, 50)", "memory": [{"addr": "0x1004CE78", "u8": 1}]},
+    {"name": "cursor clears prefilled source rect left", "memory": [
+      {"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+       "writes": [{"addr": "0x7F0EFF80", "hex": "efbeadde"},
+                  {"addr": "0x7F0EFF84", "hex": "efbeadde"},
+                  {"arg": 0, "offset": 0, "hex": "6400000032000000"}]}}},
+    {"name": "cursor blit initializes the screen origin", "memory": [
+      {"addr": "0x1004CE78", "u8": 1},
+      {"addr": "0x7f0eff68", "u32": 3735928559},
+      {"addr": "0x7f0eff6c", "u32": 3735928559},
+      {"addr": "0x7f0eff70", "u32": 3735928559},
+      {"addr": "0x7f0eff74", "u32": 3735928559},
+      {"addr": "0x7f0eff78", "u32": 3735928559},
+      {"addr": "0x7f0eff7c", "u32": 3735928559},
+      {"addr": "0x7f0eff80", "u32": 3735928559},
+      {"addr": "0x7f0eff84", "u32": 3735928559},
+      {"addr": "0x7f0eff88", "u32": 3735928559}]},
+    {"name": "cursor on, unit has no control", "memory": [
+      {"addr": "0x1004CE78", "u8": 1},
+      {"addr": "@unit", "offset": "0x10", "u32": 0}]},
+    {"name": "cursor clamps right edge (x 700: x+w > 0x27e)", "memory": [{"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                             "writes": [{"arg": 0, "offset": 0, "hex": "bc02000032000000"}]}}},
+    {"name": "cursor clamps bottom edge (y 470: y+h > 0x1de)", "memory": [{"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                             "writes": [{"arg": 0, "offset": 0, "hex": "64000000d6010000"}]}}},
+    {"name": "right boundary: x+w = 0x27e, no clamp", "memory": [{"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                             "writes": [{"arg": 0, "offset": 0, "hex": "1a02000032000000"}]}}},
+    {"name": "right boundary: x+w = 0x27f, clamp", "memory": [{"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                             "writes": [{"arg": 0, "offset": 0, "hex": "1b02000032000000"}]}}},
+    {"name": "bottom boundary: y+h = 0x1de, no clamp", "memory": [{"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                             "writes": [{"arg": 0, "offset": 0, "hex": "640000008e010000"}]}}},
+    {"name": "bottom boundary: y+h = 0x1df, clamp", "memory": [{"addr": "0x1004CE78", "u8": 1}],
+     "callees": {"user32.dll!GetCursorPos": {"conv": "stdcall", "args": ["ignore"], "ret": 1,
+                                             "writes": [{"arg": 0, "offset": 0, "hex": "640000008f010000"}]}}},
+    {"name": "blink: focus, type 1, diff 1000", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "no blink: focus, diff exactly 500", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 1500}]},
+    {"name": "blink: focus, diff 501", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 1499}]},
+    {"name": "blink: stamp later than now (unsigned diff wraps)", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 3000}]},
+    {"name": "no blink: focus, stamp equals now", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 2000}]},
+    {"name": "blink: focus, type 8", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x0", "u32": 8},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "no blink: focus, type 2", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x0", "u32": 2},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "no blink: focus is another item", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item2"},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "blink: flag 1 toggles to 0", "memory": [
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x34", "u32": 1},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "blink before the cursor pass (cursor on)", "memory": [
+      {"addr": "0x1004CE78", "u8": 1},
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "blink with no control on the unit", "memory": [
+      {"addr": "@unit", "offset": "0x10", "u32": 0},
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]},
+    {"name": "two units, cursor on, focus in the second unit (DVar5 kept)",
+     "objects": {},
+     "memory": [
+      {"addr": "0x1004CE78", "u8": 1},
+      {"addr": "@onode", "offset": "0x8", "u32": "@onode2"},
+      {"addr": "@unit2", "offset": "0x10", "u32": "@ctl"},
+      {"addr": "0x1004CEC4", "u32": "@item2"},
+      {"addr": "@item2", "offset": "0x38", "u32": 1000}]},
+    {"name": "two units, cursor off, focus in the first unit", "memory": [
+      {"addr": "@onode", "offset": "0x8", "u32": "@onode2"},
+      {"addr": "@unit2", "offset": "0x10", "u32": "@ctl"},
+      {"addr": "0x1004CEC4", "u32": "@item"},
+      {"addr": "@item", "offset": "0x38", "u32": 1000}]}
+  ],
+  "fuzz": {
+    "seed": 10003700,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004CE90", "type": "ptr", "choices": [0, "@onode"]},
+      {"addr": "0x1004CEC4", "type": "ptr", "choices": [0, "@item", "@item2"]},
+      {"addr": "0x1004CE78", "type": "u8", "choices": [0, 1]},
+      {"addr": "@onode", "offset": "0x4", "type": "ptr", "choices": ["@unit", "@unit2"]},
+      {"addr": "@onode", "offset": "0x8", "type": "ptr", "choices": [0, "@onode2"]},
+      {"addr": "@onode2", "offset": "0x4", "type": "ptr", "choices": ["@unit2", "@unit"]},
+      {"addr": "@onode2", "offset": "0x8", "type": "ptr", "choices": [0]},
+      {"addr": "@unit", "offset": "0x10", "type": "ptr", "choices": [0, "@ctl"]},
+      {"addr": "@unit2", "offset": "0x10", "type": "ptr", "choices": [0, "@ctl"]},
+      {"addr": "@unit", "offset": "0x1c", "type": "ptr", "choices": [0, "@inode"]},
+      {"addr": "@unit2", "offset": "0x1c", "type": "ptr", "choices": [0, "@inode2"]},
+      {"addr": "@inode", "offset": "0x4", "type": "ptr", "choices": ["@item", "@item2"]},
+      {"addr": "@inode", "offset": "0x8", "type": "ptr", "choices": [0]},
+      {"addr": "@inode2", "offset": "0x4", "type": "ptr", "choices": ["@item2", "@item"]},
+      {"addr": "@inode2", "offset": "0x8", "type": "ptr", "choices": [0]},
+      {"addr": "@item", "offset": "0x0", "type": "u32", "choices": [0, 1, 2, 8, 9]},
+      {"addr": "@item", "offset": "0x34", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@item", "offset": "0x38", "type": "u32", "range": [0, 3000]},
+      {"addr": "@item2", "offset": "0x0", "type": "u32", "choices": [0, 1, 2, 8, 9]},
+      {"addr": "@item2", "offset": "0x34", "type": "u32", "choices": [0, 1, 2]},
+      {"addr": "@item2", "offset": "0x38", "type": "u32", "range": [0, 3000]},
+      {"addr": "@g9c", "offset": "0x0", "type": "u32", "range": [0, 300]},
+      {"addr": "@g9c", "offset": "0x4", "type": "u32", "range": [0, 300]}
+    ]
+  }
+}

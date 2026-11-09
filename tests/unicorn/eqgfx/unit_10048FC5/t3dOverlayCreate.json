@@ -1,0 +1,118 @@
+{
+  "function": "t3dOverlayCreate",
+  "original": "0x100491E6",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "width", "type": "u32"},
+    {"name": "height", "type": "u32"},
+    {"name": "overlayFlags", "type": "u32"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "overlay": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc", "u32": "@surface"}
+      ]
+    },
+    "directDraw": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@directDrawVtable"}
+      ]
+    },
+    "directDrawVtable": {
+      "size": "0x1c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "@createSurfaceFn"}
+      ]
+    },
+    "createSurfaceFn": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "surface": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@surfaceVtable"}
+      ]
+    },
+    "surfaceVtable": {
+      "size": "0x78",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x74", "u32": "@setColorKeyFn"}
+      ]
+    },
+    "setColorKeyFn": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x100fb8a8", "u32": 0},
+    {"addr": "0x100fba38", "u32": 16},
+    {"addr": "0x100fba3c", "u32": 0},
+    {"addr": "0x100fba2c", "u32": "@directDraw"},
+    {"addr": "0x100fba30", "u32": "0x12345678"}
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@overlay"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "@createSurfaceFn": {
+      "name": "CreateSurface_guess",
+      "conv": "stdcall",
+      "args": ["ptr", "mem:124", "ptr", "ptr"],
+      "ret": 0
+    },
+    "@setColorKeyFn": {
+      "name": "SetColorKey_guess",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "mem:8"]
+    }
+  },
+  "cases": [
+    {"name": "mode 0 skips surface creation", "args": [320, 240, 1]},
+    {"name": "mode 1 configures 555 and sets color key", "args": [320, 240, 1], "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fba38", "u32": 16}, {"addr": "0x100fba3c", "u32": 0}]},
+    {"name": "mode 1 configures 565 without color key", "args": [640, 480, 2], "memory": [{"addr": "0x100fb8a8", "u32": 1}, {"addr": "0x100fba38", "u32": 16}, {"addr": "0x100fba3c", "u32": 1}]},
+    {"name": "mode 2 configures 32 bit and sets color key", "args": [800, 600, 257], "memory": [{"addr": "0x100fb8a8", "u32": 2}, {"addr": "0x100fba38", "u32": 32}]},
+    {"name": "mode 3 skips surface creation", "args": [1, 1, 0], "memory": [{"addr": "0x100fb8a8", "u32": 3}]},
+    {"name": "unsigned high render mode skips surface creation", "args": [1, 1, 1], "memory": [{"addr": "0x100fb8a8", "u32": 4294967295}]},
+    {"name": "negative create result frees overlay", "args": [123, 456, 1], "memory": [{"addr": "0x100fb8a8", "u32": 1}], "callees": {"@createSurfaceFn": {"name": "CreateSurface_guess", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "ptr"], "ret": -1}}},
+    {"name": "positive create result succeeds", "args": [123, 456, 0], "memory": [{"addr": "0x100fb8a8", "u32": 2}], "callees": {"@createSurfaceFn": {"name": "CreateSurface_guess", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "ptr"], "ret": 1}}},
+    {"name": "zero dimensions preserve packed values", "args": [0, 0, 3], "memory": [{"addr": "0x100fb8a8", "u32": 2}]},
+    {"name": "allocation failure skips in mode 0", "args": [640, 480, 1], "memory": [{"addr": "0x100fb8a8", "u32": 0}], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}}},
+    {"name": "allocation failure and create failure", "args": [640, 480, 1], "memory": [{"addr": "0x100fb8a8", "u32": 1}], "callees": {"0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}, "@createSurfaceFn": {"name": "CreateSurface_guess", "conv": "stdcall", "args": ["ptr", "mem:124", "ptr", "ptr"], "ret": -1}}}
+  ],
+  "fuzz": {
+    "seed": 299494,
+    "count": 40,
+    "args": [
+      {"range": [0, 4096]},
+      {"range": [0, 2160]},
+      {"choices": [0, 1, 2, 3, 257, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "0x100fb8a8", "type": "u32", "range": [0, 4]},
+      {"addr": "0x100fba38", "type": "u32", "choices": [8, 16, 24, 32]},
+      {"addr": "0x100fba3c", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x100fba30", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

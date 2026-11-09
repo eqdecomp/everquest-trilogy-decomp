@@ -1,0 +1,72 @@
+{
+  "function": "PlaceGuideButtons_guess",
+  "original": "0x004363f5",
+  "sources": ["src/EverQuest/EQ_Guide.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x2668", "fill": "zero"},
+    "everquest": {
+      "size": "0xba8",
+      "fill": "zero",
+      "init": [{"offset": "0xba4", "u32": 0}]
+    },
+    "setrect": {"size": "0x1", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x00534248", "u32": "@setrect"},
+    {"addr": "0x006efe2c", "u32": "@everquest"}
+  ],
+  "callees": {
+    "@setrect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x004503be": {
+      "name": "EQ_Overlay_AddButton_guess",
+      "conv": "thiscall",
+      "args": ["int", "ptr", "int", "int", "int", "int"]
+    }
+  },
+  "cases": [
+    {"name": "mode zero button", "args": ["@self", 0], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 0}]},
+    {"name": "mode one empty", "args": ["@self", 1], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 0}]},
+    {"name": "mode one negative count", "args": ["@self", 2], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": -1}]},
+    {"name": "mode one single", "args": ["@self", 3], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 1}]},
+    {"name": "mode one ten boundary", "args": ["@self", 4], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 10}]},
+    {"name": "mode one eleven boundary", "args": ["@self", 5], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 11}]},
+    {"name": "mode one twenty boundary", "args": ["@self", 6], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 20}]},
+    {"name": "mode one twenty one boundary", "args": ["@self", 7], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 21}]},
+    {"name": "mode one twenty five", "args": ["@self", 8], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 25}]},
+    {"name": "mode one clamps count", "args": ["@self", 9], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 1}, {"addr": "@everquest", "offset": "0xba4", "u32": 26}]},
+    {"name": "mode two twelve rows", "args": ["@self", 10], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 2}]},
+    {"name": "mode three pair", "args": ["@self", 11], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 3}]},
+    {"name": "mode four no available slots", "args": ["@self", 12], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 4}, {"addr": "@self", "offset": "0xdbc", "u32": 12}]},
+    {"name": "mode four both directional searches", "args": ["@self", 13], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 4}, {"addr": "@self", "offset": "0xdbc", "u32": 5}, {"addr": "@self", "offset": "0xfd4", "u32": 1}, {"addr": "@self", "offset": "0x146c", "u32": 1}, {"addr": "@self", "offset": "0x177c", "u32": 1}, {"addr": "@self", "offset": "0x1a8c", "u32": 1}]},
+    {"name": "mode four high backward match", "args": ["@self", 14], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 4}, {"addr": "@self", "offset": "0xdbc", "u32": 11}, {"addr": "@self", "offset": "0x1d9c", "u32": 1}]},
+    {"name": "mode four backward slot zero boundary", "args": ["@self", 18], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 4}, {"addr": "@self", "offset": "0xdbc", "u32": 1}, {"addr": "@self", "offset": "0xe4c", "u32": 1}]},
+    {"name": "mode four forward skips slot zero", "args": ["@self", 15], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 4}, {"addr": "@self", "offset": "0xdbc", "u32": 0}, {"addr": "@self", "offset": "0xe4c", "u32": 1}, {"addr": "@self", "offset": "0x1f24", "u32": 1}]},
+    {"name": "mode four invalid backward count", "args": ["@self", 16], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 4}, {"addr": "@self", "offset": "0xdbc", "u32": -1}]},
+    {"name": "unmatched mode", "args": ["@self", 17], "memory": [{"addr": "@self", "offset": "0x8c", "u32": 5}]}
+  ],
+  "fuzz": {
+    "seed": 4416501,
+    "count": 32,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [-32, 32]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x8c", "type": "int", "choices": [-1, 0, 1, 2, 3, 4, 5]},
+      {"addr": "@everquest", "offset": "0xba4", "type": "int", "choices": [-1, 0, 1, 10, 11, 20, 21, 25, 26]},
+      {"addr": "@self", "offset": "0xdbc", "type": "int", "choices": [-1, 0, 1, 6, 10, 11, 12]},
+      {"addr": "@self", "offset": "0xe4c", "type": "int", "count": 12, "stride": "0x188", "range": [0, 1], "p": 0.5}
+    ]
+  }
+}

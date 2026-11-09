@@ -1,0 +1,224 @@
+{
+  "function": "guildpeace_guess",
+  "original": "0x004a566f",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    },
+    "eq": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "buf": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006E4DAC",
+      "u32": "@target"
+    },
+    {
+      "addr": "0x006EFE2C",
+      "u32": "@eq"
+    },
+    {
+      "addr": "@target",
+      "offset": "0x01",
+      "cstr": "Guild Leader"
+    },
+    {
+      "addr": "@buf",
+      "cstr": ""
+    }
+  ],
+  "callees": {
+    "0x004CB1A5": {
+      "name": "CEverQuest::GuildPeace_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x005219C0": {
+      "name": "strcpy_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "nonempty text without target",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4DAC",
+          "u32": 0
+        },
+        {
+          "addr": "@buf",
+          "cstr": "hello guild"
+        }
+      ]
+    },
+    {
+      "name": "empty text without target",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4DAC",
+          "u32": 0
+        },
+        {
+          "addr": "@buf",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "byte after null target pointer does not create target",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4DAC",
+          "u32": 0
+        },
+        {
+          "addr": "0x006E4DB0",
+          "u8": 1
+        },
+        {
+          "addr": "@buf",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "byte before null target pointer does not create target",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "0x006E4DAC",
+          "u32": 0
+        },
+        {
+          "addr": "0x006E4DAB",
+          "u8": 1
+        },
+        {
+          "addr": "@buf",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "nonempty text is preserved with target",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "cstr": "keep this"
+        }
+      ]
+    },
+    {
+      "name": "empty text copies target name",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "@buf",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "maximum EQPlayer name length",
+      "args": [
+        "@param_1",
+        "@buf"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x01",
+          "cstr": "12345678901234567890123456789"
+        },
+        {
+          "addr": "@buf",
+          "cstr": ""
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4871791,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "choices": [
+          "guild announcement",
+          "short",
+          "12345678901234567890123456789"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006E4DAC",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@target"
+        ]
+      }
+    ]
+  }
+}

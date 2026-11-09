@@ -1,0 +1,177 @@
+{
+  "function": "t3dCreateResourceDescriptorFromFileContext_guess",
+  "original": "0x10024c93",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "contextArg",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "loadctx": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@dict"},
+        {"offset": "0x38", "u32": 16},
+        {"offset": "0x8044", "u32": "@record"},
+        {"offset": "0x804c", "u32": "@table"},
+        {"offset": "0x8050", "u32": 2},
+        {"offset": "0x8058", "u32": "@descriptors"}
+      ]
+    },
+    "record": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": 32}
+      ]
+    },
+    "table": {"size": "0x80", "fill": "random"},
+    "descriptors": {"size": "0x200", "fill": "zero"},
+    "dict": {"size": "0x40", "fill": "zero"},
+    "dictEntry": {"size": "0x40", "fill": "zero"},
+    "storage": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@dictEntry"
+    },
+    "0x10024e56": {
+      "name": "getResourceStorageSize_guess",
+      "conv": "cdecl",
+      "args": ["int", "int", "int"],
+      "ret": 128
+    },
+    "0x10019a5c": {
+      "name": "s3dAllocateMemoryFromPool",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": "@storage"
+    },
+    "0x10024e99": {
+      "name": "t3dCreateResourceDescriptor_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr", "int", "int", "u32", "ptr", "ptr", "ptr", "float", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical_kind1",
+      "args": ["@loadctx"]
+    },
+    {
+      "name": "index_past_count",
+      "args": ["@loadctx"],
+      "memory": [{"addr": "@loadctx", "offset": "0x8054", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "alloc_fails",
+      "args": ["@loadctx"],
+      "callees": {
+        "0x10019a5c": {"name": "s3dAllocateMemoryFromPool", "conv": "cdecl", "args": ["ptr", "u32", "ptr"], "ret": 0}
+      }
+    },
+    {
+      "name": "fill_fails_nonzero",
+      "args": ["@loadctx"],
+      "callees": {
+        "0x10024e99": {"name": "FUN_10024e99", "conv": "cdecl", "args": ["ptr", "ptr", "ptr", "int", "int", "u32", "ptr", "ptr", "ptr", "float", "int"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fill_ok_sets_pool_flag",
+      "args": ["@loadctx"],
+      "memory": [{"addr": "@loadctx", "offset": "0x8064", "u32": 1}]
+    },
+    {
+      "name": "kind0_no_flags",
+      "args": ["@loadctx"],
+      "memory": [{"addr": "@record", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "kind2_all_bits",
+      "args": ["@loadctx"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u32": "0x1c7"},
+        {"addr": "@record", "offset": "0x2c", "u32": 3}
+      ]
+    },
+    {
+      "name": "label_and_owner_from_dictionary",
+      "args": ["@loadctx"],
+      "memory": [
+        {"addr": "@record", "offset": "0x0", "u32": "0xfffffffe"},
+        {"addr": "@record", "offset": "0x8", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "owner_from_table",
+      "args": ["@loadctx"],
+      "memory": [{"addr": "@record", "offset": "0x8", "u32": 3}]
+    },
+    {
+      "name": "entry_present_trailer_after_entries",
+      "args": ["@loadctx"],
+      "memory": [
+        {"addr": "@record", "offset": "0x24", "u32": 1},
+        {"addr": "@record", "offset": "0x48", "u32": 2}
+      ]
+    },
+    {
+      "name": "flag100_ref_from_dictionary",
+      "args": ["@loadctx"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u32": "0x100"},
+        {"addr": "@record", "offset": "0x2c", "u32": 0},
+        {"addr": "@record", "offset": "0x32", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "flag40_ref_from_dictionary",
+      "args": ["@loadctx"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u32": "0x40"},
+        {"addr": "@record", "offset": "0x2c", "u32": 0},
+        {"addr": "@record", "offset": "0x32", "u32": "0xfffffffd"}
+      ]
+    },
+    {
+      "name": "values_extra_and_payload",
+      "args": ["@loadctx"],
+      "memory": [
+        {"addr": "@record", "offset": "0x4", "u32": 7},
+        {"addr": "@record", "offset": "0x2c", "u32": 0},
+        {"addr": "@record", "offset": "0x46", "u32": 5}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 150675,
+    "count": 40,
+    "args": [{"choices": ["@loadctx"]}],
+    "memory": [
+      {"addr": "@loadctx", "offset": "0x38", "type": "int", "range": [0, 64]},
+      {"addr": "@loadctx", "offset": "0x8050", "type": "u32", "range": [0, 3]},
+      {"addr": "@loadctx", "offset": "0x8054", "type": "u32", "range": [0, 3]},
+      {"addr": "@loadctx", "offset": "0x8064", "type": "int", "range": [0, 1]},
+      {"addr": "@record", "offset": "0x0", "type": "int", "range": [-3, 3]},
+      {"addr": "@record", "offset": "0x4", "type": "u32", "range": [0, 511]},
+      {"addr": "@record", "offset": "0x8", "type": "int", "range": [-3, 3]},
+      {"addr": "@record", "offset": "0x24", "type": "int", "range": [0, 2]},
+      {"addr": "@record", "offset": "0x2c", "type": "u32", "count": 64, "range": [0, 16]}
+    ]
+  }
+}

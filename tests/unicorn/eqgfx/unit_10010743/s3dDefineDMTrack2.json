@@ -1,0 +1,145 @@
+{
+  "function": "s3dDefineDMTrack2",
+  "original": "0x1001090b",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "dictionary", "type": "ptr"},
+    {"name": "existingTrackDefinition", "type": "ptr"},
+    {"name": "trackName", "type": "cstr"},
+    {"name": "countA", "type": "u32"},
+    {"name": "countB", "type": "u32"},
+    {"name": "trackValueA", "type": "u16"},
+    {"name": "trackValueB", "type": "u16"},
+    {"name": "trackValueC", "type": "u32"},
+    {"name": "sourceData", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "dictionary": {"size": "0x40", "fill": "zero"},
+    "track_existing": {"size": "0x400", "fill": "zero"},
+    "track_allocated": {"size": "0x1000", "fill": "zero"},
+    "source_data": {"size": "0x1000", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x100108dd": {
+      "name": "s3dCalcDMTrackDef2AllocSize",
+      "conv": "cdecl",
+      "args": ["cstr", "u16", "u16"],
+      "ret": 96
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@track_allocated"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 1
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 7
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "existing definition copies name and payload then inserts",
+      "args": ["@dictionary", "@track_existing", "run", 2, 3, 4386, 13124, 1432778632, "@source_data"]
+    },
+    {
+      "name": "null name with zero dimensions returns existing definition",
+      "args": ["@dictionary", "@track_existing", 0, 0, 0, 0, 0, 0, "@source_data"]
+    },
+    {
+      "name": "empty name and rejected insertion invokes cleanup",
+      "args": ["@dictionary", "@track_existing", "", 1, 1, 2, 3, 4, "@source_data"],
+      "callees": {"0x1000dc08": {"ret": -1}}
+    },
+    {
+      "name": "validation failure on caller-owned definition",
+      "args": ["@dictionary", "@track_existing", "rejected", 2, 1, 5, 6, 7, "@source_data"],
+      "callees": {"0x1001564b": {"ret": 3}}
+    },
+    {
+      "name": "allocated definition with insertion failure is cleaned and freed",
+      "args": ["@dictionary", 0, "new_track", 2, 4, 17, 34, 51, "@source_data"],
+      "callees": {"0x1000dc08": {"ret": -1}}
+    },
+    {
+      "name": "allocated definition with validation failure is freed",
+      "args": ["@dictionary", 0, "bad_track", 1, 1, 10, 20, 30, "@source_data"],
+      "callees": {"0x1001564b": {"ret": -1}}
+    },
+    {
+      "name": "allocation failure returns null",
+      "args": ["@dictionary", 0, "no_memory", 1, 1, 0, 0, 0, "@source_data"],
+      "callees": {"0x10050c48": {"ret": 0}}
+    },
+    {
+      "name": "allocated definition with null name succeeds without insertion",
+      "args": ["@dictionary", 0, 0, 3, 2, "0x1234", "0x5678", "0x12345678", "@source_data"]
+    },
+    {
+      "name": "countA truncates to zero at the low-word boundary",
+      "args": ["@dictionary", "@track_existing", 0, 65536, 3, 1, 2, 3, "@source_data"]
+    },
+    {
+      "name": "maximum low words preserve wrapped byte count",
+      "args": ["@dictionary", "@track_existing", 0, 65535, 65535, "0xffff", "0xfffe", "0xffffffff", "@source_data"]
+    },
+    {
+      "name": "long name places payload after its terminator",
+      "args": ["@dictionary", "@track_existing", "model_track_name", 1, 2, "0x3456", "0x789a", "0xabcdef01", "@source_data"]
+    },
+    {
+      "name": "zero countA skips payload copy but keeps inline name",
+      "args": ["@dictionary", "@track_existing", "x", 0, 2, 1, 2, 3, "@source_data"]
+    },
+    {
+      "name": "zero countB skips payload copy but keeps inline name",
+      "args": ["@dictionary", "@track_existing", "xy", 2, 0, 4, 5, 6, "@source_data"]
+    }
+  ],
+  "fuzz": {
+    "seed": 67851,
+    "count": 30,
+    "args": [
+      {"choices": ["@dictionary"]},
+      {"choices": [0, "@track_existing"]},
+      {},
+      {"choices": [0, 1, 2, 3, 4, 5, 65535, 65536]},
+      {"choices": [0, 1, 2, 3, 4, 5, 65535]},
+      {"choices": [0, 1, 65535]},
+      {"choices": [0, 1, 32768, 65535]},
+      {"choices": [0, 1, 305419896, 4294967295]},
+      {"choices": ["@source_data"]}
+    ],
+    "memory": []
+  }
+}

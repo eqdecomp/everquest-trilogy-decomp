@@ -1,0 +1,130 @@
+{
+  "function": "t3dSet3DSpritePolygonVAxis",
+  "original": "0x10008d74",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "sprite", "type": "ptr"},
+    {"name": "index", "type": "u32"},
+    {"name": "inAxis", "type": "ptr"}
+  ],
+  "ret": "u32",
+  "_note": "polys is the first heap object, at 0x60000000 (the bump allocator's base); the FUN_1000897d stub writes that address to sprite+0x18",
+  "objects": {
+    "polys": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x18", "u32": "@polys"},
+        {"offset": "0x2c", "u32": "@info"}
+      ]
+    },
+    "info": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": 4}
+      ]
+    },
+    "inaxis": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "callees": {
+    "0x1000897d": {
+      "name": "t3dCopy3DSpriteDefinitionFrames_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0,
+      "writes": [{"arg": 0, "offset": 24, "hex": "00000060"}]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical, polygon 1 of 4",
+      "args": ["@sprite", 1, "@inaxis"]
+    },
+    {
+      "name": "polygon 0",
+      "args": ["@sprite", 0, "@inaxis"]
+    },
+    {
+      "name": "last polygon 3 of 4",
+      "args": ["@sprite", 3, "@inaxis"]
+    },
+    {
+      "name": "index == count",
+      "args": ["@sprite", 4, "@inaxis"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "index 0xffffffff (unsigned compare)",
+      "args": ["@sprite", "0xffffffff", "@inaxis"],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "count 0",
+      "args": ["@sprite", 0, "@inaxis"],
+      "memory": [{"addr": "@info", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no polyBase, callee ok, polygon 2",
+      "args": ["@sprite", 2, "@inaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no polyBase, callee fails (1)",
+      "args": ["@sprite", 2, "@inaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no polyBase, callee fails (-1)",
+      "args": ["@sprite", 2, "@inaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": "0xffffffff"}
+      },
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "no polyBase, index out of range: callee not called",
+      "args": ["@sprite", 4, "@inaxis"],
+      "memory": [{"addr": "@sprite", "offset": "0x18", "u32": 0}],
+      "expect": {"ret": "0xffff3d3e"}
+    },
+    {
+      "name": "polyBase set, callee would fail: not called",
+      "args": ["@sprite", 1, "@inaxis"],
+      "callees": {
+        "0x1000897d": {"name": "FUN_1000897d", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 36212,
+    "count": 40,
+    "args": [
+      {"choices": ["@sprite"]},
+      {"range": [0, 8]},
+      {"choices": ["@inaxis"]}
+    ],
+    "memory": [
+      {"addr": "@info", "offset": "0x20", "type": "u32", "range": [0, 8]},
+      {"addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": ["@polys", "0x0"], "p": 0.5}
+    ]
+  }
+}

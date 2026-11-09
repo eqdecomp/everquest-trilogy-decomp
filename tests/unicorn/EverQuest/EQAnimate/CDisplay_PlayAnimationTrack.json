@@ -1,0 +1,141 @@
+{
+  "function": "CDisplay_PlayAnimationTrack_guess",
+  "original": "0x0048ed3b",
+  "sources": ["src/EverQuest/EQAnimate.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "display", "type": "ptr"},
+    {"name": "edxDummy", "type": "ptr"},
+    {"name": "player", "type": "ptr"},
+    {"name": "animation", "type": "int"},
+    {"name": "oneCycle", "type": "int"},
+    {"name": "reverse", "type": "int"},
+    {"name": "speed", "type": "float"},
+    {"name": "param7", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "display": {"size": "0x100", "fill": "random"},
+    "edxdummy": {"size": "0x100", "fill": "random"},
+    "player": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "@actorinfo"},
+        {"offset": "0x12c", "u8": 0}
+      ]
+    },
+    "actorinfo": {
+      "size": "0x17c", "fill": "random",
+      "init": [{"offset": "0x178", "u32": "@animset"}]
+    },
+    "animset": {
+      "size": "0x3a0", "fill": "random",
+      "init": [{"offset": "0x39c", "u8": 0}]
+    },
+    "player_no_actor": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": 0},
+        {"offset": "0x12c", "u8": 0}
+      ]
+    },
+    "player_no_animset": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "@actorinfo_no_animset"},
+        {"offset": "0x12c", "u8": 0}
+      ]
+    },
+    "actorinfo_no_animset": {
+      "size": "0x17c", "fill": "random",
+      "init": [{"offset": "0x178", "u32": 0}]
+    },
+    "player_flag_high": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "@actorinfo_high"},
+        {"offset": "0x12c", "u8": 255}
+      ]
+    },
+    "actorinfo_high": {
+      "size": "0x17c", "fill": "random",
+      "init": [{"offset": "0x178", "u32": "@animset_high"}]
+    },
+    "animset_high": {
+      "size": "0x3a0", "fill": "random",
+      "init": [{"offset": "0x39c", "u8": 128}]
+    },
+    "player_flag_false_nonzero": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x70", "u32": "@actorinfo_boundary"},
+        {"offset": "0x12c", "u8": 127}
+      ]
+    },
+    "actorinfo_boundary": {
+      "size": "0x17c", "fill": "random",
+      "init": [{"offset": "0x178", "u32": "@animset_boundary"}]
+    },
+    "animset_boundary": {
+      "size": "0x3a0", "fill": "random",
+      "init": [
+        {"offset": "0x39b", "u8": 1},
+        {"offset": "0x39c", "u8": 0},
+        {"offset": "0x39d", "u8": 1}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0048ed8d": {
+      "name": "CDisplay_PlayAnimationTrack2_guess",
+      "conv": "fastcall",
+      "args": ["ptr", "ptr", "ptr", "int", "int", "int", "float", "int", "u32"]
+    }
+  },
+  "cases": [
+    {
+      "name": "null player short-circuits",
+      "args": ["@display", "@edxdummy", 0, 101, 202, 303, 1.25, 404]
+    },
+    {
+      "name": "no actor info short-circuits",
+      "args": ["@display", "@edxdummy", "@player_no_actor", 101, 202, 303, 1.25, 404]
+    },
+    {
+      "name": "no animation set short-circuits",
+      "args": ["@display", "@edxdummy", "@player_no_animset", 101, 202, 303, 1.25, 404]
+    },
+    {
+      "name": "animation set flag zero calls with zero track",
+      "args": ["@display", "@edxdummy", "@player", 17, 23, 31, 0.75, 47]
+    },
+    {
+      "name": "nonzero high flag copies player byte and preserves argument order",
+      "args": ["@display", "@edxdummy", "@player_flag_high", 91, 92, 93, 2.5, 95]
+    },
+    {
+      "name": "false flag keeps cleared byte and clears this pointer low byte",
+      "args": ["@display+0x21", "@edxdummy", "@player_flag_false_nonzero", 101, 102, 103, 1.75, 105]
+    }
+  ],
+  "fuzz": {
+    "seed": 4779323,
+    "count": 40,
+    "args": [
+      {"choices": ["@display", "@display+0x21"]},
+      {"choices": ["@edxdummy"]},
+      {"choices": [0, "@player", "@player_no_actor", "@player_no_animset", "@player_flag_high"]},
+      {"range": [-2147483648, 2147483647]},
+      {"range": [-2147483648, 2147483647]},
+      {"range": [-2147483648, 2147483647]},
+      {},
+      {"range": [-2147483648, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "@player", "offset": "0x12c", "type": "u8", "range": [0, 255]},
+      {"addr": "@actorinfo", "offset": "0x178", "type": "ptr", "choices": [0, "@animset"]},
+      {"addr": "@animset", "offset": "0x39c", "type": "u8", "choices": [0, 1, 128, 255]}
+    ]
+  }
+}

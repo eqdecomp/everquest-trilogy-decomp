@@ -1,0 +1,129 @@
+{
+  "function": "msg_wldgroup4_guess",
+  "original": "0x004a2ffc",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "pc",
+      "type": "ptr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "value",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "pc": {
+      "size": "0x1400",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@pc", "offset": "0x1078", "cstr": "Alpha"},
+    {"addr": "@pc", "offset": "0x10A8", "cstr": "Beta"},
+    {"addr": "@pc", "offset": "0x10D8", "cstr": "Gamma"},
+    {"addr": "@pc", "offset": "0x1108", "cstr": "Delta"},
+    {"addr": "@pc", "offset": "0x1138", "cstr": "Epsilon"},
+    {"addr": "@pc", "offset": "0x1168", "cstr": "Zeta"}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "exact match in slot 0: replaced, returns 1",
+      "args": ["@pc", "Alpha", "Replaced"]
+    },
+    {
+      "name": "exact match in slot 1",
+      "args": ["@pc", "Beta", "New"]
+    },
+    {
+      "name": "match in the last slot (slot 5): the loop reaches it",
+      "args": ["@pc", "Zeta", "Last"]
+    },
+    {
+      "name": "match ignores case (strcmpi): gAMMA finds slot 2",
+      "args": ["@pc", "gAMMA", "Third"]
+    },
+    {
+      "name": "no slot matches: returns 0, nothing written",
+      "args": ["@pc", "Omega", "X"]
+    },
+    {
+      "name": "prefix of a slot string is not a match",
+      "args": ["@pc", "Alp", "X"]
+    },
+    {
+      "name": "longer than a slot string is not a match",
+      "args": ["@pc", "Alphabet", "X"]
+    },
+    {
+      "name": "empty name: returns 0 before any compare",
+      "args": ["@pc", "", "X"]
+    },
+    {
+      "name": "empty name, empty slot 0: the name check comes first, nothing matches",
+      "memory": [{"addr": "@pc", "offset": "0x1078", "u8": 0}],
+      "args": ["@pc", "", "Filled"]
+    },
+    {
+      "name": "null pc: returns 0 without touching memory",
+      "args": [0, "Alpha", "X"]
+    },
+    {
+      "name": "empty value empties the matched slot",
+      "args": ["@pc", "Delta", ""]
+    },
+    {
+      "name": "value equal to name: slot rewritten with itself",
+      "args": ["@pc", "Beta", "Beta"]
+    },
+    {
+      "name": "two slots hold the same name: both replaced (scan does not stop at a hit)",
+      "memory": [{"addr": "@pc", "offset": "0x1138", "cstr": "Alpha"}],
+      "args": ["@pc", "Alpha", "Dup"]
+    },
+    {
+      "name": "value of 47 chars fills a slot exactly: no overrun",
+      "args": ["@pc", "Alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstu"]
+    },
+    {
+      "name": "value of 48 chars: the terminator lands on slot 1's first byte",
+      "args": ["@pc", "Alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv"]
+    },
+    {
+      "name": "long value overruns into later slots, which then match in turn",
+      "args": ["@pc", "Alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvAlpha"]
+    }
+  ],
+  "fuzz": {
+    "seed": 4861948,
+    "count": 50,
+    "args": [
+      {
+        "choices": ["@pc", "@pc", 0]
+      },
+      {
+        "choices": ["Alpha", "alpha", "ALPHA", "Beta", "gamma", "Delta", "EPSILON", "zeta", "Omega", "Alp", "Alphabet", "", "Dup"]
+      },
+      {
+        "choices": ["", "New", "Replacement", "Alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstu", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvAlpha"]
+      }
+    ],
+    "memory": [
+      {"addr": "@pc+0x1078", "type": "u8", "choices": [0, 65, 97, 66], "p": 0.5},
+      {"addr": "@pc+0x10A8", "type": "u8", "choices": [0, 65, 97, 66], "p": 0.5},
+      {"addr": "@pc+0x10D8", "type": "u8", "choices": [0, 65, 97, 66], "p": 0.5},
+      {"addr": "@pc+0x1108", "type": "u8", "choices": [0, 65, 97, 66], "p": 0.5},
+      {"addr": "@pc+0x1138", "type": "u8", "choices": [0, 65, 97, 66], "p": 0.5},
+      {"addr": "@pc+0x1168", "type": "u8", "choices": [0, 65, 97, 66], "p": 0.5}
+    ]
+  }
+}

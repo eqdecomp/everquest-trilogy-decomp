@@ -1,0 +1,231 @@
+{
+  "function": "t3dSetPlaneEquation",
+  "original": "0x10011982",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "plane",
+      "type": "ptr"
+    },
+    {
+      "name": "normal",
+      "type": "ptr"
+    },
+    {
+      "name": "distance",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "plane": {
+      "size": "0x14",
+      "fill": "random"
+    },
+    "normal": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@plane",
+        "@normal",
+        1.5
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": 1.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@plane",
+          "offset": "0x0",
+          "u32": 305419896
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@plane",
+        "@normal",
+        0.0
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": 0.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": 0.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": 0.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "negative-distance",
+      "args": [
+        "@plane",
+        "@normal",
+        -4.25
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": -1.5
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": 2.25
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": -3.75
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "large-mixed",
+      "args": [
+        "@plane",
+        "@normal",
+        1000000.0
+      ],
+      "memory": [
+        {
+          "addr": "@normal",
+          "offset": "0x0",
+          "f32": 1000000000.0
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x4",
+          "f32": -0.00001
+        },
+        {
+          "addr": "@normal",
+          "offset": "0x8",
+          "f32": 3.4028235e38
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "self-alias",
+      "args": [
+        "@plane",
+        "@plane+0x4",
+        9.25
+      ],
+      "memory": [
+        {
+          "addr": "@plane",
+          "offset": "0x4",
+          "f32": 7.0
+        },
+        {
+          "addr": "@plane",
+          "offset": "0x8",
+          "f32": 8.0
+        },
+        {
+          "addr": "@plane",
+          "offset": "0xc",
+          "f32": 9.0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 72066,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@plane"
+        ]
+      },
+      {
+        "choices": [
+          "@normal"
+        ]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@normal",
+        "offset": "0x0",
+        "type": "float",
+        "count": 3,
+        "range": [
+          -100,
+          100
+        ]
+      },
+      {
+        "addr": "@plane",
+        "offset": "0x0",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@plane",
+        "offset": "0x10",
+        "type": "float",
+        "range": [
+          -50,
+          50
+        ],
+        "p": 0.5
+      }
+    ]
+  }
+}

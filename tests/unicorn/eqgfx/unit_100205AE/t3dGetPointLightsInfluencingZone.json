@@ -1,0 +1,125 @@
+{
+  "function": "t3dGetPointLightsInfluencingZone",
+  "original": "0x10021042",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "world", "type": "int"},
+    {"name": "light", "type": "ptr"},
+    {"name": "referenceList", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": 1},
+        {"offset": "0x1c", "u32": "@entries"}
+      ]
+    },
+    "entries": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@worldobject0"},
+        {"offset": "0x4", "u32": "@worldobject1"},
+        {"offset": "0x8", "u32": "@worldobject2"},
+        {"offset": "0xc", "u32": "@worldobject3"}
+      ]
+    },
+    "worldobject0": {"size": "0x30", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@regionset0"}]},
+    "worldobject1": {"size": "0x30", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@regionset1"}]},
+    "worldobject2": {"size": "0x30", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@regionset2"}]},
+    "worldobject3": {"size": "0x30", "fill": "zero", "init": [{"offset": "0x2c", "u32": "@regionset3"}]},
+    "regionset0": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x10", "u32": 2}, {"offset": "0x18", "u32": "@objectlist"}]},
+    "regionset1": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x18", "u32": "@objectlist"}]},
+    "regionset2": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x18", "u32": "@objectlist"}]},
+    "regionset3": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x10", "u32": 1}, {"offset": "0x18", "u32": "@objectlist"}]},
+    "objectlist": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@object0"},
+        {"offset": "0x4", "u32": "@object1"},
+        {"offset": "0x8", "u32": "@object2"},
+        {"offset": "0xc", "u32": "@object3"}
+      ]
+    },
+    "object0": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 30}]},
+    "object1": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 5}]},
+    "object2": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 30}]},
+    "object3": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "u32": 30}]},
+    "referencelist": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1001905a": {"name": "t3dClearReferenceList", "conv": "cdecl", "args": ["ptr"]},
+    "0x100190b6": {"name": "t3dFindReferenceInSortedList", "conv": "cdecl", "args": ["ptr", "ptr", "ignore"], "ret": 0, "writes": [{"arg": 2, "offset": 0, "hex": "05000000"}]},
+    "0x100190f9": {"name": "t3dInsertReferenceIntoList", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "object 0 inserted, object 1 skipped by its tag, object 2 past the count", "args": [1, "@light", "@referencelist"], "expect": {"ret": 0}},
+    {"name": "object 0 already listed, nothing inserted", "args": [1, "@light", "@referencelist"],
+     "callees": {"0x100190b6": {"name": "t3dFindReferenceInSortedList", "conv": "cdecl", "args": ["ptr", "ptr", "ignore"], "ret": 1, "writes": [{"arg": 2, "offset": 0, "hex": "05000000"}]}},
+     "expect": {"ret": 0}},
+    {"name": "insert of object 0 fails, returns 0xFFFF3D3E and skips object 2", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@regionset0", "offset": "0x10", "u32": 3}],
+     "callees": {"0x100190f9": {"name": "t3dInsertReferenceIntoList", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 1}},
+     "expect": {"ret": -49858}},
+    {"name": "object 0 listed, object 2 inserted", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@regionset0", "offset": "0x10", "u32": 3}],
+     "callees": {"0x100190b6": {"name": "t3dFindReferenceInSortedList", "conv": "cdecl", "args": ["ptr", "ptr", "ignore"], "ret": [1, 0], "writes": [{"arg": 2, "offset": 0, "hex": "05000000"}]}},
+     "expect": {"ret": 0}},
+    {"name": "no entries: clears the list and returns 0", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@light", "offset": "0x14", "u32": 0}],
+     "expect": {"ret": 0}},
+    {"name": "no entries and a null entry list", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@light", "offset": "0x14", "u32": 0}, {"addr": "@light", "offset": "0x1c", "u32": 0}],
+     "expect": {"ret": 0}},
+    {"name": "empty region set with a null object list", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@regionset0", "offset": "0x10", "u32": 0}, {"addr": "@regionset0", "offset": "0x18", "u32": 0}],
+     "expect": {"ret": 0}},
+    {"name": "no object tagged 0x1e: no find or insert", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@object0", "offset": "0x0", "u32": 5}],
+     "expect": {"ret": 0}},
+    {"name": "tag 0x1f is not a point light, object 2 inserted", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@regionset0", "offset": "0x10", "u32": 3}, {"addr": "@object0", "offset": "0x0", "u32": 31}],
+     "expect": {"ret": 0}},
+    {"name": "error in the first entry stops the outer loop too", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@light", "offset": "0x14", "u32": 2}, {"addr": "@regionset0", "offset": "0x10", "u32": 3}, {"addr": "@regionset1", "offset": "0x10", "u32": 4}],
+     "callees": {"0x100190f9": {"name": "t3dInsertReferenceIntoList", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": 1}},
+     "expect": {"ret": -49858}},
+    {"name": "second entry supplies the point lights after an empty first region set", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@light", "offset": "0x14", "u32": 2}, {"addr": "@regionset0", "offset": "0x10", "u32": 0}, {"addr": "@regionset1", "offset": "0x10", "u32": 4}],
+     "expect": {"ret": 0}},
+    {"name": "third insert fails across the object list, later objects skipped", "args": [1, "@light", "@referencelist"],
+     "memory": [{"addr": "@regionset0", "offset": "0x10", "u32": 4}],
+     "callees": {"0x100190f9": {"name": "t3dInsertReferenceIntoList", "conv": "cdecl", "args": ["ptr", "ptr", "int"], "ret": [0, 0, 1]}},
+     "expect": {"ret": -49858}},
+    {"name": "null reference list is only passed through to the callees", "args": [1, "@light", 0],
+     "expect": {"ret": 0}}
+  ],
+  "fuzz": {
+    "seed": 135234,
+    "count": 40,
+    "args": [
+      {"range": [-4, 30]},
+      {"choices": ["@light"]},
+      {"choices": ["@referencelist", 0]}
+    ],
+    "memory": [
+      {"addr": "@light", "offset": "0x14", "type": "u32", "range": [0, 4]},
+      {"addr": "@regionset0", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@regionset1", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@regionset2", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@regionset3", "offset": "0x10", "type": "u32", "range": [0, 4]},
+      {"addr": "@object0", "offset": "0x0", "type": "u32", "choices": [30, 5, 0, 31, 29]},
+      {"addr": "@object1", "offset": "0x0", "type": "u32", "choices": [30, 5, 0, 31, 29]},
+      {"addr": "@object2", "offset": "0x0", "type": "u32", "choices": [30, 5, 0, 31, 29]},
+      {"addr": "@object3", "offset": "0x0", "type": "u32", "choices": [30, 5, 0, 31, 29]}
+    ]
+  }
+}

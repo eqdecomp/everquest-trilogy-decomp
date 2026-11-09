@@ -1,0 +1,171 @@
+{
+  "function": "CEverQuest_SaveAndSendDeath_guess::PrepareLocalPCForRepop",
+  "original": "0x004c717d",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@ceverquest_saveandsenddeath",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "ceverquest_saveandsenddeath": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "ui": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "pc": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006E4E44",
+      "u32": "@ui"
+    },
+    {
+      "addr": "0x006E4DA8",
+      "u32": "@pc"
+    },
+    {
+      "addr": "0x00568308",
+      "u32": 4660
+    }
+  ],
+  "callees": {
+    "0x004cf31a": {
+      "name": "CEverQuest::saveOptions_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x004567f8": {
+      "name": "CEverQuest::saveCustom_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x0048048e": {
+      "name": "SendPlayerDeath_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "ui object and profile"
+    },
+    {
+      "name": "no ui object",
+      "memory": [
+        {
+          "addr": "0x006E4E44",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "no profile (no null check before SendPlayerDeath)",
+      "memory": [
+        {
+          "addr": "0x006E4DA8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "no ui object, no profile, zero argument",
+      "memory": [
+        {
+          "addr": "0x006E4E44",
+          "u32": 0
+        },
+        {
+          "addr": "0x006E4DA8",
+          "u32": 0
+        },
+        {
+          "addr": "0x00568308",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "saveOptions clears the ui pointer (re-read before the test)",
+      "callees": {
+        "0x004cf31a": {
+          "name": "CEverQuest::saveOptions_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {
+              "addr": "0x006E4E44",
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "saveOptions changes the argument (re-read before the push)",
+      "callees": {
+        "0x004cf31a": {
+          "name": "CEverQuest::saveOptions_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {
+              "addr": "0x00568308",
+              "hex": "efcdab89"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "saveCustom clears the profile and changes the argument",
+      "callees": {
+        "0x004567f8": {
+          "name": "CEverQuest::saveCustom_guess",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {
+              "addr": "0x006E4DA8",
+              "hex": "00000000"
+            },
+            {
+              "addr": "0x00568308",
+              "hex": "78563412"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5009789,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x006E4E44",
+        "type": "u32",
+        "choices": [0, "@ui"]
+      },
+      {
+        "addr": "0x006E4DA8",
+        "type": "u32",
+        "choices": [0, "@pc"]
+      },
+      {
+        "addr": "0x00568308",
+        "type": "u32"
+      }
+    ]
+  }
+}

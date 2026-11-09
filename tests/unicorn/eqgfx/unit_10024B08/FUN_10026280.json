@@ -1,0 +1,163 @@
+{
+  "function": "_t3dParseOnError",
+  "original": "0x10026280",
+  "sources": [
+    "src/eqgfx/unit_10024B08.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "message",
+      "type": "cstr"
+    }
+  ],
+  "ret": "int",
+  "objects": {},
+  "memory": [],
+  "callees": {
+    "user32.dll!MessageBoxA": {
+      "name": "MessageBoxA",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "cstr",
+        "cstr",
+        "u32"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        0,
+        "Failed to parse world file"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zeros",
+      "args": [
+        0,
+        ""
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "unused nonzero ignored",
+      "args": [
+        12345,
+        "abc"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "unused negative ignored",
+      "args": [
+        -1,
+        "abc"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "unused INT_MAX ignored",
+      "args": [
+        2147483647,
+        "abc"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "unused INT_MIN ignored",
+      "args": [
+        -2147483648,
+        "abc"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "long message",
+      "args": [
+        0,
+        "This is a much longer world parser error message with numbers 12345 and symbols !@#$% and a path C:\\everquest\\world\\qeynos.wld repeated to be long"
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "messagebox returns IDCANCEL still returns 1",
+      "args": [
+        0,
+        "abc"
+      ],
+      "callees": {
+        "user32.dll!MessageBoxA": {
+          "name": "MessageBoxA",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "cstr",
+            "cstr",
+            "u32"
+          ],
+          "ret": 2
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "messagebox returns 0 still returns 1",
+      "args": [
+        7,
+        "different text"
+      ],
+      "callees": {
+        "user32.dll!MessageBoxA": {
+          "name": "MessageBoxA",
+          "conv": "stdcall",
+          "args": [
+            "u32",
+            "cstr",
+            "cstr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 156288,
+    "count": 30,
+    "args": [
+      {
+        "range": [-8, 64]
+      },
+      {}
+    ],
+    "memory": []
+  }
+}

@@ -1,0 +1,345 @@
+{
+  "function": "s3dDestroyDMRGBTrack",
+  "original": "0x10010eed",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "offset": "0x34",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10017dad": {
+      "name": "t3dUnshareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 305419896
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "nonzero use count returns the error without cleanup",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x34",
+          "u32": "@dictionary"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "negative use count is also busy",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "idle with null shared object and key skips removal and key free",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x34",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "flag bit zero removes entry and nonnull key is freed after destroy helper",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x34",
+          "u32": "@dictionary"
+        }
+      ],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 2712847316
+        }
+      },
+      "expect": {
+        "ret": 2712847316
+      }
+    },
+    {
+      "name": "other flag bits do not remove the dictionary entry but still free the key",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": "@dictionary"
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 254
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0x34",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "flag bit zero removes a null key too",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x8",
+          "u32": 0
+        },
+        {
+          "addr": "@track",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 305419896
+      }
+    },
+    {
+      "name": "high use count does not pass the equality check",
+      "args": [
+        "@dictionary",
+        "@track"
+      ],
+      "memory": [
+        {
+          "addr": "@track",
+          "offset": "0x10",
+          "u32": 65536
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 2694,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@track"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@track",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@dictionary"
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0xc",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          128,
+          255
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          65536,
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@track",
+        "offset": "0x34",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@dictionary"
+        ]
+      }
+    ]
+  }
+}

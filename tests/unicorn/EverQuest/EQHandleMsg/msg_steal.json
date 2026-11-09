@@ -1,0 +1,189 @@
+{
+  "function": "msg_steal_guess",
+  "original": "0x00494485",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "connection", "type": "ptr"},
+    {"name": "opcode", "type": "u32"},
+    {"name": "msg", "type": "ptr"},
+    {"name": "size", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "connection": {"size": "0x100", "fill": "zero"},
+    "msg": {"size": "0x200", "fill": "zero"},
+    "everquest": {"size": "0x100", "fill": "zero"},
+    "counter": {"size": "0xA0", "fill": "zero"},
+    "first": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtable"}
+    ]},
+    "second": {"size": "0x200", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtable"}
+    ]},
+    "vtable": {"size": "0x20", "fill": "zero", "init": [
+      {"offset": "0x8", "u32": "@update"}
+    ]},
+    "profile": {"size": "0x1FA4", "fill": "zero", "init": [
+      {"offset": "0xE0", "u32": "@container"}
+    ]},
+    "state": {"size": "0x40", "fill": "zero"},
+    "copybuf": {"size": "0xAC", "fill": "zero"},
+    "equipment": {"size": "0x124", "fill": "zero"},
+    "note": {"size": "0xD0", "fill": "zero"},
+    "update": {"size": "0x10", "fill": "zero"},
+    "container": {"size": "0xD4", "fill": "zero", "init": [
+      {"offset": "0x81", "u8": 1}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006B3194", "u32": "0x12345678"},
+    {"addr": "0x006E4E44", "u32": "@counter"},
+    {"addr": "0x006018C0", "u32": "@first"},
+    {"addr": "0x00604984", "u32": "@second"},
+    {"addr": "0x005DFBBC", "u32": 0},
+    {"addr": "0x006E4DE0", "u32": "@state"},
+    {"addr": "0x006E4DA8", "u32": "@profile"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x004a46f6": {"name": "random_range_guess", "conv": "cdecl", "args": ["int", "int"], "ret": 17},
+    "0x004d055e": {"name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"]},
+    "0x005224fb": {"name": "sprintf", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:8", "u32", "int"]},
+    "0x005218c6": {"name": "operator_new", "conv": "cdecl", "args": ["u32"], "ret": ["@copybuf", "@equipment"]},
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x00436099": {"name": "EQ_Equipment::EQ_Equipment_guess", "conv": "thiscall", "args": [], "ret": "@equipment"},
+    "0x0044ff75": {"name": "EQ_Note::EQ_Note_guess", "conv": "thiscall", "args": [], "ret": "@equipment"},
+    "0x004a2816": {"name": "CheckDupLoreItems", "conv": "cdecl", "args": ["ptr"]},
+    "@update": {"name": "container_refresh_guess", "conv": "thiscall", "args": []}
+  },
+  "rewrite_aliases": {"__EH_prolog": "0x0052189c"},
+  "cases": [
+    {"name": "unsuccessful attempt rewrites status and sends reply", "args": ["@connection", 0, "@msg", 0], "memory": [
+      {"addr": "@msg", "offset": "0x0", "u32": "0x11223344"},
+      {"addr": "@msg", "offset": "0x4", "u32": "0x55667788"},
+      {"addr": "@msg", "offset": "0x9", "u8": 255}
+    ]},
+    {"name": "unsuccessful reply preserves arbitrary request words", "args": ["@connection", 8365, "@msg", 310], "memory": [
+      {"addr": "@msg", "offset": "0x0", "u32": 0},
+      {"addr": "@msg", "offset": "0x4", "u32": 4294967295},
+      {"addr": "@msg", "offset": "0x9", "u8": 255}
+    ]},
+    {"name": "status zero reports unsuccessful theft", "args": ["@connection", 1, "@msg", 0], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 0}
+    ]},
+    {"name": "platinum addition signed lower boundary", "args": ["@connection", 2, "@msg", 1], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 1},
+      {"addr": "@msg", "offset": "0xC", "u32": 2147483648},
+      {"addr": "@profile", "offset": "0x998", "u32": 2147483647}
+    ]},
+    {"name": "gold addition signed upper boundary", "args": ["@connection", 3, "@msg", 2], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 2},
+      {"addr": "@msg", "offset": "0xC", "u32": 2147483647},
+      {"addr": "@profile", "offset": "0x99C", "u32": 4294967295}
+    ]},
+    {"name": "silver addition negative amount", "args": ["@connection", 4, "@msg", 3], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 3},
+      {"addr": "@msg", "offset": "0xC", "u32": 4294967295}
+    ]},
+    {"name": "copper addition zero amount", "args": ["@connection", 5, "@msg", 4], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 4},
+      {"addr": "@msg", "offset": "0xC", "u32": 0}
+    ]},
+    {"name": "unknown positive status skips chat", "args": ["@connection", 6, "@msg", 5], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 6}
+    ]},
+    {"name": "signed high status skips chat", "args": ["@connection", 7, "@msg", 6], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 128}
+    ]},
+    {"name": "equipment item with negative slot is discarded", "args": ["@connection", 8, "@msg", 7], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 65535}
+    ]},
+    {"name": "equipment enters inventory slot zero and refreshes UI", "args": ["@connection", 9, "@msg", 8], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 0},
+      {"addr": "@msg", "offset": "0x10", "cstr": "Test Blade"},
+      {"addr": "@first", "offset": "0x10", "u32": 1},
+      {"addr": "@second", "offset": "0x10", "u32": 1},
+      {"addr": "@counter", "offset": "0x94", "u32": 1}
+    ]},
+    {"name": "equipment inventory upper slot boundary", "args": ["@connection", 10, "@msg", 9], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 29}
+    ]},
+    {"name": "equipment bag lower boundary targets first container slot", "args": ["@connection", 11, "@msg", 10], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 30}
+    ]},
+    {"name": "equipment bag upper boundary targets last container slot", "args": ["@connection", 12, "@msg", 11], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 39}
+    ]},
+    {"name": "bag item dropped when indexed inventory entry is empty", "args": ["@connection", 13, "@msg", 12], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 40}
+    ]},
+    {"name": "second bag index selects inventory entry one", "args": ["@connection", 18, "@msg", 12], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 40},
+      {"addr": "@profile", "offset": "0xE4", "u32": "@container"}
+    ]},
+    {"name": "bag item dropped when destination is not a container", "args": ["@connection", 14, "@msg", 13], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 30},
+      {"addr": "@container", "offset": "0x81", "u8": 0}
+    ]},
+    {"name": "negative item icon reports ground drop but still inserts", "args": ["@connection", 15, "@msg", 14], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 0},
+      {"addr": "@msg", "offset": "0x96", "u16": 1},
+      {"addr": "@msg", "offset": "0x94", "u16": 65535}
+    ]},
+    {"name": "note item follows alternate constructor and can enter bag", "args": ["@connection", 16, "@msg", 15], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 5},
+      {"addr": "@msg", "offset": "0x91", "u8": 1},
+      {"addr": "@msg", "offset": "0x96", "u16": 30}
+    ]},
+    {"name": "counter clamps at zero and disabled interfaces do not refresh", "args": ["@connection", 17, "@msg", 16], "memory": [
+      {"addr": "@msg", "offset": "0x9", "u8": 6},
+      {"addr": "@counter", "offset": "0x94", "u32": 4294967295},
+      {"addr": "@first", "offset": "0x10", "u32": 0},
+      {"addr": "@second", "offset": "0x10", "u32": 0}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4944485,
+    "count": 36,
+    "args": [
+      {"choices": ["@connection"]},
+      {"range": [-10, 10]},
+      {"choices": ["@msg"]},
+      {"choices": [0, 1, 18, 226, 310]}
+    ],
+    "memory": [
+      {"addr": "@msg", "offset": "0x9", "type": "u8", "choices": [0, 1, 2, 3, 4, 5, 6, 127, 128, 255]},
+      {"addr": "@msg", "offset": "0xC", "type": "int", "choices": [-2147483648, -1, 0, 1, 2147483647]},
+      {"addr": "@msg", "offset": "0x91", "type": "u8", "choices": [0, 1]},
+      {"addr": "@msg", "offset": "0x96", "type": "short", "choices": [-1, 0, 1, 29, 30, 31, 39, 40, 119]},
+      {"addr": "@msg", "offset": "0x94", "type": "short", "choices": [-1, 0, 1, 29, 30, 39, 40]},
+      {"addr": "@first", "offset": "0x10", "type": "u32", "choices": [0, 1]},
+      {"addr": "@second", "offset": "0x10", "type": "u32", "choices": [0, 1]},
+      {"addr": "@counter", "offset": "0x94", "type": "int", "range": [-2, 2]},
+      {"addr": "@profile", "offset": "0x998", "type": "int", "range": [-20, 20]},
+      {"addr": "@profile", "offset": "0x99C", "type": "int", "range": [-20, 20]},
+      {"addr": "@profile", "offset": "0x9A0", "type": "int", "range": [-20, 20]},
+      {"addr": "@profile", "offset": "0x9A4", "type": "int", "range": [-20, 20]}
+    ]
+  }
+}

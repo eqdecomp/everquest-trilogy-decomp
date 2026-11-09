@@ -1,0 +1,545 @@
+{
+  "function": "CEverQuest_ProcessMBox_type_guess::ProcessMBox_guess",
+  "original": "0x004c4ee7",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "rewrite": "CEverQuest_ProcessMBox_type_guess::ProcessMBox_guess",
+  "conv": "thiscall",
+  "this": "@ceverquest",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "ceverquest": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "transport": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "incoming": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "incoming2": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "connection": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "application": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1
+        }
+      ]
+    },
+    "data": {
+      "size": "0x8",
+      "fill": "zero"
+    },
+    "worldConnection": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006b63f8",
+      "u8": 0
+    },
+    {
+      "addr": "0x006ecca8",
+      "u32": "@transport"
+    },
+    {
+      "addr": "0x006048e8",
+      "size": 32,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": 0
+    },
+    {
+      "addr": "@data",
+      "u16": 4660
+    },
+    {
+      "addr": "@data",
+      "offset": "0x2",
+      "u16": 22136
+    }
+  ],
+  "callees": {
+    "0x004f1600": {
+      "name": "rdp_receive",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": [
+        "@incoming",
+        0
+      ]
+    },
+    "0x004f4cb0": {
+      "name": "msg_arrival_get_sender_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@connection"
+    },
+    "0x004f23c0": {
+      "name": "connection_app_ptr_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@application"
+    },
+    "0x004f4c80": {
+      "name": "msg_arrival_get_size_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x004f21d0": {
+      "name": "connection_close",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int",
+        "int"
+      ]
+    },
+    "0x004f4cc0": {
+      "name": "msg_arrival_has_fin_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": [
+        0,
+        1
+      ]
+    },
+    "0x004f23b0": {
+      "name": "connection_connected_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": [
+        0,
+        0
+      ]
+    },
+    "0x004c1703": {
+      "name": "DbgLog_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "int",
+        "int"
+      ]
+    },
+    "0x004f4c90": {
+      "name": "msg_arrival_get_data",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": "@data"
+    },
+    "kernel32.dll!EnterCriticalSection": {
+      "name": "EnterCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "kernel32.dll!LeaveCriticalSection": {
+      "name": "LeaveCriticalSection",
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x00496743": {
+      "name": "CEverQuest::HandleWorldMessage_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr",
+        "u32"
+      ],
+      "ret": 257
+    },
+    "0x004f4ac0": {
+      "name": "fast_free_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "MBox gate skips receive and returns true",
+      "memory": [
+        {
+          "addr": "0x006b63f8",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "empty queue returns the initialized true result",
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "senderless message is freed before polling again",
+      "callees": {
+        "0x004f4cb0": {
+          "name": "msg_arrival_get_sender_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "zero application pointer closes sender then checks short message",
+      "memory": [
+        {
+          "addr": "@application",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            1
+          ]
+        },
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "short message with FIN logs and closes world connection",
+      "memory": [
+        {
+          "addr": "0x006b3194",
+          "u32": "@worldConnection"
+        }
+      ],
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            1,
+            1
+          ]
+        },
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            0
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "connected short message without FIN is ignored",
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        },
+        "0x004f4cc0": {
+          "name": "msg_arrival_has_fin_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0
+        },
+        "0x004f23b0": {
+          "name": "connection_connected_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "two-byte boundary takes the world-message branch",
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 2
+        },
+        "0x00496743": {
+          "name": "CEverQuest::HandleWorldMessage_guess",
+          "conv": "thiscall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "u32"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "handler result is truncated to its low byte",
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 4
+        },
+        "0x00496743": {
+          "name": "CEverQuest::HandleWorldMessage_guess",
+          "conv": "thiscall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "u32"
+          ],
+          "ret": 257
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "handler zero low byte returns immediately",
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 2
+        },
+        "0x00496743": {
+          "name": "CEverQuest::HandleWorldMessage_guess",
+          "conv": "thiscall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "u32"
+          ],
+          "ret": 256
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one-byte boundary uses the short-message path",
+      "callees": {
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "senderless message is freed before the next message is handled",
+      "callees": {
+        "0x004f1600": {
+          "name": "rdp_receive_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": [
+            "@incoming",
+            "@incoming2",
+            0
+          ]
+        },
+        "0x004f4cb0": {
+          "name": "msg_arrival_get_sender_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": [
+            0,
+            "@connection"
+          ]
+        },
+        "0x004f4c80": {
+          "name": "msg_arrival_get_size_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 2
+        },
+        "0x00496743": {
+          "name": "CEverQuest::HandleWorldMessage_guess",
+          "conv": "thiscall",
+          "args": [
+            "ptr",
+            "u32",
+            "ptr",
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5000935,
+    "count": 36,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x006b63f8",
+        "type": "u8",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@application",
+        "type": "u32",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "0x006b3194",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@worldConnection"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "function": "EQMain_PrintTimestamp_guess",
+  "original": "0x10016820",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "tm": {"size": "0x24", "fill": "zero"},
+    "sink": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x4", "u32": "0x00402a10"}]},
+    "fmt_a": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "%H:%M:%S"}]},
+    "fmt_b": {"size": "0x10", "fill": "zero", "init": [{"offset": "0x0", "cstr": "%Y"}]}
+  },
+  "memory": [
+    {"addr": "0x10055958", "u32": "@fmt_a"}
+  ],
+  "callees": {
+    "0x10035b24": {"name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": 1234567890},
+    "0x100359c4": {"name": "_localtime", "conv": "cdecl", "args": ["mem:4"], "ret": "@tm"},
+    "0x10035112": {
+      "name": "_strftime", "conv": "cdecl", "args": ["ignore", "u32", "cstr", "ptr"], "ret": 24,
+      "writes": [{"arg": 0, "hex": "31323a30303a303000"}]
+    },
+    "0x10034117": {"name": "_sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true},
+    "0x10020ef0": {"name": "FUN_10020ef0", "conv": "cdecl", "args": ["char"], "ret": "@sink"},
+    "0x100224b0": {"name": "FUN_100224b0", "conv": "cdecl", "args": ["cstr", "u32", "u8"]}
+  },
+  "cases": [
+    {"name": "typical", "args": []},
+    {
+      "name": "time_zero", "args": [],
+      "callees": {"0x10035b24": {"name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": 0}}
+    },
+    {
+      "name": "time_minus_one", "args": [],
+      "callees": {"0x10035b24": {"name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": -1}}
+    },
+    {
+      "name": "time_int_min", "args": [],
+      "callees": {"0x10035b24": {"name": "_time", "conv": "cdecl", "args": ["ptr"], "ret": -2147483648}}
+    },
+    {
+      "name": "strftime_empty", "args": [],
+      "callees": {
+        "0x10035112": {"name": "_strftime", "conv": "cdecl", "args": ["ignore", "u32", "cstr", "ptr"], "ret": 0,
+                       "writes": [{"arg": 0, "hex": "00"}]}
+      }
+    },
+    {
+      "name": "strftime_percent_literal", "args": [],
+      "callees": {
+        "0x10035112": {"name": "_strftime", "conv": "cdecl", "args": ["ignore", "u32", "cstr", "ptr"], "ret": 4,
+                       "writes": [{"arg": 0, "hex": "2573252500"}]}
+      }
+    },
+    {
+      "name": "sink_word_all_ones", "args": [],
+      "memory": [{"addr": "@sink", "offset": "0x4", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "format_second_string", "args": [],
+      "memory": [{"addr": "0x10055958", "u32": "@fmt_b"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 92192,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@sink", "offset": "0x4", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

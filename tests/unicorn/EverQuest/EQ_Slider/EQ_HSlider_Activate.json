@@ -1,0 +1,180 @@
+{
+  "function": "EQ_HSlider_Activate_guess",
+  "rewrite": "EQ_HSlider_Activate_guess",
+  "original": "0x0048629a",
+  "sources": ["src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@slider",
+  "args": [
+    {"name": "range", "type": "ptr"},
+    {"name": "mode", "type": "u8"},
+    {"name": "value", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "slider": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtable"},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0x24", "u32": 10},
+        {"offset": "0x28", "u32": 20},
+        {"offset": "0x70", "u32": "@element1"},
+        {"offset": "0x90", "u32": 0},
+        {"offset": "0x94", "u32": 0},
+        {"offset": "0x98", "u32": 0},
+        {"offset": "0x9c", "u32": 0},
+        {"offset": "0xa8", "u32": 0},
+        {"offset": "0xac", "u32": 0},
+        {"offset": "0xb0", "u32": 66},
+        {"offset": "0xb4", "u32": 0},
+        {"offset": "0xc0", "u32": 0},
+        {"offset": "0xc4", "u32": 0},
+        {"offset": "0xc8", "u32": 40},
+        {"offset": "0xcc", "u32": 0},
+        {"offset": "0x1c0", "u32": "@thumb"},
+        {"offset": "0x1d0", "u32": "@range"},
+        {"offset": "0x1d4", "u8": 0},
+        {"offset": "0x1d8", "u32": 0},
+        {"offset": "0x1e4", "u32": 0},
+        {"offset": "0x1e8", "u32": 0}
+      ]
+    },
+    "range": {"size": 4, "fill": "zero", "init": [{"offset": 0, "u32": 37}]},
+    "thumb": {
+      "size": 16,
+      "fill": "random",
+      "init": [
+        {"offset": 0, "u32": 60},
+        {"offset": 4, "u32": 5},
+        {"offset": 8, "u32": 70},
+        {"offset": 12, "u32": 55}
+      ]
+    },
+    "element1": {
+      "size": "0x24",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u16": 0},
+        {"offset": "0x20", "u32": "@element2"}
+      ]
+    },
+    "element2": {
+      "size": "0x24",
+      "fill": "random",
+      "init": [
+        {"offset": "0x14", "u16": 1},
+        {"offset": "0x20", "u32": 0}
+      ]
+    },
+    "vtable": {"size": 4, "fill": "zero", "init": [{"offset": 0, "u32": "@callback"}]},
+    "callback": {"size": 4, "fill": "zero"},
+    "window_state": {"size": "0x98", "fill": "zero", "init": [{"offset": "0x94", "u32": 0}]},
+    "ui_state": {"size": "0x40", "fill": "zero"},
+    "profile": {"size": "0xe4", "fill": "zero"},
+    "other_state": {"size": "0x14", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": "@window_state"},
+    {"addr": "0x006e4de0", "u32": "@ui_state"},
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006018c0", "u32": "@other_state"},
+    {"addr": "0x006efc80", "u32": 100},
+    {"addr": "0x006efc84", "u32": 80},
+    {"addr": "0x006b70ec", "u32": 1},
+    {"addr": "0x006b70e8", "u32": 0}
+  ],
+  "callees": {
+    "user32.dll!SetRect": {
+      "name": "SetRect",
+      "conv": "stdcall",
+      "args": ["ptr", "int", "int", "int", "int"],
+      "ret": 1
+    },
+    "0x00419583": {
+      "name": "RectElement_guess::SetRect_Win32_guess",
+      "conv": "thiscall",
+      "args": ["int", "int"]
+    },
+    "user32.dll!CopyRect": {
+      "name": "CopyRect",
+      "conv": "stdcall",
+      "args": ["ptr", "mem:16"],
+      "ret": 1
+    },
+    "@callback": {
+      "name": "ActivateCallback_guess",
+      "conv": "thiscall",
+      "args": ["int", "int"]
+    }
+  },
+  "cases": [
+    {"name": "typical with two list elements", "args": ["@range", 1, 123]},
+    {"name": "negative display origin clamps", "args": ["@range", 0, -12], "memory": [
+      {"addr": "0x006efc80", "u32": -90}, {"addr": "0x006efc84", "u32": -20}
+    ]},
+    {"name": "display origin upper bounds", "args": ["@range", 255, 655], "memory": [
+      {"addr": "0x006efc80", "u32": 1200}, {"addr": "0x006efc84", "u32": 900}
+    ]},
+    {"name": "no list elements", "args": ["@range", 3, 22], "memory": [
+      {"addr": "@slider", "offset": "0x70", "u32": 0}
+    ]},
+    {"name": "modal state blocks activation", "args": ["@range", 4, 21], "memory": [
+      {"addr": "@window_state", "offset": "0x94", "u32": 1}
+    ]},
+    {"name": "first ui flag blocks activation", "args": ["@range", 5, 20], "memory": [
+      {"addr": "@ui_state", "offset": "0x3d", "u8": 1}
+    ]},
+    {"name": "second ui flag blocks activation", "args": ["@range", 6, 19], "memory": [
+      {"addr": "@ui_state", "offset": "0x3e", "u8": 1}
+    ]},
+    {"name": "inventory item blocks activation", "args": ["@range", 7, 18], "memory": [
+      {"addr": "@profile", "offset": "0xe0", "u32": 1}
+    ]},
+    {"name": "third ui flag blocks activation", "args": ["@range", 8, 17], "memory": [
+      {"addr": "@ui_state", "offset": "0x3c", "u8": 1}
+    ]},
+    {"name": "other state blocks activation", "args": ["@range", 9, 16], "memory": [
+      {"addr": "@other_state", "offset": "0x10", "u32": 1}
+    ]},
+    {"name": "window pointer is null", "args": ["@range", 10, 15], "memory": [
+      {"addr": "0x006e4e44", "u32": 0}
+    ]},
+    {"name": "no callback when both interaction globals are zero", "args": ["@range", 11, 14], "memory": [
+      {"addr": "0x006b70ec", "u32": 0}, {"addr": "0x006b70e8", "u32": 0}
+    ]},
+    {"name": "range value callback", "args": ["@range", 12, 13], "memory": [
+      {"addr": "0x006b70ec", "u32": 0}, {"addr": "0x006b70e8", "u32": 1}
+    ]},
+    {"name": "range points at the thumb rect, which activation rewrites before the callback", "args": ["@thumb", 12, 13], "memory": [
+      {"addr": "0x006b70ec", "u32": 0}, {"addr": "0x006b70e8", "u32": 1}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4743834,
+    "count": 40,
+    "args": [
+      {"choices": ["@range"]},
+      {"range": [0, 255]},
+      {"range": [-1000, 1000]}
+    ],
+    "memory": [
+      {"addr": "@range", "offset": 0, "type": "int", "range": [-10000, 10000]},
+      {"addr": "0x006efc80", "type": "int", "range": [-1000, 1200]},
+      {"addr": "0x006efc84", "type": "int", "range": [-1000, 900]},
+      {"addr": "0x006b70ec", "type": "int", "choices": [0, 1]},
+      {"addr": "0x006b70e8", "type": "int", "choices": [0, 1]},
+      {"addr": "@window_state", "offset": "0x94", "type": "int", "choices": [0, 1], "p": 0.25},
+      {"addr": "@ui_state", "offset": "0x3c", "type": "u8", "choices": [0, 1], "p": 0.25},
+      {"addr": "@ui_state", "offset": "0x3d", "type": "u8", "choices": [0, 1], "p": 0.25},
+      {"addr": "@ui_state", "offset": "0x3e", "type": "u8", "choices": [0, 1], "p": 0.25},
+      {"addr": "@profile", "offset": "0xe0", "type": "u32", "choices": [0, 1], "p": 0.25},
+      {"addr": "@other_state", "offset": "0x10", "type": "int", "choices": [0, 1], "p": 0.25},
+      {"addr": "@element1", "offset": "0x14", "type": "short", "range": [-8, 10]},
+      {"addr": "@element2", "offset": "0x14", "type": "short", "range": [-8, 10]}
+    ]
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "function": "EQMissile_CleanupMissileEffects_guess",
+  "original": "0x004ad088",
+  "sources": [
+    "src/EverQuest/EQMissile.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "m",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "m": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4c", "u32": 7}
+      ]
+    },
+    "o": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x4c", "u32": "0x35b"}
+      ]
+    },
+    "e0": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": "@e1"},
+        {"offset": "0x5c", "u32": "@m"}
+      ]
+    },
+    "e1": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": "@e2"},
+        {"offset": "0x5c", "u32": "@o"}
+      ]
+    },
+    "e2": {
+      "size": "0x80",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": 0},
+        {"offset": "0x5c", "u32": "@m"}
+      ]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4d74", "u32": "@e0"}
+  ],
+  "callees": {
+    "0x00490ef4": {
+      "name": "EQEffect::~EQEffect_guess",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "mixed owners, delete path",
+      "args": ["@m"]
+    },
+    {
+      "name": "mixed owners, 0x35b detach path",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "@m", "offset": "0x4c", "u32": "0x35b"}
+      ]
+    },
+    {
+      "name": "boundary 0x35a deletes",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "@m", "offset": "0x4c", "u32": "0x35a"}
+      ]
+    },
+    {
+      "name": "boundary 0x35c deletes",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "@m", "offset": "0x4c", "u32": "0x35c"}
+      ]
+    },
+    {
+      "name": "empty list",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "0x006e4d74", "u32": 0}
+      ]
+    },
+    {
+      "name": "none owned by m",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "@e0", "offset": "0x5c", "u32": "@o"},
+        {"addr": "@e2", "offset": "0x5c", "u32": 0}
+      ]
+    },
+    {
+      "name": "all owned, delete order",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "@e1", "offset": "0x5c", "u32": "@m"}
+      ]
+    },
+    {
+      "name": "single element owned",
+      "args": ["@m"],
+      "memory": [
+        {"addr": "0x006e4d74", "u32": "@e2"}
+      ]
+    },
+    {
+      "name": "other missile with 0x35b",
+      "args": ["@o"]
+    }
+  ],
+  "fuzz": {
+    "seed": 4903048,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@m", "@o"]
+      }
+    ],
+    "memory": [
+      {"addr": "@m", "offset": "0x4c", "type": "u32", "choices": [0, "0x35a", "0x35b", "0x35c"]},
+      {"addr": "@o", "offset": "0x4c", "type": "u32", "choices": [0, "0x35b"]},
+      {"addr": "@e0", "offset": "0x5c", "type": "u32", "choices": ["@m", "@o", 0]},
+      {"addr": "@e1", "offset": "0x5c", "type": "u32", "choices": ["@m", "@o", 0]},
+      {"addr": "@e2", "offset": "0x5c", "type": "u32", "choices": ["@m", "@o", 0]},
+      {"addr": "0x006e4d74", "type": "u32", "choices": ["@e0", "@e1", "@e2", 0]}
+    ]
+  }
+}

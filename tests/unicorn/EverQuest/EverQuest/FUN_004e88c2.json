@@ -1,0 +1,268 @@
+{
+  "function": "ProcessGameThread_guess",
+  "original": "0x004e88c2",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "everquest": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 0
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006EFE2C",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006EFE30",
+      "u32": 0
+    },
+    {
+      "addr": "0x006EE7BC",
+      "u32": "0x11223344"
+    },
+    {
+      "addr": "0x006EE720",
+      "u32": "0x55667788"
+    }
+  ],
+  "callees": {
+    "0x004da043": {
+      "name": "CEverQuest::ProcessGame_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "user32.dll!PostMessageA": {
+      "name": "PostMessageA",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "state zero invokes ProcessGame with window then instance",
+      "args": [
+        "@context"
+      ],
+      "objects": {
+        "everquest": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nonzero object state skips ProcessGame",
+      "args": [
+        "@context"
+      ],
+      "objects": {
+        "everquest": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative object state skips ProcessGame",
+      "args": [
+        "@context"
+      ],
+      "objects": {
+        "everquest": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0xffffffff"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "null everquest pointer skips ProcessGame",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {
+          "addr": "0x006EFE2C",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "zero context is ignored",
+      "args": [
+        0
+      ],
+      "objects": {
+        "everquest": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "initial flag reset is visible during ProcessGame",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {
+          "addr": "0x006EFE30",
+          "u32": 7
+        },
+        {
+          "addr": "0x006EE7BC",
+          "u32": "0x006EFE30"
+        }
+      ],
+      "objects": {
+        "everquest": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x004da043": {
+          "name": "CEverQuest::ProcessGame_guess",
+          "conv": "thiscall",
+          "args": [
+            "mem:4",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "call arguments preserve high-bit dwords",
+      "args": [
+        "@context"
+      ],
+      "memory": [
+        {
+          "addr": "0x006EE7BC",
+          "u32": "0x80000001"
+        },
+        {
+          "addr": "0x006EE720",
+          "u32": "0xffffffff"
+        }
+      ],
+      "objects": {
+        "everquest": {
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5146818,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006EFE2C",
+        "type": "u32",
+        "choices": [
+          0,
+          "@everquest"
+        ]
+      },
+      {
+        "addr": "@everquest",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2147483647
+        ]
+      },
+      {
+        "addr": "0x006EE7BC",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "0x006EE720",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

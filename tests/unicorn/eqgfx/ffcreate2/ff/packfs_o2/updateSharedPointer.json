@@ -1,0 +1,129 @@
+{
+  "function": "PackFsSharedPtr_guess::updateSharedPointer_guess",
+  "original": "0x10054520",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/packfs_o2.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@packfssharedptr",
+  "args": [
+    {
+      "name": "other",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "coverage_ok": {
+    "10054548-10054563": "the self-assignment path (this == &other, the by-value copy's own stack slot) needs this to alias the callee's argument slot; no C++ caller passes that, and the fixture cannot place this on the stack"
+  },
+  "objects": {
+    "packfssharedptr": {
+      "size": "0x4",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@oldobj"}
+      ]
+    },
+    "oldobj": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl"},
+        {"offset": "0x4", "u32": 2}
+      ]
+    },
+    "newobj": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl"},
+        {"offset": "0x4", "u32": 5}
+      ]
+    },
+    "objC": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "@vtbl"},
+        {"offset": "0x4", "u32": 1}
+      ]
+    },
+    "destroy": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "vtbl": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@destroy"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@destroy": {"conv": "thiscall", "args": ["int"]}
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@newobj"]
+    },
+    {
+      "name": "old_last_reference_destroyed",
+      "args": ["@newobj"],
+      "memory": [{"addr": "@oldobj", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "old_count_zero_not_destroyed",
+      "args": ["@newobj"],
+      "memory": [{"addr": "@oldobj", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "null_old",
+      "args": ["@newobj"],
+      "memory": [{"addr": "@packfssharedptr", "u32": 0}]
+    },
+    {
+      "name": "null_new",
+      "args": [0]
+    },
+    {
+      "name": "both_null",
+      "args": [0],
+      "memory": [{"addr": "@packfssharedptr", "u32": 0}]
+    },
+    {
+      "name": "same_object",
+      "args": ["@oldobj"]
+    },
+    {
+      "name": "same_object_last_reference",
+      "args": ["@oldobj"],
+      "memory": [{"addr": "@oldobj", "offset": "0x4", "u32": 1}]
+    },
+    {
+      "name": "new_count_zero_destroyed_by_copy_release",
+      "args": ["@newobj"],
+      "memory": [{"addr": "@newobj", "offset": "0x4", "u32": 0}]
+    },
+    {
+      "name": "new_count_minus_one",
+      "args": ["@newobj"],
+      "memory": [{"addr": "@newobj", "offset": "0x4", "u32": "0xFFFFFFFF"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 345376,
+    "count": 40,
+    "args": [
+      {"choices": [0, "@oldobj", "@newobj", "@objC"]}
+    ],
+    "memory": [
+      {"addr": "@packfssharedptr", "type": "ptr", "choices": [0, "@oldobj", "@newobj", "@objC"]},
+      {"addr": "@oldobj", "offset": "0x4", "type": "int", "range": [-1, 3]},
+      {"addr": "@newobj", "offset": "0x4", "type": "int", "range": [-1, 3]},
+      {"addr": "@objC", "offset": "0x4", "type": "int", "range": [-1, 3]}
+    ]
+  }
+}

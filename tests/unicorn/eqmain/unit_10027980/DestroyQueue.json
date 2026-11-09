@@ -1,0 +1,296 @@
+{
+  "function": "DestroyQueue_guess",
+  "original": "0x10027b70",
+  "sources": [
+    "src/eqmain/unit_10027980.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x4",
+      "fill": "random",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "@queue"
+        }
+      ]
+    },
+    "queue": {
+      "size": "0x10",
+      "init": [
+        {
+          "offset": 0,
+          "u32": "@node"
+        }
+      ]
+    },
+    "node": {
+      "size": "0x8",
+      "init": [
+        {
+          "offset": 4,
+          "u32": "@item"
+        }
+      ]
+    },
+    "item": {
+      "size": "0x10"
+    }
+  },
+  "callees": {
+    "0x10028430": {
+      "name": "FUN_10028430",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@item",
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 8,
+          "hex": "00000000"
+        }
+      ]
+    },
+    "0x10027960": {
+      "name": "DeleteGdiObjectAndClearWord_guess",
+      "conv": "fastcall",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033800": {
+      "name": "FUN_10033800",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10028480": {
+      "name": "FUN_10028480",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null queue pointer",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@self",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "empty queue",
+      "args": [
+        "@self"
+      ]
+    },
+    {
+      "name": "one item",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "one item, pop returns null",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ],
+      "callees": {
+        "0x10028430": {
+          "name": "FUN_10028430",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 8,
+              "hex": "00000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "negative count (signed compare)",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "count 0x80000000",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x8",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "one item, null head node",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x0",
+          "u32": 0
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "pop repoints self to a second queue (bottom reload must reread *self)",
+      "args": [
+        "@self"
+      ],
+      "memory": [
+        {
+          "addr": "@queue",
+          "offset": "0x0",
+          "u32": "@self"
+        },
+        {
+          "addr": "@queue",
+          "offset": "0x8",
+          "u32": 1
+        }
+      ],
+      "objects": {
+        "queue2": {
+          "size": "0x10",
+          "init": [
+            {
+              "offset": 0,
+              "u32": "@self"
+            },
+            {
+              "offset": 8,
+              "u32": 1
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x10028430": {
+          "name": "FUN_10028430",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": "@item",
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 8,
+              "hex": "00000000"
+            },
+            {
+              "arg": 1,
+              "offset": 0,
+              "hex": "40000060"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 162672,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "offset": "0x0",
+        "type": "ptr",
+        "choices": [
+          "0x0",
+          "@queue"
+        ]
+      },
+      {
+        "addr": "@queue",
+        "offset": "0x0",
+        "type": "ptr",
+        "choices": [
+          "0x0",
+          "@node"
+        ]
+      },
+      {
+        "addr": "@queue",
+        "offset": "0x8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          "0x7fffffff",
+          "0x80000000",
+          "0xffffffff"
+        ]
+      }
+    ]
+  }
+}

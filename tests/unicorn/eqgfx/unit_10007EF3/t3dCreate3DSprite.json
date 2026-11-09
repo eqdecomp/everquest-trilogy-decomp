@@ -1,0 +1,357 @@
+{
+  "function": "t3dCreate3DSprite",
+  "original": "0x100084ff",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "volume",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "definition": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 4
+        },
+        {
+          "offset": "0x20",
+          "u32": 5
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@parent"
+        }
+      ]
+    },
+    "parent": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "0xd2345678"
+        },
+        {
+          "offset": "0x14",
+          "u32": "@fallback_volume"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@frames"
+        }
+      ]
+    },
+    "volume": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "fallback_volume": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "duplicate_volume": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "sprite": {
+      "size": "0x30",
+      "fill": "random"
+    },
+    "frames": {
+      "size": "0x190",
+      "fill": "zero"
+    },
+    "simple_a": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0",
+          "u32": 1
+        }
+      ]
+    },
+    "simple_empty": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "simple_c": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0",
+          "u32": 1
+        }
+      ]
+    },
+    "simple_d": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0",
+          "u32": 1
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "@frames",
+      "offset": "0x1c",
+      "u32": "@simple_a"
+    },
+    {
+      "addr": "@frames",
+      "offset": "0xbc",
+      "u32": "@simple_empty"
+    },
+    {
+      "addr": "@frames",
+      "offset": "0x10c",
+      "u32": "@simple_c"
+    },
+    {
+      "addr": "@frames",
+      "offset": "0x15c",
+      "u32": "@simple_d"
+    }
+  ],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@sprite"
+    },
+    "0x1001d516": {
+      "name": "t3dDuplicateVolume",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": "@duplicate_volume"
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "allocation failure returns null before reading definition",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "volume fallback from parent with zero frames",
+      "args": [
+        "@context",
+        "@definition",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 0
+        }
+      ],
+      "expect": {}
+    },
+    {
+      "name": "explicit volume and reverse sharing order with null and empty frame entries",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "low source flag bit is cleared by the dword mask",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "memory": [
+        {
+          "addr": "@parent",
+          "offset": "0x0c",
+          "u32": "0xd2345679"
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "single frame boundary",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x20",
+          "u32": 1
+        }
+      ],
+      "expect": {}
+    },
+    {
+      "name": "volume duplication failure frees sprite and returns null",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "callees": {
+        "0x1001d516": {
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "initialization failure frees the frame field then sprite",
+      "args": [
+        "@context",
+        "@definition",
+        "@volume"
+      ],
+      "callees": {
+        "0x1001564b": {
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 1,
+              "offset": 24,
+              "hex": "78563412"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 34047,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "@volume"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@definition",
+        "offset": "0x10",
+        "type": "u32",
+        "range": [
+          0,
+          100
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x20",
+        "type": "u32",
+        "range": [
+          0,
+          5
+        ]
+      }
+    ]
+  }
+}

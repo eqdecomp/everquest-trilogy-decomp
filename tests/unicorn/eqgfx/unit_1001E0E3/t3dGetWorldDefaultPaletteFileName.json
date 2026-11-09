@@ -1,0 +1,266 @@
+{
+  "function": "t3dGetWorldDefaultPaletteFileName",
+  "original": "0x1001e1c6",
+  "sources": [
+    "src/eqgfx/unit_1001E0E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "fileNameOut",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "filenameout": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "tEmpty": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tA": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tAbc": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "tLong": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "tSpaces": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@tEmpty",
+      "cstr": ""
+    },
+    {
+      "addr": "@tA",
+      "cstr": "a"
+    },
+    {
+      "addr": "@tAbc",
+      "cstr": "abc"
+    },
+    {
+      "addr": "@tLong",
+      "cstr": "hello world 12345"
+    },
+    {
+      "addr": "@tSpaces",
+      "cstr": "   "
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "null palette zeroes first byte",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty name copies terminator",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": "@tEmpty"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "single char",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": "@tA"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "three chars",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": "@tAbc"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "longer name with spaces and digits",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": "@tLong"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "spaces only",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": "@tSpaces"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "surrounding bytes nonzero do not affect +0x48 read",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x0",
+          "u32": 3735928559
+        },
+        {
+          "addr": "@world",
+          "offset": "0x44",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": "@tAbc"
+        },
+        {
+          "addr": "@world",
+          "offset": "0x4c",
+          "u32": 3235820544
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null name with surrounding bytes nonzero",
+      "args": [
+        "@world",
+        "@filenameout"
+      ],
+      "memory": [
+        {
+          "addr": "@world",
+          "offset": "0x0",
+          "u32": 3735928559
+        },
+        {
+          "addr": "@world",
+          "offset": "0x48",
+          "u32": 0
+        },
+        {
+          "addr": "@world",
+          "offset": "0x4c",
+          "u32": 3235820544
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 123334,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@filenameout"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@world",
+        "offset": "0x48",
+        "type": "u32",
+        "choices": [
+          0,
+          "@tEmpty",
+          "@tA",
+          "@tAbc",
+          "@tLong",
+          "@tSpaces"
+        ]
+      }
+    ]
+  }
+}

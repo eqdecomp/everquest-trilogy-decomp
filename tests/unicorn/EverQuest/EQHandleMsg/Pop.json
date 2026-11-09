@@ -1,0 +1,59 @@
+{
+  "function": "EQNodeQueue_guess::Pop_guess",
+  "original": "0x00402099",
+  "sources": [
+    "src/EverQuest/EQHandleMsg.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@q",
+  "args": [],
+  "ret": "u32",
+  "objects": {
+    "q": {"size": "0x220", "fill": "random", "init": [
+      {"offset": "0x4", "u32": "@n0"}, {"offset": "0x8", "u32": "@n1"},
+      {"offset": "0xc", "u32": "@f"}, {"offset": "0x214", "u32": 2}]},
+    "n0": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "0x11111111"}, {"offset": "0x4", "u32": "@n1"}]},
+    "n1": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "0x22222222"}, {"offset": "0x4", "u32": 0}]},
+    "f": {"size": "0x10", "fill": "random", "init": [
+      {"offset": "0x0", "u32": "0x33333333"}, {"offset": "0x4", "u32": 0}]}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "two nodes: head advances, tail kept", "args": []},
+    {"name": "one node: queue emptied", "args": [],
+     "memory": [{"addr": "@q", "offset": "0x214", "u32": 1}, {"addr": "@n0", "offset": "0x4", "u32": 0},
+                {"addr": "@q", "offset": "0x8", "u32": "@n0"}]},
+    {"name": "empty queue returns 0", "args": [],
+     "memory": [{"addr": "@q", "offset": "0x4", "u32": 0}, {"addr": "@q", "offset": "0x214", "u32": 0}]},
+    {"name": "empty head but nonzero count untouched", "args": [],
+     "memory": [{"addr": "@q", "offset": "0x4", "u32": 0}, {"addr": "@q", "offset": "0x214", "u32": 5}]},
+    {"name": "count 0 with head: decrements to -1, not emptied", "args": [],
+     "memory": [{"addr": "@q", "offset": "0x214", "u32": 0}]},
+    {"name": "count 3: decrement only", "args": [],
+     "memory": [{"addr": "@q", "offset": "0x214", "u32": 3}]},
+    {"name": "free list empty", "args": [],
+     "memory": [{"addr": "@q", "offset": "0xc", "u32": 0}]},
+    {"name": "zero value", "args": [],
+     "memory": [{"addr": "@n0", "offset": "0x0", "u32": 0}]},
+    {"name": "head next is null with count 2", "args": [],
+     "memory": [{"addr": "@n0", "offset": "0x4", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 4202649,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@q", "offset": "0x4", "type": "ptr", "choices": [0, "@n0", "@n1"]},
+      {"addr": "@q", "offset": "0x8", "type": "ptr", "choices": [0, "@n0", "@n1"]},
+      {"addr": "@q", "offset": "0xc", "type": "ptr", "choices": [0, "@f", "@n1"]},
+      {"addr": "@q", "offset": "0x214", "type": "u32", "range": [0, 3]},
+      {"addr": "@n0", "offset": "0x0", "type": "u32"},
+      {"addr": "@n0", "offset": "0x4", "type": "ptr", "choices": [0, "@n1", "@f"]},
+      {"addr": "@n1", "offset": "0x0", "type": "u32"},
+      {"addr": "@n1", "offset": "0x4", "type": "ptr", "choices": [0, "@n0", "@f"]}
+    ]
+  }
+}

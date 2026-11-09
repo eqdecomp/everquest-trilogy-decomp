@@ -1,0 +1,43 @@
+{
+  "function": "target_guess",
+  "original": "0x004ab3b7",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "top": {"size": "0x4", "fill": "zero"},
+    "player": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x80", "u32": 305419896}]},
+    "eq": {"size": "0x4", "fill": "zero"},
+    "connection": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4d58", "u32": "@top"},
+    {"addr": "0x006b3194", "u32": "@connection"},
+    {"addr": "0x006efe2c", "u32": "@eq"}
+  ],
+  "callees": {
+    "0x004a49bd": {"name": "allowslashcommand", "conv": "cdecl", "args": [], "ret": 1},
+    "0x004b146a": {"name": "EQPlayer::get_player_partial_name", "conv": "thiscall", "args": ["cstr"], "ret": 0},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:4", "u32", "int"]},
+    "0x004d055e": {"name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"]}
+  },
+  "cases": [
+    {"name": "slash command disallowed", "args": [7, "Ari"], "callees": {"0x004a49bd": {"ret": 0}}},
+    {"name": "disallowed empty input", "args": [-1, ""], "callees": {"0x004a49bd": {"ret": 0}}},
+    {"name": "allowed empty input shows format help", "args": [0, ""]},
+    {"name": "allowed nonempty with no matching player sends zero", "args": [1, "Missing"]},
+    {"name": "matched player sends spawn id", "args": [2, "Aria"], "callees": {"0x004b146a": {"ret": "@player"}}},
+    {"name": "matched player zero spawn id", "args": [3, "Zero"], "memory": [{"addr": "@player", "offset": "0x80", "u32": 0}], "callees": {"0x004b146a": {"ret": "@player"}}},
+    {"name": "matched player high-bit spawn id", "args": [4, "Boundary"], "memory": [{"addr": "@player", "offset": "0x80", "u32": 4294967295}], "callees": {"0x004b146a": {"ret": "@player"}}}
+  ],
+  "fuzz": {
+    "seed": 4895671,
+    "count": 30,
+    "args": [{"range": [-3, 3]}, {}],
+    "memory": [{"addr": "@player", "offset": "0x80", "type": "u32", "range": [0, 4294967295]}]
+  }
+}

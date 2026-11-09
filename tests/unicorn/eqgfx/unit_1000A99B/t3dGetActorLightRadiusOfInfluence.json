@@ -1,0 +1,108 @@
+{
+  "function": "t3dGetActorLightRadiusOfInfluence",
+  "original": "0x1000ad84",
+  "sources": [
+    "src/eqgfx/unit_1000A99B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "actor": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x54", "u32": "@light"}
+      ]
+    },
+    "light": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x20", "f32": 12.5}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "light with radius",
+      "args": [
+        "@actor"
+      ],
+      "expect": {"ret": 12.5}
+    },
+    {
+      "name": "no light",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@actor", "offset": "0x54", "u32": 0}
+      ],
+      "expect": {"ret": 0.0}
+    },
+    {
+      "name": "light radius zero",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@light", "offset": "0x20", "f32": 0.0}
+      ],
+      "expect": {"ret": 0.0}
+    },
+    {
+      "name": "light radius negative zero",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@light", "offset": "0x20", "hex": "00000080"}
+      ],
+      "expect": {"ret": -0.0}
+    },
+    {
+      "name": "light radius negative",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@light", "offset": "0x20", "f32": -3.25}
+      ],
+      "expect": {"ret": -3.25}
+    },
+    {
+      "name": "light radius large",
+      "args": [
+        "@actor"
+      ],
+      "memory": [
+        {"addr": "@light", "offset": "0x20", "f32": 1024.0}
+      ],
+      "expect": {"ret": 1024.0}
+    }
+  ],
+  "fuzz": {
+    "seed": 44420,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@actor", "offset": "0x54", "type": "ptr", "choices": ["@light", 0]},
+      {"addr": "@light", "offset": "0x20", "type": "float"},
+      {"addr": "@light", "offset": "0x10", "type": "u32"}
+    ]
+  }
+}

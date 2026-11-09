@@ -1,0 +1,190 @@
+{
+  "function": "t3dUndefineBlitSprite",
+  "original": "0x1000cf2a",
+  "sources": [
+    "src/eqgfx/unit_1000BABA.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "definitionEntry", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {"size": "0x10", "fill": "zero"},
+    "definitionentry": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@entryname"},
+        {"offset": "0x10", "u32": 1},
+        {"offset": "0x14", "u32": "@sprite"}
+      ]
+    },
+    "sprite": {
+      "size": "0x70",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@spritename"},
+        {"offset": "0x10", "u32": 1},
+        {"offset": "0x68", "u32": "@reference"}
+      ]
+    },
+    "reference": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0x10", "u32": 5}]
+    },
+    "entryname": {"size": "0x10", "fill": "zero"},
+    "spritename": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "plain: no dictionary flags, both names set",
+      "args": ["@context", "@definitionentry"]
+    },
+    {
+      "name": "both in dictionary",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0xc", "u32": 1},
+        {"addr": "@sprite", "offset": "0xc", "u8": 1}
+      ]
+    },
+    {
+      "name": "only sprite in dictionary",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0xc", "u32": "0xfffffffe"},
+        {"addr": "@sprite", "offset": "0xc", "u8": 1}
+      ]
+    },
+    {
+      "name": "only entry in dictionary, sprite flag bit 0 clear",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0xc", "u32": 1},
+        {"addr": "@sprite", "offset": "0xc", "u8": 254}
+      ]
+    },
+    {
+      "name": "both names null",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0x8", "u32": 0},
+        {"addr": "@sprite", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "sprite name null only, entry in dictionary",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0xc", "u32": 1},
+        {"addr": "@sprite", "offset": "0x8", "u32": 0}
+      ]
+    },
+    {
+      "name": "entry name null only, sprite in dictionary",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0x8", "u32": 0},
+        {"addr": "@sprite", "offset": "0xc", "u8": 1}
+      ]
+    },
+    {
+      "name": "entry reference count 2",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "entry reference count 0",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "sprite state 0",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "sprite state 2",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x10", "u32": 2}
+      ]
+    },
+    {
+      "name": "both counts wrong",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0x10", "u32": 3},
+        {"addr": "@sprite", "offset": "0x10", "u32": 3}
+      ]
+    },
+    {
+      "name": "reference count 0 wraps",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@reference", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "dictionary flag bits other than bit 0",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0xc", "u32": "0xfffffffe"},
+        {"addr": "@sprite", "offset": "0xc", "u8": 254}
+      ]
+    },
+    {
+      "name": "high flag bit only on entry",
+      "args": ["@context", "@definitionentry"],
+      "memory": [
+        {"addr": "@definitionentry", "offset": "0xc", "u32": "0x80000001"},
+        {"addr": "@sprite", "offset": "0xc", "u8": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 53034,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]},
+      {"choices": ["@definitionentry"]}
+    ],
+    "memory": [
+      {"addr": "@definitionentry", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 1, 1, 2, 3]},
+      {"addr": "@sprite", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 1, 1, 2, 3]},
+      {"addr": "@definitionentry", "offset": "0xc", "type": "u32", "choices": [0, 1, 2, 3, "0x20", "0x80000001", "0xfffffffe", "0xffffffff"]},
+      {"addr": "@sprite", "offset": "0xc", "type": "u8", "choices": [0, 1, 2, 3, 32, 254, 255]},
+      {"addr": "@definitionentry", "offset": "0x8", "type": "ptr", "choices": [0, "@entryname"]},
+      {"addr": "@sprite", "offset": "0x8", "type": "ptr", "choices": [0, "@spritename"]},
+      {"addr": "@reference", "offset": "0x10", "type": "int", "choices": [-1, 0, 1, 5, 2147483647]}
+    ]
+  }
+}

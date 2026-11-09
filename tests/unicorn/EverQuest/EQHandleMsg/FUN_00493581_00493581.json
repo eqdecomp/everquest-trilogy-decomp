@@ -1,0 +1,99 @@
+{
+  "function": "UpdateTrainerCaps_guess",
+  "original": "0x00493581",
+  "sources": ["src/EverQuest/EQHandleMsg.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "connection", "type": "ptr"},
+    {"name": "opcode", "type": "u32"},
+    {"name": "msg", "type": "ptr"},
+    {"name": "size", "type": "u32"}
+  ],
+  "ret": "void",
+  "objects": {
+    "connection": {"size": "0x100", "fill": "zero"},
+    "msg": {"size": "0x94", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "0x1234"},
+      {"offset": "0x6c", "u32": "0x3f800000"},
+      {"offset": "0x70", "u8": 1}
+    ]},
+    "client": {"size": "0x6c900", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@vtable"},
+      {"offset": "0xe5c", "u32": 2}
+    ]},
+    "vtable": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x4", "u32": "@finish_training"},
+      {"offset": "0x8", "u32": "@refresh_training"}
+    ]},
+    "finish_training": {"size": "0x1", "fill": "zero"},
+    "refresh_training": {"size": "0x1", "fill": "zero"},
+    "spawn_head": {"size": "0x134", "fill": "zero"},
+    "trainer": {"size": "0x134", "fill": "zero"},
+    "profile": {"size": "0x1fa4", "fill": "zero"},
+    "sound_manager": {"size": "0x20", "fill": "zero"},
+    "display": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4dc4", "u32": 0},
+    {"addr": "0x006e4e44", "u32": "@client"},
+    {"addr": "0x006e4d58", "u32": "@spawn_head"},
+    {"addr": "0x006b3194", "u32": "@connection"},
+    {"addr": "0x006efe1c", "u32": 1},
+    {"addr": "0x006ecdf4", "u32": "@sound_manager"},
+    {"addr": "0x0058fc6c", "u32": 0},
+    {"addr": "0x00590170", "u32": 0},
+    {"addr": "0x006e4de0", "u32": "@display"},
+    {"addr": "0x006e4da8", "u32": "@profile"}
+  ],
+  "callees": {
+    "0x004b1416": {"name": "EQPlayer::GetPlayerFromID_guess", "conv": "thiscall", "args": ["int"], "ret": "@trainer"},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:12", "u32", "int"]},
+    "0x004e4ee6": {"name": "EqSoundManager::SetMusicSelection_guess", "conv": "thiscall", "args": ["int"]},
+    "0x0040e58b": {"name": "CDisplay::ChangeVideoMode_guess", "conv": "thiscall", "args": ["int"]},
+    "0x004a08d7": {"name": "checkLang_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 1},
+    "@refresh_training": {"name": "refresh_training_vfunc", "conv": "fastcall", "args": ["ptr", "int"]},
+    "@finish_training": {"name": "finish_training_vfunc", "conv": "fastcall", "args": ["ptr", "int"]}
+  },
+  "cases": [
+    {"name": "busy trainer flag skips lookup", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "0x006e4dc4", "u32": "@trainer"}]},
+    {"name": "null client skips lookup", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "0x006e4e44", "u32": 0}]},
+    {"name": "trainer lookup miss", "args": ["@connection", 1, "@msg", 0], "callees": {"0x004b1416": {"name": "EQPlayer::GetPlayerFromID_guess", "conv": "thiscall", "args": ["int"], "ret": 0}}},
+    {"name": "closed negative count saturates at zero", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x70", "u8": 0}, {"addr": "@client", "offset": "0xe5c", "u32": "0xffffffff"}]},
+    {"name": "closed count one reaches zero without send", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x70", "u8": 0}, {"addr": "@client", "offset": "0xe5c", "u32": 1}]},
+    {"name": "closed count two sends one then clears", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x70", "u8": 0}, {"addr": "@client", "offset": "0xe5c", "u32": 2}]},
+    {"name": "closed high count sends decremented value", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x70", "u8": 0}, {"addr": "@client", "offset": "0xe5c", "u32": 2147483647}]},
+    {"name": "open flag zero with empty counter", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x70", "u8": 0}, {"addr": "@client", "offset": "0xe5c", "u32": 0}]},
+    {"name": "open filters skill boundaries and resets stale arrays", "args": ["@connection", 1, "@msg", 0], "memory": [
+      {"addr": "@msg", "offset": "0x08", "u8": 1}, {"addr": "@msg", "offset": "0x0a", "u8": 252},
+      {"addr": "@msg", "offset": "0x0b", "u8": 253}, {"addr": "@msg", "offset": "0x0c", "u8": 255},
+      {"addr": "@msg", "offset": "0x0d", "u8": 1}, {"addr": "@msg", "offset": "0x17", "u8": 1},
+      {"addr": "@msg", "offset": "0x29", "u8": 1}, {"addr": "@msg", "offset": "0x50", "u8": 1},
+      {"addr": "@msg", "offset": "0x51", "u8": 252}, {"addr": "@msg", "offset": "0x71", "u8": 2},
+      {"addr": "@msg", "offset": "0x88", "u8": 3}, {"addr": "@profile", "offset": "0x9cd", "u8": 255}
+    ]},
+    {"name": "checkLang rejection clears language caps", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x71", "u8": 7}, {"addr": "@msg", "offset": "0x88", "u8": 5}],
+      "callees": {"0x004a08d7": {"name": "checkLang_guess", "conv": "cdecl", "args": ["ptr", "int"], "ret": 0}}},
+    {"name": "music and video state update path", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "0x006efe1c", "u32": 0}, {"addr": "0x0058fc6c", "u32": 2}]},
+    {"name": "music disabled and unrelated video mode", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "0x006efe1c", "u32": 1}, {"addr": "0x0058fc6c", "u32": 1}]},
+    {"name": "any nonzero open byte selects open branch", "args": ["@connection", 1, "@msg", 0], "memory": [{"addr": "@msg", "offset": "0x70", "u8": 255}]}
+  ],
+  "fuzz": {
+    "seed": 4797825,
+    "count": 40,
+    "args": [
+      {"choices": ["@connection"]}, {"range": [0, 4294967295]},
+      {"choices": ["@msg"]}, {"range": [0, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@msg", "offset": "0x70", "type": "u8", "range": [0, 1]},
+      {"addr": "@msg", "offset": "0x08", "type": "u8", "range": [0, 255], "count": 74},
+      {"addr": "@msg", "offset": "0x71", "type": "u8", "range": [0, 255], "count": 24},
+      {"addr": "@profile", "offset": "0x9c8", "type": "u8", "range": [0, 255], "count": 74},
+      {"addr": "@client", "offset": "0xe5c", "type": "int", "range": [-2, 8]},
+      {"addr": "@client", "offset": "0x5f038", "size": 100},
+      {"addr": "0x006e4dc4", "type": "u32", "range": [0, 1], "p": 0.1},
+      {"addr": "0x006efe1c", "type": "u32", "range": [0, 1]},
+      {"addr": "0x0058fc6c", "type": "u32", "range": [0, 2]}
+    ]
+  }
+}

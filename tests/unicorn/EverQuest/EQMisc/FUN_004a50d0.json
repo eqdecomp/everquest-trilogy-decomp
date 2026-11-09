@@ -1,0 +1,98 @@
+{
+  "function": "RequestZoneByName_guess",
+  "original": "0x004a50d0",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "zoneName",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006EFE2C", "u32": "@everquest"},
+    {"addr": "0x006B3194", "u32": 0},
+    {"addr": "0x006E1DE7", "u8": 2},
+    {"addr": "0x006E1DE8", "size": 64, "fill": "zero"}
+  ],
+  "callees": {
+    "0x004a461e": {
+      "name": "EqGetTime",
+      "conv": "cdecl",
+      "args": [],
+      "ret": [100, 60101]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:84",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004c4ee7": {
+      "name": "CEverQuest::ProcessMBox_guess",
+      "conv": "thiscall",
+      "args": [],
+      "writes": [
+        {"addr": "0x006E1DE7", "hex": "01"}
+      ]
+    },
+    "kernel32.dll!Sleep": {
+      "name": "Sleep",
+      "conv": "stdcall",
+      "args": ["u32"],
+      "ret": 0
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    }
+  },
+  "cases": [
+    {"name": "empty name rejected", "args": [0, ""]},
+    {"name": "31 bytes accepted", "args": [0, "abcdefghijklmnopqrstuvwxyzabcde"]},
+    {"name": "32 bytes rejected", "args": [0, "abcdefghijklmnopqrstuvwxyzabcdef"]},
+    {"name": "one byte accepted and response wins before timeout", "args": [1, "A"], "callees": {"0x004a461e": {"name": "EqGetTime_guess", "conv": "cdecl", "args": [], "ret": [10, 90000]}}},
+    {"name": "mailbox complete response", "args": [-9, "qyz"], "callees": {"0x004c4ee7": {"name": "CEverQuest::ProcessMBox_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "0x006E1DE7", "hex": "02"}]}}},
+    {"name": "timeout just over one minute", "args": [0, "zone"], "callees": {"0x004a461e": {"name": "EqGetTime_guess", "conv": "cdecl", "args": [], "ret": [500, 60501]}, "0x004c4ee7": {"name": "CEverQuest::ProcessMBox_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "0x006E1DE7", "hex": "00"}]}}},
+    {"name": "equal timeout boundary sleeps then expires", "args": [0, "zone"], "callees": {"0x004a461e": {"name": "EqGetTime_guess", "conv": "cdecl", "args": [], "ret": [1000, 61000, 61001]}, "0x004c4ee7": {"name": "CEverQuest::ProcessMBox_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "0x006E1DE7", "hex": "00"}]}}},
+    {"name": "unsigned timer wraps before expiring", "args": [0, "wrap"], "callees": {"0x004a461e": {"name": "EqGetTime_guess", "conv": "cdecl", "args": [], "ret": [4294967280, 16, 60004]}, "0x004c4ee7": {"name": "CEverQuest::ProcessMBox_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "0x006E1DE7", "hex": "00"}]}}},
+    {"name": "unexpected mailbox status waits", "args": [0, "status"], "callees": {"0x004a461e": {"name": "EqGetTime_guess", "conv": "cdecl", "args": [], "ret": [200, 60201]}, "0x004c4ee7": {"name": "CEverQuest::ProcessMBox_guess", "conv": "thiscall", "args": [], "writes": [{"addr": "0x006E1DE7", "hex": "ff"}]}}},
+    {"name": "initial completion state is cleared before polling", "args": [0, "zone"], "callees": {"0x004c4ee7": {"name": "CEverQuest::ProcessMBox_guess", "conv": "thiscall", "args": []}}}
+  ],
+  "fuzz": {
+    "seed": 4870352,
+    "count": 30,
+    "args": [
+      {"range": [-2, 2]},
+      {"choices": ["", "x", "ab", "Nektulos", "qeynos", "abcdefghijklmnopqrstuvwxyzabcde", "abcdefghijklmnopqrstuvwxyzabcdef"]}
+    ],
+    "memory": []
+  }
+}

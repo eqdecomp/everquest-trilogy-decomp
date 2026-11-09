@@ -1,0 +1,52 @@
+{
+  "function": "kick_guess",
+  "original": "0x004a4ebb",
+  "sources": ["src/EverQuest/Socket.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "param_2", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "target": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x1", "cstr": "TargetOne"}]},
+    "local": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x1", "cstr": "LocalPlayer"}]},
+    "connection": {"size": 4, "fill": "zero"},
+    "eq": {"size": 16, "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x0058fba4", "cstr": "/target"},
+    {"addr": "0x006e4d8c", "u32": "@local"},
+    {"addr": "0x006b3194", "u32": "@connection"},
+    {"addr": "0x006e4dac", "u32": "@target"},
+    {"addr": "0x006efe2c", "u32": "@eq"}
+  ],
+  "callees": {
+    "0x005219c0": {"name": "strcpy", "args": ["ignore", "cstr"], "passthrough": true},
+    "0x004e1c45": {"name": "send_message_guess", "conv": "cdecl", "args": ["ptr", "u32", "mem:61", "u32", "int"]},
+    "0x004d055e": {"name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"]}
+  },
+  "cases": [
+    {"name": "ordinary name sends before chat", "args": [1, "Mercutio"]},
+    {"name": "special name sends target name then chats target", "args": [7, "/target"]},
+    {"name": "special name with null target returns before any calls", "args": [0, "/target"], "memory": [{"addr": "0x006e4dac", "u32": 0}]},
+    {"name": "special comparison is case sensitive", "args": [0, "/Target"]},
+    {"name": "empty ordinary name", "args": [0, ""]},
+    {"name": "percent sequences stay name data", "args": [0, "%s %n 100%"]},
+    {"name": "name ends at 29 bytes", "args": [0, "12345678901234567890123456789"]},
+    {"name": "name crosses the 30 byte local boundary", "args": [0, "1234567890123456789012345678901"]},
+    {"name": "target and local names differ", "args": [0, "/target"], "objects": {"target": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x1", "cstr": "OtherTarget"}]}, "local": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x1", "cstr": "DifferentLocal"}]}}},
+    {"name": "null target with nonzero neighbour still returns", "args": [0, "/target"], "memory": [{"addr": "0x006e4dac", "u32": 0}, {"addr": "0x006e4db0", "u32": 1}]}
+  ],
+  "fuzz": {
+    "seed": 4869819,
+    "count": 35,
+    "args": [
+      {"range": [-10, 10]},
+      {"choices": ["ordinary", "/target", "/Target", "", "abcdef", "12345678901234567890123456789", "1234567890123456789012345678901", "%s %n 100%"]}
+    ],
+    "memory": [
+      {"addr": "0x006e4dac", "type": "ptr", "choices": ["@target", 0], "p": 0.35}
+    ]
+  }
+}

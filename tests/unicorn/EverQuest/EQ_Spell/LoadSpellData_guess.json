@@ -1,0 +1,584 @@
+{
+  "function": "EQ_Spell_guess::LoadSpellData_guess",
+  "original": "0x0048760D",
+  "sources": [
+    "src/EverQuest/EQ_Spell.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@spell",
+  "args": [
+    {
+      "name": "spellIndex",
+      "type": "short"
+    }
+  ],
+  "ret": "int",
+  "size": "0x9b",
+  "objects": {
+    "spell": {
+      "size": "0x300",
+      "fill": "random"
+    },
+    "file": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x0055CB0C",
+      "from_image": "0x0055CB0C",
+      "image_size": 10
+    },
+    {
+      "addr": "0x0053C2BC",
+      "from_image": "0x0053C2BC",
+      "image_size": 3
+    }
+  ],
+  "callees": {
+    "0x005223BC": {
+      "name": "fopen",
+      "conv": "cdecl",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "ret": "@file"
+    },
+    "0x005222D2": {
+      "name": "fseek",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x00522038": {
+      "name": "fread",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    },
+    "0x00521FBB": {
+      "name": "fclose",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "_fseek": "0x005222D2"
+  },
+  "cases": [
+    {
+      "name": "open failure returns zero without later file calls",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x005223BC": {
+          "name": "fopen",
+          "conv": "cdecl",
+          "args": [
+            "cstr",
+            "cstr"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero index skips seek and reads one record",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "00000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "positive signed-short index seeks by 0x260",
+      "args": [
+        1
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "01000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "negative signed-short index seeks backward",
+      "args": [
+        -1
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "ff000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "signed-short maximum seek offset",
+      "args": [
+        32767
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "signed-short minimum seek offset",
+      "args": [
+        -32768
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "seek failure closes without reading",
+      "args": [
+        3
+      ],
+      "callees": {
+        "0x005222D2": {
+          "name": "fseek",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero read closes and returns zero",
+      "args": [
+        2
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 600,
+              "hex": "efbeadde"
+            },
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "04000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "read count two is not one record",
+      "args": [
+        2
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 2,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 600,
+              "hex": "efbeadde"
+            },
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "04000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "post-close negative effect count clears pointer",
+      "args": [
+        4
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 600,
+              "hex": "efbeadde"
+            },
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "04000000"
+            }
+          ]
+        },
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": -1,
+          "writes": [
+            {
+              "addr": "@spell",
+              "offset": 604,
+              "hex": "ffffffff"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "post-close zero count selects the base pointer",
+      "args": [
+        4
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "ff000000"
+            }
+          ]
+        },
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@spell",
+              "offset": 604,
+              "hex": "00000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "post-close count 255 selects final valid entry",
+      "args": [
+        4
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "00000000"
+            }
+          ]
+        },
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@spell",
+              "offset": 604,
+              "hex": "ff000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "post-close count 256 clears pointer",
+      "args": [
+        4
+      ],
+      "callees": {
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@spell",
+              "offset": 604,
+              "hex": "00010000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "positive side of signed count limit is invalid",
+      "args": [
+        4
+      ],
+      "callees": {
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@spell",
+              "offset": 604,
+              "hex": "ffffff7f"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "fread pointer and count writes are replaced after close",
+      "args": [
+        4
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 600,
+              "hex": "efbeadde"
+            },
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "04000000"
+            }
+          ]
+        },
+        "0x00521FBB": {
+          "name": "fclose",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "ret": 0,
+          "writes": [
+            {
+              "addr": "@spell",
+              "offset": 604,
+              "hex": "ff000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "unaligned this pointer uses exact member offsets",
+      "this": "@spell+1",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x00522038": {
+          "name": "fread",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": 1,
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 604,
+              "hex": "ff000000"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 48760,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          -32768,
+          -1,
+          0,
+          1,
+          2,
+          255,
+          256,
+          32767
+        ]
+      }
+    ]
+  }
+}

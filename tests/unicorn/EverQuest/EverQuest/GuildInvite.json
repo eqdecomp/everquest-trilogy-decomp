@@ -1,0 +1,706 @@
+{
+  "function": "CEverQuest_GuildInvite_guess::GuildInvite",
+  "original": "0x004c9ef6",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@ceverquest_guildinvite",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    },
+    {
+      "name": "param_2",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ceverquest_guildinvite": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "profile": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "Me"
+        },
+        {
+          "offset": "0x103a",
+          "u16": 4660
+        },
+        {
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "Bob"
+        },
+        {
+          "offset": "0x98",
+          "u8": 0
+        }
+      ]
+    },
+    "local_player": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "Me"
+        },
+        {
+          "offset": "0x98",
+          "u8": 0
+        }
+      ]
+    },
+    "found": {
+      "size": "0x134",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1",
+          "cstr": "Zed"
+        },
+        {
+          "offset": "0x98",
+          "u8": 0
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@profile"
+    },
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@local_player"
+    },
+    {
+      "addr": "0x006e4d58",
+      "u32": "@found"
+    },
+    {
+      "addr": "0x00596330",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x004b1435": {
+      "name": "EQPlayer::get_player_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ],
+      "ret": "@found"
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:68",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004b21fc": {
+      "name": "EQPlayer::NotOnSameDeity_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "_sprintf",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x00524240": {
+      "name": "__strcmpi",
+      "args": [
+        "cstr",
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "member invite by name to a player in the zone",
+      "args": [
+        "Bob",
+        "x"
+      ]
+    },
+    {
+      "name": "officer invite by name from a leader (param_2 o)",
+      "args": [
+        "Bob",
+        "o"
+      ]
+    },
+    {
+      "name": "name right after an officer invite is a member invite",
+      "args": [
+        "Bob",
+        "x"
+      ]
+    },
+    {
+      "name": "name with param_2 o refused below leader rank",
+      "args": [
+        "Bob",
+        "o"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "name with param_2 o refused at rank 0 by the first check",
+      "args": [
+        "Bob",
+        "o"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "rank 255 (signed -1) is not refused by the unsigned rank check",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "guild id -1 refused before the rank check",
+      "args": [
+        "o",
+        "o"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x103a",
+          "u16": 65535
+        },
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "keyword with no target refused",
+      "args": [
+        "",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "keyword with a non player target refused",
+      "args": [
+        "l",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x98",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "keyword with the local player as target refused",
+      "args": [
+        "o",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": "@local_player"
+        }
+      ]
+    },
+    {
+      "name": "deity blocked invite prints the deity message",
+      "args": [
+        "",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "0x00596330",
+          "u32": 4
+        }
+      ],
+      "callees": {
+        "0x004b21fc": {
+          "name": "EQPlayer::NotOnSameDeity_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "deity check not made when the state is not 4",
+      "args": [
+        "",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "0x00596330",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x004b21fc": {
+          "name": "EQPlayer::NotOnSameDeity_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "deity state 4 with the same deity proceeds",
+      "args": [
+        "",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "0x00596330",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "keyword o uses the target name for the officer message",
+      "args": [
+        "o",
+        "x"
+      ]
+    },
+    {
+      "name": "keyword l right after an officer invite is a member invite",
+      "args": [
+        "l",
+        "x"
+      ]
+    },
+    {
+      "name": "keyword o refused below leader rank",
+      "args": [
+        "o",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "keyword o refused at rank 3 (only rank 2 may offer)",
+      "args": [
+        "o",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 3
+        }
+      ]
+    },
+    {
+      "name": "keyword l with param_2 o is still a member invite",
+      "args": [
+        "l",
+        "o"
+      ]
+    },
+    {
+      "name": "empty keyword with param_2 o is a member invite",
+      "args": [
+        "",
+        "o"
+      ]
+    },
+    {
+      "name": "keyword o with a blank param_2 is an officer invite",
+      "args": [
+        "o",
+        ""
+      ]
+    },
+    {
+      "name": "own name is silently ignored",
+      "args": [
+        "ME",
+        "o"
+      ]
+    },
+    {
+      "name": "name not in the zone is refused",
+      "args": [
+        "Zed",
+        "x"
+      ],
+      "callees": {
+        "0x004b1435": {
+          "name": "EQPlayer::get_player_guess",
+          "conv": "thiscall",
+          "args": [
+            "cstr"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "found GM is invited",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@found",
+          "offset": "0x98",
+          "u8": 1
+        },
+        {
+          "addr": "@found",
+          "offset": "0xf1",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "found non player refused",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@found",
+          "offset": "0x98",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "found corpse refused",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@found",
+          "offset": "0x98",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "uppercase L is a name, not the keyword",
+      "args": [
+        "L",
+        "x"
+      ]
+    },
+    {
+      "name": "name with param_2 o refused at rank 0 before the lookup",
+      "args": [
+        "Mex",
+        "o"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "long in-bound name is copied into the 30-byte field",
+      "args": [
+        "12345678901234567890123456789",
+        "x"
+      ]
+    },
+    {
+      "name": "empty profile name is copied into the invite",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "guild id 65534 is written as 16 bits",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x103a",
+          "u16": 65534
+        }
+      ]
+    },
+    {
+      "name": "profile name longer than the inviter field spills into guild_id and officer (path B)",
+      "args": [
+        "Bob",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0",
+          "cstr": "Abcdefghijklmnopqrstuvwxyz0123456789"
+        }
+      ]
+    },
+    {
+      "name": "profile name longer than the inviter field spills into guild_id and officer (path A)",
+      "args": [
+        "l",
+        "x"
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0",
+          "cstr": "Abcdefghijklmnopqrstuvwxyz0123456789"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5021430,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "",
+          "o",
+          "l",
+          "Bob",
+          "me",
+          "ME",
+          "L",
+          "Mex",
+          "lo",
+          "ob",
+          "x",
+          "Zed"
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "o",
+          "l",
+          "x",
+          "O"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@profile",
+        "offset": "0x103a",
+        "type": "short",
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          4660,
+          -2
+        ]
+      },
+      {
+        "addr": "@profile",
+        "offset": "0x104b",
+        "type": "i8",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          -1,
+          127
+        ]
+      },
+      {
+        "addr": "0x006e4dac",
+        "type": "ptr",
+        "choices": [
+          "@target",
+          "@target",
+          "@local_player",
+          0
+        ]
+      },
+      {
+        "addr": "0x006e4d8c",
+        "type": "ptr",
+        "choices": [
+          "@local_player",
+          "@local_player",
+          "@target"
+        ]
+      },
+      {
+        "addr": "0x00596330",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          3,
+          4,
+          4,
+          5
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x98",
+        "type": "u8",
+        "choices": [
+          0,
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "addr": "@found",
+        "offset": "0x98",
+        "type": "u8",
+        "choices": [
+          0,
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "addr": "@found",
+        "offset": "0xf1",
+        "type": "u8",
+        "choices": [
+          0,
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

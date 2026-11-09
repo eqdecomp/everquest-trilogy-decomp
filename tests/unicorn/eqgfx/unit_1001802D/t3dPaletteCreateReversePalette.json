@@ -1,0 +1,267 @@
+{
+  "function": "t3dPaletteCreateReversePalette",
+  "original": "0x10018883",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "palette",
+      "type": "ptr"
+    },
+    {
+      "name": "firstPenIndex",
+      "type": "u32"
+    },
+    {
+      "name": "lastPenIndex",
+      "type": "u32"
+    },
+    {
+      "name": "highlightPenIndex",
+      "type": "u32"
+    },
+    {
+      "name": "colorKey",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x430",
+      "fill": "random"
+    },
+    "colorkey": {
+      "size": "0x4",
+      "fill": "random"
+    },
+    "reverseblock": {
+      "size": "0x8000",
+      "fill": "random"
+    },
+    "existingblock": {
+      "size": "0x8000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@reverseblock"
+    },
+    "0x1001865f": {
+      "name": "t3dPaletteBuildReversePalette",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32",
+        "u32",
+        "u32",
+        "ptr"
+      ],
+      "ret": 4660
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: reverse block null, allocated",
+      "args": [
+        "@palette",
+        10,
+        245,
+        42,
+        "@colorkey"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "existing reverse block: no allocation",
+      "args": [
+        "@palette",
+        0,
+        255,
+        127,
+        "@colorkey"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": "@existingblock"
+        }
+      ]
+    },
+    {
+      "name": "allocation fails: 0xFFFF3D3E, build not called, null stored",
+      "args": [
+        "@palette",
+        10,
+        245,
+        42,
+        "@colorkey"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "zero pen indices, allocated",
+      "args": [
+        "@palette",
+        0,
+        0,
+        0,
+        "@colorkey"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "null colorKey passed through, allocated",
+      "args": [
+        "@palette",
+        1,
+        2,
+        3,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "wide pen indices pass whole dwords",
+      "args": [
+        "@palette",
+        "0xfffffffe",
+        "0x80000001",
+        "0xdeadbeef",
+        "@colorkey"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "existing block, build returns -1 (passed back)",
+      "args": [
+        "@palette",
+        5,
+        6,
+        7,
+        "@colorkey"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": "@existingblock"
+        }
+      ],
+      "callees": {
+        "0x1001865f": {
+          "name": "t3dPaletteBuildReversePalette",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "u32",
+            "u32",
+            "u32",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "existing block, all zero, null colorKey",
+      "args": [
+        "@palette",
+        0,
+        0,
+        0,
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": "@existingblock"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 100483,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@palette"
+        ]
+      },
+      {},
+      {},
+      {},
+      {
+        "choices": [
+          0,
+          "@colorkey"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@palette",
+        "offset": "0x420",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@existingblock"
+        ]
+      }
+    ]
+  }
+}

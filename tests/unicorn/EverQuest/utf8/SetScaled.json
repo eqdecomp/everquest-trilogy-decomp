@@ -1,0 +1,127 @@
+{
+  "function": "EQScaledBlock_guess::SetScaled_guess",
+  "original": "0x0040383b",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqscaledblock",
+  "args": [
+    {
+      "name": "src",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eqscaledblock": {
+      "size": "0xa0",
+      "fill": "random"
+    },
+    "src": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@eqscaledblock+0x44", "f32": 1.0},
+    {"addr": "@eqscaledblock+0x48", "f32": 2.0},
+    {"addr": "@eqscaledblock+0x4c", "f32": -3.0},
+    {"addr": "@eqscaledblock+0x50", "f32": 4.5},
+    {"addr": "@eqscaledblock+0x54", "f32": 10.0},
+    {"addr": "@eqscaledblock+0x58", "f32": -12.0},
+    {"addr": "@eqscaledblock+0x5c", "f32": 0.25},
+    {"addr": "@eqscaledblock+0x60", "f32": 640.0},
+    {"addr": "@eqscaledblock+0x8c", "f32": 3.0},
+    {"addr": "@eqscaledblock+0x90", "f32": 7.0}
+  ],
+  "callees": {
+    "0x004038b4": {
+      "name": "EQBlock32_guess::Set_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: even entries over +0x8c, odd entries over +0x90",
+      "args": ["@src"]
+    },
+    {
+      "name": "divides use the values the copy wrote (copy before divide)",
+      "args": ["@src"],
+      "callees": {
+        "0x004038b4": {
+          "name": "EQBlock32_guess::Set_guess",
+          "conv": "thiscall",
+          "args": ["ptr"],
+          "writes": [
+            {"addr": "@eqscaledblock+0x44", "hex": "00002041"},
+            {"addr": "@eqscaledblock+0x48", "hex": "0000a040"},
+            {"addr": "@eqscaledblock+0x5c", "hex": "000080bf"},
+            {"addr": "@eqscaledblock+0x60", "hex": "0000c842"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "fractional and negative divisors",
+      "args": ["@src"],
+      "memory": [
+        {"addr": "@eqscaledblock+0x8c", "f32": 0.5},
+        {"addr": "@eqscaledblock+0x90", "f32": -0.25}
+      ]
+    },
+    {
+      "name": "zero divisors give infinities and nan",
+      "args": ["@src"],
+      "memory": [
+        {"addr": "@eqscaledblock+0x44", "f32": 0.0},
+        {"addr": "@eqscaledblock+0x48", "f32": 0.0},
+        {"addr": "@eqscaledblock+0x8c", "f32": 0.0},
+        {"addr": "@eqscaledblock+0x90", "f32": 0.0}
+      ]
+    },
+    {
+      "name": "distinct x/y divisors catch swapped even/odd divisor",
+      "args": ["@src"],
+      "memory": [
+        {"addr": "@eqscaledblock+0x8c", "f32": 2.0},
+        {"addr": "@eqscaledblock+0x90", "f32": 1024.0}
+      ]
+    },
+    {
+      "name": "random source pointer argument passed through",
+      "args": ["@src"],
+      "memory": [
+        {"addr": "@eqscaledblock+0x8c", "f32": 1.0},
+        {"addr": "@eqscaledblock+0x90", "f32": 1.0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4208699,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@src"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@eqscaledblock+0x44", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x48", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x4c", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x50", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x54", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x58", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x5c", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x60", "type": "float", "choices": [-100.0, -1.5, 0.0, 0.3, 1.0, 17.25, 1000.0]},
+      {"addr": "@eqscaledblock+0x8c", "type": "float", "choices": [-2.0, 0.0, 0.1, 1.0, 3.0, 640.0]},
+      {"addr": "@eqscaledblock+0x90", "type": "float", "choices": [-5.0, 0.0, 0.7, 1.0, 9.0, 480.0]}
+    ]
+  }
+}

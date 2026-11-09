@@ -1,0 +1,159 @@
+{
+  "function": "t3dGet3DSpritePolygonConstantIntensity",
+  "original": "0x10008a4c",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "sprite",
+      "type": "ptr"
+    },
+    {
+      "name": "frameIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "float",
+  "objects": {
+    "sprite": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        { "offset": "0x18", "u32": "@frames" },
+        { "offset": "0x2c", "u32": "@definition" }
+      ]
+    },
+    "sprite_inherit": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        { "offset": "0x18", "u32": 0 },
+        { "offset": "0x2c", "u32": "@definition" }
+      ]
+    },
+    "definition": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        { "offset": "0x20", "u32": 4 },
+        { "offset": "0x2c", "u32": "@parent" }
+      ]
+    },
+    "parent": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        { "offset": "0x18", "u32": "@inherit_frames" },
+        { "offset": "0x20", "u32": 0 }
+      ]
+    },
+    "frames": {
+      "size": "0x190",
+      "fill": "random"
+    },
+    "inherit_frames": {
+      "size": "0x190",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "frame 0 of the sprite's own frames, +0x04/+0x0C hold other floats",
+      "args": ["@sprite", 0],
+      "memory": [
+        { "addr": "@frames", "offset": "0x4", "u32": "0x3f800000" },
+        { "addr": "@frames", "offset": "0x8", "f32": 1.5 },
+        { "addr": "@frames", "offset": "0xc", "u32": "0x40000000" },
+        { "addr": "@inherit_frames", "offset": "0x8", "f32": 7.5 }
+      ]
+    },
+    {
+      "name": "frame 1 of the sprite's own frames",
+      "args": ["@sprite", 1],
+      "memory": [
+        { "addr": "@frames", "offset": "0x58", "f32": 2.25 }
+      ]
+    },
+    {
+      "name": "last valid index (frame_count - 1)",
+      "args": ["@sprite", 3],
+      "memory": [
+        { "addr": "@frames", "offset": "0xf8", "f32": -7.25 }
+      ]
+    },
+    {
+      "name": "index == frame_count returns 0 without reading the frame",
+      "args": ["@sprite", 4],
+      "memory": [
+        { "addr": "@frames", "offset": "0x148", "f32": 9.5 }
+      ]
+    },
+    {
+      "name": "index > frame_count returns 0",
+      "args": ["@sprite", 5]
+    },
+    {
+      "name": "index 0xffffffff is not below the count (unsigned compare)",
+      "args": ["@sprite", "0xffffffff"]
+    },
+    {
+      "name": "null frame array uses the definition parent's frames",
+      "args": ["@sprite_inherit", 0],
+      "memory": [
+        { "addr": "@frames", "offset": "0x8", "f32": 1.5 },
+        { "addr": "@inherit_frames", "offset": "0x8", "f32": 7.5 }
+      ]
+    },
+    {
+      "name": "null frame array, index 2",
+      "args": ["@sprite_inherit", 2],
+      "memory": [
+        { "addr": "@inherit_frames", "offset": "0xa8", "f32": -2.5 }
+      ]
+    },
+    {
+      "name": "null frame array, index == frame_count returns 0",
+      "args": ["@sprite_inherit", 4],
+      "memory": [
+        { "addr": "@inherit_frames", "offset": "0x148", "f32": 12.5 }
+      ]
+    },
+    {
+      "name": "own frames win over the parent's frames",
+      "args": ["@sprite", 0],
+      "memory": [
+        { "addr": "@sprite", "offset": "0x18", "u32": "@inherit_frames" },
+        { "addr": "@parent", "offset": "0x18", "u32": "@frames" },
+        { "addr": "@inherit_frames", "offset": "0x8", "f32": 5.5 },
+        { "addr": "@frames", "offset": "0x8", "f32": -1.5 }
+      ]
+    },
+    {
+      "name": "count comes from the definition, not the parent",
+      "args": ["@sprite", 2],
+      "memory": [
+        { "addr": "@parent", "offset": "0x20", "u32": 1 },
+        { "addr": "@frames", "offset": "0xa8", "f32": 6.25 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 35404,
+    "count": 40,
+    "args": [
+      { "choices": ["@sprite", "@sprite_inherit"] },
+      { "choices": [0, 1, 2, 3, 4, 5, 7, "0xffffffff"] }
+    ],
+    "memory": [
+      { "addr": "@definition", "offset": "0x20", "type": "u32", "choices": [0, 1, 2, 3, 4, 5] },
+      { "addr": "@sprite", "offset": "0x18", "type": "ptr", "choices": ["@frames", "0x0", "@inherit_frames"] },
+      { "addr": "@parent", "offset": "0x18", "type": "ptr", "choices": ["@inherit_frames", "@frames"] },
+      { "addr": "@frames", "size": "0x190" },
+      { "addr": "@inherit_frames", "size": "0x190" }
+    ]
+  }
+}

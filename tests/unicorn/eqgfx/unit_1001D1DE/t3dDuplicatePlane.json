@@ -1,0 +1,153 @@
+{
+  "function": "t3dDuplicatePlane",
+  "original": "0x1001d406",
+  "sources": [
+    "src/eqgfx/unit_1001D1DE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "plane",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "plane": {
+      "size": "0x18",
+      "fill": "zero"
+    },
+    "copy": {
+      "size": "0x14",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@copy"
+    }
+  },
+  "cases": [
+    {
+      "name": "distinct five word plane copy",
+      "args": [
+        "@plane"
+      ],
+      "objects": {
+        "plane": {
+          "size": "0x18",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x00", "u32": "0x11000001"},
+            {"offset": "0x04", "u32": "0x22000002"},
+            {"offset": "0x08", "u32": "0x33000003"},
+            {"offset": "0x0c", "u32": "0x44000004"},
+            {"offset": "0x10", "u32": "0x55000005"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero plane copy",
+      "args": [
+        "@plane"
+      ],
+      "objects": {
+        "plane": {
+          "size": "0x18",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "allocation failure skips null source",
+      "args": [
+        0
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "forward overlapping destination",
+      "args": [
+        "@plane"
+      ],
+      "objects": {
+        "plane": {
+          "size": "0x18",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x00", "u32": "0x10101010"},
+            {"offset": "0x04", "u32": "0x20202020"},
+            {"offset": "0x08", "u32": "0x30303030"},
+            {"offset": "0x0c", "u32": "0x40404040"},
+            {"offset": "0x10", "u32": "0x50505050"},
+            {"offset": "0x14", "u32": "0x60606060"}
+          ]
+        }
+      },
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@plane+0x4"
+        }
+      }
+    },
+    {
+      "name": "same source and destination",
+      "args": [
+        "@plane"
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@plane"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 1406,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@plane",
+          "@plane+0x4"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@plane",
+        "type": "u32",
+        "count": 6,
+        "choices": [
+          0,
+          1,
+          1431655765,
+          2863311530,
+          2147483648,
+          3735928559,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "function": "t3dFreeRenderContextResources_guess",
+  "original": "0x10042a9b",
+  "sources": [
+    "src/eqgfx/unit_10042A22.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x280",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null allocation clears first field",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x278",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x27c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "non-null allocation is freed and cleared",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x278",
+          "u32": "0xdeadbeef"
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x27c",
+          "u32": "0xcafebabe"
+        }
+      ]
+    },
+    {
+      "name": "allocation pointer one",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x278",
+          "u32": 1
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x27c",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "high-bit allocation pointer",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x278",
+          "u32": "0x80000000"
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x27c",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "first clear precedes aliased free write",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x278",
+          "u32": "0x12345678"
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x27c",
+          "u32": "@rendercontext+0x278"
+        }
+      ],
+      "callees": {
+        "0x10050cbb": {
+          "name": "t3dFreeMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "78563412"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "allocation clear follows aliased free write",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x278",
+          "u32": "0xabcdef01"
+        },
+        {
+          "addr": "@rendercontext",
+          "offset": "0x27c",
+          "u32": "@rendercontext+0x27c"
+        }
+      ],
+      "callees": {
+        "0x10050cbb": {
+          "name": "t3dFreeMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr"
+          ],
+          "writes": [
+            {
+              "arg": 0,
+              "offset": 0,
+              "hex": "efbeadde"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 273051,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rendercontext",
+        "offset": "0x278",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0xffffffff",
+          "0x12345678"
+        ]
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x27c",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          "0xffffffff",
+          "0x80000000",
+          "0x10000000"
+        ]
+      }
+    ]
+  }
+}

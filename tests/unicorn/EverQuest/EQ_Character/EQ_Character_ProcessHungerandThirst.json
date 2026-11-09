@@ -1,0 +1,422 @@
+{
+  "function": "EQ_Character_ProcessHungerandThirst_guess",
+  "original": "0x00425a6a",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "ch",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "now",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ch": {
+      "size": "0xB00",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x36", "u8": 0},
+        {"offset": "0x974", "cstr": "Tester"},
+        {"offset": "0xa0", "u32": "@player"},
+        {"offset": "0xaf8", "u32": 0},
+        {"offset": "0xafc", "u32": 0}
+      ]
+    },
+    "player": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x70", "u32": "@info"}
+      ]
+    },
+    "info": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "eqmain": {
+      "size": "0xE80",
+      "fill": "zero"
+    },
+    "everquest": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006B63F8", "u8": 0},
+    {"addr": "0x006B6494", "u32": 0},
+    {"addr": "0x006E4E44", "u32": "@eqmain"},
+    {"addr": "0x006EFE2C", "u32": "@everquest"}
+  ],
+  "callees": {
+    "0x00428193": {"name": "EQ_Character::AutoEat_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+    "0x004d055e": {"name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"]},
+    "0x004a461e": {"name": "EqGetTime", "conv": "cdecl", "args": [], "ret": 123456},
+    "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 1}
+  },
+  "cases": [
+    {
+      "name": "typical: thirst, hunger, out-of-food line, tick stamp",
+      "args": ["@ch", 0, 100000]
+    },
+    {
+      "name": "player pointer null returns before any field",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@ch", "offset": "0xa0", "u32": 0}]
+    },
+    {
+      "name": "player byte 0x98 nonzero returns",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@player", "offset": "0x98", "u8": 1}]
+    },
+    {
+      "name": "player byte 0x98 = 0x80 returns",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@player", "offset": "0x98", "u8": 128}]
+    },
+    {
+      "name": "neighbour bytes of 0x98 and 0xF1 nonzero, both flags zero",
+      "args": ["@ch", 0, 100000],
+      "memory": [
+        {"addr": "@player", "offset": "0x97", "u8": 255},
+        {"addr": "@player", "offset": "0x99", "u8": 255},
+        {"addr": "@player", "offset": "0xf0", "u8": 255},
+        {"addr": "@player", "offset": "0xf2", "u8": 255}
+      ]
+    },
+    {
+      "name": "flag 0xF1 sets both stat words to 32000, no time check",
+      "args": ["@ch", 0, 0],
+      "memory": [
+        {"addr": "@player", "offset": "0xf1", "u8": 1},
+        {"addr": "@ch", "offset": "0xaf8", "u32": 5},
+        {"addr": "@ch", "offset": "0xafc", "u32": "0xFFFFFFFF"}
+      ]
+    },
+    {
+      "name": "flag 0xF1 = 0x80 sets both stat words",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@player", "offset": "0xf1", "u8": 128}]
+    },
+    {
+      "name": "flag 0xF1 wins over the interface lock",
+      "args": ["@ch", 0, 100000],
+      "memory": [
+        {"addr": "@player", "offset": "0xf1", "u8": 1},
+        {"addr": "0x006B63F8", "u8": 1}
+      ]
+    },
+    {
+      "name": "interface byte lock skips the tick",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "0x006B63F8", "u8": 1}]
+    },
+    {
+      "name": "interface byte lock 0x80 skips the tick",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "0x006B63F8", "u8": 128}]
+    },
+    {
+      "name": "dword lock skips the tick",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "0x006B6494", "u32": 1}]
+    },
+    {
+      "name": "dword lock 0x100 skips the tick",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "0x006B6494", "u32": 256}]
+    },
+    {
+      "name": "byte 0x6B63F9 set is not the lock",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "0x006B63F9", "u8": 1}]
+    },
+    {
+      "name": "gap 46000 is not due",
+      "args": ["@ch", 0, 46000]
+    },
+    {
+      "name": "gap 46001 is due",
+      "args": ["@ch", 0, 46001]
+    },
+    {
+      "name": "race byte 6 keeps the 46000 limit (neighbours 0x35, 0x37 = 7)",
+      "args": ["@ch", 0, 46001],
+      "memory": [
+        {"addr": "@ch", "offset": "0x36", "u8": 6},
+        {"addr": "@ch", "offset": "0x35", "u8": 7},
+        {"addr": "@ch", "offset": "0x37", "u8": 7}
+      ]
+    },
+    {
+      "name": "race byte 7 raises the limit: gap 46001 not due",
+      "args": ["@ch", 0, 46001],
+      "memory": [{"addr": "@ch", "offset": "0x36", "u8": 7}]
+    },
+    {
+      "name": "race byte 7: gap 92000 not due",
+      "args": ["@ch", 0, 92000],
+      "memory": [{"addr": "@ch", "offset": "0x36", "u8": 7}]
+    },
+    {
+      "name": "race byte 7: gap 92001 due",
+      "args": ["@ch", 0, 92001],
+      "memory": [{"addr": "@ch", "offset": "0x36", "u8": 7}]
+    },
+    {
+      "name": "tick ahead of now is due (unsigned gap)",
+      "args": ["@ch", 0, 0],
+      "memory": [{"addr": "@info", "offset": "0x60", "u32": 100}]
+    },
+    {
+      "name": "tick equal to now is not due",
+      "args": ["@ch", 0, 500000],
+      "memory": [{"addr": "@info", "offset": "0x60", "u32": 500000}]
+    },
+    {
+      "name": "info neighbours 0x5C and 0x64 equal now: gap still from 0x60",
+      "args": ["@ch", 0, 100000],
+      "memory": [
+        {"addr": "@info", "offset": "0x5c", "u32": 100000},
+        {"addr": "@info", "offset": "0x64", "u32": 100000}
+      ]
+    },
+    {
+      "name": "gap 0x80000000 is due",
+      "args": ["@ch", 0, "0x80000000"]
+    },
+    {
+      "name": "both stat words 2999 still run both checks",
+      "args": ["@ch", 0, 100000],
+      "memory": [
+        {"addr": "@ch", "offset": "0xafc", "u32": 2999},
+        {"addr": "@ch", "offset": "0xaf8", "u32": 2999}
+      ]
+    },
+    {
+      "name": "thirst word 3000 skips the thirst check only",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@ch", "offset": "0xafc", "u32": 3000}]
+    },
+    {
+      "name": "hunger word 3000 skips the hunger check only",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@ch", "offset": "0xaf8", "u32": 3000}]
+    },
+    {
+      "name": "both words 3000: status line and stamp only",
+      "args": ["@ch", 0, 100000],
+      "memory": [
+        {"addr": "@ch", "offset": "0xafc", "u32": 3000},
+        {"addr": "@ch", "offset": "0xaf8", "u32": 3000}
+      ]
+    },
+    {
+      "name": "thirst word -1 is below 3000 (signed compare)",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@ch", "offset": "0xafc", "u32": "0xFFFFFFFF"}]
+    },
+    {
+      "name": "hunger word INT_MIN is below 3000 (signed compare)",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@ch", "offset": "0xaf8", "u32": "0x80000000"}]
+    },
+    {
+      "name": "null eqmain: no AutoEat, no thirst or hunger line",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "0x006E4E44", "u32": 0}]
+    },
+    {
+      "name": "eqmain +0xE5C nonzero: no thirst or hunger line",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@eqmain", "offset": "0xe5c", "u32": 1}]
+    },
+    {
+      "name": "eqmain +0x94 nonzero: no thirst or hunger line",
+      "args": ["@ch", 0, 100000],
+      "memory": [{"addr": "@eqmain", "offset": "0x94", "u32": 1}]
+    },
+    {
+      "name": "eqmain neighbours 0x90, 0x98, 0xE58, 0xE60 nonzero: both lines",
+      "args": ["@ch", 0, 100000],
+      "memory": [
+        {"addr": "@eqmain", "offset": "0x90", "u32": 1},
+        {"addr": "@eqmain", "offset": "0x98", "u32": 1},
+        {"addr": "@eqmain", "offset": "0xe58", "u32": 1},
+        {"addr": "@eqmain", "offset": "0xe60", "u32": 1}
+      ]
+    },
+    {
+      "name": "AutoEat(0) true: no thirst line, hunger line kept",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428193": {"name": "EQ_Character::AutoEat_guess", "conv": "thiscall", "args": ["int"], "ret": [1, 0]}
+      }
+    },
+    {
+      "name": "AutoEat(1) true: no hunger line, thirst line kept",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428193": {"name": "EQ_Character::AutoEat_guess", "conv": "thiscall", "args": ["int"], "ret": [0, 1]}
+      }
+    },
+    {
+      "name": "AutoEat true for both: neither line",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428193": {"name": "EQ_Character::AutoEat_guess", "conv": "thiscall", "args": ["int"], "ret": 1}
+      }
+    },
+    {
+      "name": "name equals the first string: one compare",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00524240": {"name": "__strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": 0}
+      }
+    },
+    {
+      "name": "name equals the second string: two compares, no oasis compare",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00524240": {"name": "__strcmpi", "conv": "cdecl", "args": ["cstr", "cstr"], "ret": [1, 0]}
+      }
+    },
+    {
+      "name": "status 2 low on food",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 2}
+      }
+    },
+    {
+      "name": "status 4 out of drink",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 4}
+      }
+    },
+    {
+      "name": "status 5 out of food and drink",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 5}
+      }
+    },
+    {
+      "name": "status 6 out of drink and low on food",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 6}
+      }
+    },
+    {
+      "name": "status 8 low on drink",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 8}
+      }
+    },
+    {
+      "name": "status 9 out of food and low on drink",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 9}
+      }
+    },
+    {
+      "name": "status 10 low on food and drink",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 10}
+      }
+    },
+    {
+      "name": "status 0 has no line",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 0}
+      }
+    },
+    {
+      "name": "status 3 has no line (table default)",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 3}
+      }
+    },
+    {
+      "name": "status 7 has no line (table default)",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 7}
+      }
+    },
+    {
+      "name": "status 11 has no line (past the table)",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 11}
+      }
+    },
+    {
+      "name": "status -1 has no line",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": -1}
+      }
+    },
+    {
+      "name": "status 0x10001 reads AX only: out of food",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 65537}
+      }
+    },
+    {
+      "name": "status 0x8001 (AX negative) has no line",
+      "args": ["@ch", 0, 100000],
+      "callees": {
+        "0x00428405": {"name": "EQ_Character::FoodDrinkStatus_guess", "conv": "thiscall", "args": [], "ret": 32769}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4348522,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@ch"
+        ]
+      },
+      {},
+      {
+        "range": [0, 300000]
+      }
+    ],
+    "memory": [
+      {"addr": "@ch", "offset": "0x36", "type": "u8", "choices": [0, 6, 7, 8, 255]},
+      {"addr": "@ch", "offset": "0xaf8", "type": "int", "choices": [0, 2999, 3000, 3001, -1, -2147483648, 32000, 2147483647], "p": 0.8},
+      {"addr": "@ch", "offset": "0xafc", "type": "int", "choices": [0, 2999, 3000, 3001, -1, -2147483648, 32000, 2147483647], "p": 0.8},
+      {"addr": "@ch", "offset": "0xa0", "type": "u32", "choices": ["@player", 0], "p": 0.05},
+      {"addr": "@player", "offset": "0x98", "type": "u8", "choices": [0, 0, 0, 1, 128], "p": 0.5},
+      {"addr": "@player", "offset": "0xf1", "type": "u8", "choices": [0, 0, 0, 1, 128], "p": 0.5},
+      {"addr": "@info", "offset": "0x60", "type": "u32", "range": [0, 300000]},
+      {"addr": "0x006B63F8", "type": "u8", "choices": [0, 1, 128], "p": 0.2},
+      {"addr": "0x006B6494", "type": "u32", "choices": [0, 1, 128], "p": 0.2},
+      {"addr": "0x006E4E44", "type": "u32", "choices": ["@eqmain", 0], "p": 0.1},
+      {"addr": "@eqmain", "offset": "0xe5c", "type": "u32", "choices": [0, 0, 1, 305419896], "p": 0.5},
+      {"addr": "@eqmain", "offset": "0x94", "type": "u32", "choices": [0, 0, 1], "p": 0.5}
+    ]
+  }
+}

@@ -1,0 +1,332 @@
+{
+  "function": "t3dIsActorPositionContainedInZone",
+  "original": "0x100207fd",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actor",
+      "type": "ptr"
+    },
+    {
+      "name": "position",
+      "type": "ptr"
+    },
+    {
+      "name": "region",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@zones"
+        }
+      ]
+    },
+    "position": {
+      "size": "0x30",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x28",
+          "u32": 1
+        }
+      ]
+    },
+    "zones": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@zone0"
+        },
+        {
+          "offset": "0x4",
+          "u32": "@zone1"
+        },
+        {
+          "offset": "0x8",
+          "u32": "@zone2"
+        },
+        {
+          "offset": "0x3c",
+          "u32": "@zone3"
+        }
+      ]
+    },
+    "zones2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@zone3"
+        }
+      ]
+    },
+    "zone0": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "zone1": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "zone2": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "zone3": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002084f": {
+      "name": "t3dIsRegionContainedInZone",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "index0 zones[0]",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "index1 zones[1]",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "index2 zones[2]",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "index15 last entry",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 15
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "index3 null zone entry",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@position",
+          "offset": "0x28",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "second table via actor pointer",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@actor",
+          "offset": "0x24",
+          "u32": "@zones2"
+        }
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "negative region",
+      "args": [
+        "@actor",
+        "@position",
+        -1
+      ],
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "callee says not contained",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x1002084f": {
+          "name": "t3dIsRegionContainedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee result passes through unchanged",
+      "args": [
+        "@actor",
+        "@position",
+        1
+      ],
+      "callees": {
+        "0x1002084f": {
+          "name": "t3dIsRegionContainedInZone",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "int"
+          ],
+          "ret": 305419896
+        }
+      },
+      "expect": {
+        "ret": 305419896
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 133117,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actor"
+        ]
+      },
+      {
+        "choices": [
+          "@position"
+        ]
+      },
+      {
+        "range": [
+          -4,
+          30
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actor",
+        "offset": "0x24",
+        "type": "ptr",
+        "choices": [
+          "@zones",
+          "@zones2"
+        ]
+      },
+      {
+        "addr": "@position",
+        "offset": "0x28",
+        "type": "int",
+        "range": [
+          0,
+          15
+        ]
+      },
+      {
+        "addr": "@zones",
+        "type": "ptr",
+        "count": 16,
+        "choices": [
+          "@zone0",
+          "@zone1",
+          "@zone2",
+          "@zone3",
+          "0x0"
+        ]
+      },
+      {
+        "addr": "@zones2",
+        "type": "ptr",
+        "count": 16,
+        "choices": [
+          "@zone0",
+          "@zone1",
+          "@zone2",
+          "@zone3",
+          "0x0"
+        ]
+      }
+    ]
+  }
+}

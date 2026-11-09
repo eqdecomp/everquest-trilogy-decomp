@@ -1,0 +1,70 @@
+{
+  "function": "t3dFastFileRead",
+  "original": "0x1002186a",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "fastFile", "type": "ptr"},
+    {"name": "buffer", "type": "ptr"},
+    {"name": "byteCount", "type": "int"}
+  ],
+  "ret": "int",
+  "objects": {
+    "fastfile": {"size": "0x10", "fill": "random", "init": [{"offset": "0x0", "u32": "@stream"}]},
+    "stream": {"size": "0x20", "fill": "random", "init": [{"offset": "0x8", "u32": "@handle"}]},
+    "stream2": {"size": "0x20", "fill": "random", "init": [{"offset": "0x8", "u32": "@handle2"}]},
+    "handle": {"size": "0x20", "fill": "random"},
+    "handle2": {"size": "0x20", "fill": "random"},
+    "buffer": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10052a90": {
+      "name": "readDataFromFastFile_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "int"],
+      "ret": 7
+    }
+  },
+  "cases": [
+    {"name": "typical read", "args": ["@fastfile", "@buffer", 16], "expect": {"ret": 1}},
+    {"name": "one byte", "args": ["@fastfile", "@buffer", 1], "expect": {"ret": 1}},
+    {"name": "zero count", "args": ["@fastfile", "@buffer", 0], "expect": {"ret": 1}},
+    {"name": "negative count", "args": ["@fastfile", "@buffer", -1], "expect": {"ret": 0}},
+    {"name": "most negative count", "args": ["@fastfile", "@buffer", -2147483648], "expect": {"ret": 0}},
+    {"name": "largest count", "args": ["@fastfile", "@buffer", 2147483647], "expect": {"ret": 1}},
+    {"name": "null fastFile", "args": [0, "@buffer", 16], "expect": {"ret": 0}},
+    {"name": "null buffer", "args": ["@fastfile", 0, 16], "expect": {"ret": 0}},
+    {"name": "null buffer zero count", "args": ["@fastfile", 0, 0], "expect": {"ret": 0}},
+    {"name": "null fastFile zero count", "args": [0, "@buffer", 0], "expect": {"ret": 0}},
+    {"name": "null fastFile negative count", "args": [0, "@buffer", -1], "expect": {"ret": 0}},
+    {"name": "null buffer negative count", "args": ["@fastfile", 0, -1], "expect": {"ret": 0}},
+    {"name": "both null", "args": [0, 0, 5], "expect": {"ret": 0}},
+    {
+      "name": "callee returns zero",
+      "args": ["@fastfile", "@buffer", 16],
+      "callees": {"0x10052a90": {"name": "readDataFromFastFile_guess", "conv": "thiscall", "args": ["ptr", "int"], "ret": 0}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "second stream",
+      "args": ["@fastfile", "@buffer", 16],
+      "memory": [{"addr": "@fastfile", "u32": "@stream2"}],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 1002186,
+    "count": 40,
+    "args": [
+      {"choices": ["@fastfile", 0]},
+      {"choices": ["@buffer", 0]},
+      {"range": [-4, 30]}
+    ],
+    "memory": [
+      {"addr": "@fastfile", "type": "ptr", "choices": ["@stream", "@stream2"]}
+    ]
+  }
+}

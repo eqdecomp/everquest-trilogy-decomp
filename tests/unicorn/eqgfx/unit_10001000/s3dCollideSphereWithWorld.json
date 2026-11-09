@@ -1,0 +1,129 @@
+{
+  "function": "s3dCollideSphereWithWorld",
+  "original": "0x100016dc",
+  "sources": ["src/eqgfx/unit_10001000.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "world", "type": "ptr"},
+    {"name": "collision_context", "type": "int"},
+    {"name": "start_position", "type": "ptr"},
+    {"name": "end_position", "type": "ptr"},
+    {"name": "radius", "type": "float"},
+    {"name": "collision_mask", "type": "int"},
+    {"name": "segment_callback", "type": "ptr"},
+    {"name": "callback_context", "type": "ptr"},
+    {"name": "hit_position", "type": "ptr"},
+    {"name": "collision_data", "type": "ptr"},
+    {"name": "collision_id", "type": "ptr"},
+    {"name": "orientation_actor", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {"size": "0x4", "fill": "zero"},
+    "start_position": {"size": "0xc", "fill": "zero"},
+    "end_position": {"size": "0xc", "fill": "zero"},
+    "callback_context": {"size": "0x4", "fill": "zero"},
+    "hit_position": {"size": "0xc", "fill": "zero"},
+    "collision_data": {"size": "0xc", "fill": "zero"},
+    "collision_id": {"size": "0x4", "fill": "zero"},
+    "orientation_actor": {"size": "0x4", "fill": "zero"},
+    "segment_callback": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x10086080", "u32": 31},
+    {"addr": "0x100aad08", "u32": 17},
+    {"addr": "0x30003000", "size": "0xfc", "fill": "zero"},
+    {"addr": "0x30003000", "u32": 24}
+  ],
+  "callees": {
+    "0x10006e31": {"name": "s3dReallocateClipSegmentStack", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10001a67": {
+      "name": "s3dCollideMovingSphereWithWorld",
+      "conv": "cdecl",
+      "args": ["ptr", "int", "ptr", "ptr", "float", "int", "ptr", "ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 7, "offset": 0, "hex": "00300030000000000000803e0000403f4433221188776655ddccbbaadf9b5713"}
+      ]
+    },
+    "0x100017ef": {"name": "s3dReorientActorFromCollision", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 0},
+    "@segment_callback": {"conv": "cdecl", "args": ["ptr", "ptr", "float"], "ret": 1}
+  },
+  "cases": [
+    {
+      "name": "reallocation failure returns minus one",
+      "args": ["@world", 1, "@start_position", "@end_position", 1.5, 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", "@orientation_actor"],
+      "callees": {"0x10006e31": {"name": "s3dReallocateClipSegmentStack", "conv": "cdecl", "args": ["ptr"], "ret": 1}}
+    },
+    {
+      "name": "null segment result interpolates outputs",
+      "args": ["@world", 1, "@start_position", "@end_position", 1.5, 3, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0],
+      "callees": {
+        "0x10001a67": {
+          "name": "FUN_10001a67", "conv": "cdecl", "args": ["ptr", "int", "ptr", "ptr", "float", "int", "ptr", "ptr"], "ret": 0,
+          "writes": [{"arg": 7, "offset": 0, "hex": "00000000000000000000803e0000403f4433221188776655ddccbbaadf9b5713"}]
+        }
+      },
+      "memory": [
+        {"addr": "@start_position", "offset": "0x0", "f32": 10.0},
+        {"addr": "@start_position", "offset": "0x4", "f32": -4.0},
+        {"addr": "@start_position", "offset": "0x8", "f32": 2.0},
+        {"addr": "@end_position", "offset": "0x0", "f32": 18.0},
+        {"addr": "@end_position", "offset": "0x4", "f32": 8.0},
+        {"addr": "@end_position", "offset": "0x8", "f32": -6.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "non collision segment calls callback then exits",
+      "args": ["@world", 0, "@start_position", "@end_position", 0.5, 0, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0],
+      "memory": [{"addr": "0x30003000", "u32": 23}]
+    },
+    {
+      "name": "collision segment with null callback exits",
+      "args": ["@world", 0, "@start_position", "@end_position", 0.5, 0, 0, "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0]
+    },
+    {
+      "name": "collision callback returns one",
+      "args": ["@world", 0, "@start_position", "@end_position", 0.5, 0, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0]
+    },
+    {
+      "name": "collision callback continues once and sets counter",
+      "args": ["@world", 7, "@start_position", "@end_position", 2.0, 5, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", 0],
+      "callees": {"@segment_callback": {"conv": "cdecl", "args": ["ptr", "ptr", "float"], "ret": [0, 1]}},
+      "memory": [
+        {"addr": "0x10086080", "u32": 100},
+        {"addr": "0x100aad08", "u32": 2},
+        {"addr": "0x30003000", "offset": "0xf8", "u32": 0}
+      ]
+    },
+    {
+      "name": "orientation actor is forwarded",
+      "args": ["@world", 4, "@start_position", "@end_position", 3.0, 9, "@segment_callback", "@callback_context", "@hit_position", "@collision_data", "@collision_id", "@orientation_actor"]
+    }
+  ],
+  "fuzz": {
+    "seed": 16016860,
+    "count": 30,
+    "args": [
+      {"choices": ["@world"]},
+      {"range": [-16, 128]},
+      {"choices": ["@start_position"]},
+      {"choices": ["@end_position"]},
+      {"range": [-20, 20]},
+      {"range": [-8, 32]},
+      {"choices": [0, "@segment_callback"]},
+      {"choices": ["@callback_context"]},
+      {"choices": ["@hit_position"]},
+      {"choices": ["@collision_data"]},
+      {"choices": ["@collision_id"]},
+      {"choices": [0, "@orientation_actor"]}
+    ],
+    "memory": [
+      {"addr": "@start_position", "offset": "0x0", "type": "float", "count": 3, "range": [-100, 100]},
+      {"addr": "@end_position", "offset": "0x0", "type": "float", "count": 3, "range": [-100, 100]},
+      {"addr": "0x10086080", "type": "u32", "range": [0, 100000]},
+      {"addr": "0x100aad08", "type": "u32", "range": [0, 100000]}
+    ]
+  }
+}

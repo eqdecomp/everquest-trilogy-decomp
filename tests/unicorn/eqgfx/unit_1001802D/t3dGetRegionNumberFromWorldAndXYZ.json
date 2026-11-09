@@ -1,0 +1,206 @@
+{
+  "function": "t3dGetRegionNumberFromWorldAndXYZ",
+  "original": "0x100192c4",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "regionList",
+      "type": "ptr"
+    },
+    {
+      "name": "worldXYZ",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "listMain": { "size": "0x28", "fill": "zero" },
+    "listNullRoot": { "size": "0x28", "fill": "zero" },
+    "listNullChoice": { "size": "0x28", "fill": "zero" },
+    "listLeafRoot": { "size": "0x28", "fill": "zero" },
+    "listNegRegion": { "size": "0x28", "fill": "zero" },
+    "xyz": { "size": "0x10", "fill": "zero" },
+    "nodeRoot": { "size": "0x20", "fill": "zero" },
+    "nodeLeft": { "size": "0x20", "fill": "zero" },
+    "nodeNullChoice": { "size": "0x20", "fill": "zero" },
+    "deadNode": { "size": "0x20", "fill": "zero" },
+    "leafRoot": { "size": "0x20", "fill": "zero" },
+    "leafPos": { "size": "0x20", "fill": "zero" },
+    "leafNeg": { "size": "0x20", "fill": "zero" },
+    "leafStop": { "size": "0x20", "fill": "zero" },
+    "leafChoice": { "size": "0x20", "fill": "zero" },
+    "leafNegRegion": { "size": "0x20", "fill": "zero" }
+  },
+  "memory": [
+    { "addr": "@listMain", "offset": "0xc", "u32": "@nodeRoot" },
+    { "addr": "@listNullChoice", "offset": "0xc", "u32": "@nodeNullChoice" },
+    { "addr": "@listLeafRoot", "offset": "0xc", "u32": "@leafRoot" },
+    { "addr": "@listNegRegion", "offset": "0xc", "u32": "@leafNegRegion" },
+    { "addr": "@nodeRoot", "offset": "0x10", "u32": "@leafStop" },
+    { "addr": "@nodeRoot", "offset": "0x14", "u32": "@nodeLeft" },
+    { "addr": "@nodeLeft", "offset": "0x10", "u32": "@leafPos" },
+    { "addr": "@nodeLeft", "offset": "0x14", "u32": "@leafNeg" },
+    { "addr": "@nodeNullChoice", "offset": "0x10", "u32": 0 },
+    { "addr": "@nodeNullChoice", "offset": "0x14", "u32": "@leafChoice" },
+    { "addr": "@leafPos", "offset": "0x10", "u32": "@deadNode" },
+    { "addr": "@leafPos", "offset": "0x14", "u32": "@deadNode" },
+    { "addr": "@leafNeg", "offset": "0x10", "u32": "@deadNode" },
+    { "addr": "@leafNeg", "offset": "0x14", "u32": "@deadNode" },
+    { "addr": "@leafStop", "offset": "0x10", "u32": "@deadNode" },
+    { "addr": "@leafStop", "offset": "0x14", "u32": "@deadNode" },
+    { "addr": "@leafChoice", "offset": "0x10", "u32": "@deadNode" },
+    { "addr": "@leafChoice", "offset": "0x14", "u32": "@deadNode" },
+    { "addr": "@leafRoot", "offset": "0x10", "u32": "@deadNode" },
+    { "addr": "@leafRoot", "offset": "0x14", "u32": "@deadNode" },
+    { "addr": "@leafNegRegion", "offset": "0x10", "u32": "@deadNode" },
+    { "addr": "@leafNegRegion", "offset": "0x14", "u32": "@deadNode" },
+    { "addr": "@leafPos", "offset": "0x18", "u32": 1 },
+    { "addr": "@leafNeg", "offset": "0x18", "u32": 2 },
+    { "addr": "@leafStop", "offset": "0x18", "u32": 3 },
+    { "addr": "@leafChoice", "offset": "0x18", "u32": 4 },
+    { "addr": "@leafRoot", "offset": "0x18", "u32": 9 },
+    { "addr": "@leafNegRegion", "offset": "0x18", "u32": 4294967293 }
+  ],
+  "cases": [
+    {
+      "name": "null root",
+      "args": ["@listNullRoot", "@xyz"],
+      "expect": { "ret": -1 }
+    },
+    {
+      "name": "root is a leaf",
+      "args": ["@listLeafRoot", "@xyz"],
+      "expect": { "ret": 8 }
+    },
+    {
+      "name": "point on the plane takes the positive child",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@nodeRoot", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@nodeRoot", "offset": "0x4", "f32": 0.0 },
+        { "addr": "@nodeRoot", "offset": "0x8", "f32": 0.0 },
+        { "addr": "@nodeRoot", "offset": "0xc", "f32": 0.0 }
+      ],
+      "expect": { "ret": 2 }
+    },
+    {
+      "name": "negative at root, positive at left",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@xyz", "offset": "0x0", "f32": -1.0 },
+        { "addr": "@nodeRoot", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@nodeLeft", "offset": "0x4", "f32": 1.0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "negative at both levels",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@xyz", "offset": "0x0", "f32": -1.0 },
+        { "addr": "@xyz", "offset": "0x4", "f32": -1.0 },
+        { "addr": "@nodeRoot", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@nodeLeft", "offset": "0x4", "f32": 1.0 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "boundary: dot exactly -d takes the positive child",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@xyz", "offset": "0x0", "f32": 5.0 },
+        { "addr": "@nodeRoot", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@nodeRoot", "offset": "0xc", "f32": -5.0 }
+      ],
+      "expect": { "ret": 2 }
+    },
+    {
+      "name": "boundary: one ulp inside takes the negative child",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@xyz", "offset": "0x0", "f32": 4.9999995 },
+        { "addr": "@nodeRoot", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@nodeRoot", "offset": "0xc", "f32": -5.0 },
+        { "addr": "@nodeLeft", "offset": "0x4", "f32": 1.0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "non-axis-aligned plane",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@xyz", "offset": "0x0", "f32": 3.0 },
+        { "addr": "@xyz", "offset": "0x4", "f32": 1.0 },
+        { "addr": "@xyz", "offset": "0x8", "f32": 2.0 },
+        { "addr": "@nodeRoot", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@nodeRoot", "offset": "0x4", "f32": 2.0 },
+        { "addr": "@nodeRoot", "offset": "0x8", "f32": -3.0 },
+        { "addr": "@nodeLeft", "offset": "0x4", "f32": 1.0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "positive child is null",
+      "args": ["@listNullChoice", "@xyz"],
+      "memory": [
+        { "addr": "@nodeNullChoice", "offset": "0x0", "f32": 1.0 }
+      ],
+      "expect": { "ret": -1 }
+    },
+    {
+      "name": "negative child of the null-choice node",
+      "args": ["@listNullChoice", "@xyz"],
+      "memory": [
+        { "addr": "@xyz", "offset": "0x0", "f32": -1.0 },
+        { "addr": "@nodeNullChoice", "offset": "0x0", "f32": 1.0 }
+      ],
+      "expect": { "ret": 3 }
+    },
+    {
+      "name": "early stop at a live interior node",
+      "args": ["@listMain", "@xyz"],
+      "memory": [
+        { "addr": "@nodeRoot", "offset": "0x18", "u32": 7 }
+      ],
+      "expect": { "ret": 6 }
+    },
+    {
+      "name": "negative stored region still stops the walk",
+      "args": ["@listNegRegion", "@xyz"],
+      "expect": { "ret": -4 }
+    },
+    {
+      "name": "null pointers",
+      "args": [0, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 5017550,
+    "count": 32,
+    "args": [
+      {
+        "choices": ["@listMain", "@listNullRoot", "@listNullChoice", "@listLeafRoot"]
+      },
+      {
+        "choices": ["@xyz"]
+      }
+    ],
+    "memory": [
+      { "addr": "@xyz", "offset": "0x0", "type": "float", "count": 3, "range": [-8, 8] },
+      { "addr": "@nodeRoot", "offset": "0x0", "type": "float", "count": 4, "range": [-3, 3], "p": 0.9 },
+      { "addr": "@nodeLeft", "offset": "0x0", "type": "float", "count": 4, "range": [-3, 3], "p": 0.9 },
+      { "addr": "@nodeNullChoice", "offset": "0x0", "type": "float", "count": 4, "range": [-3, 3], "p": 0.9 },
+      { "addr": "@nodeRoot", "offset": "0x18", "type": "int", "range": [-3, 4], "p": 0.35 },
+      { "addr": "@nodeLeft", "offset": "0x18", "type": "int", "range": [-3, 4], "p": 0.35 },
+      { "addr": "@nodeNullChoice", "offset": "0x18", "type": "int", "range": [-3, 4], "p": 0.35 },
+      { "addr": "@leafPos", "offset": "0x18", "type": "int", "range": [-3, 8], "p": 0.5 },
+      { "addr": "@leafNeg", "offset": "0x18", "type": "int", "range": [-3, 8], "p": 0.5 },
+      { "addr": "@leafStop", "offset": "0x18", "type": "int", "range": [-3, 8], "p": 0.5 },
+      { "addr": "@leafChoice", "offset": "0x18", "type": "int", "range": [-3, 8], "p": 0.5 },
+      { "addr": "@leafRoot", "offset": "0x18", "type": "int", "range": [-3, 8], "p": 0.5 }
+    ]
+  }
+}

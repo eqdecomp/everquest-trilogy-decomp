@@ -1,0 +1,483 @@
+{
+  "function": "t3dQuantizeEnabledRgb_guess",
+  "original": "0x10050e01",
+  "sources": [
+    "src/eqgfx/unit_10050AA7.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "colors",
+      "type": "ptr"
+    },
+    {
+      "name": "count",
+      "type": "int"
+    },
+    {
+      "name": "enabled",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "colors": {
+      "size": "0x30",
+      "fill": "zero"
+    },
+    "flags": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100a3ac0",
+      "f32": 1.5
+    },
+    {
+      "addr": "0x100a3ac4",
+      "u32": "0x437f0000"
+    },
+    {
+      "addr": "0x100a3acc",
+      "f32": 0.0
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "disabled element is left alone",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "@flags",
+          "u8": 0
+        },
+        {
+          "addr": "@colors",
+          "f32": 10.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": 20.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 30.0
+        }
+      ]
+    },
+    {
+      "name": "enabled element: scaled by 1.5 and rounded",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "f32": 10.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": 20.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 30.0
+        }
+      ]
+    },
+    {
+      "name": "ties round to even at scale 0.5",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac0",
+          "f32": 0.5
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "f32": 1.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": 3.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 5.0
+        }
+      ]
+    },
+    {
+      "name": "negative ties round to even (limit is all ones, so no clamp)",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "0x100a3ac0",
+          "f32": 0.5
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "f32": -3.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": -5.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": -1.0
+        }
+      ]
+    },
+    {
+      "name": "channel equal to the limit multiplies, above it clamps",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac0",
+          "f32": 0.5
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "u32": "0x437f0000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "u32": "0x437f0001"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 100.0
+        }
+      ]
+    },
+    {
+      "name": "negative and NaN channels clamp (unsigned compare of the bits)",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "u32": "0xbf800000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "u32": "0x7fc00000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "u32": "0x7f800000"
+        }
+      ]
+    },
+    {
+      "name": "+inf at the limit multiplies: the int indefinite",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac4",
+          "u32": "0x7f800000"
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "u32": "0x7f800000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "u32": "0x7fc00000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": -2.0
+        }
+      ]
+    },
+    {
+      "name": "overflowing products store the int indefinite",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac4",
+          "u32": "0xffffffff"
+        },
+        {
+          "addr": "0x100a3ac0",
+          "f32": 1e30
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "f32": 3e9
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": 1.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 0.0
+        }
+      ]
+    },
+    {
+      "name": "zero limit: only +0.0 multiplies",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac4",
+          "u32": "0x00000000"
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "u32": "0x00000000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "u32": "0x80000000"
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "u32": "0x00000001"
+        }
+      ]
+    },
+    {
+      "name": "three elements, middle disabled (stride and flags)",
+      "args": [
+        "@colors",
+        3,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac0",
+          "f32": 2.0
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@flags",
+          "offset": "0x1",
+          "u8": 0
+        },
+        {
+          "addr": "@flags",
+          "offset": "0x2",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "f32": 1.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": 2.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 3.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0xc",
+          "f32": 7.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x10",
+          "f32": 8.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x14",
+          "f32": 9.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x18",
+          "f32": 100.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x1c",
+          "f32": 200.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x20",
+          "f32": 300.0
+        }
+      ]
+    },
+    {
+      "name": "negative scale: rounding of negative products",
+      "args": [
+        "@colors",
+        1,
+        "@flags"
+      ],
+      "memory": [
+        {
+          "addr": "0x100a3ac0",
+          "f32": -2.0
+        },
+        {
+          "addr": "@flags",
+          "u8": 1
+        },
+        {
+          "addr": "@colors",
+          "f32": 3.0
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x4",
+          "f32": 0.25
+        },
+        {
+          "addr": "@colors",
+          "offset": "0x8",
+          "f32": 1.25
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 10050001,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@colors"
+        ]
+      },
+      {
+        "range": [
+          1,
+          4
+        ]
+      },
+      {
+        "choices": [
+          "@flags"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100a3ac0",
+        "type": "float",
+        "choices": [0.0, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, -0.5, -2.0, 1e30]
+      },
+      {
+        "addr": "0x100a3ac4",
+        "type": "u32",
+        "choices": [0, 1065353216, 1132396544, 2139095040, 2143289344, 2147483648, 4294967295]
+      },
+      {
+        "addr": "@colors",
+        "type": "float",
+        "count": 12
+      },
+      {
+        "addr": "@flags",
+        "type": "u8",
+        "count": 4,
+        "choices": [0, 1, 1, 2, 255]
+      }
+    ]
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "function": "t3dGet3DSpriteDefinitionPolygonNumVertices",
+  "original": "0x10008413",
+  "sources": [
+    "src/eqgfx/unit_10007EF3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "definition": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": 16843009},
+        {"offset": "0x20", "u32": 4},
+        {"offset": "0x24", "u32": "@polygons"},
+        {"offset": "0x28", "u32": "@otherpolygons"}
+      ]
+    },
+    "polygons": {
+      "size": "0x200",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": 286331153},
+        {"offset": "0x04", "u32": 7},
+        {"offset": "0x08", "u32": 572662306},
+        {"offset": "0x2c", "u32": 858993459},
+        {"offset": "0x30", "u32": 11},
+        {"offset": "0x34", "u32": 1145324612},
+        {"offset": "0x58", "u32": 1431655765},
+        {"offset": "0x5c", "u32": 13},
+        {"offset": "0x60", "u32": 1717986918},
+        {"offset": "0x84", "u32": 2004318071},
+        {"offset": "0x88", "u32": 17},
+        {"offset": "0x8c", "u32": 2289585448}
+      ]
+    },
+    "otherpolygons": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": 21},
+        {"offset": "0x30", "u32": 23},
+        {"offset": "0x5c", "u32": 25},
+        {"offset": "0x88", "u32": 27}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "first polygon",
+      "args": ["@definition", 0],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "second polygon (stride witness)",
+      "args": ["@definition", 1],
+      "expect": {"ret": 11}
+    },
+    {
+      "name": "third polygon (stride witness)",
+      "args": ["@definition", 2],
+      "expect": {"ret": 13}
+    },
+    {
+      "name": "fourth polygon (stride witness)",
+      "args": ["@definition", 3],
+      "expect": {"ret": 17}
+    },
+    {
+      "name": "index equals count",
+      "args": ["@definition", 4],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index one past count",
+      "args": ["@definition", 5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index far past count",
+      "args": ["@definition", 2147483647],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index all ones (unsigned compare)",
+      "args": ["@definition", 4294967295],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count zero",
+      "args": ["@definition", 0],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count one, index zero",
+      "args": ["@definition", 0],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 1}],
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "count one, index one",
+      "args": ["@definition", 1],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count two, third polygon",
+      "args": ["@definition", 2],
+      "memory": [{"addr": "@definition", "offset": "0x20", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count all ones, fifth polygon",
+      "args": ["@definition", 4],
+      "memory": [
+        {"addr": "@definition", "offset": "0x20", "u32": 4294967295},
+        {"addr": "@polygons", "offset": "0xb4", "u32": 99}
+      ],
+      "expect": {"ret": 99}
+    }
+  ],
+  "fuzz": {
+    "seed": 33811,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "range": [0, 16]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x20", "type": "u32", "range": [0, 12]},
+      {"addr": "@polygons", "offset": "0x04", "type": "u32", "range": [0, 64], "count": 4, "stride": 44}
+    ]
+  }
+}

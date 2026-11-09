@@ -1,0 +1,212 @@
+{
+  "function": "AllocateValueHolder_guess",
+  "original": "0x0040199f",
+  "sources": [
+    "src/EverQuest/Display.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "edx",
+      "type": "int"
+    },
+    {
+      "name": "value",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x8",
+      "fill": "random"
+    },
+    "allocated": {
+      "size": "0x18",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x0052189c": {
+      "name": "__EH_prolog",
+      "args": [],
+      "passthrough": true
+    },
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@allocated"
+    },
+    "0x0040107b": {
+      "name": "InitializeContainerMember_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": "@allocated"
+    },
+    "0x004010c6": {
+      "name": "PreviousValueHolder_guess::updatePreviousValue_guess",
+      "conv": "thiscall",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "allocate and initialize with sentinel values",
+      "args": [
+        "@self",
+        "0x13579bdf",
+        "0x2468ace0"
+      ],
+      "objects": {
+        "self": {
+          "size": "0x8",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0xaaaaaaaa"
+            },
+            {
+              "offset": "0x4",
+              "u32": "0x55555555"
+            }
+          ]
+        },
+        "allocated": {
+          "size": "0x18",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "zero value",
+      "args": [
+        "@self",
+        0,
+        0
+      ],
+      "objects": {
+        "self": {
+          "size": "0x8",
+          "fill": "zero"
+        },
+        "allocated": {
+          "size": "0x18",
+          "fill": "zero"
+        }
+      }
+    },
+    {
+      "name": "high bit and maximum value",
+      "args": [
+        "@self",
+        -1,
+        "0xffffffff"
+      ],
+      "objects": {
+        "self": {
+          "size": "0x8",
+          "fill": "zero",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": "0x80000000"
+            },
+            {
+              "offset": "0x4",
+              "u32": "0x7fffffff"
+            }
+          ]
+        },
+        "allocated": {
+          "size": "0x18",
+          "fill": "random"
+        }
+      }
+    },
+    {
+      "name": "allocation failure skips constructor but still updates",
+      "args": [
+        "@self",
+        85,
+        "0xdeadbeef"
+      ],
+      "callees": {
+        "0x005218c6": {
+          "name": "operator_new",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "objects": {
+        "self": {
+          "size": "0x8",
+          "fill": "zero"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4200863,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {
+        "choices": [
+          -1,
+          0,
+          1,
+          "0x13579bdf"
+        ]
+      },
+      {
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@self",
+        "type": "u32",
+        "count": 2,
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@allocated",
+        "type": "u8",
+        "count": 24,
+        "range": [
+          0,
+          255
+        ]
+      }
+    ]
+  }
+}

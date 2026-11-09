@@ -1,0 +1,254 @@
+{
+  "function": "tr_flush_block_guess",
+  "original": "0x1000cd90",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "s", "type": "ptr"},
+    {"name": "buf", "type": "ptr"},
+    {"name": "stored_len", "type": "int"},
+    {"name": "eof", "type": "int"}
+  ],
+  "ret": "u32",
+  "objects": {
+    "s": {
+      "size": "0x1700",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@pend"},
+        {"offset": "0x7c", "u32": 1},
+        {"offset": "0x1c", "u8": 0},
+        {"offset": "0x14", "u32": 4},
+        {"offset": "0x16a0", "u32": 100},
+        {"offset": "0x16a4", "u32": 100},
+        {"offset": "0x16a8", "u32": 1000},
+        {"offset": "0x16b4", "u16": 0},
+        {"offset": "0x16b8", "u32": 5},
+        {"offset": "0xb14", "u32": 7},
+        {"offset": "0xb20", "u32": 9}
+      ]
+    },
+    "pend": {"size": "0x1000", "fill": "random"},
+    "buf": {"size": "0x100", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e320": {"name": "detect_data_type_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x1000cfc0": {"name": "build_tree_guess", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x1000d590": {"name": "build_bl_tree_guess", "conv": "cdecl", "args": ["ptr"], "ret": 5},
+    "0x1000ccd0": {"name": "tr_stored_block_guess", "conv": "cdecl", "args": ["ptr", "ptr", "int", "int"]},
+    "0x1000dee0": {"name": "compress_block_guess", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"]},
+    "0x1000d6f0": {"name": "send_all_trees_guess", "conv": "cdecl", "args": ["ptr", "int", "int", "int"]},
+    "0x1000cc60": {"name": "init_block_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x1000e3c0": {"name": "bi_windup_guess", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {
+      "name": "static tree: static_lenb == opt_lenb (13), stored_len 1000 too big, eof 0, bi_valid 5",
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "stored: stored_len + 4 = 8 <= 13, eof 1 (windup and + 7)",
+      "args": ["@s", "@buf", 4, 1]
+    },
+    {
+      "name": "stored boundary: stored_len + 4 == opt_lenb (9 + 4 == 13)",
+      "args": ["@s", "@buf", 9, 0]
+    },
+    {
+      "name": "not stored: stored_len + 4 == opt_lenb + 1 (10 + 4 == 14)",
+      "args": ["@s", "@buf", 10, 0]
+    },
+    {
+      "name": "buf null: never stored, static tree with len = static_len",
+      "args": ["@s", 0, 4, 0]
+    },
+    {
+      "name": "stored_len -10: stored_len + 4 is huge unsigned, not stored",
+      "args": ["@s", "@buf", -10, 0]
+    },
+    {
+      "name": "opt_len 6 (opt_lenb 2): stored_len -2 gives stored_len + 4 == 2 <= 2, stored",
+      "memory": [{"addr": "@s", "offset": "0x16a0", "u32": 6}],
+      "args": ["@s", "@buf", -2, 0]
+    },
+    {
+      "name": "level 0: opt_lenb = static_lenb = stored_len + 5, stored (buf set), eof 0",
+      "memory": [{"addr": "@s", "offset": "0x7c", "u32": 0}],
+      "args": ["@s", "@buf", 4, 0]
+    },
+    {
+      "name": "level 0, buf null: static tree, len = static_len (100), eof 1",
+      "memory": [{"addr": "@s", "offset": "0x7c", "u32": 0}],
+      "args": ["@s", 0, 4, 1]
+    },
+    {
+      "name": "level 0, stored_len -5: opt_lenb 0, stored_len + 4 wraps to ffffffff, not stored, static tree",
+      "memory": [{"addr": "@s", "offset": "0x7c", "u32": 0}],
+      "args": ["@s", "@buf", -5, 0]
+    },
+    {
+      "name": "level -1 (ffffffff), buf null: static tree, eof 0",
+      "memory": [{"addr": "@s", "offset": "0x7c", "hex": "ffffffff"}],
+      "args": ["@s", 0, 4, 0]
+    },
+    {
+      "name": "data_type 2: detect_data_type runs before the trees",
+      "memory": [{"addr": "@s", "offset": "0x1c", "u8": 2}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "data_type 0x102: low byte is 2, so detect runs (byte compare)",
+      "memory": [{"addr": "@s", "offset": "0x1c", "u32": 258}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "data_type 3: no detect",
+      "memory": [{"addr": "@s", "offset": "0x1c", "u8": 3}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "dyn: static_lenb 14 > opt_lenb 13, bi_valid 5 (small), eof 0, len = opt_len",
+      "memory": [{"addr": "@s", "offset": "0x16a4", "u32": 105}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "dyn: bi_valid 13 (small), eof 0",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a4", "u32": 105},
+        {"addr": "@s", "offset": "0x16b8", "u32": 13}
+      ],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "dyn: bi_valid 14 (big), eof 1 (bits 5 spill)",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a4", "u32": 105},
+        {"addr": "@s", "offset": "0x16b8", "u32": 14}
+      ],
+      "args": ["@s", "@buf", 1000, 1]
+    },
+    {
+      "name": "dyn: bi_valid 16 (big, shift 0), eof 0",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a4", "u32": 105},
+        {"addr": "@s", "offset": "0x16b8", "u32": 16}
+      ],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "dyn: bi_valid 0 (small), eof 1, pending 0x40",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a4", "u32": 105},
+        {"addr": "@s", "offset": "0x16b8", "u32": 0},
+        {"addr": "@s", "offset": "0x14", "u32": 64}
+      ],
+      "args": ["@s", "@buf", 1000, 1]
+    },
+    {
+      "name": "dyn: build_bl_tree returns 0 (max_blindex + 1 == 1), bi_valid 15 (big), eof 1",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a4", "u32": 105},
+        {"addr": "@s", "offset": "0x16b8", "u32": 15}
+      ],
+      "callees": {
+        "0x1000d590": {"name": "build_bl_tree_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+      },
+      "args": ["@s", "@buf", 1000, 1]
+    },
+    {
+      "name": "dyn: bi_valid 8, eof 2 (bits 6, windup on any nonzero eof)",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a4", "u32": 105},
+        {"addr": "@s", "offset": "0x16b8", "u32": 8}
+      ],
+      "args": ["@s", "@buf", 1000, 2]
+    },
+    {
+      "name": "static: bi_valid 13 (small), eof 0",
+      "memory": [{"addr": "@s", "offset": "0x16b8", "u32": 13}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "static: bi_valid 14 (big), eof 0, bits 2 spill",
+      "memory": [{"addr": "@s", "offset": "0x16b8", "u32": 14}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "static: bi_valid 15 (big), eof 1 (bits 3), pending 0x40",
+      "memory": [
+        {"addr": "@s", "offset": "0x16b8", "u32": 15},
+        {"addr": "@s", "offset": "0x14", "u32": 64}
+      ],
+      "args": ["@s", "@buf", 1000, 1]
+    },
+    {
+      "name": "static: bi_valid 16 (big), eof 2 (windup on any nonzero eof)",
+      "memory": [{"addr": "@s", "offset": "0x16b8", "u32": 16}],
+      "args": ["@s", "@buf", 1000, 2]
+    },
+    {
+      "name": "static: bi_valid 0 (small), eof 0",
+      "memory": [{"addr": "@s", "offset": "0x16b8", "u32": 0}],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "static: compressed_len 0x80000010, unsigned >> 3, eof 1 adds 7",
+      "memory": [{"addr": "@s", "offset": "0x16a8", "u32": 2147483664}],
+      "args": ["@s", "@buf", 1000, 1]
+    },
+    {
+      "name": "static: opt_lenb 2 > static_lenb 1, so opt = 1 and the static tree, len = static_len 5",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a0", "u32": 6},
+        {"addr": "@s", "offset": "0x16a4", "u32": 5}
+      ],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "dyn: opt_lenb 1 < static_lenb 2, dyn trees, len = opt_len 5",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a0", "u32": 5},
+        {"addr": "@s", "offset": "0x16a4", "u32": 6}
+      ],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "static: opt_lenb 2 == static_lenb 2 (static 13), len = static_len 13",
+      "memory": [
+        {"addr": "@s", "offset": "0x16a0", "u32": 6},
+        {"addr": "@s", "offset": "0x16a4", "u32": 13}
+      ],
+      "args": ["@s", "@buf", 1000, 0]
+    },
+    {
+      "name": "static: static_lenb 13 <= opt_lenb 13 (static_len 95), static tree, len = static_len 95",
+      "memory": [{"addr": "@s", "offset": "0x16a4", "u32": 95}],
+      "args": ["@s", "@buf", 1000, 0]
+    }
+  ],
+  "fuzz": {
+    "seed": 52624,
+    "count": 40,
+    "args": [
+      {"choices": ["@s"]},
+      {"choices": ["@buf", 0]},
+      {"range": [-8, 300]},
+      {"range": [0, 2]}
+    ],
+    "memory": [
+      {"addr": "@s", "offset": "0x7c", "type": "int", "range": [-1, 2]},
+      {"addr": "@s", "offset": "0x1c", "type": "u8", "choices": [0, 1, 2, 3, 2]},
+      {"addr": "@s", "offset": "0x14", "type": "u32", "range": [0, 200]},
+      {"addr": "@s", "offset": "0x16a0", "type": "u32", "range": [0, 400]},
+      {"addr": "@s", "offset": "0x16a4", "type": "u32", "range": [0, 400]},
+      {"addr": "@s", "offset": "0x16a8", "type": "u32", "range": [0, 100000]},
+      {"addr": "@s", "offset": "0x16b4", "type": "u16", "range": [0, 65535]},
+      {"addr": "@s", "offset": "0x16b8", "type": "int", "range": [0, 16]},
+      {"addr": "@s", "offset": "0xb14", "type": "int", "range": [0, 286]},
+      {"addr": "@s", "offset": "0xb20", "type": "int", "range": [0, 30]}
+    ]
+  }
+}

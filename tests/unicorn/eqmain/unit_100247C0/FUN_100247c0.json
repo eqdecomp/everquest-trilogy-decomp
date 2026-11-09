@@ -1,0 +1,101 @@
+{
+  "function": "IncrementCallbackCount_guess",
+  "original": "0x100247c0",
+  "sources": [
+    "src/eqmain/unit_100247C0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [
+    {
+      "name": "guid",
+      "type": "ptr"
+    },
+    {
+      "name": "description",
+      "type": "cstr"
+    },
+    {
+      "name": "name",
+      "type": "cstr"
+    },
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "guid": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x101258fc", "u32": 0}
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "counter 0 -> 1",
+      "args": ["@guid", "abc", "abc", "@context"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "counter 1 -> 2",
+      "args": ["@guid", "", "", "@context"],
+      "memory": [{"addr": "0x101258fc", "u32": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "counter 0xff carries into the next byte",
+      "args": ["@guid", "abc", "abc", "@context"],
+      "memory": [{"addr": "0x101258fc", "u32": 255}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "counter 0x7fffffff goes negative",
+      "args": ["@guid", "abc", "abc", "@context"],
+      "memory": [{"addr": "0x101258fc", "u32": 2147483647}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "counter 0xffffffff wraps to 0",
+      "args": ["@guid", "abc", "abc", "@context"],
+      "memory": [{"addr": "0x101258fc", "u32": 4294967295}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "null pointers are never read",
+      "args": [0, "abc", "abc", 0],
+      "memory": [{"addr": "0x101258fc", "u32": 41}],
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 149440,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          "@guid",
+          0
+        ]
+      },
+      {},
+      {},
+      {
+        "choices": [
+          "@context",
+          0
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x101258fc", "type": "u32"}
+    ]
+  }
+}

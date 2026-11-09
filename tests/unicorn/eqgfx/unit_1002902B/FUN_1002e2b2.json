@@ -1,0 +1,167 @@
+{
+  "function": "_t3dFreeObjectLists_guess",
+  "original": "0x1002e2b2",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "firstObject",
+      "type": "ptr"
+    },
+    {
+      "name": "object",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "firstobject": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": "0x10101010"},
+        {"offset": "0x04", "u32": "0x20202020"},
+        {"offset": "0x08", "u32": "0x30303030"},
+        {"offset": "0x0c", "u32": "0x55550005"}
+      ]
+    },
+    "object": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": "0x11111111"},
+        {"offset": "0x04", "u32": "0x22222222"},
+        {"offset": "0x08", "u32": 2},
+        {"offset": "0x0c", "u32": "@entries"}
+      ]
+    },
+    "entries": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x08", "u32": "0x11110001"},
+        {"offset": "0x28", "u32": "0x22220002"},
+        {"offset": "0x48", "u32": "0x33330003"},
+        {"offset": "0x68", "u32": "0x44440004"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002dd0f": {
+      "name": "getObjectValueAt0C_guess",
+      "conv": "cdecl",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x1002dd6f": {
+      "name": "getObjectValue_guess",
+      "conv": "cdecl",
+      "args": ["int"],
+      "passthrough": true
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1002dce0": {
+      "name": "freeDynamicArray_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "two records are freed backward before the container",
+      "args": ["@firstobject", "@object"]
+    },
+    {
+      "name": "zero count skips record loop",
+      "args": ["@firstobject", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x08", "u32": 0}]
+    },
+    {
+      "name": "one record",
+      "args": ["@firstobject", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x08", "u32": 1}]
+    },
+    {
+      "name": "four records",
+      "args": ["@firstobject", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x08", "u32": 4}]
+    },
+    {
+      "name": "count multiplication wraps to equal end",
+      "args": ["@firstobject", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x08", "u32": "0x08000000"}]
+    },
+    {
+      "name": "unsigned end wraps below start",
+      "args": ["@firstobject", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x08", "u32": "0x7fffffff"}]
+    },
+    {
+      "name": "negative count wraps below start",
+      "args": ["@firstobject", "@object"],
+      "memory": [{"addr": "@object", "offset": "0x08", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "null base with zero count",
+      "args": ["@firstobject", "@object"],
+      "memory": [
+        {"addr": "@object", "offset": "0x08", "u32": 0},
+        {"addr": "@object", "offset": "0x0c", "u32": 0}
+      ]
+    },
+    {
+      "name": "null record pointers remain ordered",
+      "args": ["@firstobject", "@object"],
+      "memory": [
+        {"addr": "@object", "offset": "0x08", "u32": 4},
+        {"addr": "@entries", "offset": "0x08", "u32": 0},
+        {"addr": "@entries", "offset": "0x28", "u32": 0},
+        {"addr": "@entries", "offset": "0x48", "u32": 0},
+        {"addr": "@entries", "offset": "0x68", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 189106,
+    "count": 35,
+    "args": [
+      {"choices": ["@firstobject"]},
+      {"choices": ["@object"]}
+    ],
+    "memory": [
+      {
+        "addr": "@object",
+        "offset": "0x08",
+        "type": "u32",
+        "choices": [0, 1, 2, 3, 4, "0x08000000", "0x7fffffff", "0xffffffff"]
+      },
+      {
+        "addr": "@entries",
+        "offset": "0x08",
+        "type": "ptr",
+        "count": 4,
+        "stride": "0x20",
+        "choices": [0, "0x11110001", "0x22220002", "0x33330003", "0x44440004", "0x7fffffff"]
+      },
+      {
+        "addr": "@firstobject",
+        "offset": "0x0c",
+        "type": "ptr",
+        "choices": [0, "0x55550005", "0x7fffffff", "0xffffffff"]
+      }
+    ]
+  }
+}

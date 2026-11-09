@@ -1,0 +1,298 @@
+{
+  "function": "_verify_guess",
+  "original": "0x100549a0",
+  "sources": [
+    "src/eqgfx/ffcreate2/ff/verify_o2.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "status",
+      "type": "char"
+    },
+    {
+      "name": "format",
+      "type": "cstr"
+    },
+    {
+      "name": "value",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "file_a": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "verify.cpp"
+        }
+      ]
+    },
+    "file_b": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "renderer.cpp"
+        }
+      ]
+    },
+    "hook": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100fc018",
+      "u32": 0
+    },
+    {
+      "addr": "0x100fc014",
+      "u32": 0
+    },
+    {
+      "addr": "0x100fbc08",
+      "u32": "@file_a"
+    },
+    {
+      "addr": "0x100fbc0c",
+      "u32": 117
+    },
+    {
+      "addr": "0x100fbc10",
+      "u32": "@file_b"
+    },
+    {
+      "addr": "0x100fbc14",
+      "u32": 904
+    }
+  ],
+  "callees": {
+    "0x10067992": {
+      "name": "_sprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "int",
+        "cstr"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "41420000"
+        }
+      ]
+    },
+    "0x1006a0d9": {
+      "name": "_vsprintf",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr",
+        "mem:4"
+      ],
+      "ret": 0,
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "434400"
+        }
+      ]
+    },
+    "0x100548b0": {
+      "name": "logErrorToFile_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x10054a70": {
+      "name": "logErrorMessage_guess",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "ret": 0
+    },
+    "0x1006af92": {
+      "name": "__exit",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": 0,
+      "noreturn": true
+    },
+    "@hook": {
+      "name": "verify_hook",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "positive status decrements stack index",
+      "args": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "negative byte status decrements stack index",
+      "args": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "zero byte status formats default message",
+      "args": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "zero status formats one integer",
+      "args": [
+        0,
+        "verification code %d",
+        42
+      ]
+    },
+    {
+      "name": "zero status formats signed minimum",
+      "args": [
+        0,
+        "failure %d",
+        -2147483648
+      ]
+    },
+    {
+      "name": "zero status reads second stack entry",
+      "args": [
+        0,
+        "",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "0x100fc014",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "zero status invokes hook before formatting",
+      "args": [
+        0,
+        "hooked %d",
+        9
+      ],
+      "memory": [
+        {
+          "addr": "0x100fc018",
+          "u32": "@hook"
+        }
+      ]
+    },
+    {
+      "name": "char truncation wraps to zero",
+      "args": [
+        256,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "char truncation remains nonzero",
+      "args": [
+        257,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "negative char boundary",
+      "args": [
+        -128,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "hook unset with a huge stack index (the hook test reads exactly 0x100fc018)",
+      "args": [
+        0,
+        "x %d",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "0x100fc014",
+          "u32": "0x01000000"
+        },
+        {
+          "addr": "0x100fc018",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1005490,
+    "count": 30,
+    "args": [
+      {
+        "choices": [
+          -128,
+          -1,
+          0,
+          1,
+          127,
+          255,
+          256,
+          -256
+        ]
+      },
+      {
+        "choices": [
+          0,
+          "%d",
+          "value=%d",
+          "error: %d",
+          "no details"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x100fc014",
+        "type": "u32",
+        "range": [
+          0,
+          1
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "function": "EqDirectSoundSlotsStop_guess::CountPlayingWithId_guess",
+  "original": "0x004eca93",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@slots",
+  "args": [
+    {
+      "name": "id",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "slots": {
+      "size": "0x50",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": "@va"},
+        {"offset": "0x08", "u32": "@vb"},
+        {"offset": "0x0c", "u32": "@vc"},
+        {"offset": "0x10", "u32": "@va"},
+        {"offset": "0x14", "u32": "@vb"},
+        {"offset": "0x18", "u32": "@vc"},
+        {"offset": "0x1c", "u32": "@va"},
+        {"offset": "0x20", "u32": "@va"},
+        {"offset": "0x24", "u32": "@vb"},
+        {"offset": "0x28", "u32": "@vc"},
+        {"offset": "0x2c", "u32": "@va"},
+        {"offset": "0x30", "u32": "@vb"},
+        {"offset": "0x34", "u32": "@vc"},
+        {"offset": "0x38", "u32": "@va"},
+        {"offset": "0x3c", "u32": "@vb"},
+        {"offset": "0x40", "u32": "@vc"},
+        {"offset": "0x44", "u32": "@va"},
+        {"offset": "0x48", "u32": "@va"}
+      ]
+    },
+    "va": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [{"offset": "0x14", "u32": 7}]
+    },
+    "vb": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [{"offset": "0x14", "u32": 9}]
+    },
+    "vc": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [{"offset": "0x14", "u32": 7}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004ec004": {
+      "name": "EqDirectSoundVoice_guess::GetStatus_guess",
+      "conv": "thiscall",
+      "args": [],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "all 16 playing, id 7 -> 11 (slot 16 not read)",
+      "args": [7]
+    },
+    {
+      "name": "all 16 playing, id 9 -> 5",
+      "args": [9]
+    },
+    {
+      "name": "no voice has id 8 -> 0",
+      "args": [8]
+    },
+    {
+      "name": "status 0 -> 0",
+      "args": [7],
+      "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 0}}
+    },
+    {
+      "name": "status 2 (bit 1 clear) -> 0",
+      "args": [7],
+      "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 2}}
+    },
+    {
+      "name": "status 0xFFFFFFFE -> 0",
+      "args": [9],
+      "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 4294967294}}
+    },
+    {
+      "name": "status 0x80000005 -> counts",
+      "args": [9],
+      "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 2147483653}}
+    },
+    {
+      "name": "status 0x101 -> counts",
+      "args": [7],
+      "callees": {"0x004ec004": {"conv": "thiscall", "args": [], "ret": 257}}
+    },
+    {
+      "name": "first slot null -> 0",
+      "args": [7],
+      "memory": [{"addr": "@slots", "offset": "0x04", "u32": 0}]
+    },
+    {
+      "name": "slot 3 null stops early -> 2",
+      "args": [7],
+      "memory": [{"addr": "@slots", "offset": "0x10", "u32": 0}]
+    },
+    {
+      "name": "slot 1 null stops early, id 9 -> 0",
+      "args": [9],
+      "memory": [{"addr": "@slots", "offset": "0x08", "u32": 0}]
+    },
+    {
+      "name": "last slot 15 null -> 10",
+      "args": [7],
+      "memory": [{"addr": "@slots", "offset": "0x40", "u32": 0}]
+    },
+    {
+      "name": "only last slot matches -> 1",
+      "args": [5],
+      "memory": [{"addr": "@vc", "offset": "0x14", "u32": 5}, {"addr": "@slots", "offset": "0x0c", "u32": "@vb"},
+                 {"addr": "@slots", "offset": "0x18", "u32": "@vb"}, {"addr": "@slots", "offset": "0x28", "u32": "@vb"},
+                 {"addr": "@slots", "offset": "0x34", "u32": "@vb"}]
+    },
+    {
+      "name": "negative id",
+      "args": [-1],
+      "memory": [{"addr": "@vb", "offset": "0x14", "u32": 4294967295}]
+    },
+    {
+      "name": "id 0x80000000",
+      "args": [-2147483648],
+      "memory": [{"addr": "@va", "offset": "0x14", "u32": 2147483648}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5163667,
+    "count": 40,
+    "args": [
+      {"choices": [0, 7, 9, 5, -1, 8]}
+    ],
+    "memory": [
+      {"addr": "@va", "offset": "0x14", "type": "int", "choices": [7, 9, 5, 0, -1]},
+      {"addr": "@vb", "offset": "0x14", "type": "int", "choices": [7, 9, 5, 0]},
+      {"addr": "@vc", "offset": "0x14", "type": "int", "choices": [7, 9, 8, -1]},
+      {"addr": "@slots", "offset": "0x10", "type": "u32", "choices": [0, "@va", "@vb"]},
+      {"addr": "@slots", "offset": "0x30", "type": "u32", "choices": [0, "@vc", "@va"]},
+      {"addr": "@slots", "offset": "0x40", "type": "u32", "choices": [0, "@vc", "@vb"]}
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "function": "EqDirectSoundVoiceDup_guess::EqDirectSoundVoiceDup_guess",
+  "original": "0x004ec60f",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@voice",
+  "args": [
+    {
+      "name": "source",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "buf": {"size": "0x20", "fill": "random", "init": [{"offset": 0, "u32": "@bufvt"}]},
+    "bufvt": {"size": "0x40", "fill": "random", "init": [{"offset": 0, "u32": "@qi"}]},
+    "qi": {"size": 4},
+    "voice": {"size": "0x40", "fill": "random"},
+    "source": {"size": "0x40", "fill": "random", "init": [{"offset": 4, "u32": "0x13572468"}]},
+    "ds": {"size": "0x20", "fill": "random", "init": [{"offset": 0, "u32": "@dsvt"}]},
+    "dsvt": {"size": "0x40", "fill": "random", "init": [{"offset": "0x14", "u32": "@dup"}]},
+    "dup": {"size": 4}
+  },
+  "memory": [
+    {"addr": "0x006EFE40", "u32": "@ds"}
+  ],
+  "callees": {
+    "0x005218d4": {
+      "name": "__CxxThrowException@8",
+      "conv": "stdcall",
+      "args": ["mem:4", "u32"],
+      "ret": 0
+    },
+    "@dup": {
+      "name": "IDirectSound::DuplicateSoundBuffer",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 0,
+      "writes": [{"arg": 2, "hex": "00000060"}]
+    },
+    "@qi": {
+      "name": "IUnknown::QueryInterface",
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": [0, 0],
+      "writes": [{"arg": 2, "hex": "44332211"}]
+    }
+  },
+  "cases": [
+    {"name": "all interfaces obtained", "args": ["@source"]},
+    {"name": "null source only clears and sets vtable", "args": [0]},
+    {"name": "no DirectSound only clears and sets vtable", "args": ["@source"], "memory": [{"addr": "0x006EFE40", "u32": 0}]},
+    {"name": "no DirectSound with nonzero neighbour global", "args": ["@source"], "memory": [{"addr": "0x006EFE40", "u32": 0}, {"addr": "0x006EFE44", "u32": "0xFFFFFFFF"}]},
+    {"name": "null source and no DirectSound", "args": [0], "memory": [{"addr": "0x006EFE40", "u32": 0}]},
+    {"name": "third query fails clears +0xC", "args": ["@source"],
+      "callees": {"@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [0, 1], "writes": [{"arg": 2, "hex": "44332211"}]}}},
+    {"name": "third query fails with negative HRESULT", "args": ["@source"],
+      "callees": {"@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [0, 2147500034], "writes": [{"arg": 2, "hex": "44332211"}]}}},
+    {"name": "3D query fails throws the 3D message", "args": ["@source"],
+      "callees": {"@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [2147500034, 0], "writes": [{"arg": 2, "hex": "44332211"}]}}},
+    {"name": "both queries fail", "args": ["@source"],
+      "callees": {"@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [1, 1], "writes": [{"arg": 2, "hex": "44332211"}]}}},
+    {"name": "duplicate fails throws the duplicate message", "args": ["@source"],
+      "callees": {"@dup": {"name": "IDirectSound::DuplicateSoundBuffer", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": 2147500037, "writes": [{"arg": 2, "hex": "00000060"}]}}},
+    {"name": "duplicate returns 1 and every query fails", "args": ["@source"],
+      "callees": {
+        "@dup": {"name": "IDirectSound::DuplicateSoundBuffer", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": 1, "writes": [{"arg": 2, "hex": "00000060"}]},
+        "@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [1, 1], "writes": [{"arg": 2, "hex": "44332211"}]}}},
+    {"name": "query leaves outputs untouched", "args": ["@source"],
+      "callees": {"@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [0, 0]}}},
+    {"name": "query fails without writing", "args": ["@source"],
+      "callees": {"@qi": {"name": "IUnknown::QueryInterface", "conv": "stdcall", "args": ["ptr", "u32", "ptr"], "ret": [0, 5]}}},
+    {"name": "other source buffer pointer", "args": ["@source"], "memory": [{"addr": "@source+0x4", "u32": "0xFFFFFFFF"}, {"addr": "@source", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 5162511,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@source", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "0x006EFE40", "type": "ptr", "choices": ["@ds", "@ds", 0]},
+      {"addr": "@source", "offset": 4, "type": "u32", "choices": [0, 1, 2147483648, 3735928559]}
+    ]
+  }
+}

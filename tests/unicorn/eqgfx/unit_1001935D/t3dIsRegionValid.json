@@ -1,0 +1,203 @@
+{
+  "function": "t3dIsRegionValid",
+  "original": "0x1001942c",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 25 },
+        { "offset": "0x24", "u32": "@state" },
+        { "offset": "0x28", "u32": "@mode" },
+        { "offset": "0x2c", "u32": "@actorState" }
+      ]
+    },
+    "state": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "u32": 40 }
+      ]
+    },
+    "mode": {
+      "size": "0x4",
+      "fill": "zero"
+    },
+    "actorState": {
+      "size": "0x4",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "null region",
+      "args": [0],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "wrong region type short circuits null children",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@region", "offset": "0x0", "u32": 24 },
+        { "addr": "@region", "offset": "0x24", "u32": 0 },
+        { "addr": "@region", "offset": "0x28", "u32": 0 },
+        { "addr": "@region", "offset": "0x2c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "region type upper neighbor",
+      "args": ["@region"],
+      "memory": [{ "addr": "@region", "offset": "0x0", "u32": 26 }],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "state type 0x28 and mode zero succeeds before actor dereference",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 40 },
+        { "addr": "@mode", "u32": 0 },
+        { "addr": "@region", "offset": "0x2c", "u32": 0 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "state type 0x28 mode nonzero actor zero succeeds",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 40 },
+        { "addr": "@mode", "u32": 1 },
+        { "addr": "@actorState", "u32": 0 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "state type 0x28 rejects adjacent mode and actor values",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 40 },
+        { "addr": "@mode", "u32": 1 },
+        { "addr": "@actorState", "u32": 1 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "state type below accepted types short circuits null children",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 39 },
+        { "addr": "@region", "offset": "0x28", "u32": 0 },
+        { "addr": "@region", "offset": "0x2c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "state type above 0x28 short circuits null children",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 41 },
+        { "addr": "@region", "offset": "0x28", "u32": 0 },
+        { "addr": "@region", "offset": "0x2c", "u32": 0 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "state type 0x25 mode 0x26 succeeds before actor dereference",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 37 },
+        { "addr": "@mode", "u32": 38 },
+        { "addr": "@region", "offset": "0x2c", "u32": 0 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "state type 0x25 mode misses then actor type 0x27 succeeds",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 37 },
+        { "addr": "@mode", "u32": 37 },
+        { "addr": "@actorState", "u32": 39 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "state type 0x25 actor type 0x29 succeeds",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 37 },
+        { "addr": "@mode", "u32": 37 },
+        { "addr": "@actorState", "u32": 41 }
+      ],
+      "expect": { "ret": 1 }
+    },
+    {
+      "name": "state type 0x25 rejects other actor types",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 37 },
+        { "addr": "@mode", "u32": 37 },
+        { "addr": "@actorState", "u32": 40 }
+      ],
+      "expect": { "ret": 0 }
+    },
+    {
+      "name": "actor type 0x29 upper neighbor rejected",
+      "args": ["@region"],
+      "memory": [
+        { "addr": "@state", "u32": 37 },
+        { "addr": "@mode", "u32": 37 },
+        { "addr": "@actorState", "u32": 42 }
+      ],
+      "expect": { "ret": 0 }
+    }
+  ],
+  "fuzz": {
+    "seed": 103468,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@region"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@region",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [24, 25, 26, -1, 0]
+      },
+      {
+        "addr": "@state",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [36, 37, 38, 39, 40, 41, -1, 0]
+      },
+      {
+        "addr": "@mode",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [0, 1, 37, 38, 39, 41, -1]
+      },
+      {
+        "addr": "@actorState",
+        "offset": "0x0",
+        "type": "int",
+        "choices": [0, 1, 38, 39, 40, 41, 42, -1]
+      }
+    ]
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "function": "QueueUnitReset_guess",
+  "original": "0x1000a3e0",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unit", "type": "ptr"},
+    {"name": "rec", "type": "ptr"},
+    {"name": "out", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "unit": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": 0},
+        {"offset": "0x04", "u32": "0x2001"},
+        {"offset": "0x08", "u32": "0x2002"},
+        {"offset": "0x0c", "u32": "0x2003"},
+        {"offset": "0x10", "u32": "0x2004"},
+        {"offset": "0x14", "u32": "0x2005"},
+        {"offset": "0x18", "u32": "0x2006"},
+        {"offset": "0x1c", "u32": "0x2007"},
+        {"offset": "0x20", "u32": "0x2008"},
+        {"offset": "0x24", "u32": "0x2009"},
+        {"offset": "0x28", "u32": "0x210a"},
+        {"offset": "0x2c", "u32": "0x210b"},
+        {"offset": "0x30", "u32": "0x210c"},
+        {"offset": "0x34", "u32": "0x210d"},
+        {"offset": "0x38", "u32": "@begin"},
+        {"offset": "0x3c", "u32": "0x7777"}
+      ]
+    },
+    "rec": {
+      "size": "0x40",
+      "init": [
+        {"offset": "0x24", "u32": "@cb"},
+        {"offset": "0x28", "u32": 77},
+        {"offset": "0x30", "u32": "0x9999"}
+      ]
+    },
+    "out": {
+      "size": "0x10",
+      "init": [
+        {"offset": "0x0", "u32": "0xbad"}
+      ]
+    },
+    "cb": {"size": "0x10"},
+    "begin": {"size": "0x10"}
+  },
+  "callees": {
+    "0x1000ba30": {"name": "InvokeCallback_guess", "conv": "cdecl", "args": ["int", "ptr"], "ret": 0},
+    "@cb": {"name": "cb", "conv": "cdecl", "args": ["int", "int"], "ret": 0},
+    "@begin": {"name": "begin", "conv": "cdecl", "args": ["int", "int", "int"], "ret": 4660}
+  },
+  "cases": [
+    {"name": "idle, no out, begin", "args": ["@unit", "@rec", 0]},
+    {"name": "idle, out, begin", "args": ["@unit", "@rec", "@out"]},
+    {"name": "idle, out, no begin", "args": ["@unit", "@rec", "@out"],
+     "memory": [{"addr": "@unit", "offset": "0x38", "u32": 0}]},
+    {"name": "state -1, no out, begin", "args": ["@unit", "@rec", 0],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": "0xffffffff"}]},
+    {"name": "state 3, out, begin", "args": ["@unit", "@rec", "@out"],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 3}]},
+    {"name": "state 4, no out, begin", "args": ["@unit", "@rec", 0],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 4}]},
+    {"name": "state 5, out, begin", "args": ["@unit", "@rec", "@out"],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 5}]},
+    {"name": "state 6, no out, begin", "args": ["@unit", "@rec", 0],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 6}]},
+    {"name": "state 6, out, no begin", "args": ["@unit", "@rec", "@out"],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 6}, {"addr": "@unit", "offset": "0x38", "u32": 0}]},
+    {"name": "state 4, out, no begin", "args": ["@unit", "@rec", "@out"],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 4}, {"addr": "@unit", "offset": "0x38", "u32": 0}]},
+    {"name": "state 7, out, begin", "args": ["@unit", "@rec", "@out"],
+     "memory": [{"addr": "@unit", "offset": "0x0", "u32": 7}]}
+  ],
+  "fuzz": {
+    "seed": 41952,
+    "count": 40,
+    "args": [
+      {"choices": ["@unit"]},
+      {"choices": ["@rec"]},
+      {"choices": [0, "@out"]}
+    ],
+    "memory": [
+      {"addr": "@unit", "offset": "0x0", "type": "int", "choices": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 16]},
+      {"addr": "@unit", "offset": "0x4", "type": "int", "count": 9, "stride": 4},
+      {"addr": "@unit", "offset": "0x28", "type": "int", "count": 2, "stride": 4},
+      {"addr": "@unit", "offset": "0x38", "type": "ptr", "choices": ["@begin", 0], "p": 0.7},
+      {"addr": "@unit", "offset": "0x3c", "type": "int"},
+      {"addr": "@rec", "offset": "0x28", "type": "int"},
+      {"addr": "@rec", "offset": "0x30", "type": "int"},
+      {"addr": "@out", "offset": "0x0", "type": "int"}
+    ]
+  }
+}

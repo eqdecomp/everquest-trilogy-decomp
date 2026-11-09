@@ -1,0 +1,58 @@
+{
+  "function": "chain_iter_next_bucket_guess",
+  "original": "0x10018ae0",
+  "sources": [
+    "src/eqmain/Suite/Suite/BoxDraw.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "n": {"size": "0x20", "fill": "zero"},
+    "v": {"size": "0x80", "fill": "zero"},
+    "e": {"size": "0x10", "fill": "zero"},
+    "one": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@n", "cstr": "ABCDEFGHIJKLMNOP"},
+    {"addr": "@v", "cstr": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEF"},
+    {"addr": "@one", "cstr": "A"},
+    {"addr": "0x10055038", "u32": "0x12345678"},
+    {"addr": "0x10052dc0", "size": 8800, "fill": "zero"}
+  ],
+  "callees": {
+    "0x100250a0": {"name": "FUN_100250a0", "conv": "cdecl", "args": ["ptr"]},
+    "0x10025150": {"name": "FUN_10025150", "conv": "stdcall", "args": [], "ret": ["@n", "@v"]},
+    "0x10025120": {"name": "FUN_10025120", "conv": "stdcall", "args": [], "ret": ["0x11111111", "0x22222222", "0x33333333"]}
+  },
+  "cases": [
+    {"name": "empty first name: no entry filled, counter 0, FUN_10025120 never called", "args": [1],
+     "callees": {"0x10025150": {"name": "FUN_10025150", "conv": "stdcall", "args": [], "ret": ["@e"]}}},
+    {"name": "one entry, then an empty name: counter 1", "args": [1],
+     "callees": {"0x10025150": {"name": "FUN_10025150", "conv": "stdcall", "args": [], "ret": ["@n", "@v", "@e"]}}},
+    {"name": "three entries, then an empty name: counter 3", "args": [1],
+     "callees": {"0x10025150": {"name": "FUN_10025150", "conv": "stdcall", "args": [], "ret": ["@n", "@v", "@n", "@v", "@n", "@v", "@e"]}}},
+    {"name": "one-character names (strlen 1, not 0): runs to the bound, counter 100", "args": [1],
+     "callees": {"0x10025150": {"name": "FUN_10025150", "conv": "stdcall", "args": [], "ret": ["@one"]}}},
+    {"name": "all names non-empty: 100 entries, loop stops once _Dest reaches 0x10055020", "args": [1]},
+    {"name": "arg 0: passed to FUN_100250a0, same 100 entries", "args": [0]},
+    {"name": "arg 0xdeadbeef: passed through unchanged", "args": ["0xdeadbeef"]}
+  ],
+  "fuzz": {
+    "seed": 4242,
+    "count": 40,
+    "args": [
+      {}
+    ],
+    "memory": [
+      {"addr": "@n", "type": "u8", "count": 12, "choices": [0, 65, 66, 255]},
+      {"addr": "@v", "type": "u8", "count": 8, "choices": [0, 67, 255]},
+      {"addr": "0x10055038", "type": "u32", "choices": [0, 1, "0x12345678", "0xffffffff"]}
+    ]
+  }
+}

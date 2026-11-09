@@ -1,0 +1,243 @@
+{
+  "function": "t3dSaveAllActorInstances",
+  "original": "0x1002e6c4",
+  "sources": [
+    "src/eqgfx/unit_1002902B.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "writer",
+      "type": "ptr"
+    },
+    {
+      "name": "actorList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "writer": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "actorlist": {
+      "size": "0x180",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x170", "u32": 3},
+        {"offset": "0x17c", "u32": "@entries"}
+      ]
+    },
+    "entries": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@actor0"},
+        {"offset": "0x4", "u32": "@actor1"},
+        {"offset": "0x8", "u32": "@actor2"},
+        {"offset": "0xc", "u32": "@actor3"}
+      ]
+    },
+    "actor0": {
+      "size": "0x68",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 24},
+        {"offset": "0x64", "u32": "@defOther"}
+      ]
+    },
+    "actor1": {
+      "size": "0x68",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 24},
+        {"offset": "0x64", "u32": "@defSelf"}
+      ]
+    },
+    "actor2": {
+      "size": "0x68",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 24},
+        {"offset": "0x64", "u32": "@defOther"}
+      ]
+    },
+    "actor3": {
+      "size": "0x68",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": 25},
+        {"offset": "0x64", "u32": "@defOther"}
+      ]
+    },
+    "defOther": {
+      "size": "0x68",
+      "fill": "random",
+      "init": [
+        {"offset": "0x28", "u32": "@primary"}
+      ]
+    },
+    "defSelf": {
+      "size": "0x68",
+      "fill": "random",
+      "init": [
+        {"offset": "0x28", "u32": "@actor1"}
+      ]
+    },
+    "primary": {
+      "size": "0x68",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002ea85": {
+      "name": "t3dSetActorSaveStream_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002ea9f": {
+      "name": "_t3dWriteActorSaveBytes_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore"
+      ]
+    },
+    "0x1002e737": {
+      "name": "t3dSaveActorInstance_guess",
+      "conv": "cdecl",
+      "args": [
+        "mem:4",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002ebc2": {
+      "name": "t3dWriteMarker3_guess",
+      "conv": "cdecl",
+      "args": [
+        "ignore"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: actor0 and actor2 are saved (actor1 is its own primary, actor3 is kind 0x19); returns 0",
+      "args": ["@writer", "@actorlist"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first saved actor returns 5: returned at once, later entries not visited",
+      "args": ["@writer", "@actorlist"],
+      "callees": {
+        "0x1002e737": {"name": "FUN_1002e737", "conv": "cdecl", "args": ["mem:4", "ptr"], "ret": [5]}
+      },
+      "expect": {"ret": 5}
+    },
+    {
+      "name": "second saved actor returns -1: returned, FUN_1002ebc2 not reached",
+      "args": ["@writer", "@actorlist"],
+      "callees": {
+        "0x1002e737": {"name": "FUN_1002e737", "conv": "cdecl", "args": ["mem:4", "ptr"], "ret": [0, -1]}
+      },
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "count 4: the last entry (actor3, kind 0x18) is saved and its nonzero result is returned",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actorlist", "offset": "0x170", "u32": 4}, {"addr": "@actor3", "offset": "0x0", "u32": 24}],
+      "callees": {
+        "0x1002e737": {"name": "FUN_1002e737", "conv": "cdecl", "args": ["mem:4", "ptr"], "ret": [0, 0, 7]}
+      },
+      "expect": {"ret": 7}
+    },
+    {
+      "name": "count 4: the last entry (actor3, kind 0x18) is saved and returns 0",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actorlist", "offset": "0x170", "u32": 4}, {"addr": "@actor3", "offset": "0x0", "u32": 24}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "kind 0x17 entry is skipped: the first call is for actor2",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actor0", "offset": "0x0", "u32": 23}],
+      "callees": {
+        "0x1002e737": {"name": "FUN_1002e737", "conv": "cdecl", "args": ["mem:4", "ptr"], "ret": [9]}
+      },
+      "expect": {"ret": 9}
+    },
+    {
+      "name": "all entries skipped (kinds 0x19, self-defined actor1): FUN_1002ebc2 only, returns 0",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actor0", "offset": "0x0", "u32": 25}, {"addr": "@actor2", "offset": "0x0", "u32": 25}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "primary of defOther is actor0: actor0 skipped, only actor2 saved",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@defOther", "offset": "0x28", "u32": "@actor0"}],
+      "callees": {
+        "0x1002e737": {"name": "FUN_1002e737", "conv": "cdecl", "args": ["mem:4", "ptr"], "ret": [9]}
+      },
+      "expect": {"ret": 9}
+    },
+    {
+      "name": "count 0: nothing is visited, returns 0",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actorlist", "offset": "0x170", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 1: only actor0 is visited",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actorlist", "offset": "0x170", "u32": 1}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 2: actor1 (self-defined) is skipped, actor0 saved",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actorlist", "offset": "0x170", "u32": 2}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "count 2 with actor0 returning -1: first saved actor's result",
+      "args": ["@writer", "@actorlist"],
+      "memory": [{"addr": "@actorlist", "offset": "0x170", "u32": 2}],
+      "callees": {
+        "0x1002e737": {"name": "FUN_1002e737", "conv": "cdecl", "args": ["mem:4", "ptr"], "ret": [-1]}
+      },
+      "expect": {"ret": -1}
+    }
+  ],
+  "fuzz": {
+    "seed": 1002902,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@writer"]
+      },
+      {
+        "choices": ["@actorlist"]
+      }
+    ],
+    "memory": [
+      {"addr": "@actorlist", "offset": "0x170", "type": "u32", "range": [0, 4]},
+      {"addr": "@entries", "type": "u32", "count": 4, "stride": 4, "choices": ["@actor0", "@actor1", "@actor2", "@actor3"]},
+      {"addr": "@actor0", "offset": "0x0", "type": "u32", "choices": [24, 24, 24, 23, 25]},
+      {"addr": "@actor1", "offset": "0x0", "type": "u32", "choices": [24, 24, 24, 23, 25]},
+      {"addr": "@actor2", "offset": "0x0", "type": "u32", "choices": [24, 24, 24, 23, 25]},
+      {"addr": "@actor3", "offset": "0x0", "type": "u32", "choices": [24, 25]},
+      {"addr": "@actor0", "offset": "0x64", "type": "u32", "choices": ["@defOther", "@defSelf"]},
+      {"addr": "@actor1", "offset": "0x64", "type": "u32", "choices": ["@defOther", "@defSelf"]},
+      {"addr": "@actor2", "offset": "0x64", "type": "u32", "choices": ["@defOther", "@defSelf"]},
+      {"addr": "@actor3", "offset": "0x64", "type": "u32", "choices": ["@defOther", "@defSelf"]},
+      {"addr": "@defOther", "offset": "0x28", "type": "u32", "choices": ["@actor0", "@actor1", "@actor2", "@primary"]},
+      {"addr": "@defSelf", "offset": "0x28", "type": "u32", "choices": ["@actor0", "@actor1", "@actor2", "@primary"]}
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+# What this proves: the repository has no forbidden or binary files, local paths or stray e-mail addresses;
+# every fixture is valid JSON with well-formed from_image references; annotations are unique; the Python
+# compiles; and the tools' self-tests that need no workspace pass.
+# What it cannot prove: nothing here has the original binaries or Visual C++ 6, so no rewrite is compiled
+# and no differential fixture or byte-match runs. Those run locally (README.md, CONTRIBUTING.md).
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: eq-trilogy
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install the pinned packages
+        run: python -m pip install -r eq-trilogy/tools/requirements-lock.txt
+      - name: Python compiles
+        run: python -m compileall -q eq-trilogy/tools eq-trilogy/tests
+      - name: Repository checks
+        run: python eq-trilogy/tools/ci/check_tree.py eq-trilogy
+      - name: Tools self-tests (no binaries, no VC6)
+        shell: bash
+        run: |
+          # an empty workspace: no binaries, no VC6, so tests that need them skip
+          mkdir -p ws && printf '[workspace]\noriginal = original\nbuild = build\n' > ws/paths.local.ini
+          export EQD_ROOT="$PWD/ws"
+          cd eq-trilogy
+          python -m pytest -q -p no:cacheprovider tools/tests

@@ -1,0 +1,132 @@
+{
+  "function": "AppendString_guess",
+  "original": "0x10024ff0",
+  "sources": [
+    "src/eqmain/unit_100248A0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {
+      "addr": "0x10125914",
+      "size": 8192,
+      "fill": "random"
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "empty at cursor 0",
+      "args": [""],
+      "memory": [{"addr": "0x1012b918", "u32": 0}]
+    },
+    {
+      "name": "empty at 0x1ffe",
+      "args": [""],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ffe"}]
+    },
+    {
+      "name": "empty at 0x1fff (last slot, no bounds check needed)",
+      "args": [""],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1fff"}]
+    },
+    {
+      "name": "empty at 0x2000 (no bounds check: writes one past the limit)",
+      "args": [""],
+      "memory": [{"addr": "0x1012b918", "u32": "0x2000"}]
+    },
+    {
+      "name": "empty at 0xffffffff (cursor wraps to 0)",
+      "args": [""],
+      "memory": [{"addr": "0x1012b918", "u32": "0xffffffff"}]
+    },
+    {
+      "name": "abc at 0",
+      "args": ["abc"],
+      "memory": [{"addr": "0x1012b918", "u32": 0}]
+    },
+    {
+      "name": "x at 0 (one char)",
+      "args": ["x"],
+      "memory": [{"addr": "0x1012b918", "u32": 0}]
+    },
+    {
+      "name": "long string at 0",
+      "args": ["The quick brown fox jumps over the lazy dog"],
+      "memory": [{"addr": "0x1012b918", "u32": 0}]
+    },
+    {
+      "name": "a at 0x1ffd (ends at 0x1fff, fits)",
+      "args": ["a"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ffd"}]
+    },
+    {
+      "name": "a at 0x1ffe (ends exactly at 0x2000, fits)",
+      "args": ["a"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ffe"}]
+    },
+    {
+      "name": "ab at 0x1ffe (ends at 0x2001, one too long)",
+      "args": ["ab"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ffe"}]
+    },
+    {
+      "name": "abc at 0x1ffc (ends exactly at 0x2000, fits)",
+      "args": ["abc"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ffc"}]
+    },
+    {
+      "name": "abcd at 0x1ffc (ends at 0x2001, one too long)",
+      "args": ["abcd"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ffc"}]
+    },
+    {
+      "name": "a at 0x1fff (ends at 0x2001, skipped)",
+      "args": ["a"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1fff"}]
+    },
+    {
+      "name": "a at 0x2000 (skipped)",
+      "args": ["a"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x2000"}]
+    },
+    {
+      "name": "hello world at 0x1ff0 (fits)",
+      "args": ["hello world"],
+      "memory": [{"addr": "0x1012b918", "u32": "0x1ff0"}]
+    },
+    {
+      "name": "x at 0xfffffff0 (signed next is -14, so it stores 16 bytes before the buffer)",
+      "args": ["x"],
+      "memory": [{"addr": "0x1012b918", "u32": "0xfffffff0"}]
+    },
+    {
+      "name": "ab at 0xfffffffe (unsigned sum wraps to 1)",
+      "args": ["ab"],
+      "memory": [{"addr": "0x1012b918", "u32": "0xfffffffe"}]
+    }
+  ],
+  "fuzz": {
+    "seed": 151536,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["", "a", "ab", "abc", "abcd", "hello", "hello world", "The quick brown fox", "x", "!", "~~", "zz top"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x1012b918",
+        "type": "u32",
+        "choices": ["0x0", "0x1", "0x1000", "0x100", "0x1ff0", "0x1ffc", "0x1ffd", "0x1ffe", "0x1fff", "0x2000", "0x2001", "0x2010", "0xfffffff0", "0xfffffffe", "0xffffffff"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "function": "GetOrCreateRefCountedRecord_guess",
+  "original": "0x00402ff4",
+  "sources": ["src/EverQuest/utf8.cpp"],
+  "rewrite": "GetOrCreateRefCountedRecord_guess",
+  "conv": "fastcall",
+  "args": [
+    {"name": "owner_guess", "type": "ptr"},
+    {"name": "edx_guess", "type": "int"},
+    {"name": "name_guess", "type": "cstr"},
+    {"name": "first_value_guess", "type": "int"},
+    {"name": "second_value_guess", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "owner": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x2c", "u32": "@buckets"},
+        {"offset": "0x30", "u32": "@buckets+0x4"}
+      ]
+    },
+    "buckets": {"size": "0x8", "fill": "zero"},
+    "node": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": "@duplicate_key"},
+        {"offset": "0x8", "u32": "@existing_record"}
+      ]
+    },
+    "duplicate_key": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "cstr": "dup23"}]
+    },
+    "existing_record": {
+      "size": "0x54",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": 3}]
+    },
+    "keybuf": {"size": "0x100", "fill": "zero"},
+    "recordbuf": {"size": "0x100", "fill": "zero"},
+    "map_entry": {"size": "0x8", "fill": "zero"},
+    "fontfn": {"size": "0x4", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e51d8", "u32": "@fontfn"}
+  ],
+  "callees": {
+    "0x0052189c": {"name": "__EH_prolog", "args": [], "passthrough": true},
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "passthrough": true
+    },
+    "0x005219c0": {
+      "name": "strcpy_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "passthrough": true
+    },
+    "0x005218bb": {"name": "operator_delete_guess", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x00404387": {
+      "name": "FindNodeByKey_guess",
+      "conv": "thiscall",
+      "args": ["ignore", "ignore"],
+      "passthrough": true
+    },
+    "0x00401be6": {
+      "name": "InitializeBlockFields_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x004033e1": {
+      "name": "FUN_004033e1",
+      "conv": "thiscall",
+      "args": ["ignore"],
+      "ret": "@map_entry"
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "u32"],
+      "ret": ["@keybuf", "@recordbuf"]
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": ["ptr", "u32", "ptr"],
+      "ret": 1
+    },
+    "@fontfn": {
+      "name": "t3dCreateFont",
+      "conv": "cdecl",
+      "args": ["cstr", "int", "int", "int"],
+      "ret": "0x12345678"
+    }
+  },
+  "rewrite_aliases": {
+    "__EH_prolog": "0x0052189c",
+    "??2@YAPAXI@Z": "0x005218c6"
+  },
+  "cases": [
+    {
+      "name": "new record",
+      "args": ["@owner", 0, "abc", 12, 2]
+    },
+    {
+      "name": "font creation failure leaks key",
+      "args": ["@owner", 99, "abc", 12, 2],
+      "callees": {"@fontfn": {"ret": 0}}
+    },
+    {
+      "name": "duplicate lookup precedes font creation",
+      "args": ["@owner", 0, "DuP", 2, 3],
+      "memory": [{"addr": "@buckets", "u32": "@node"}]
+    },
+    {
+      "name": "empty name and zero values",
+      "args": ["@owner", 1, "", 0, 0]
+    },
+    {
+      "name": "signed formatting boundaries",
+      "args": ["@owner", -1, "Q", -2147483648, 2147483647]
+    },
+    {
+      "name": "same formatted key with another font handle",
+      "args": ["@owner", 2, "z", -1, 10],
+      "callees": {"@fontfn": {"ret": 1}}
+    }
+  ],
+  "fuzz": {
+    "seed": 4206580,
+    "count": 32,
+    "args": [
+      {"choices": ["@owner"]},
+      {"range": [-100, 100]},
+      {"choices": ["a", "font", "Gamma", "font_17"]},
+      {"range": [-30, 30]},
+      {"range": [-30, 30]}
+    ]
+  }
+}

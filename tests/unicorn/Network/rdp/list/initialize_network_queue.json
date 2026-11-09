@@ -1,0 +1,103 @@
+{
+  "function": "initialize_network_queue_guess",
+  "original": "0x004f6810",
+  "sources": ["src/Network/rdp/list.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x1c", "u32": "0x12345678"},
+        {"offset": "0x38", "u32": 0},
+        {"offset": "0x4c", "u32": 55}
+      ]
+    },
+    "link1": {"size": 16, "fill": "zero", "init": [{"offset": 8, "u32": "@item1"}]},
+    "fn_initialize": {"size": 1, "fill": "zero"},
+    "fn_enter": {"size": 1, "fill": "zero"},
+    "fn_close": {"size": 1, "fill": "zero"},
+    "fn_overlapped": {"size": 1, "fill": "zero"},
+    "fn_last_error": {"size": 1, "fill": "zero"},
+    "fn_leave": {"size": 1, "fill": "zero"},
+    "fn_delete": {"size": 1, "fill": "zero"},
+    "item1": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x20", "u32": "0x00abc123"},
+        {"offset": "0x24", "u32": 100}
+      ]
+    },
+    "removed1": {"size": "0x40", "fill": "zero", "init": [{"offset": "0x24", "u32": 40}]}
+  },
+  "memory": [
+    {"addr": "0x005340e0", "u32": "@fn_initialize"},
+    {"addr": "0x00534194", "u32": "@fn_enter"},
+    {"addr": "0x005341d4", "u32": "@fn_close"},
+    {"addr": "0x005340c0", "u32": "@fn_overlapped"},
+    {"addr": "0x005341ac", "u32": "@fn_last_error"},
+    {"addr": "0x00534190", "u32": "@fn_leave"},
+    {"addr": "0x005341c8", "u32": "@fn_delete"},
+    {"addr": "0x006efed4", "u32": 0}
+  ],
+  "callees": {
+    "0x004f5460": {"name": "setLinkedListProperties_guess", "conv": "cdecl", "args": ["ptr", "int", "int"]},
+    "@fn_initialize": {"name": "InitializeCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "0x004f7ff0": {"name": "allocate_memory_buffer_guess", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 1},
+    "@fn_enter": {"name": "EnterCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "0x004f66d0": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": 123456},
+    "@fn_overlapped": {
+      "name": "GetOverlappedResult",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "ignore", "int"],
+      "ret": 1,
+      "writes": [{"arg": 2, "offset": 0, "hex": "64000000"}]
+    },
+    "0x004f5500": {
+      "name": "list_remove_head_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": "@removed1",
+      "writes": [{"arg": 0, "offset": 0, "hex": "00000000"}]
+    },
+    "@fn_close": {"name": "CloseHandle", "conv": "stdcall", "args": ["ptr"], "ret": 1},
+    "0x004f4ac0": {"name": "fast_free_guess", "conv": "cdecl", "args": ["ptr"]},
+    "@fn_last_error": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 5},
+    "0x004f8030": {"name": "FreeRingBuffer_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x0051cf90": {"name": "no_op_empty_return_guess", "conv": "cdecl", "args": ["ptr"]},
+    "@fn_leave": {"name": "LeaveCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0},
+    "@fn_delete": {"name": "DeleteCriticalSection", "conv": "stdcall", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "allocation failed and 16-bit option truncates", "args": ["@param_1", "0x12345"], "callees": {"0x004f7ff0": {"name": "allocate_memory_buffer_guess", "conv": "cdecl", "args": ["ptr", "u32"], "ret": 0}}},
+    {"name": "empty list cleans up", "args": ["@param_1", 0]},
+    {"name": "null data stops the drain", "args": ["@param_1", 65535], "memory": [{"addr": "@param_1", "offset": "0x38", "u32": "@link1"}, {"addr": "@link1", "offset": 8, "u32": 0}]},
+    {"name": "pending item stays queued", "args": ["@param_1", 4], "memory": [{"addr": "@param_1", "offset": "0x38", "u32": "@link1"}], "callees": {"@fn_overlapped": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 0}, "@fn_last_error": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 996}}},
+    {"name": "failed item is removed", "args": ["@param_1", 5], "memory": [{"addr": "@param_1", "offset": "0x38", "u32": "@link1"}], "callees": {"@fn_overlapped": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 0}, "@fn_last_error": {"name": "GetLastError", "conv": "stdcall", "args": [], "ret": 5}}},
+    {"name": "exact completion increments exact counter", "args": ["@param_1", 6], "memory": [{"addr": "@param_1", "offset": "0x38", "u32": "@link1"}]},
+    {"name": "short completion increments partial counter", "args": ["@param_1", 7], "memory": [{"addr": "@param_1", "offset": "0x38", "u32": "@link1"}], "callees": {"@fn_overlapped": {"name": "GetOverlappedResult", "conv": "stdcall", "args": ["ptr", "ptr", "ignore", "int"], "ret": 1, "writes": [{"arg": 2, "offset": 0, "hex": "63000000"}]}}},
+    {"name": "account removed item size separately from freed item", "args": ["@param_1", 8], "memory": [{"addr": "@param_1", "offset": "0x38", "u32": "@link1"}, {"addr": "@removed1", "offset": "0x24", "u32": 7}, {"addr": "@item1", "offset": "0x24", "u32": 900}]}
+  ],
+  "fuzz": {
+    "seed": 5203984,
+    "count": 30,
+    "args": [
+      {"choices": ["@param_1"]},
+      {"choices": [0, 1, 65535, 65536, 74565, 4294967295]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x38", "type": "ptr", "choices": [0, "@link1"]},
+      {"addr": "@link1", "offset": 8, "type": "ptr", "choices": [0, "@item1"]},
+      {"addr": "@param_1", "offset": "0x4c", "type": "int", "range": [-1000, 1000]},
+      {"addr": "@item1", "offset": "0x20", "type": "u32", "range": [0, 4294967295]},
+      {"addr": "@item1", "offset": "0x24", "type": "u32", "range": [0, 200]},
+      {"addr": "@removed1", "offset": "0x24", "type": "u32", "range": [0, 200]}
+    ]
+  }
+}

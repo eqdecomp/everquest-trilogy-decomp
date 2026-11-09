@@ -1,0 +1,366 @@
+{
+  "function": "ReadPackFileClamped_guess",
+  "original": "0x004e86a9",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "ptr"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@object"
+        }
+      ]
+    },
+    "object": {
+      "size": "0x30",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@buffer"
+        },
+        {
+          "offset": "0x18",
+          "u32": 256
+        },
+        {
+          "offset": "0x20",
+          "u32": 64
+        }
+      ]
+    },
+    "buffer": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "param_2": {
+      "size": "0x40",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004f9730": {
+      "name": "PackFileSystem_ReadPackFileData_guess",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "int"
+      ],
+      "ret": 1234
+    }
+  },
+  "cases": [
+    {
+      "name": "count below bytes left: position advances by count, callee result returned",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "count equal to bytes left (192) is taken whole",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        192
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "count one past bytes left is clamped to bytes left",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        193
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "position at end: count clamps to 0, callee gets 0",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x20",
+          "u32": 256
+        }
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "position past end: negative bytes left is kept (signed compare)",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x20",
+          "u32": 300
+        }
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "negative count below bytes left moves the position back (signed compare)",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        -5
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "dword at +0x14 clear: position still advances, callee not called, returns 0",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "dword at +0x14 nonzero only in its top byte: still set, callee called",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x14",
+          "u32": 16777216
+        }
+      ],
+      "expect": {
+        "ret": 1234
+      }
+    },
+    {
+      "name": "byte below +0x14 set, dword at +0x14 clear: callee not called",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x13",
+          "u8": 1
+        },
+        {
+          "addr": "@object",
+          "offset": "0x14",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null object pointer in slot returns 0 and touches nothing",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x0",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "null param_2 returns 0 and leaves the position",
+      "args": [
+        "@param_1",
+        0,
+        0,
+        16
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero count returns 0 and leaves the position",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "callee result -1 is returned as is",
+      "args": [
+        "@param_1",
+        0,
+        "@param_2",
+        16
+      ],
+      "callees": {
+        "0x004f9730": {
+          "name": "PackFileSystem_ReadPackFileData_guess",
+          "conv": "thiscall",
+          "args": [
+            "ptr",
+            "int"
+          ],
+          "ret": -1
+        }
+      },
+      "expect": {
+        "ret": -1
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5146281,
+    "count": 60,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@param_2",
+          0
+        ]
+      },
+      {
+        "range": [
+          -16,
+          320
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x0",
+        "type": "ptr",
+        "choices": [
+          "@object",
+          0
+        ]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x13",
+        "type": "u8",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x14",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          16777216
+        ]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x18",
+        "type": "int",
+        "range": [
+          -16,
+          320
+        ]
+      },
+      {
+        "addr": "@object",
+        "offset": "0x20",
+        "type": "int",
+        "range": [
+          -16,
+          320
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,273 @@
+{
+  "function": "process_icmp_error_guess",
+  "original": "0x100296e0",
+  "sources": [
+    "src/eqmain/Network/rdp/rdp.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "u32"},
+    {"name": "param_4", "type": "ptr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "rdp": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x16", "u16": 4660},
+        {"offset": "0x26", "u16": 22136},
+        {"offset": "0x104", "u32": 4096}
+      ]
+    },
+    "packet": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u8": 69},
+        {"offset": "0x14", "u8": 11},
+        {"offset": "0x1c", "u8": 5},
+        {"offset": "0x25", "u8": 17},
+        {"offset": "0x28", "u32": "0x01020304"},
+        {"offset": "0x2c", "u32": "0x05060708"},
+        {"offset": "0x30", "u16": 4660},
+        {"offset": "0x32", "u16": 66},
+        {"offset": "0x34", "u16": 7},
+        {"offset": "0x36", "u16": 8}
+      ]
+    },
+    "from": {
+      "size": 16,
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "0x0a0b0c0d"}
+      ]
+    },
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0c", "u32": "@state"}
+      ]
+    },
+    "state": {
+      "size": "0x200",
+      "fill": "zero"
+    },
+    "node": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@conn"}
+      ]
+    },
+    "victim": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "iptext": {
+      "size": 16,
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "cstr": "192.0.2.1"}
+      ]
+    },
+    "enter": {
+      "size": 16,
+      "fill": "zero"
+    },
+    "leave": {
+      "size": 16,
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x1004014C", "u32": "@enter"},
+    {"addr": "0x10040148", "u32": "@leave"}
+  ],
+  "callees": {
+    "0x100322b4": {"name": "inet_ntoa", "conv": "stdcall", "args": ["u32"], "ret": "@iptext"},
+    "0x100322ba": {"name": "ntohs", "conv": "stdcall", "args": ["u16"], "ret": 4661},
+    "0x100322ae": {"name": "htons", "conv": "stdcall", "args": ["u16"], "ret": 22136},
+    "0x1002e6e0": {"name": "FUN_1002e6e0", "conv": "cdecl", "args": ["ptr", "mem:16"], "ret": "@conn"},
+    "0x1002d870": {"name": "NetworkConnection_pprocess_network_packet_stats_guess", "conv": "cdecl",
+                   "args": ["ptr", "char", "u8", "char", "u32", "ptr"]},
+    "0x100288b0": {"name": "fast_malloc_guess", "conv": "cdecl", "args": ["int"], "ret": "@node"},
+    "0x1002de10": {"name": "FUN_1002de10", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x10028a90": {"name": "FUN_10028a90", "conv": "cdecl", "args": ["ptr"]},
+    "@enter": {"name": "EnterCriticalSection", "conv": "stdcall", "args": ["ptr"]},
+    "@leave": {"name": "LeaveCriticalSection", "conv": "stdcall", "args": ["ptr"]},
+    "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x1002df20": {"name": "FUN_1002df20", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x1002e910": {"name": "signalMessageProcessing_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x1002d230": {"name": "NetworkConnection_getConnectionStatus_guess", "conv": "cdecl",
+                   "args": ["ptr", "ignore"],
+                   "writes": [{"arg": 1, "offset": 0, "hex": "0100000002000000"}]},
+    "0x1002e480": {"name": "updateHeapElement_guess", "conv": "cdecl", "args": ["ptr", "ptr"]},
+    "0x1002e530": {"name": "Heap_getTopHeapElement_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x1002e800": {"name": "FUN_1002e800", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1002e310": {"name": "removeHeapElement_guess", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0},
+    "0x1002d210": {"name": "NetworkConnection_CleanupNetworkConnectionResources_guess", "conv": "cdecl", "args": ["ptr"]},
+    "0x10033568": {"name": "_free", "conv": "cdecl", "args": ["ptr"]}
+  },
+  "cases": [
+    {
+      "name": "typical: port at rdp+0x16, node queued, list empty (signal), heap updated",
+      "args": ["@rdp", "@packet", 64, "@from"]
+    },
+    {
+      "name": "checksum fold 0x66e0: the carry shift of the first fold is zero",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [
+        {"addr": "@packet", "offset": "0x30", "u16": 22136},
+        {"addr": "@packet", "offset": "0x32", "u16": 45}
+      ]
+    },
+    {
+      "name": "checksum path: destination port equals rdp+0x26",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x30", "u16": 22136}]
+    },
+    {
+      "name": "destination port matches neither",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x30", "u16": 39321}]
+    },
+    {
+      "name": "length 0xffffffff: counter untouched, nothing else",
+      "args": ["@rdp", "@packet", 4294967295, "@from"]
+    },
+    {
+      "name": "length 27: counter bumped, below the minimum",
+      "args": ["@rdp", "@packet", 27, "@from"]
+    },
+    {
+      "name": "length 0x80000000: negative as a signed int",
+      "args": ["@rdp", "@packet", 2147483648, "@from"]
+    },
+    {
+      "name": "length 47: header plus 0x1c does not fit",
+      "args": ["@rdp", "@packet", 47, "@from"]
+    },
+    {
+      "name": "length 55: inner header plus 0x10 does not fit",
+      "args": ["@rdp", "@packet", 55, "@from"]
+    },
+    {
+      "name": "length 56: exact fit for the inner header",
+      "args": ["@rdp", "@packet", 56, "@from"]
+    },
+    {
+      "name": "header length 60: header plus 8 does not fit",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x0", "u8": 79}]
+    },
+    {
+      "name": "protocol 2 rejected",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x14", "u8": 2}]
+    },
+    {
+      "name": "protocol 4 accepted",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x14", "u8": 4}]
+    },
+    {
+      "name": "protocol 5 rejected",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x14", "u8": 5}]
+    },
+    {
+      "name": "protocol 12 rejected",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x14", "u8": 12}]
+    },
+    {
+      "name": "UDP marker not 0x11",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@packet", "offset": "0x25", "u8": 16}]
+    },
+    {
+      "name": "no connection for the key",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "callees": {
+        "0x1002e6e0": {"name": "FUN_1002e6e0", "conv": "cdecl", "args": ["ptr", "mem:16"], "ret": 0}
+      }
+    },
+    {
+      "name": "connection +0x6d4 set: no node",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@conn", "offset": "0x6d4", "u32": 1}]
+    },
+    {
+      "name": "connection +0x6e0 set: no node",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@conn", "offset": "0x6e0", "u32": 1}]
+    },
+    {
+      "name": "node's connection has +0x4c set: node freed",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@conn", "offset": "0x4c", "u32": 1}]
+    },
+    {
+      "name": "node without a connection, list not empty (no signal)",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [{"addr": "@node", "offset": "0x8", "u32": 0}],
+      "callees": {
+        "0x1002e120": {"name": "FUN_1002e120", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      }
+    },
+    {
+      "name": "status unchanged: no heap update",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [
+        {"addr": "@conn", "offset": "0x28", "u32": 1},
+        {"addr": "@conn", "offset": "0x2c", "u32": 2}
+      ]
+    },
+    {
+      "name": "hash entry found: removed from heap, cleaned up and freed",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "callees": {
+        "0x1002e800": {"name": "FUN_1002e800", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": "@victim"}
+      }
+    },
+    {
+      "name": "checksum path with protocol 4",
+      "args": ["@rdp", "@packet", 64, "@from"],
+      "memory": [
+        {"addr": "@packet", "offset": "0x30", "u16": 22136},
+        {"addr": "@packet", "offset": "0x14", "u8": 4}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5017550,
+    "count": 50,
+    "args": [
+      {"choices": ["@rdp"]},
+      {"choices": ["@packet"]},
+      {"choices": [4294967295, 0, 27, 28, 47, 48, 55, 56, 64, 100, 2147483648]},
+      {"choices": ["@from"]}
+    ],
+    "memory": [
+      {"addr": "@packet", "offset": "0x0", "type": "u8", "choices": [69, 70, 79, 68, 64]},
+      {"addr": "@packet", "offset": "0x14", "type": "u8", "choices": [0, 2, 3, 4, 5, 11, 12]},
+      {"addr": "@packet", "offset": "0x1c", "type": "u8", "choices": [0, 4, 5, 6, 8, 15]},
+      {"addr": "@packet", "offset": "0x25", "type": "u8", "choices": [17, 17, 16, 6]},
+      {"addr": "@packet", "offset": "0x30", "type": "u16", "choices": [4660, 22136, 39321]},
+      {"addr": "@packet", "offset": "0x32", "type": "u16", "count": 3},
+      {"addr": "@packet", "offset": "0x28", "type": "u32", "count": 2},
+      {"addr": "@packet", "offset": "0x40", "size": 128},
+      {"addr": "@rdp", "offset": "0x16", "type": "u16", "choices": [4660, 22136, 39321]},
+      {"addr": "@rdp", "offset": "0x26", "type": "u16", "choices": [4660, 22136]},
+      {"addr": "@conn", "offset": "0x4c", "type": "u32", "choices": [0, 0, 1]},
+      {"addr": "@conn", "offset": "0x6d4", "type": "u32", "choices": [0, 0, 0, 1]},
+      {"addr": "@conn", "offset": "0x6e0", "type": "u32", "choices": [0, 0, 0, 1]},
+      {"addr": "@conn", "offset": "0x28", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x2c", "type": "u32", "choices": [0, 2]}
+    ]
+  }
+}

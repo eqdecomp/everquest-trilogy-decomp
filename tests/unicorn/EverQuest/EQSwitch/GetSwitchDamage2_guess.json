@@ -1,0 +1,26 @@
+{
+  "function": "EQSwitch::GetSwitchDamage2_guess",
+  "original": "0x004BE42C",
+  "sources": ["src/EverQuest/EQSwitch.cpp"],
+  "conv": "thiscall",
+  "this": "@sw",
+  "args": [{"name": "value", "type": "short"}],
+  "ret": "int",
+  "callees": {"0x004BDEE6": {"name": "GetSwitchDamage", "conv": "thiscall", "args": [], "ret": 4}},
+  "objects": {"sw": {"size": "0x90", "fill": "random", "init": [{"offset": "0x1C", "u8": 115}]}},
+  "cases": [
+    {"name": "no damage leaves zero", "args": [-32768], "memory": [{"addr": "@sw", "offset": "0x1C", "u8": 0}], "callees": {"0x004BDEE6": {"name": "GetSwitchDamage_guess", "conv": "thiscall", "args": [], "ret": 0}}, "expect": {"ret": 0}},
+    {"name": "damaging switch and negative input", "args": [-1], "expect": {"ret": 1}},
+    {"name": "damaging switch and zero input", "args": [0], "expect": {"ret": 1}},
+    {"name": "one is rejected", "args": [1], "expect": {"ret": 0}},
+    {"name": "damage 30 from switch type 120", "args": [1], "memory": [{"addr": "@sw", "offset": "0x1C", "u8": 120}], "callees": {"0x004BDEE6": {"name": "GetSwitchDamage_guess", "conv": "thiscall", "args": [], "ret": 30}}, "expect": {"ret": 0}},
+    {"name": "damage 10 from switch type 140", "args": [1], "memory": [{"addr": "@sw", "offset": "0x1C", "u8": 140}], "callees": {"0x004BDEE6": {"name": "GetSwitchDamage_guess", "conv": "thiscall", "args": [], "ret": 10}}, "expect": {"ret": 0}},
+    {"name": "damage 50 from switch type 146", "args": [1], "memory": [{"addr": "@sw", "offset": "0x1C", "u8": 146}], "callees": {"0x004BDEE6": {"name": "GetSwitchDamage_guess", "conv": "thiscall", "args": [], "ret": 50}}, "expect": {"ret": 0}},
+    {"name": "one below 0xfe is rejected", "args": [253], "expect": {"ret": 0}},
+    {"name": "0xfe special accepted value", "args": [254], "expect": {"ret": 1}},
+    {"name": "one above 0xfe rejected", "args": [255], "expect": {"ret": 0}},
+    {"name": "signed short maximum", "args": [32767], "expect": {"ret": 0}},
+    {"name": "signed short minimum", "args": [-32768], "expect": {"ret": 1}}
+  ],
+  "fuzz": {"seed": 4946476, "count": 30, "args": [{"range": [-32768, 32768]}]}
+}

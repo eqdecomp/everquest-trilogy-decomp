@@ -1,0 +1,200 @@
+{
+  "function": "SetSafeLock_guess",
+  "original": "0x004ac2ea",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unusedCommandId",
+      "type": "int"
+    },
+    {
+      "name": "password",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e20f4",
+      "size": 64,
+      "fill": "zero"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    }
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty input with no saved password prints prompt then locks usage",
+      "args": [
+        1,
+        ""
+      ]
+    },
+    {
+      "name": "empty input with saved password reports locked interface",
+      "args": [
+        -1,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20f4",
+          "cstr": "secret"
+        }
+      ]
+    },
+    {
+      "name": "first nonempty password is saved and reported",
+      "args": [
+        42,
+        "secret"
+      ]
+    },
+    {
+      "name": "31 byte password is accepted at the upper boundary",
+      "args": [
+        0,
+        "1234567890123456789012345678901"
+      ]
+    },
+    {
+      "name": "32 byte password is rejected at the upper boundary",
+      "args": [
+        0,
+        "12345678901234567890123456789012"
+      ]
+    },
+    {
+      "name": "long password is rejected",
+      "args": [
+        0,
+        "1234567890123456789012345678901234567890"
+      ]
+    },
+    {
+      "name": "matching saved password unlocks and clears the first byte",
+      "args": [
+        0,
+        "secret"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20f4",
+          "cstr": "secret"
+        }
+      ]
+    },
+    {
+      "name": "password comparison is case insensitive",
+      "args": [
+        0,
+        "SeCrEt"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20f4",
+          "cstr": "secret"
+        }
+      ]
+    },
+    {
+      "name": "incorrect password leaves saved password intact",
+      "args": [
+        0,
+        "wrong"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20f4",
+          "cstr": "secret"
+        }
+      ]
+    },
+    {
+      "name": "nonzero first argument does not affect behavior",
+      "args": [
+        -2147483648,
+        "secret"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e20f4",
+          "cstr": "secret"
+        }
+      ]
+    },
+    {
+      "name": "prompt call precedes the final response call",
+      "args": [
+        7,
+        ""
+      ]
+    },
+    {
+      "name": "a one character initial password is accepted",
+      "args": [
+        3,
+        "x"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4899562,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          -2147483648,
+          -1,
+          0,
+          1,
+          2147483647
+        ]
+      },
+      {
+        "choices": [
+          "",
+          "x",
+          "secret",
+          "SECRET",
+          "wrong",
+          "1234567890123456789012345678901",
+          "12345678901234567890123456789012"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e20f4",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          65,
+          115,
+          255
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "function": "dequeueMessageBySequence_guess",
+  "original": "0x1002f3e0",
+  "sources": [
+    "src/eqmain/Network/rdp/rx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "conn",
+      "type": "ptr"
+    },
+    {
+      "name": "channel",
+      "type": "u32"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "conn": {
+      "size": "0x2000",
+      "fill": "zero"
+    },
+    "msg": {
+      "size": "0x80",
+      "fill": "zero"
+    },
+    "msg2": {
+      "size": "0x80",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e120": {
+      "name": "list_peek_head",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x1002e130": {
+      "name": "list_remove_head",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "empty queue",
+      "args": [
+        "@conn",
+        0
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "head is next in turn on channel 0",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x26c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x270", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x27c", "u32": 1},
+        {"addr": "@conn", "offset": "0x256", "u8": 0},
+        {"addr": "@msg", "offset": "0x17", "u8": 0}
+      ]
+    },
+    {
+      "name": "head is not next in turn (expected seq ahead)",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x26c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x270", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x27c", "u32": 1},
+        {"addr": "@conn", "offset": "0x256", "u8": 1},
+        {"addr": "@msg", "offset": "0x17", "u8": 0}
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "head is not next in turn (head seq ahead)",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x26c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x270", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x27c", "u32": 1},
+        {"addr": "@conn", "offset": "0x256", "u8": 0},
+        {"addr": "@msg", "offset": "0x17", "u8": 1}
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "expected seq wraps 255 -> 0",
+      "args": [
+        "@conn",
+        0
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x26c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x270", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x27c", "u32": 1},
+        {"addr": "@conn", "offset": "0x256", "u8": 255},
+        {"addr": "@msg", "offset": "0x17", "u8": 255}
+      ]
+    },
+    {
+      "name": "channel 0x105 masks to 5",
+      "args": [
+        "@conn",
+        261
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x2e4", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x2e8", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x2f4", "u32": 1},
+        {"addr": "@conn", "offset": "0x25b", "u8": 7},
+        {"addr": "@msg", "offset": "0x17", "u8": 7}
+      ]
+    },
+    {
+      "name": "channel 256 masks to 0",
+      "args": [
+        "@conn",
+        256
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x26c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x270", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x27c", "u32": 1},
+        {"addr": "@conn", "offset": "0x256", "u8": 0},
+        {"addr": "@msg", "offset": "0x17", "u8": 0}
+      ]
+    },
+    {
+      "name": "last array channel 19",
+      "args": [
+        "@conn",
+        19
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x434", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x438", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x444", "u32": 1},
+        {"addr": "@conn", "offset": "0x269", "u8": 3},
+        {"addr": "@msg", "offset": "0x17", "u8": 3}
+      ]
+    },
+    {
+      "name": "channel 20 reads past chan_queue[] (no bounds check)",
+      "args": [
+        "@conn",
+        20
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x44c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x450", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x45c", "u32": 1},
+        {"addr": "@conn", "offset": "0x26a", "u8": 0},
+        {"addr": "@msg", "offset": "0x17", "u8": 0}
+      ]
+    },
+    {
+      "name": "two queued: only the head leaves, the next becomes head",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x284", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x288", "u32": "@msg2"},
+        {"addr": "@conn", "offset": "0x294", "u32": 2},
+        {"addr": "@conn", "offset": "0x257", "u8": 0},
+        {"addr": "@msg", "offset": "0x17", "u8": 0},
+        {"addr": "@msg", "u32": "@msg2"},
+        {"addr": "@msg2", "offset": "0x4", "u32": "@msg"},
+        {"addr": "@msg2", "offset": "0x17", "u8": 1}
+      ]
+    },
+    {
+      "name": "channel 1 is empty while channel 0 holds a match",
+      "args": [
+        "@conn",
+        1
+      ],
+      "memory": [
+        {"addr": "@conn", "offset": "0x26c", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x270", "u32": "@msg"},
+        {"addr": "@conn", "offset": "0x27c", "u32": 1},
+        {"addr": "@conn", "offset": "0x257", "u8": 0},
+        {"addr": "@conn", "offset": "0x256", "u8": 0},
+        {"addr": "@msg", "offset": "0x17", "u8": 0}
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4401,
+    "count": 48,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      },
+      {
+        "range": [
+          0,
+          300
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x26c",
+        "type": "ptr",
+        "count": 20,
+        "stride": 24,
+        "choices": [
+          "@msg",
+          "@msg2",
+          "0x0"
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x256",
+        "type": "u8",
+        "count": 20,
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@msg",
+        "offset": "0x17",
+        "type": "u8",
+        "range": [
+          0,
+          3
+        ]
+      },
+      {
+        "addr": "@msg2",
+        "offset": "0x17",
+        "type": "u8",
+        "range": [
+          0,
+          3
+        ]
+      }
+    ]
+  }
+}

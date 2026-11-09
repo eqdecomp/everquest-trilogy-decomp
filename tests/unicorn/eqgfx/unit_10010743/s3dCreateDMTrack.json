@@ -1,0 +1,316 @@
+{
+  "function": "s3dCreateDMTrack",
+  "original": "0x10010ad8",
+  "sources": [
+    "src/eqgfx/unit_10010743.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "parameter24",
+      "type": "int"
+    },
+    {
+      "name": "parameter28",
+      "type": "int"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": 128
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x1c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "u32": "@primarySource"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@fallbackSource"
+        }
+      ]
+    },
+    "primarySource": {
+      "size": "0x14",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": 240
+        },
+        {
+          "offset": "0x10",
+          "u32": 480
+        }
+      ]
+    },
+    "fallbackSource": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x4",
+          "u16": 60
+        },
+        {
+          "offset": "0x8",
+          "u32": 120
+        }
+      ]
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@track"
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10017ce8": {
+      "name": "t3dShareObject",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "primary source, accepted",
+      "args": [
+        "@context",
+        "@definition",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "primary source, rejected",
+      "args": [
+        "@context",
+        "@definition",
+        2147483647,
+        -2147483648
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "fallback source, zero boundary",
+      "args": [
+        "@context",
+        "@definition",
+        -1,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@fallbackSource",
+          "offset": "0x4",
+          "u16": 0
+        },
+        {
+          "addr": "@fallbackSource",
+          "offset": "0x8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "fallback source, unsigned short maximum",
+      "args": [
+        "@context",
+        "@definition",
+        17,
+        23
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x14",
+          "u32": 0
+        },
+        {
+          "addr": "@fallbackSource",
+          "offset": "0x4",
+          "u16": 65535
+        },
+        {
+          "addr": "@fallbackSource",
+          "offset": "0x8",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "allocation failure",
+      "args": [
+        "@context",
+        "@definition",
+        5,
+        7
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "negative validation result",
+      "args": [
+        "@context",
+        "@definition",
+        9,
+        11
+      ],
+      "callees": {
+        "0x1001564b": {
+          "name": "FUN_1001564b",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr"
+          ],
+          "ret": -1
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 68312,
+    "count": 36,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@definition"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@context",
+        "offset": "0x8",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@primarySource",
+        "offset": "0xc",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@primarySource",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "addr": "@fallbackSource",
+        "offset": "0x4",
+        "type": "u16",
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {
+        "addr": "@fallbackSource",
+        "offset": "0x8",
+        "type": "int",
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ]
+  }
+}

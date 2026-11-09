@@ -1,0 +1,175 @@
+{
+  "function": "t3dSetPaletteReversePalette",
+  "original": "0x10018618",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "palette",
+      "type": "ptr"
+    },
+    {
+      "name": "reversePalette",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "palette": {
+      "size": "0x430",
+      "fill": "random"
+    },
+    "reverse_palette": {
+      "size": "0x8000",
+      "fill": "random"
+    },
+    "new_block": {
+      "size": "0x8000",
+      "fill": "random"
+    },
+    "old_block": {
+      "size": "0x8000",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@new_block"
+    },
+    "0x10067d30": {
+      "name": "memcpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "block null: allocated (0x8000 bytes), 0x8000 bytes copied in, returns 0",
+      "args": [
+        "@palette",
+        "@reverse_palette"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "block already set: no allocation, copied into the old block",
+      "args": [
+        "@palette",
+        "@reverse_palette"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": "@old_block"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "block null and allocation fails: 0xFFFF3D3E, block stays null, nothing copied",
+      "args": [
+        "@palette",
+        "@reverse_palette"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": 0
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "block already set and the allocator would fail: allocator not consulted, returns 0",
+      "args": [
+        "@palette",
+        "@reverse_palette"
+      ],
+      "memory": [
+        {
+          "addr": "@palette",
+          "offset": "0x420",
+          "u32": "@old_block"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 10018618,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@palette"
+        ]
+      },
+      {
+        "choices": [
+          "@reverse_palette"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@palette",
+        "offset": "0x420",
+        "type": "ptr",
+        "choices": [
+          "@old_block",
+          0
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "function": "CreateNamedNode_guess",
+  "original": "0x10005840",
+  "sources": [
+    "src/eqmain/unit_10003700.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "int"},
+    {"name": "param_2", "type": "int"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "int"},
+    {"name": "param_5", "type": "int"},
+    {"name": "param_6", "type": "u32"},
+    {"name": "param_7", "type": "int"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "parent": {"size": "0x40", "fill": "random"},
+    "node": {"size": "0x48", "fill": "random"},
+    "image": {"size": "0x40", "fill": "random"},
+    "bitmap": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x1004ceb8", "u32": 305419896}
+  ],
+  "callees": {
+    "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": "@node"},
+    "0x10028330": {"name": "ClearRecord3_guess", "conv": "cdecl", "args": ["ptr"], "passthrough": true},
+    "0x10006d80": {"name": "FUN_10006d80", "conv": "cdecl", "args": ["int", "int", "int"], "ret": "@image"},
+    "0x10006c20": {
+      "name": "FUN_10006c20", "conv": "cdecl",
+      "args": ["int", "int", "int", "int", "int", "int", "int", "int", "u32"], "ret": 0
+    },
+    "0x10007ae0": {"name": "FUN_10007ae0", "conv": "cdecl", "args": ["cstr", "int"], "ret": "@bitmap"},
+    "0x10028340": {"name": "FUN_10028340", "conv": "cdecl", "args": ["ptr", "int", "int"]}
+  },
+  "cases": [
+    {
+      "name": "odd flags: divisor 11, node filled",
+      "args": ["@parent", 10, 20, 30, 40, 1, 7]
+    },
+    {
+      "name": "even flags: divisor 13",
+      "args": ["@parent", 10, 20, 30, 100, 0, 7]
+    },
+    {
+      "name": "bit 1 set, bit 0 clear: still divisor 13",
+      "args": ["@parent", 10, 20, 30, 100, 2, 7]
+    },
+    {
+      "name": "all flag bits set: divisor 11",
+      "args": ["@parent", 10, 20, 30, 100, 4294967295, 7]
+    },
+    {
+      "name": "high bit only: divisor 13",
+      "args": ["@parent", 10, 20, 30, 100, 2147483648, 7]
+    },
+    {
+      "name": "negative height, odd: quotient truncates toward zero",
+      "args": ["@parent", 10, 20, 30, -23, 1, 7]
+    },
+    {
+      "name": "negative height, even",
+      "args": ["@parent", 10, 20, 30, -23, 0, 7]
+    },
+    {
+      "name": "zero height",
+      "args": ["@parent", 10, 20, 30, 0, 1, 0]
+    },
+    {
+      "name": "maximum height, odd",
+      "args": ["@parent", 10, 20, 30, 2147483647, 1, 7]
+    },
+    {
+      "name": "minimum height, even",
+      "args": ["@parent", 10, 20, 30, -2147483648, 0, 7]
+    },
+    {
+      "name": "y plus height wraps past 2^31",
+      "args": ["@parent", 10, 2147483647, 30, 2, 1, 7]
+    },
+    {
+      "name": "x plus width wraps past 2^31",
+      "args": ["@parent", 2147483647, 20, 2, 40, 0, 7]
+    },
+    {
+      "name": "null parent is stored and offset by 0x1c",
+      "args": [0, 10, 20, 30, 40, 1, 7]
+    },
+    {
+      "name": "malloc fails: returns NULL, no other calls",
+      "args": ["@parent", 10, 20, 30, 40, 1, 7],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "malloc fails with negative height and even flags",
+      "args": ["@parent", 10, 20, 30, -5, 0, 7],
+      "callees": {
+        "0x1003342e": {"name": "_malloc", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "image allocation (FUN_10006d80) returns NULL",
+      "args": ["@parent", 10, 20, 30, 40, 1, 7],
+      "callees": {
+        "0x10006d80": {"name": "FUN_10006d80", "conv": "cdecl", "args": ["int", "int", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "bitmap load (FUN_10007ae0) returns NULL",
+      "args": ["@parent", 10, 20, 30, 40, 1, 7],
+      "callees": {
+        "0x10007ae0": {"name": "FUN_10007ae0", "conv": "cdecl", "args": ["cstr", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "fill global DAT_1004CEB8 is zero",
+      "args": ["@parent", 10, 20, 30, 40, 1, 7],
+      "memory": [
+        {"addr": "0x1004ceb8", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 22592,
+    "count": 40,
+    "args": [
+      {"choices": ["@parent", 0]},
+      {"range": [-100, 1000]},
+      {"range": [-100, 1000]},
+      {"range": [-4, 300]},
+      {"range": [-200, 300]},
+      {"range": [0, 4294967295]},
+      {"range": [-2147483648, 2147483647]}
+    ],
+    "memory": [
+      {"addr": "0x1004ceb8", "type": "u32", "range": [0, 4294967295]}
+    ]
+  }
+}

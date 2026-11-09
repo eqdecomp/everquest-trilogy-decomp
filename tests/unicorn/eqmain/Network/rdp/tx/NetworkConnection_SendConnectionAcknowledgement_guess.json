@@ -1,0 +1,417 @@
+{
+  "function": "NetworkConnection_SendConnectionAcknowledgement_guess",
+  "original": "0x1002BE10",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x784",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x6c8",
+          "u32": 0
+        },
+        {
+          "offset": "0x6d4",
+          "u32": 1
+        },
+        {
+          "offset": "0x6d8",
+          "u32": 0
+        },
+        {
+          "offset": "0x488",
+          "u16": 7
+        },
+        {
+          "offset": "0x48c",
+          "u16": 8
+        }
+      ]
+    },
+    "packet": {
+      "size": "0x32",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x100288b0": {
+      "name": "fast_malloc_guess",
+      "conv": "cdecl",
+      "args": [
+        "int"
+      ],
+      "ret": "@packet"
+    },
+    "0x10030e30": {
+      "name": "bitarray_setbit_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x1002f9f0": {
+      "name": "WINMM.DLL::timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": "0x12345678"
+    },
+    "0x10030f30": {
+      "name": "msg_outgoing_init_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x1002bae0": {
+      "name": "tx_enqueue_outgoing_guess",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "eligible packet sets bit zero and advances sequence",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 7
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 8
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x490",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0,
+        "memory": [
+          {
+            "addr": "@conn",
+            "offset": "0x48c",
+            "hex": "0900"
+          },
+          {
+            "addr": "@conn",
+            "offset": "0x490",
+            "hex": "78563412"
+          },
+          {
+            "addr": "@packet",
+            "offset": "0x10",
+            "hex": "0102"
+          },
+          {
+            "addr": "@packet",
+            "offset": "0x12",
+            "hex": "0800"
+          }
+        ]
+      }
+    },
+    {
+      "name": "disabled state skips allocation",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d4",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "not connected skips allocation",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d4",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d8",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "pending disconnect skips allocation",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x6c8",
+          "u32": 0
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d4",
+          "u32": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x6d8",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "allocation failure returns two before state updates",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 7
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 8
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x490",
+          "u32": 99
+        }
+      ],
+      "callees": {
+        "0x100288b0": {
+          "name": "fast_malloc_guess",
+          "conv": "cdecl",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "expect": {
+        "ret": 2,
+        "memory": [
+          {
+            "addr": "@conn",
+            "offset": "0x48c",
+            "hex": "0800"
+          },
+          {
+            "addr": "@conn",
+            "offset": "0x490",
+            "hex": "63000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "underflowed acknowledgement index wraps to fffe",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 1
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 0
+        }
+      ],
+      "expect": {
+        "ret": 0,
+        "memory": [
+          {
+            "addr": "@conn",
+            "offset": "0x48c",
+            "hex": "0100"
+          },
+          {
+            "addr": "@packet",
+            "offset": "0x12",
+            "hex": "0000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "16 bit sequence wraps from ffff to zero",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 65534
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 65535
+        }
+      ],
+      "expect": {
+        "ret": 0,
+        "memory": [
+          {
+            "addr": "@conn",
+            "offset": "0x48c",
+            "hex": "0000"
+          },
+          {
+            "addr": "@packet",
+            "offset": "0x12",
+            "hex": "ffff"
+          }
+        ]
+      }
+    },
+    {
+      "name": "signed short subtraction is reduced to a 16 bit bit index",
+      "args": [
+        "@conn"
+      ],
+      "memory": [
+        {
+          "addr": "@conn",
+          "offset": "0x488",
+          "u16": 32767
+        },
+        {
+          "addr": "@conn",
+          "offset": "0x48c",
+          "u16": 32768
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5190448,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@conn"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@conn",
+        "offset": "0x6c8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6d4",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x6d8",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x488",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          32767,
+          32768,
+          65535
+        ]
+      },
+      {
+        "addr": "@conn",
+        "offset": "0x48c",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          32767,
+          32768,
+          65535
+        ]
+      }
+    ]
+  }
+}

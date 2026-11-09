@@ -1,0 +1,166 @@
+{
+  "function": "t3dSetSkyRegionConstantIntensity",
+  "original": "0x100197e1",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "region",
+      "type": "ptr"
+    },
+    {
+      "name": "levelOfDetailIndex",
+      "type": "u32"
+    },
+    {
+      "name": "renderMethodIndex",
+      "type": "u32"
+    },
+    {
+      "name": "constantIntensity",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "region": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@state"
+        }
+      ]
+    },
+    "state": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 40
+        },
+        {
+          "offset": "0x8",
+          "u32": 10
+        },
+        {
+          "offset": "0xc",
+          "u32": "@lod_data"
+        },
+        {
+          "offset": "0x18",
+          "u32": "@render_methods"
+        }
+      ]
+    },
+    "lod_data": {
+      "size": "0x50",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 10}, {"offset": "0x4", "u32": "@references"},
+        {"offset": "0x8", "u32": 10}, {"offset": "0xc", "u32": "@references"},
+        {"offset": "0x10", "u32": 10}, {"offset": "0x14", "u32": "@references"},
+        {"offset": "0x18", "u32": 10}, {"offset": "0x1c", "u32": "@references"},
+        {"offset": "0x20", "u32": 10}, {"offset": "0x24", "u32": "@references"},
+        {"offset": "0x28", "u32": 10}, {"offset": "0x2c", "u32": "@references"},
+        {"offset": "0x30", "u32": 10}, {"offset": "0x34", "u32": "@references"},
+        {"offset": "0x38", "u32": 10}, {"offset": "0x3c", "u32": "@references"},
+        {"offset": "0x40", "u32": 10}, {"offset": "0x44", "u32": "@references"},
+        {"offset": "0x48", "u32": 10}, {"offset": "0x4c", "u32": "@references"}
+      ]
+    },
+    "references": {
+      "size": "0x78",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": 0}, {"offset": "0x14", "u32": 1},
+        {"offset": "0x20", "u32": 2}, {"offset": "0x2c", "u32": 3},
+        {"offset": "0x38", "u32": 4}, {"offset": "0x44", "u32": 5},
+        {"offset": "0x50", "u32": 6}, {"offset": "0x5c", "u32": 7},
+        {"offset": "0x68", "u32": 8}, {"offset": "0x74", "u32": 9}
+      ]
+    },
+    "render_methods": {
+      "size": "0x320",
+      "fill": "zero"
+    }
+  },
+  "callees": {},
+  "cases": [
+    {
+      "name": "first level and first method",
+      "args": ["@region", 0, 0, 0.0]
+    },
+    {
+      "name": "middle level and method",
+      "args": ["@region", 3, 4, -2.25]
+    },
+    {
+      "name": "last valid level and method",
+      "args": ["@region", 9, 9, 3.25]
+    },
+    {
+      "name": "wrong region type",
+      "args": ["@region", 1, 1, 1.5],
+      "memory": [
+        {"addr": "@state", "offset": "0x0", "u32": 39}
+      ]
+    },
+    {
+      "name": "wrong region type short circuits indices",
+      "args": ["@region", 4294967295, 4294967295, 1.5],
+      "memory": [
+        {"addr": "@state", "offset": "0x0", "u32": 0}
+      ]
+    },
+    {
+      "name": "level index equals action count",
+      "args": ["@region", 3, 0, 1.5],
+      "memory": [
+        {"addr": "@state", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "level index past action count",
+      "args": ["@region", 4294967295, 0, 1.5]
+    },
+    {
+      "name": "last method valid",
+      "args": ["@region", 2, 9, -0.0]
+    },
+    {
+      "name": "render method index equals count",
+      "args": ["@region", 1, 4, 1.5],
+      "memory": [
+        {"addr": "@lod_data", "offset": "0x8", "u32": 4}
+      ]
+    },
+    {
+      "name": "render method index past count",
+      "args": ["@region", 1, 4294967295, 1.5]
+    },
+    {
+      "name": "valid high intensity",
+      "args": ["@region", 7, 6, 12345.75]
+    }
+  ],
+  "fuzz": {
+    "seed": 104417,
+    "count": 40,
+    "args": [
+      {"choices": ["@region"]},
+      {"range": [0, 11]},
+      {"range": [0, 11]},
+      {"range": [-1000, 1000]}
+    ],
+    "memory": [
+      {"addr": "@state", "offset": "0x0", "type": "u32", "choices": [40, 39, 0, 41], "p": 0.6},
+      {"addr": "@state", "offset": "0x8", "type": "u32", "range": [0, 10]},
+      {"addr": "@lod_data", "type": "u32", "count": 10, "stride": 8, "range": [0, 10], "p": 0.7}
+    ]
+  }
+}

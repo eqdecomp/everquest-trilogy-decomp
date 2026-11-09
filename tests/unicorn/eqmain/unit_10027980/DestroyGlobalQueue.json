@@ -1,0 +1,119 @@
+{
+  "function": "DestroyGlobalFontManager_guess",
+  "original": "0x10027b20",
+  "sources": [
+    "src/eqmain/unit_10027980.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "queue": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x1012c7b8",
+      "u32": "@queue"
+    }
+  ],
+  "callees": {
+    "0x10027b70": {
+      "name": "FUN_10027b70 (queue destroy, thiscall)",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x10033800": {
+      "name": "FUN_10033800 (free, cdecl)",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "global holds a queue: destroyed, freed, global cleared to 0",
+      "args": []
+    },
+    {
+      "name": "global null: nothing called, global stays 0",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012c7b8",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "global holds 1: non-null path, free gets 1",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012c7b8",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "global holds 0xffffffff: non-null path",
+      "args": [],
+      "memory": [
+        {
+          "addr": "0x1012c7b8",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "callee rewrites the global: free still gets the first pointer",
+      "args": [],
+      "callees": {
+        "0x10027b70": {
+          "name": "FUN_10027b70 (queue destroy, thiscall)",
+          "conv": "thiscall",
+          "args": [],
+          "writes": [
+            {
+              "addr": "0x1012c7b8",
+              "hex": "44332211"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "callee returns 12345 in eax: ignored",
+      "args": [],
+      "callees": {
+        "0x10027b70": {
+          "name": "FUN_10027b70 (queue destroy, thiscall)",
+          "conv": "thiscall",
+          "args": [],
+          "ret": 12345
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 162592,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {
+        "addr": "0x1012c7b8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@queue",
+          "0x00000001",
+          "0xffffffff",
+          "0x007a0000"
+        ]
+      }
+    ]
+  }
+}

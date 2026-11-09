@@ -1,0 +1,479 @@
+{
+  "function": "initializeStringReferenceWithNormalizedPath_guess",
+  "original": "0x10007870",
+  "sources": [
+    "src/eqmain/ffcreate2/ff/packfs.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "str",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "self": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "str": {
+      "size": "0x10",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@blk"
+        }
+      ]
+    },
+    "blk": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x8",
+          "u32": "@sdata"
+        },
+        {
+          "offset": "0xc",
+          "u32": 9
+        }
+      ]
+    },
+    "sdata": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "rep1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@vt"
+        },
+        {
+          "offset": "0x4",
+          "u32": 0
+        },
+        {
+          "offset": "0x8",
+          "u32": "@buf1"
+        },
+        {
+          "offset": "0xc",
+          "u32": 64
+        }
+      ]
+    },
+    "vt": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@dtor_fn"
+        }
+      ]
+    },
+    "buf1": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "buf2": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "obj2": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "dtor_fn": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10007f70": {
+      "name": "allocateSharedBuffer_guess",
+      "conv": "fastcall",
+      "args": [
+        "ignore",
+        "ignore",
+        "u32"
+      ],
+      "passthrough": true
+    },
+    "0x10007fe0": {
+      "name": "PackFsSharedPtr_guess::updateSharedPointer_guess",
+      "conv": "fastcall",
+      "args": [
+        "ignore",
+        "ignore",
+        "int"
+      ],
+      "passthrough": true
+    },
+    "0x10008080": {
+      "name": "CXStr_getStringLength_guess",
+      "conv": "fastcall",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x100338e5": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": [
+        "@buf1",
+        "@rep1"
+      ]
+    },
+    "kernel32.dll!HeapAlloc": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "ret": [
+        "@buf2",
+        "@obj2"
+      ]
+    },
+    "0x10008090": {
+      "name": "FUN_10008090",
+      "conv": "thiscall",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": "@rep1"
+    },
+    "@dtor_fn": {
+      "name": "PackFsRefCounted_guess::destroy_guess",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "empty (length 0)",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "one byte (its only byte is dropped by the count)",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 1
+        },
+        {
+          "addr": "@sdata",
+          "hex": "41"
+        }
+      ]
+    },
+    {
+      "name": "two uppercase letters (last byte dropped)",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 3
+        },
+        {
+          "addr": "@sdata",
+          "hex": "414243"
+        }
+      ]
+    },
+    {
+      "name": "slash run collapses",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 5
+        },
+        {
+          "addr": "@sdata",
+          "hex": "612f2f62"
+        }
+      ]
+    },
+    {
+      "name": "backslash becomes slash",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 4
+        },
+        {
+          "addr": "@sdata",
+          "hex": "615c62"
+        }
+      ]
+    },
+    {
+      "name": "mixed separators collapse into one slash",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 6
+        },
+        {
+          "addr": "@sdata",
+          "hex": "5c2f5c2f78"
+        }
+      ]
+    },
+    {
+      "name": "leading slash run",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 5
+        },
+        {
+          "addr": "@sdata",
+          "hex": "2f2f6162"
+        }
+      ]
+    },
+    {
+      "name": "letter boundaries @ A Z [ ` a z {",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 9
+        },
+        {
+          "addr": "@sdata",
+          "hex": "40415a5b60617a7b"
+        }
+      ]
+    },
+    {
+      "name": "high bytes and an embedded NUL (copy stops at it)",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 6
+        },
+        {
+          "addr": "@sdata",
+          "hex": "80ff7f0041"
+        }
+      ]
+    },
+    {
+      "name": "only slashes",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 5
+        },
+        {
+          "addr": "@sdata",
+          "hex": "5c5c2f5c"
+        }
+      ]
+    },
+    {
+      "name": "trailing slash",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 4
+        },
+        {
+          "addr": "@sdata",
+          "hex": "61622f"
+        }
+      ]
+    },
+    {
+      "name": "single slash",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 2
+        },
+        {
+          "addr": "@sdata",
+          "hex": "2f"
+        }
+      ]
+    },
+    {
+      "name": "node allocation fails (NULL object: both sides fault)",
+      "args": [
+        "@self",
+        0,
+        "@str"
+      ],
+      "callees": {
+        "0x100338e5": {
+          "ret": [
+            "@buf1",
+            0
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "@blk",
+          "offset": "0xc",
+          "u32": 3
+        },
+        {
+          "addr": "@sdata",
+          "hex": "414243"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 7001,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@self"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@str"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@blk",
+        "offset": "0xc",
+        "type": "u32",
+        "range": [
+          0,
+          40
+        ]
+      },
+      {
+        "addr": "@sdata",
+        "type": "u8",
+        "count": 48,
+        "choices": [
+          64,
+          65,
+          90,
+          91,
+          96,
+          97,
+          122,
+          123,
+          47,
+          92,
+          0,
+          128,
+          255,
+          48,
+          32,
+          127
+        ]
+      }
+    ]
+  }
+}

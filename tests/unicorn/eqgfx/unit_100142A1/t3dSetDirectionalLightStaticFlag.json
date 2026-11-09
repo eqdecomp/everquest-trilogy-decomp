@@ -1,0 +1,182 @@
+{
+  "function": "t3dSetDirectionalLightStaticFlag",
+  "original": "0x10014628",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "light",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "light": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "light2": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@light",
+      "offset": "0xf",
+      "u8": 0
+    },
+    {
+      "addr": "@light2",
+      "offset": "0xf",
+      "u8": 0
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "zero flag byte gains 0x80, returns 0",
+      "args": ["@light"],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "0x7f becomes 0xff",
+      "args": ["@light"],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0xf",
+          "u8": 127
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "already 0x80 stays 0x80",
+      "args": ["@light"],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0xf",
+          "u8": 128
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "0xff stays 0xff",
+      "args": ["@light"],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0xf",
+          "u8": 255
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "other bits kept: 0x55 becomes 0xd5",
+      "args": ["@light"],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0xf",
+          "u8": 85
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "exactly one byte written: neighbours 0xd..0xe and 0x10..0x12 untouched",
+      "args": ["@light"],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0xd",
+          "u8": 255
+        },
+        {
+          "addr": "@light",
+          "offset": "0xe",
+          "u8": 255
+        },
+        {
+          "addr": "@light",
+          "offset": "0xf",
+          "u8": 0
+        },
+        {
+          "addr": "@light",
+          "offset": "0x10",
+          "u8": 255
+        },
+        {
+          "addr": "@light",
+          "offset": "0x11",
+          "u8": 255
+        },
+        {
+          "addr": "@light",
+          "offset": "0x12",
+          "u8": 255
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "uses the argument object, not the fixture's first object",
+      "args": ["@light2"],
+      "memory": [
+        {
+          "addr": "@light",
+          "offset": "0xf",
+          "u8": 1
+        },
+        {
+          "addr": "@light2",
+          "offset": "0xf",
+          "u8": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 83496,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@light", "@light2"]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@light",
+        "offset": "0xf",
+        "type": "u8"
+      },
+      {
+        "addr": "@light2",
+        "offset": "0xf",
+        "type": "u8"
+      }
+    ]
+  }
+}

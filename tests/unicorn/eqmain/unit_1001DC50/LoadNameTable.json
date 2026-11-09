@@ -1,0 +1,182 @@
+{
+  "function": "LoadNameTable_guess",
+  "original": "0x1001f140",
+  "sources": [
+    "src/eqmain/unit_1001DC50.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "stream",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "stream": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "s0": {"size": "0x40", "init": [{"offset": 0, "cstr": "name0"}]},
+    "s1": {"size": "0x40", "init": [{"offset": 0, "cstr": "str0"}]},
+    "s2": {"size": "0x40", "init": [{"offset": 0, "cstr": "name1"}]},
+    "s3": {"size": "0x40", "init": [{"offset": 0, "cstr": "str1"}]},
+    "s4": {"size": "0x40", "init": [{"offset": 0, "cstr": "name2"}]},
+    "s5": {"size": "0x40", "init": [{"offset": 0, "cstr": "str2"}]},
+    "o0": {"size": "0x40", "init": [{"offset": 0, "cstr": "out0"}]},
+    "o1": {"size": "0x40", "init": [{"offset": 0, "cstr": "out1"}]},
+    "o2": {"size": "0x40", "init": [{"offset": 0, "cstr": "out2"}]},
+    "o3": {"size": "0x40", "init": [{"offset": 0, "cstr": "out3"}]},
+    "o4": {"size": "0x40", "init": [{"offset": 0, "cstr": "out4"}]},
+    "o5": {"size": "0x40", "init": [{"offset": 0, "cstr": "out5"}]}
+  },
+  "memory": [
+    {"addr": "0x100f1d23", "u8": 1},
+    {"addr": "0x100f1d20", "u8": 0},
+    {"addr": "0x100f1d26", "u16": 0},
+    {"addr": "0x10055530", "cstr": "abc"}
+  ],
+  "callees": {
+    "0x10035c00": {
+      "name": "__strlwr",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "ret": "0x10055530"
+    },
+    "0x10035fd0": {
+      "name": "_strstr",
+      "conv": "cdecl",
+      "args": ["cstr", "cstr"],
+      "passthrough": true
+    },
+    "0x100250a0": {
+      "name": "FUN_100250a0",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x10025120": {
+      "name": "FUN_10025120",
+      "conv": "stdcall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x100250c0": {
+      "name": "FUN_100250c0",
+      "conv": "stdcall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x10025150": {
+      "name": "FUN_10025150",
+      "conv": "stdcall",
+      "args": [],
+      "ret": ["@s0", "@s1", "@s2", "@s3", "@s4", "@s5"]
+    },
+    "0x10021110": {
+      "name": "FUN_10021110",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "ret": ["@o0", "@o1", "@o2", "@o3", "@o4", "@o5"]
+    },
+    "0x1001e120": {
+      "name": "FUN_1001e120",
+      "conv": "stdcall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "flag off: nothing runs",
+      "args": ["@stream"],
+      "memory": [{"addr": "0x100f1d23", "u8": 0}]
+    },
+    {
+      "name": "zero records replaces an old count, no test",
+      "args": ["@stream"],
+      "memory": [{"addr": "0x100f1d26", "u16": 3}, {"addr": "@stream", "offset": 2, "u32": 0}]
+    },
+    {
+      "name": "zero records with the high word set",
+      "args": ["@stream"],
+      "memory": [{"addr": "@stream", "offset": 2, "u32": 65536}]
+    },
+    {
+      "name": "one record, text has test",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "0x10055530", "cstr": "a test b"},
+        {"addr": "@stream", "offset": 2, "u32": 1},
+        {"addr": "@stream", "offset": 6, "u8": 65},
+        {"addr": "@stream", "offset": 7, "u32": 305419896}
+      ]
+    },
+    {
+      "name": "two records, signed byte, high word set",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": 2, "u32": 65538},
+        {"addr": "@stream", "offset": 6, "u8": 255},
+        {"addr": "@stream", "offset": 7, "u32": 2147483647},
+        {"addr": "@stream", "offset": 11, "u8": 128},
+        {"addr": "@stream", "offset": 12, "u32": 1}
+      ]
+    },
+    {
+      "name": "one update lands in record 0",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": 2, "u32": 4294967295},
+        {"addr": "@stream", "offset": 6, "u32": 3405691582},
+        {"addr": "0x100f1d26", "u16": 1},
+        {"addr": "0x100ecbd4", "u32": 0}
+      ]
+    },
+    {
+      "name": "three updates, the last one has no record",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": 2, "u32": 4294967293},
+        {"addr": "@stream", "offset": 6, "u32": 111},
+        {"addr": "@stream", "offset": 10, "u32": 222},
+        {"addr": "@stream", "offset": 14, "u32": 333},
+        {"addr": "0x100f1d26", "u16": 2},
+        {"addr": "0x100ecbd4", "u32": 1},
+        {"addr": "0x100ecbd4", "offset": "0x118", "u32": 0},
+        {"addr": "0x100ecbd4", "offset": "0x230", "u32": 2}
+      ]
+    },
+    {
+      "name": "updates with no records to search",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "@stream", "offset": 2, "u32": 4294967294},
+        {"addr": "@stream", "offset": 6, "u32": 7},
+        {"addr": "@stream", "offset": 10, "u32": 8}
+      ]
+    },
+    {
+      "name": "count -32768 takes no updates",
+      "args": ["@stream"],
+      "memory": [
+        {"addr": "0x100f1d26", "u16": 2},
+        {"addr": "@stream", "offset": 2, "u32": 32768}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 127296,
+    "count": 40,
+    "args": [
+      {"choices": ["@stream"]}
+    ],
+    "memory": [
+      {"addr": "0x100f1d23", "type": "u8", "choices": [0, 1, 1, 1]},
+      {"addr": "0x100f1d26", "type": "short", "range": [-1, 5]},
+      {"addr": "0x100ecbd4", "type": "int", "range": [-2, 6], "count": 6, "stride": "0x118"},
+      {"addr": "0x10055530", "type": "u8", "count": 15, "choices": [116, 101, 115, 120, 32]},
+      {"addr": "0x1005553f", "type": "u8", "choices": [0]},
+      {"addr": "@stream", "offset": 2, "type": "int", "range": [-6, 6]}
+    ]
+  }
+}

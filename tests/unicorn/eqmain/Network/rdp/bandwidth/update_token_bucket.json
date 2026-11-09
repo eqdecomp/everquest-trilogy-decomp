@@ -1,0 +1,510 @@
+{
+  "function": "update_token_bucket_guess",
+  "original": "0x10030cb0",
+  "sources": [
+    "src/eqmain/Network/rdp/bandwidth.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "bw",
+      "type": "ptr"
+    }
+  ],
+  "ret": "u32",
+  "objects": {
+    "bw": {
+      "size": "0xc",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": 1000
+        },
+        {
+          "offset": "0x4",
+          "u32": 2000
+        },
+        {
+          "offset": "0x8",
+          "u32": 3000
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 2100
+    },
+    "0x10036aa0": {
+      "name": "__aulldiv",
+      "conv": "stdcall",
+      "args": [
+        "u32",
+        "u32",
+        "u32",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "rewrite_aliases": {
+    "__aulldiv": "0x10036aa0"
+  },
+  "cases": [
+    {
+      "name": "partly drained: 300 of 1000 drains, clock 100 ms on",
+      "args": [
+        "@bw"
+      ],
+      "expect": {
+        "ret": 700
+      }
+    },
+    {
+      "name": "fully drained: drain 300 >= 100 bytes",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 100
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 3000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "exact drain: 300 == 300 takes the zero path (strict <)",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 300
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 3000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "one byte more than the drain",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 301
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 3000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 1
+      }
+    },
+    {
+      "name": "empty bucket: returns before the clock, time kept",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 0
+            },
+            {
+              "offset": "0x4",
+              "u32": 500
+            },
+            {
+              "offset": "0x8",
+              "u32": 3000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "zero rate: nothing drains",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 500
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 500
+      }
+    },
+    {
+      "name": "no time elapsed",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 500
+            },
+            {
+              "offset": "0x4",
+              "u32": 2100
+            },
+            {
+              "offset": "0x8",
+              "u32": 1000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 500
+      }
+    },
+    {
+      "name": "elapsed 1000 ms: divisor 1000 exact",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 1000
+            },
+            {
+              "offset": "0x4",
+              "u32": 1100
+            },
+            {
+              "offset": "0x8",
+              "u32": 10
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 990
+      }
+    },
+    {
+      "name": "time ahead of the clock: elapsed wraps, zero path",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 1000
+            },
+            {
+              "offset": "0x4",
+              "u32": 2200
+            },
+            {
+              "offset": "0x8",
+              "u32": 3000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "32-bit product wraps to 0: 64-bit compare drains, 32-bit subtract keeps all",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 4294967280
+            },
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x8",
+              "u32": 65536
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 65536
+        }
+      },
+      "expect": {
+        "ret": 4294967280
+      }
+    },
+    {
+      "name": "32-bit product wraps: partial subtract of the wrapped quotient",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 20000000
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 100000000
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 18589935
+      }
+    },
+    {
+      "name": "exact drain at a 32-bit wrap (quotient 4294967 == bytes)",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 4294967
+            },
+            {
+              "offset": "0x4",
+              "u32": 0
+            },
+            {
+              "offset": "0x8",
+              "u32": 65536
+            }
+          ]
+        }
+      },
+      "callees": {
+        "0x1002f9f0": {
+          "name": "timeGetTime",
+          "conv": "stdcall",
+          "args": [],
+          "ret": 65536
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "bytes with the top bit set: unsigned compare",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 2147483648
+            },
+            {
+              "offset": "0x4",
+              "u32": 2000
+            },
+            {
+              "offset": "0x8",
+              "u32": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 2147483648
+      }
+    },
+    {
+      "name": "quotient high dword set (>= 2^32), low dword below bytes: zero path",
+      "args": [
+        "@bw"
+      ],
+      "objects": {
+        "bw": {
+          "size": "0xc",
+          "init": [
+            {
+              "offset": "0x0",
+              "u32": 4294967295
+            },
+            {
+              "offset": "0x4",
+              "u32": 1099
+            },
+            {
+              "offset": "0x8",
+              "u32": 4294967295
+            }
+          ]
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 199856,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@bw"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@bw",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          2,
+          100,
+          300,
+          1000,
+          5000,
+          2147483648,
+          4294967280,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@bw",
+        "offset": 4,
+        "type": "u32",
+        "choices": [
+          0,
+          1000,
+          2000,
+          2099,
+          2100,
+          2101,
+          2200,
+          4294903860,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@bw",
+        "offset": 8,
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          10,
+          3000,
+          65536,
+          1000000,
+          100000000,
+          2147483647,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

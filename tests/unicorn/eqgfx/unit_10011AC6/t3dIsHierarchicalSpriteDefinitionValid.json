@@ -1,0 +1,135 @@
+{
+  "function": "t3dIsHierarchicalSpriteDefinitionValid",
+  "original": "0x100135a5",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x13"},
+        {"offset": "0x1c", "u32": "@child"}
+      ]
+    },
+    "child": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x0", "u32": "0x14"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical",
+      "args": ["@definition"],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "zeros",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "size": 32, "fill": "zero"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null pointers",
+      "args": [0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x12",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": "0x12"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x14",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": "0x14"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x113",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": "0x113"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition tag 0x80000013",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x0", "u32": "0x80000013"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child tag 0x15",
+      "args": ["@definition"],
+      "memory": [{"addr": "@child", "offset": "0x0", "u32": "0x15"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child tag 0x13",
+      "args": ["@definition"],
+      "memory": [{"addr": "@child", "offset": "0x0", "u32": "0x13"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child tag 0x0",
+      "args": ["@definition"],
+      "memory": [{"addr": "@child", "offset": "0x0", "u32": "0x0"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child tag 0x114",
+      "args": ["@definition"],
+      "memory": [{"addr": "@child", "offset": "0x0", "u32": "0x114"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child tag 0x80000014",
+      "args": ["@definition"],
+      "memory": [{"addr": "@child", "offset": "0x0", "u32": "0x80000014"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child null",
+      "args": ["@definition"],
+      "memory": [{"addr": "@definition", "offset": "0x1c", "u32": 0}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "child unmapped, tag 0x12 (child is not read before the tag check)",
+      "args": ["@definition"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x0", "u32": "0x12"},
+        {"addr": "@definition", "offset": "0x1c", "u32": "0x7f000000"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 79269,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@definition", 0]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x0", "type": "u32", "choices": [19, 19, 20, 0, 18, 275]},
+      {"addr": "@definition", "offset": "0x1c", "type": "ptr", "choices": ["@child", "@child", 0, "0x7f000000"]},
+      {"addr": "@child", "offset": "0x0", "type": "u32", "choices": [20, 20, 19, 0, 21, 275]}
+    ]
+  }
+}

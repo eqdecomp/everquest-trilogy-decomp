@@ -1,0 +1,124 @@
+{
+  "function": "EQ_HSlider2_AutoHelp_guess",
+  "original": "0x00486a0e",
+  "sources": ["src/EverQuest/EQ_Slider.cpp",
+    "src/EverQuest/EQ_Overlay.cpp"
+  ],
+  "rewrite": "EQ_HSlider2_AutoHelp_guess",
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unused_edx", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x100", "fill": "zero", "init": [
+      {"offset": "0x10", "u32": 1},
+      {"offset": "0x70", "u32": "@node1"}
+    ]},
+    "node1": {"size": "0x24", "fill": "zero", "init": [
+      {"offset": "0x4", "u32": 0},
+      {"offset": "0x8", "u32": 0},
+      {"offset": "0xc", "u32": 100},
+      {"offset": "0x10", "u32": 100},
+      {"offset": "0x14", "u16": 1},
+      {"offset": "0x20", "u32": "@node2"}
+    ]},
+    "node2": {"size": "0x24", "fill": "zero", "init": [
+      {"offset": "0x4", "u32": 0},
+      {"offset": "0x8", "u32": 0},
+      {"offset": "0xc", "u32": 100},
+      {"offset": "0x10", "u32": 100},
+      {"offset": "0x14", "u16": 3}
+    ]},
+    "main": {"size": "0xf00", "fill": "zero", "init": [
+      {"offset": "0xebc", "u16": "0x1234"},
+      {"offset": "0xec2", "u16": 3}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x006b6864", "u32": 1},
+    {"addr": "0x006e4e44", "u32": "@main"},
+    {"addr": "0x006b6414", "u16": 50},
+    {"addr": "0x006b6416", "u16": 60}
+  ],
+  "callees": {
+    "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 0},
+    "0x0046d4da": {"name": "EQ_Main::DisplayAutoHelpText_guess", "conv": "thiscall", "this": "ptr", "args": ["int", "int", "cstr", "int"], "ret": 0}
+  },
+  "cases": [
+    {"name": "global help gate disabled", "args": ["@self", 0], "memory": [
+      {"addr": "0x006b6864", "u32": 0},
+      {"addr": "@main", "offset": "0xebc", "u16": "0x3456"}
+    ]},
+    {"name": "main threshold equals two", "args": ["@self", 0], "memory": [
+      {"addr": "@main", "offset": "0xec2", "u16": 2},
+      {"addr": "@main", "offset": "0xebc", "u16": "0x3456"}
+    ]},
+    {"name": "signed negative main threshold", "args": ["@self", 0], "memory": [
+      {"addr": "@main", "offset": "0xec2", "u16": "0xffff"},
+      {"addr": "@main", "offset": "0xebc", "u16": "0x3456"}
+    ]},
+    {"name": "slider field gate disabled", "args": ["@self", 0], "memory": [
+      {"addr": "@self", "offset": "0x10", "u32": 0},
+      {"addr": "@main", "offset": "0xebc", "u16": "0x3456"}
+    ]},
+    {"name": "slider field gate ignores the byte before it", "args": ["@self", 0], "memory": [
+      {"addr": "@self", "offset": "0x10", "u32": 0},
+      {"addr": "@self", "offset": "0xe", "u16": 256},
+      {"addr": "@main", "offset": "0xebc", "u16": "0x3456"}
+    ]},
+    {"name": "empty list stores no selection", "args": ["@self", 0], "memory": [
+      {"addr": "@self", "offset": "0x70", "u32": 0}
+    ]},
+    {"name": "first node hit at left and top coordinate", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 1}
+    }, "memory": [
+      {"addr": "0x006b6414", "u16": 0},
+      {"addr": "0x006b6416", "u16": 0},
+      {"addr": "@node1", "offset": "0x14", "u16": 1}
+    ]},
+    {"name": "help id two", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 1}
+    }, "memory": [{"addr": "@node1", "offset": "0x14", "u16": 2}]},
+    {"name": "help id three", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 1}
+    }, "memory": [{"addr": "@node1", "offset": "0x14", "u16": 3}]},
+    {"name": "help id four", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 1}
+    }, "memory": [{"addr": "@node1", "offset": "0x14", "u16": 4}]},
+    {"name": "unsupported help id resets selection", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 1}
+    }, "memory": [{"addr": "@node1", "offset": "0x14", "u16": 7}]},
+    {"name": "miss first and hit second linked node", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": [0, 1]}
+    }},
+    {"name": "miss both linked nodes", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": [0, 0]}
+    }},
+    {"name": "right and bottom coordinate forwarded", "args": ["@self", 0], "callees": {
+      "user32.dll!PtInRect": {"name": "PtInRect", "conv": "stdcall", "args": ["ptr", "int", "int"], "ret": 1}
+    }, "memory": [
+      {"addr": "0x006b6414", "u16": 100},
+      {"addr": "0x006b6416", "u16": 100}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4745742,
+    "count": 30,
+    "args": [
+      {"choices": ["@self"]},
+      {"choices": [0, 1, -1]}
+    ],
+    "memory": [
+      {"addr": "0x006b6864", "type": "int", "range": [-1, 1]},
+      {"addr": "@main", "offset": "0xec2", "type": "short", "range": [-4, 8]},
+      {"addr": "@self", "offset": "0x10", "type": "int", "choices": [0, 1]},
+      {"addr": "@self", "offset": "0x70", "type": "ptr", "choices": [0, "@node1", "@node2"]},
+      {"addr": "@node1", "offset": "0x14", "type": "short", "range": [-2, 7]},
+      {"addr": "@node2", "offset": "0x14", "type": "short", "range": [-2, 7]},
+      {"addr": "0x006b6414", "type": "short", "range": [-5, 105]},
+      {"addr": "0x006b6416", "type": "short", "range": [-5, 105]}
+    ]
+  }
+}

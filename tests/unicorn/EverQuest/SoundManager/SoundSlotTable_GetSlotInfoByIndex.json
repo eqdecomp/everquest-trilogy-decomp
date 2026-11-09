@@ -1,0 +1,242 @@
+{
+  "function": "SoundSlotTable_GetSlotInfoByIndex_guess",
+  "original": "0x004edf86",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "table",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "index",
+      "type": "int"
+    },
+    {
+      "name": "info",
+      "type": "ptr"
+    }
+  ],
+  "ret": "bool",
+  "objects": {
+    "table": {
+      "size": "0x1000",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xc",
+          "u32": "@slot"
+        },
+        {
+          "offset": "0x10",
+          "u32": "@slot"
+        },
+        {
+          "offset": "0xb48",
+          "u32": "@slot"
+        }
+      ]
+    },
+    "info": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "slot": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x004ee2fd": {
+      "name": "FUN_004ee2fd",
+      "conv": "thiscall",
+      "args": [
+        "int"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@table",
+        0,
+        1,
+        "@info"
+      ]
+    },
+    {
+      "name": "slot zero",
+      "args": [
+        "@table",
+        0,
+        0,
+        "@info"
+      ]
+    },
+    {
+      "name": "last valid slot 0x2cf",
+      "args": [
+        "@table",
+        0,
+        719,
+        "@info"
+      ]
+    },
+    {
+      "name": "first invalid index 0x2d0 with a slot set",
+      "args": [
+        "@table",
+        0,
+        720,
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0xb4c",
+          "u32": "@slot"
+        }
+      ]
+    },
+    {
+      "name": "index -1 with the wrap-around slot set",
+      "args": [
+        "@table",
+        0,
+        -1,
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x8",
+          "u32": "@slot"
+        }
+      ]
+    },
+    {
+      "name": "index INT_MIN (wraps to slot 0)",
+      "args": [
+        "@table",
+        0,
+        -2147483648,
+        "@info"
+      ]
+    },
+    {
+      "name": "index INT_MAX (wraps to 0x8)",
+      "args": [
+        "@table",
+        0,
+        2147483647,
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x8",
+          "u32": "@slot"
+        }
+      ]
+    },
+    {
+      "name": "null slot",
+      "args": [
+        "@table",
+        0,
+        1,
+        "@info"
+      ],
+      "memory": [
+        {
+          "addr": "@table",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "callee rejects",
+      "args": [
+        "@table",
+        0,
+        1,
+        "@info"
+      ],
+      "callees": {
+        "0x004ee2fd": {
+          "name": "FUN_004ee2fd",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "callee returns 0x100 (low byte zero, still true)",
+      "args": [
+        "@table",
+        0,
+        1,
+        "@info"
+      ],
+      "callees": {
+        "0x004ee2fd": {
+          "name": "FUN_004ee2fd",
+          "conv": "thiscall",
+          "args": [
+            "int"
+          ],
+          "ret": 256
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 5169030,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@table"
+        ]
+      },
+      {},
+      {
+        "range": [
+          -8,
+          728
+        ]
+      },
+      {
+        "choices": [
+          "@info"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@table",
+        "offset": "0xc",
+        "type": "ptr",
+        "count": 720,
+        "p": 0.8,
+        "choices": [
+          "@slot",
+          0
+        ]
+      }
+    ]
+  }
+}

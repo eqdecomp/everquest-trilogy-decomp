@@ -1,0 +1,154 @@
+{
+  "function": "Invite",
+  "original": "0x004caf5e",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "self", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "self": {"size": "0x100", "fill": "random"},
+    "profile": {"size": "0x1fa4", "fill": "zero"},
+    "target": {"size": "0x134", "fill": "zero"},
+    "local": {"size": "0x134", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4da8", "u32": "@profile"},
+    {"addr": "0x006e4dac", "u32": "@target"},
+    {"addr": "0x006e4d8c", "u32": "@local"},
+    {"addr": "@profile", "cstr": "Profile"},
+    {"addr": "@target", "offset": "0x1", "cstr": "Target"},
+    {"addr": "@target", "offset": "0x98", "u8": 0},
+    {"addr": "@local", "offset": "0x1", "cstr": "Local"},
+    {"addr": "@local", "offset": "0xa0", "u8": 0},
+    {"addr": "0x005fe968", "cstr": ""},
+    {"addr": "0x005fe8bd", "size": 150, "fill": "zero"},
+    {"addr": "0x00596330", "u32": 0},
+    {"addr": "0x0058fba4", "cstr": ""},
+    {"addr": "0x006b3194", "u32": 0}
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": ["ignore", "cstr"],
+      "passthrough": true
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004b21fc": {
+      "name": "EQPlayer::NotOnSameDeity_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": 0
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:91", "u32", "int"]
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    }
+  },
+  "cases": [
+    {"name": "lead restriction", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe968", "cstr": "Leader"}
+    ]},
+    {"name": "pending gate precedes null target", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe968", "cstr": "Leader"},
+      {"addr": "0x006e4dac", "u32": 0}
+    ]},
+    {"name": "null target", "args": ["@self", 0], "memory": [
+      {"addr": "0x006e4dac", "u32": 0}
+    ]},
+    {"name": "non player target", "args": ["@self", 0], "memory": [
+      {"addr": "@target", "offset": "0x98", "u8": 1}
+    ]},
+    {"name": "non player check precedes self check", "args": ["@self", 0], "memory": [
+      {"addr": "0x006e4dac", "u32": "@local"},
+      {"addr": "@local", "offset": "0x98", "u8": 1}
+    ]},
+    {"name": "self invite precedes deity check", "args": ["@self", 0], "memory": [
+      {"addr": "0x006e4dac", "u32": "@local"},
+      {"addr": "0x00596330", "u32": 4}
+    ]},
+    {"name": "deity mismatch", "args": ["@self", 0], "memory": [
+      {"addr": "0x00596330", "u32": 4}
+    ], "callees": {"0x004b21fc": {
+      "name": "EQPlayer::NotOnSameDeity_guess", "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"], "ret": 1
+    } }},
+    {"name": "deity match and invite", "args": ["@self", 0], "memory": [
+      {"addr": "0x00596330", "u32": 4}
+    ], "callees": {"0x004b21fc": {
+      "name": "EQPlayer::NotOnSameDeity_guess", "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"], "ret": 0
+    } }},
+    {"name": "deity call exposes target pointer", "args": ["@self", 0], "memory": [
+      {"addr": "0x00596330", "u32": 4}
+    ]},
+    {"name": "profile name permits invite", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe968", "cstr": "Profile"}
+    ]},
+    {"name": "already invited at slot zero", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe8bd", "cstr": "Target"}
+    ]},
+    {"name": "duplicate after a hole", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe8bd", "offset": "0x0", "cstr": "Other"},
+      {"addr": "0x005fe8bd", "offset": "0x3c", "cstr": "Target"}
+    ]},
+    {"name": "invite into middle empty slot", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe8bd", "offset": "0x0", "cstr": "A"},
+      {"addr": "0x005fe8bd", "offset": "0x3c", "cstr": "C"}
+    ]},
+    {"name": "invite into fifth slot boundary", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe8bd", "offset": "0x0", "cstr": "A"},
+      {"addr": "0x005fe8bd", "offset": "0x1e", "cstr": "B"},
+      {"addr": "0x005fe8bd", "offset": "0x3c", "cstr": "C"},
+      {"addr": "0x005fe8bd", "offset": "0x5a", "cstr": "D"}
+    ]},
+    {"name": "party full boundary", "args": ["@self", 0], "memory": [
+      {"addr": "0x005fe8bd", "offset": "0x0", "cstr": "A"},
+      {"addr": "0x005fe8bd", "offset": "0x1e", "cstr": "B"},
+      {"addr": "0x005fe8bd", "offset": "0x3c", "cstr": "C"},
+      {"addr": "0x005fe8bd", "offset": "0x5a", "cstr": "D"},
+      {"addr": "0x005fe8bd", "offset": "0x78", "cstr": "E"}
+    ]},
+    {"name": "post send changed group name", "args": ["@self", 0], "memory": [
+      {"addr": "0x0058fba4", "cstr": "Group"}
+    ], "callees": {"0x004e1c45": {"writes": [
+      {"addr": "0x0058fba4", "hex": "4e657700"}
+    ]}}},
+    {"name": "maximum player name size", "args": ["@self", 0], "memory": [
+      {"addr": "@target", "offset": "0x1", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXY1234"}
+    ]},
+    {"name": "local pvp byte is serialized", "args": ["@self", 0], "memory": [
+      {"addr": "@local", "offset": "0xa0", "u8": 1}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 5025630,
+    "count": 32,
+    "args": [
+      {"choices": ["@self"]},
+      {"range": [-8, 8]}
+    ],
+    "memory": [
+      {"addr": "0x006e4dac", "type": "ptr", "choices": ["@target", "@local", 0]},
+      {"addr": "0x005fe968", "type": "u8", "range": [0, 2]},
+      {"addr": "0x00596330", "type": "u32", "choices": [0, 3, 4, 5]},
+      {"addr": "@target", "offset": "0x98", "type": "u8", "range": [0, 2]},
+      {"addr": "@target", "offset": "0x1", "type": "u8", "range": [65, 90]},
+      {"addr": "@local", "offset": "0xa0", "type": "u8", "range": [0, 1]},
+      {"addr": "0x005fe8bd", "type": "u8", "count": 5, "stride": 30, "range": [0, 1]}
+    ]
+  }
+}

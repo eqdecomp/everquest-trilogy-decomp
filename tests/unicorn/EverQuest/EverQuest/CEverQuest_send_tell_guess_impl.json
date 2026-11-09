@@ -1,0 +1,59 @@
+{
+  "function": "CEverQuest_send_tell_guess_impl",
+  "original": "0x004cf180",
+  "sources": ["src/EverQuest/EverQuest.cpp"],
+  "rewrite": "CEverQuest_send_tell_guess_impl",
+  "conv": "fastcall",
+  "args": [
+    {"name": "game", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "recipient", "type": "cstr"},
+    {"name": "text", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "game": {"size": "0x100", "fill": "zero"},
+    "localPlayer": {"size": "0x134", "fill": "zero", "init": [
+      {"offset": "0x1", "cstr": "Local"}
+    ]}
+  },
+  "memory": [
+    {"addr": "0x006b63f8", "u8": 0},
+    {"addr": "0x006b6494", "u32": 0},
+    {"addr": "0x006b6465", "u8": 0},
+    {"addr": "0x006e4d8c", "u32": "@localPlayer"},
+    {"addr": "0x006e4d58", "u32": "@localPlayer"}
+  ],
+  "callees": {
+    "0x005219c0": {"name": "strcpy_guess", "conv": "cdecl", "args": ["ignore", "cstr"], "ret": 0, "passthrough": true},
+    "0x005224fb": {"name": "sprintf", "conv": "cdecl", "args": ["ignore", "cstr"], "varargs": "printf", "ret": 0, "passthrough": true},
+    "0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "args": ["cstr"], "ret": 0},
+    "0x004d05b7": {"name": "CEverQuest::print_chat_guess", "conv": "thiscall", "args": ["cstr"]},
+    "0x004d0d77": {"name": "CEverQuest_SendNewText_guess", "conv": "thiscall", "args": ["int", "cstr", "cstr"]}
+  },
+  "cases": [
+    {"name": "first gate nonzero", "args": ["@game", 0, "Target", "hello"], "memory": [{"addr": "0x006b63f8", "u8": 1}]},
+    {"name": "second gate nonzero", "args": ["@game", 0, "Target", "hello"], "memory": [{"addr": "0x006b6494", "u32": 1}]},
+    {"name": "preceding byte is outside the second dword gate", "args": ["@game", 0, "Target", "hello"], "memory": [{"addr": "0x006b6493", "u8": 1}]},
+    {"name": "third gate nonzero", "args": ["@game", 0, "Target", "hello"], "memory": [{"addr": "0x006b6465", "u8": 1}]},
+    {"name": "remote recipient follows formatting and lookup", "args": ["@game", 123, "Target", "hello, world"], "callees": {"0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "args": ["cstr"], "ret": 0}}},
+    {"name": "lookup resolves to local player", "args": ["@game", -7, "Local", "self message"], "callees": {"0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "args": ["cstr"], "ret": "@localPlayer"}}},
+    {"name": "empty strings still take lookup path", "args": ["@game", 0, "", ""], "callees": {"0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "args": ["cstr"], "ret": 0}}},
+    {"name": "case and punctuation preserved", "args": ["@game", 0, "MiXeD_Name", "a 'quoted' reply"], "callees": {"0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "args": ["cstr"], "ret": 0}}}
+  ],
+  "fuzz": {
+    "seed": 5042560,
+    "count": 30,
+    "args": [
+      {"choices": ["@game"]},
+      {"range": [-8, 8]},
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "0x006b63f8", "type": "u8", "choices": [0, 1]},
+      {"addr": "0x006b6494", "type": "u32", "choices": [0, 1]},
+      {"addr": "0x006b6465", "type": "u8", "choices": [0, 1]}
+    ]
+  }
+}

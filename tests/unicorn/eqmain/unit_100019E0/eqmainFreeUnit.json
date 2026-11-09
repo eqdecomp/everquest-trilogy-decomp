@@ -1,0 +1,225 @@
+{
+  "function": "eqmainFreeUnit_guess",
+  "original": "0x100019e0",
+  "sources": [
+    "src/eqmain/unit_100019E0.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unit",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "unit": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@owner"},
+        {"offset": "0x24", "u32": "@sub_a"},
+        {"offset": "0x28", "u32": "@sub_b"}
+      ]
+    },
+    "unit2": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x8", "u32": "@owner"}
+      ]
+    },
+    "owner": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x1c", "u32": "@node1"}
+      ]
+    },
+    "node1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@unit"},
+        {"offset": "0x8", "u32": "@node2"}
+      ]
+    },
+    "node2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "0x2000"},
+        {"offset": "0x8", "u32": "@node3"}
+      ]
+    },
+    "node3": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "0x3000"}
+      ]
+    },
+    "sub_a": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "sub_b": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "null_msg": {
+      "size": "0x20",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x10055a74", "u32": "@null_msg"},
+    {"addr": "@null_msg", "cstr": "unit is null"}
+  ],
+  "callees": {
+    "0x100278a0": {
+      "name": "FUN_100278a0",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x10007a80": {
+      "name": "FUN_10007a80",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10033568": {
+      "name": "_free",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10028430": {
+      "name": "FUN_10028430",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null unit reports DAT_10055A74 and returns",
+      "args": [0]
+    },
+    {
+      "name": "unit on the first node with both sub-buffers",
+      "args": ["@unit"]
+    },
+    {
+      "name": "unit on the first node, no sub-buffers",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x24", "u32": 0},
+        {"addr": "@unit", "offset": "0x28", "u32": 0}
+      ]
+    },
+    {
+      "name": "only the +0x24 sub-buffer",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x28", "u32": 0}
+      ]
+    },
+    {
+      "name": "only the +0x28 sub-buffer",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x24", "u32": 0}
+      ]
+    },
+    {
+      "name": "both sub-buffers are the same pointer",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@unit", "offset": "0x28", "u32": "@sub_a"}
+      ]
+    },
+    {
+      "name": "unit on the second node",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@node1", "offset": "0x4", "u32": "0x1000"},
+        {"addr": "@node2", "offset": "0x4", "u32": "@unit"}
+      ]
+    },
+    {
+      "name": "unit on the third node",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@node1", "offset": "0x4", "u32": "0x1000"},
+        {"addr": "@node3", "offset": "0x4", "u32": "@unit"}
+      ]
+    },
+    {
+      "name": "unit not on the list: loop runs off the end",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@node1", "offset": "0x4", "u32": "0x1000"}
+      ]
+    },
+    {
+      "name": "unit on the first and second node: first match wins",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@node2", "offset": "0x4", "u32": "@unit"}
+      ]
+    },
+    {
+      "name": "unit is the list head",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": "@node2"},
+        {"addr": "@node2", "offset": "0x4", "u32": "@unit"}
+      ]
+    },
+    {
+      "name": "empty owner list",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": 0}
+      ]
+    },
+    {
+      "name": "empty owner list, no sub-buffers",
+      "args": ["@unit"],
+      "memory": [
+        {"addr": "@owner", "offset": "0x1c", "u32": 0},
+        {"addr": "@unit", "offset": "0x24", "u32": 0},
+        {"addr": "@unit", "offset": "0x28", "u32": 0}
+      ]
+    },
+    {
+      "name": "second unit not on the list, no sub-buffers",
+      "args": ["@unit2"]
+    }
+  ],
+  "fuzz": {
+    "seed": 6624,
+    "count": 40,
+    "args": [
+      {
+        "choices": [0, "@unit", "@unit", "@unit2"]
+      }
+    ],
+    "memory": [
+      {"addr": "@unit", "offset": "0x24", "type": "ptr", "choices": [0, "@sub_a", "@sub_b"]},
+      {"addr": "@unit", "offset": "0x28", "type": "ptr", "choices": [0, "@sub_a", "@sub_b"]},
+      {"addr": "@owner", "offset": "0x1c", "type": "ptr", "choices": [0, "@node1", "@node2", "@node3"]},
+      {"addr": "@node1", "offset": "0x4", "type": "ptr", "choices": ["@unit", "@unit2", "0x1000"]},
+      {"addr": "@node2", "offset": "0x4", "type": "ptr", "choices": ["@unit", "@unit2", "0x2000"]},
+      {"addr": "@node3", "offset": "0x4", "type": "ptr", "choices": ["@unit", "@unit2", "0x3000"]}
+    ]
+  }
+}

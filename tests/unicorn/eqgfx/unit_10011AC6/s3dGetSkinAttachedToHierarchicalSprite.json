@@ -1,0 +1,148 @@
+{
+  "function": "s3dGetSkinAttachedToHierarchicalSprite",
+  "original": "0x100134ba",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "skinIndex",
+      "type": "u32"
+    },
+    {
+      "name": "sprite",
+      "type": "ptr"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "sprite": {
+      "size": "0x128",
+      "fill": "random",
+      "init": [
+        {"offset": "0x40", "u32": 3},
+        {"offset": "0x48", "u32": "@skins"}
+      ]
+    },
+    "skins": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x00", "u32": "0x31000100"},
+        {"offset": "0x04", "u32": "0x31000200"},
+        {"offset": "0x08", "u32": "0x31000300"}
+      ]
+    },
+    "skinsAlt": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": "0x04", "u32": "0x31000400"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "kernel32.dll!OutputDebugStringA": {
+      "name": "OutputDebugStringA",
+      "conv": "stdcall",
+      "args": ["cstr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: index 1 of 3 returns the second skin",
+      "args": [1, "@sprite"],
+      "expect": {"ret": "0x31000200"}
+    },
+    {
+      "name": "first skin: index 0 returns the first entry",
+      "args": [0, "@sprite"],
+      "expect": {"ret": "0x31000100"}
+    },
+    {
+      "name": "last valid index (skinCount - 1) still returns its entry",
+      "args": [2, "@sprite"],
+      "expect": {"ret": "0x31000300"}
+    },
+    {
+      "name": "index equal to skinCount: reports the message and returns 0",
+      "args": [3, "@sprite"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "index past skinCount: reports and returns 0",
+      "args": [4, "@sprite"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unsigned bound: 0xffffffff is above skinCount, not -1 below it",
+      "args": ["0xffffffff", "@sprite"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unsigned bound: 0x80000000 is above skinCount, no read of skins[-2^31]",
+      "args": ["0x80000000", "@sprite"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "skinCount 0: every index reports and returns 0",
+      "args": [0, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x40", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "skinCount 1: index 0 is the only skin",
+      "args": [0, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x40", "u32": 1}
+      ],
+      "expect": {"ret": "0x31000100"}
+    },
+    {
+      "name": "skinCount 1: index 1 reports",
+      "args": [1, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x40", "u32": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "the list is read from the sprite each call: an alternate list at +0x48",
+      "args": [1, "@sprite"],
+      "memory": [
+        {"addr": "@sprite", "offset": "0x48", "u32": "@skinsAlt"}
+      ],
+      "expect": {"ret": "0x31000400"}
+    },
+    {
+      "name": "a null entry is returned as is: no null check on the element",
+      "args": [0, "@sprite"],
+      "memory": [
+        {"addr": "@skins", "offset": "0x00", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 79034,
+    "count": 40,
+    "args": [
+      {
+        "choices": [0, 1, 2, 3, 4, 5, 15, 16, "0x7fffffff", "0x80000000", "0xfffffffe", "0xffffffff"]
+      },
+      {
+        "choices": ["@sprite"]
+      }
+    ],
+    "memory": [
+      {"addr": "@sprite", "offset": "0x40", "type": "u32", "range": [0, 16]},
+      {"addr": "@sprite", "offset": "0x48", "type": "ptr", "choices": ["@skins", "@skinsAlt"]},
+      {"addr": "@skins", "type": "u32", "count": 16, "choices": [0, "0x31000100", "0x31000200", "0x31000300"]}
+    ]
+  }
+}

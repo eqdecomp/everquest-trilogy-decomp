@@ -1,0 +1,88 @@
+{
+  "function": "EQMain_SetItemText_guess",
+  "original": "0x1001cf80",
+  "sources": [
+    "src/eqmain/unit_10018B60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "long"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {},
+  "memory": [
+    {"addr": "0x100ec9c0", "u32": "0x00050123"},
+    {"addr": "0x100ec9c4", "u32": 0}
+  ],
+  "callees": {
+    "user32.dll!GetDlgItem": {
+      "name": "GetDlgItem",
+      "conv": "stdcall",
+      "args": ["int", "int"],
+      "ret": "0x00070007"
+    },
+    "user32.dll!SendMessageA": {
+      "name": "SendMessageA",
+      "conv": "stdcall",
+      "args": ["int", "u32", "u32", "long"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: handle from GetDlgItem stored and used as SendMessageA hwnd",
+      "args": [268479437, 5]
+    },
+    {
+      "name": "zero handle returned by GetDlgItem is stored and sent to",
+      "args": [0, 0],
+      "memory": [
+        {"addr": "0x100ec9c0", "u32": 0},
+        {"addr": "0x100ec9c4", "u32": "0x00080008"}
+      ],
+      "callees": {
+        "user32.dll!GetDlgItem": {"name": "GetDlgItem", "conv": "stdcall", "args": ["int", "int"], "ret": 0}
+      }
+    },
+    {
+      "name": "failed lookup (-1) overwrites the previous handle",
+      "args": [-1, -1],
+      "memory": [
+        {"addr": "0x100ec9c4", "u32": "0x00080008"}
+      ],
+      "callees": {
+        "user32.dll!GetDlgItem": {"name": "GetDlgItem", "conv": "stdcall", "args": ["int", "int"], "ret": -1}
+      }
+    },
+    {
+      "name": "negative lparam and large control id pass through unchanged",
+      "args": [-2147483648, 2147483647]
+    },
+    {
+      "name": "parent handle is what GetDlgItem receives",
+      "args": [1, 1000],
+      "memory": [
+        {"addr": "0x100ec9c0", "u32": "0xdeadbeef"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 118656,
+    "count": 40,
+    "args": [
+      {},
+      {}
+    ],
+    "memory": [
+      {"addr": "0x100ec9c0", "type": "int", "choices": [0, 1, "0x00050123", "0xffffffff", "0xdeadbeef"]},
+      {"addr": "0x100ec9c4", "type": "int", "choices": [0, 1, "0x00080008", "0xffffffff"]}
+    ]
+  }
+}

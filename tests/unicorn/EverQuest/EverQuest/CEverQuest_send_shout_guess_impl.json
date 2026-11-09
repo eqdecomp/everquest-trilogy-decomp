@@ -1,0 +1,173 @@
+{
+  "function": "CEverQuest_send_shout_guess_class::send_shout_guess",
+  "original": "0x004d0bcf",
+  "rewrite": "CEverQuest_send_shout_guess_class::send_shout_guess",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@self",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "self": {
+      "size": "0x1000",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x140",
+      "fill": "zero"
+    },
+    "other": {
+      "size": "0x140",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006E4E70", "u32": 0},
+    {"addr": "0x006E4E6C", "u32": 0},
+    {"addr": "0x006B63F8", "u8": 0},
+    {"addr": "0x006B6465", "u8": 0},
+    {"addr": "0x006B6494", "u32": 0},
+    {"addr": "0x006E4D8C", "u32": "@player"},
+    {"addr": "@player", "offset": "0x1", "cstr": "Aelar"},
+    {"addr": "@self", "offset": "0xBA8", "cstr": "hello"}
+  ],
+  "callees": {
+    "0x004d0d77": {
+      "name": "CEverQuest_SendNewText_guess",
+      "conv": "thiscall",
+      "args": ["short", "ptr", "cstr"]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr", "int"]
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "conv": "cdecl",
+      "args": ["ignore", "cstr"],
+      "varargs": "printf",
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: all gates clear, text 'hello'",
+      "args": []
+    },
+    {
+      "name": "empty text",
+      "args": [],
+      "memory": [{"addr": "@self", "offset": "0xBA8", "u8": 0}]
+    },
+    {
+      "name": "text with % signs is data, not a format",
+      "args": [],
+      "memory": [{"addr": "@self", "offset": "0xBA8", "cstr": "100%s and %d"}]
+    },
+    {
+      "name": "150-character text",
+      "args": [],
+      "memory": [{"addr": "@self", "offset": "0xBA8", "cstr": "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij"}]
+    },
+    {
+      "name": "one-character text",
+      "args": [],
+      "memory": [{"addr": "@self", "offset": "0xBA8", "cstr": "a"}]
+    },
+    {
+      "name": "byte before the text (0xBA7) is not used",
+      "args": [],
+      "memory": [{"addr": "@self", "offset": "0xBA7", "u8": 90}]
+    },
+    {
+      "name": "empty local player name",
+      "args": [],
+      "memory": [{"addr": "@player", "offset": "0x1", "cstr": ""}]
+    },
+    {
+      "name": "29-character local player name fills the field",
+      "args": [],
+      "memory": [{"addr": "@player", "offset": "0x1", "cstr": "ABCDEFGHIJKLMNOPQRSTUVWXYZabc"}]
+    },
+    {
+      "name": "local player global points at another spawn",
+      "args": [],
+      "memory": [
+        {"addr": "0x006E4D8C", "u32": "@other"},
+        {"addr": "@other", "offset": "0x1", "cstr": "Brinn"}
+      ]
+    },
+    {
+      "name": "gate dword 0x006E4E70 set blocks",
+      "args": [],
+      "memory": [{"addr": "0x006E4E70", "u32": 1}]
+    },
+    {
+      "name": "gate dword 0x006E4E70 with only bit 8 set blocks",
+      "args": [],
+      "memory": [{"addr": "0x006E4E70", "u32": 256}]
+    },
+    {
+      "name": "gate dword 0x006E4E6C set (-1) blocks",
+      "args": [],
+      "memory": [{"addr": "0x006E4E6C", "u32": 4294967295}]
+    },
+    {
+      "name": "gate byte 0x006B63F8 set blocks",
+      "args": [],
+      "memory": [{"addr": "0x006B63F8", "u8": 1}]
+    },
+    {
+      "name": "gate byte 0x006B63F8 = 0x80 blocks",
+      "args": [],
+      "memory": [{"addr": "0x006B63F8", "u8": 128}]
+    },
+    {
+      "name": "gate byte 0x006B6465 set blocks",
+      "args": [],
+      "memory": [{"addr": "0x006B6465", "u8": 1}]
+    },
+    {
+      "name": "gate dword 0x006B6494 set blocks",
+      "args": [],
+      "memory": [{"addr": "0x006B6494", "u32": 1}]
+    },
+    {
+      "name": "gate dword 0x006B6494 with only bit 16 set blocks",
+      "args": [],
+      "memory": [{"addr": "0x006B6494", "u32": 65536}]
+    },
+    {
+      "name": "neighbour byte 0x006B63F9 set does not block",
+      "args": [],
+      "memory": [{"addr": "0x006B63F9", "u8": 1}]
+    },
+    {
+      "name": "neighbour byte 0x006E4E6B (before the 0x006E4E6C gate) set does not block",
+      "args": [],
+      "memory": [{"addr": "0x006E4E6B", "u8": 1}]
+    },
+    {
+      "name": "neighbour dword 0x006E4E74 set does not block",
+      "args": [],
+      "memory": [{"addr": "0x006E4E74", "u32": 1}]
+    }
+  ],
+  "fuzz": {
+    "seed": 5049295,
+    "count": 48,
+    "args": [],
+    "memory": [
+      {"addr": "0x006E4E70", "type": "int", "choices": [0, 1, 256, -1], "p": 0.2},
+      {"addr": "0x006E4E6C", "type": "int", "choices": [0, 1, -1], "p": 0.2},
+      {"addr": "0x006B63F8", "type": "u8", "choices": [0, 1, 128], "p": 0.2},
+      {"addr": "0x006B6465", "type": "u8", "choices": [0, 1, 255], "p": 0.2},
+      {"addr": "0x006B6494", "type": "int", "choices": [0, 1, 65536], "p": 0.2},
+      {"addr": "@self", "offset": "0xBA8", "type": "u8", "choices": [0, 37, 65, 97, 126], "count": 40},
+      {"addr": "@player", "offset": "0x1", "type": "u8", "choices": [0, 65, 97], "count": 29}
+    ]
+  }
+}

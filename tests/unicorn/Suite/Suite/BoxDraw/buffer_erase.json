@@ -1,0 +1,55 @@
+{
+  "function": "buffer_erase_guess",
+  "original": "0x00404314",
+  "sources": ["src/Suite/Suite/BoxDraw.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "buf", "type": "ptr"},
+    {"name": "edx_unused", "type": "int"},
+    {"name": "dest", "type": "ptr"},
+    {"name": "src", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "blk": {"size": "0x80", "fill": "random"},
+    "bEnd0": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x10"}]},
+    "bEnd1": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x14"}]},
+    "bEnd2": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x18"}]},
+    "bEnd5": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x24"}]},
+    "bEnd8": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x30"}]},
+    "bBelow": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x8"}]},
+    "bBelow1": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0xf"}]},
+    "bOdd7": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x17"}]},
+    "bOdd3": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": "@blk+0x13"}]},
+    "bNull": {"size": "0x10", "fill": "random", "init": [{"offset": "0x4", "u32": 0}]}
+  },
+  "memory": [],
+  "callees": {},
+  "cases": [
+    {"name": "empty range: last == src", "args": ["@bEnd0", 1, "@blk", "@blk+0x10"]},
+    {"name": "one dword", "args": ["@bEnd1", 1, "@blk", "@blk+0x10"]},
+    {"name": "two dwords", "args": ["@bEnd2", 0, "@blk", "@blk+0x10"]},
+    {"name": "five dwords", "args": ["@bEnd5", 0, "@blk", "@blk+0x10"]},
+    {"name": "eight dwords", "args": ["@bEnd8", 0, "@blk", "@blk+0x10"]},
+    {"name": "last below src: nothing copied, last := dest", "args": ["@bBelow", 0, "@blk", "@blk+0x10"]},
+    {"name": "last one byte below src", "args": ["@bBelow1", 0, "@blk", "@blk+0x10"]},
+    {"name": "unaligned 7 bytes counts 1 dword", "args": ["@bOdd7", 0, "@blk", "@blk+0x10"]},
+    {"name": "unaligned 3 bytes counts 0 dwords", "args": ["@bOdd3", 0, "@blk", "@blk+0x10"]},
+    {"name": "dest equals src", "args": ["@bEnd5", 0, "@blk+0x10", "@blk+0x10"]},
+    {"name": "dest above src overlap", "args": ["@bEnd5", 0, "@blk+0x14", "@blk+0x10"]},
+    {"name": "dest offset by 8", "args": ["@bEnd8", 0, "@blk+0x8", "@blk+0x10"]},
+    {"name": "last null: huge negative count", "args": ["@bNull", 0, "@blk", "@blk+0x10"]},
+    {"name": "edx argument ignored", "args": ["@bEnd2", 12345, "@blk", "@blk+0x10"]}
+  ],
+  "fuzz": {
+    "seed": 4211476,
+    "count": 40,
+    "args": [
+      {"choices": ["@bEnd0", "@bEnd1", "@bEnd2", "@bEnd5", "@bEnd8", "@bBelow", "@bBelow1", "@bOdd7", "@bOdd3", "@bNull"]},
+      {},
+      {"choices": ["@blk", "@blk+0x4", "@blk+0x8", "@blk+0x10", "@blk+0x14"]},
+      {"choices": ["@blk+0x10", "@blk+0x14", "@blk+0x18", "@blk+0x8"]}
+    ],
+    "memory": []
+  }
+}

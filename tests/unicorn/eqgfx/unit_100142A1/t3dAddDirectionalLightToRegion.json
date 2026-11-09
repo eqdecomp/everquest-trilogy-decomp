@@ -1,0 +1,515 @@
+{
+  "function": "t3dAddDirectionalLightToRegion",
+  "original": "0x10014d38",
+  "sources": [
+    "src/eqgfx/unit_100142A1.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "world",
+      "type": "ptr"
+    },
+    {
+      "name": "regionIndices",
+      "type": "ptr"
+    },
+    {
+      "name": "regionIndex",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "world": {
+      "size": "0x80",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@regionobjects"
+        }
+      ]
+    },
+    "regionobjects": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "@regionobject"
+        },
+        {
+          "offset": "0x04",
+          "u32": "@regionobject"
+        },
+        {
+          "offset": "0x08",
+          "u32": "@regionobject"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@regionobject"
+        },
+        {
+          "offset": "0x10",
+          "u32": "@regionobject"
+        },
+        {
+          "offset": "0x14",
+          "u32": "@regionobject"
+        }
+      ]
+    },
+    "regionobject": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x2c",
+          "u32": "@regionset"
+        }
+      ]
+    },
+    "regionset": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "0x27"
+        },
+        {
+          "offset": "0x10",
+          "u32": 2
+        },
+        {
+          "offset": "0x14",
+          "u32": 8
+        },
+        {
+          "offset": "0x18",
+          "u32": "@setentries"
+        }
+      ]
+    },
+    "setentries": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": "@regionindices"
+        },
+        {
+          "offset": "0x04",
+          "u32": "@regionindices"
+        }
+      ]
+    },
+    "regionindices": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": 3
+        },
+        {
+          "offset": "0x28",
+          "u32": 8
+        },
+        {
+          "offset": "0x2c",
+          "u32": "@indexarray"
+        }
+      ]
+    },
+    "indexarray": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x00",
+          "u32": 0
+        },
+        {
+          "offset": "0x04",
+          "u32": 2
+        },
+        {
+          "offset": "0x08",
+          "u32": 4
+        }
+      ]
+    },
+    "newindexarray": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "newsetentries": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c8c": {
+      "name": "t3dReallocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x100679f0": {
+      "name": "FID_conflict__memcpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "u32"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "insert between existing indices",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "duplicate at binary search midpoint",
+      "args": [
+        "@world",
+        "@regionindices",
+        2
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "insert before first index",
+      "args": [
+        "@world",
+        "@regionindices",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@indexarray",
+          "u32": 1
+        },
+        {
+          "addr": "@indexarray",
+          "offset": "0x04",
+          "u32": 2
+        },
+        {
+          "addr": "@indexarray",
+          "offset": "0x08",
+          "u32": 4
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "insert after the last index",
+      "args": [
+        "@world",
+        "@regionindices",
+        5
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty index list",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionindices",
+          "offset": "0x24",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "empty region-set entries",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionset",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "accept tag 0x29",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionset",
+          "u32": "0x29"
+        }
+      ],
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "reject tag between accepted tags",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionset",
+          "u32": "0x28"
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "reject tag below accepted tags",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionset",
+          "u32": "0x26"
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "grow index list successfully",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionindices",
+          "offset": "0x28",
+          "u32": 3
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": "@newindexarray"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "index-list reallocation fails",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionindices",
+          "offset": "0x28",
+          "u32": 3
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "grow region-set entries successfully",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionset",
+          "offset": "0x14",
+          "u32": 2
+        }
+      ],
+      "callees": {
+        "0x10050c8c": {
+          "name": "t3dReallocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "u32"
+          ],
+          "ret": "@newsetentries"
+        }
+      },
+      "expect": {
+        "ret": 0
+      }
+    },
+    {
+      "name": "region-set reallocation fails",
+      "args": [
+        "@world",
+        "@regionindices",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@regionset",
+          "offset": "0x14",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": "0xffff3d3e"
+      }
+    },
+    {
+      "name": "insert in second half",
+      "args": [
+        "@world",
+        "@regionindices",
+        3
+      ],
+      "expect": {
+        "ret": 0
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 85304,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@world"
+        ]
+      },
+      {
+        "choices": [
+          "@regionindices"
+        ]
+      },
+      {
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@regionindices",
+        "offset": "0x24",
+        "type": "int",
+        "range": [
+          0,
+          6
+        ]
+      },
+      {
+        "addr": "@regionindices",
+        "offset": "0x28",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@indexarray",
+        "type": "u32",
+        "count": 6,
+        "range": [
+          0,
+          5
+        ]
+      },
+      {
+        "addr": "@regionset",
+        "offset": "0x00",
+        "type": "u32",
+        "choices": [
+          "0x27",
+          "0x29",
+          "0x28",
+          "0x26"
+        ]
+      },
+      {
+        "addr": "@regionset",
+        "offset": "0x10",
+        "type": "int",
+        "range": [
+          0,
+          8
+        ]
+      },
+      {
+        "addr": "@regionset",
+        "offset": "0x14",
+        "type": "u32",
+        "range": [
+          0,
+          8
+        ]
+      }
+    ]
+  }
+}

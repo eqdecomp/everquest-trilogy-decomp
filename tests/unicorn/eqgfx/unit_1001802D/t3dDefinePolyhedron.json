@@ -1,0 +1,306 @@
+{
+  "function": "t3dDefinePolyhedron",
+  "original": "0x100188cd",
+  "sources": [
+    "src/eqgfx/unit_1001802D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "name", "type": "cstr"},
+    {"name": "stateValue", "type": "int"},
+    {"name": "elementCount", "type": "int"},
+    {"name": "sourceElements", "type": "ptr"},
+    {"name": "vertexCount", "type": "int"},
+    {"name": "sourceVertices", "type": "ptr"},
+    {"name": "coreValue", "type": "u32"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {"size": "0x100", "fill": "zero"},
+    "elements": {"size": "0x80", "fill": "zero"},
+    "vertices": {"size": "0x60", "fill": "random"},
+    "existing": {"size": "0x40", "fill": "zero"},
+    "poly": {"size": "0x40", "fill": "zero"},
+    "nameblock": {"size": "0x40", "fill": "zero"},
+    "vcopy": {"size": "0x40", "fill": "zero"},
+    "core": {"size": "0x40", "fill": "zero"},
+    "ecopy": {"size": "0x80", "fill": "zero"},
+    "edge0": {"size": "0x40", "fill": "zero"},
+    "edge1": {"size": "0x40", "fill": "zero"},
+    "edge2": {"size": "0x40", "fill": "zero"},
+    "edge3": {"size": "0x40", "fill": "zero"},
+    "edges0": {"size": "0x40", "fill": "random"},
+    "edges1": {"size": "0x40", "fill": "random"},
+    "edges2": {"size": "0x40", "fill": "random"},
+    "edges3": {"size": "0x40", "fill": "random"}
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "ret": 0
+    },
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": ["@poly", "@nameblock", "@vcopy", "@core", "@ecopy", "@edge0", "@edge1", "@edge2", "@edge3"]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x1001564b": {
+      "name": "_t3dAddItemToList_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"]
+    },
+    "0x10068160": {
+      "name": "_strlen",
+      "conv": "cdecl",
+      "args": ["cstr"],
+      "passthrough": true
+    },
+    "0x10067d30": {
+      "name": "FID_conflict:_memcpy",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "u32"],
+      "passthrough": true
+    },
+    "0x10068070": {
+      "name": "copyStringWithNullTerminator_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "cstr"],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "two records, in-range vertex pointers, edge copies",
+      "args": ["@context", "tri", 7, 2, "@elements", 3, "@vertices", 5],
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 2},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@elements", "offset": "0x24", "u32": 1},
+        {"addr": "@elements", "offset": "0x28", "u32": "@edges1"},
+        {"addr": "@edges0", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges0", "offset": "0x08", "u32": "@vertices+0x18"},
+        {"addr": "@edges0", "offset": "0x18", "u32": "@vertices+0x00"},
+        {"addr": "@edges0", "offset": "0x1c", "u32": "@vertices+0x24"},
+        {"addr": "@edges1", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges1", "offset": "0x08", "u32": "@vertices+0x0c"}
+      ]
+    },
+    {
+      "name": "existing kind-1 object under the name is returned",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}
+      },
+      "memory": [
+        {"addr": "@existing", "u32": 1}
+      ]
+    },
+    {
+      "name": "existing object of another kind is not returned",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x1000e7fe": {"name": "t3dGetPointerFromDictionary", "conv": "cdecl", "args": ["ptr", "cstr"], "ret": "@existing"}
+      },
+      "memory": [
+        {"addr": "@existing", "u32": 2}
+      ]
+    },
+    {
+      "name": "polyhedron allocation fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      }
+    },
+    {
+      "name": "name block allocation fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", 0]}
+      }
+    },
+    {
+      "name": "context registration of the polyhedron fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 5}
+      }
+    },
+    {
+      "name": "dictionary add fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x1000dc08": {"name": "t3dAddEntryToDictionary", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": -1}
+      }
+    },
+    {
+      "name": "vertex copy allocation fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", "@nameblock", 0]}
+      }
+    },
+    {
+      "name": "core allocation fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", "@nameblock", "@vcopy", 0]}
+      }
+    },
+    {
+      "name": "core registration fails",
+      "args": ["@context", "tri", 1, 1, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": [0, -1]}
+      }
+    },
+    {
+      "name": "element array allocation fails",
+      "args": ["@context", "tri", 1, 2, "@elements", 1, "@vertices", 1],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", "@nameblock", "@vcopy", "@core", 0]}
+      }
+    },
+    {
+      "name": "edge block of the last element fails at once",
+      "args": ["@context", "tri", 7, 2, "@elements", 3, "@vertices", 5],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", "@nameblock", "@vcopy", "@core", "@ecopy", 0]}
+      },
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 2},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@elements", "offset": "0x24", "u32": 1},
+        {"addr": "@elements", "offset": "0x28", "u32": "@edges1"},
+        {"addr": "@edges0", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges0", "offset": "0x08", "u32": "@vertices+0x18"},
+        {"addr": "@edges1", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges1", "offset": "0x08", "u32": "@vertices+0x0c"}
+      ]
+    },
+    {
+      "name": "edge block of the first element fails after the last succeeds",
+      "args": ["@context", "tri", 7, 2, "@elements", 3, "@vertices", 5],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", "@nameblock", "@vcopy", "@core", "@ecopy", "@edge0", 0]}
+      },
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 2},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@elements", "offset": "0x24", "u32": 1},
+        {"addr": "@elements", "offset": "0x28", "u32": "@edges1"},
+        {"addr": "@edges0", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges0", "offset": "0x08", "u32": "@vertices+0x18"},
+        {"addr": "@edges1", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges1", "offset": "0x08", "u32": "@vertices+0x0c"}
+      ]
+    },
+    {
+      "name": "edge block of the first element fails after two succeed",
+      "args": ["@context", "tri", 7, 3, "@elements", 3, "@vertices", 5],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": ["@poly", "@nameblock", "@vcopy", "@core", "@ecopy", "@edge0", "@edge1", 0]}
+      },
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 2},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@elements", "offset": "0x24", "u32": 1},
+        {"addr": "@elements", "offset": "0x28", "u32": "@edges1"},
+        {"addr": "@elements", "offset": "0x44", "u32": 1},
+        {"addr": "@elements", "offset": "0x48", "u32": "@edges2"},
+        {"addr": "@edges0", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges0", "offset": "0x08", "u32": "@vertices+0x18"},
+        {"addr": "@edges1", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges1", "offset": "0x08", "u32": "@vertices+0x0c"},
+        {"addr": "@edges2", "offset": "0x04", "u32": "@vertices+0x00"},
+        {"addr": "@edges2", "offset": "0x08", "u32": "@vertices+0x30"}
+      ]
+    },
+    {
+      "name": "no elements returns the new polyhedron at once",
+      "args": ["@context", "tri", 7, 0, "@elements", 2, "@vertices", 5]
+    },
+    {
+      "name": "elements with no edges",
+      "args": ["@context", "tri", 7, 2, "@elements", 2, "@vertices", 5],
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 0},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@elements", "offset": "0x24", "u32": 0},
+        {"addr": "@elements", "offset": "0x28", "u32": "@edges1"}
+      ]
+    },
+    {
+      "name": "empty name, no vertices",
+      "args": ["@context", "", 0, 1, "@elements", 0, "@vertices", 0],
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 1},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@edges0", "offset": "0x04", "u32": "@vertices+0x0c"},
+        {"addr": "@edges0", "offset": "0x08", "u32": "@vertices+0x0c"}
+      ]
+    },
+    {
+      "name": "vertex pointers before the vertex list divide toward zero",
+      "args": ["@context", "tri", 1, 1, "@elements", 2, "@vertices", 1],
+      "memory": [
+        {"addr": "@elements", "offset": "0x04", "u32": 2},
+        {"addr": "@elements", "offset": "0x08", "u32": "@edges0"},
+        {"addr": "@edges0", "offset": "0x04", "u32": 16},
+        {"addr": "@edges0", "offset": "0x08", "u32": "@vertices+0x0c"},
+        {"addr": "@edges0", "offset": "0x18", "u32": 4294967291},
+        {"addr": "@edges0", "offset": "0x1c", "u32": 7}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 100557,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]},
+      {"choices": ["", "a", "tri", "quad", "polyhedron"]},
+      {},
+      {"range": [0, 3]},
+      {"choices": ["@elements"]},
+      {"range": [0, 4]},
+      {"choices": ["@vertices"]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@elements", "offset": "0x04", "type": "u32", "range": [0, 3], "count": 4, "stride": 32},
+      {"addr": "@elements", "offset": "0x08", "type": "ptr", "choices": ["@edges0", "@edges1", "@edges2", "@edges3"], "count": 4, "stride": 32},
+      {"addr": "@edges0", "size": 64},
+      {"addr": "@edges1", "size": 64},
+      {"addr": "@edges2", "size": 64},
+      {"addr": "@edges3", "size": 64}
+    ]
+  }
+}

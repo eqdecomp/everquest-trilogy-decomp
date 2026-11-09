@@ -1,0 +1,229 @@
+{
+  "function": "t3dInitializeActorNodePool_guess",
+  "original": "0x10008ed9",
+  "sources": [
+    "src/eqgfx/unit_10008D38.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "actorRefSet",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "actorrefset": {
+      "size": "0x6000",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x324",
+          "u32": 0
+        }
+      ]
+    },
+    "block": {
+      "size": "0x2800",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@block"
+    }
+  },
+  "cases": [
+    {
+      "name": "successful allocation links the first and final nodes",
+      "args": [
+        "@actorrefset"
+      ],
+      "memory": [
+        {
+          "addr": "@block",
+          "offset": "0x0",
+          "u32": "0x13579bdf"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x8",
+          "u32": "0x2468ace0"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x27dc",
+          "u32": "0xaaaaaaaa"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x27e4",
+          "u32": "0xbbbbbbbb"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x27e8",
+          "u32": "0xcccccccc"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x27ec",
+          "u32": "0xdddddddd"
+        },
+        {
+          "addr": "@block",
+          "offset": "0x27f4",
+          "u32": "0xeeeeeeee"
+        }
+      ]
+    },
+    {
+      "name": "allocation failure keeps adjacent state untouched",
+      "args": [
+        "@actorrefset"
+      ],
+      "memory": [
+        {
+          "addr": "@actorrefset",
+          "offset": "0x314",
+          "u32": 11
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x318",
+          "u32": 22
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x31c",
+          "u32": 33
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x320",
+          "u32": 44
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "existing block returns without allocating",
+      "args": [
+        "@actorrefset"
+      ],
+      "memory": [
+        {
+          "addr": "@actorrefset",
+          "offset": "0x314",
+          "u32": 11
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x318",
+          "u32": 22
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x31c",
+          "u32": 33
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x320",
+          "u32": 44
+        },
+        {
+          "addr": "@actorrefset",
+          "offset": "0x324",
+          "u32": "0x12345678"
+        }
+      ]
+    },
+    {
+      "name": "final link overlaps the containing block pointer",
+      "args": [
+        "@actorrefset+0x3000"
+      ],
+      "memory": [
+        {
+          "addr": "@actorrefset",
+          "fill": "zero",
+          "size": "0x6000"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@actorrefset+0xb34"
+        }
+      }
+    },
+    {
+      "name": "allocator result aliases the containing object",
+      "args": [
+        "@actorrefset"
+      ],
+      "memory": [
+        {
+          "addr": "@actorrefset",
+          "fill": "zero",
+          "size": "0x2800"
+        }
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": [
+            "u32"
+          ],
+          "ret": "@actorrefset"
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 487097,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@actorrefset"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@actorrefset",
+        "offset": "0x324",
+        "type": "u32",
+        "choices": [
+          0,
+          0,
+          0,
+          "0x12345678",
+          "0x87654321"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "function": "delcorpse_guess",
+  "original": "0x004a52e1",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "player", "type": "ptr"},
+    {"name": "args", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "player": {"size": "0x134", "fill": "random"},
+    "current": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x1", "cstr": "CurrentTarget"},
+        {"offset": "0x98", "u8": 2}
+      ]
+    },
+    "lookup": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x1", "cstr": "LookupResult"},
+        {"offset": "0x98", "u8": 2}
+      ]
+    },
+    "npc": {
+      "size": "0x134", "fill": "random",
+      "init": [
+        {"offset": "0x1", "cstr": "NotACorpse"},
+        {"offset": "0x98", "u8": 1}
+      ]
+    },
+    "local": {
+      "size": "0x134", "fill": "random",
+      "init": [{"offset": "0x1", "cstr": "LocalPlayer"}]
+    },
+    "spawns": {"size": "0x134", "fill": "random"},
+    "eq": {"size": "0x40", "fill": "random"},
+    "connection": {"size": "0x20", "fill": "random"}
+  },
+  "memory": [
+    {"addr": "0x0058fba4", "cstr": "target"},
+    {"addr": "0x006e4d58", "u32": "@spawns"},
+    {"addr": "0x006e4dac", "u32": "@current"},
+    {"addr": "0x006e4d8c", "u32": "@local"},
+    {"addr": "0x006b3194", "u32": "@connection"},
+    {"addr": "0x006efe2c", "u32": "@eq"}
+  ],
+  "callees": {
+    "0x00522920": {
+      "name": "strcmp",
+      "conv": "cdecl",
+      "args": ["cstr", "cstr"],
+      "passthrough": true
+    },
+    "0x004b1435": {
+      "name": "EQPlayer::get_player_guess",
+      "conv": "thiscall",
+      "args": ["cstr"],
+      "ret": "@lookup"
+    },
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": ["mem:30", "cstr"],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:61", "u32", "int"]
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    }
+  },
+  "cases": [
+    {"name": "normal name copies the argument", "args": ["@player", "RequestedCorpse"]},
+    {"name": "normal type 2 boundary passes", "args": ["@player", "pc corpse"]},
+    {"name": "normal type 3 passes", "args": ["@player", "npc corpse"], "memory": [{"addr": "@lookup", "offset": "0x98", "u8": 3}]},
+    {"name": "normal type 1 fails", "args": ["@player", "living npc"], "memory": [{"addr": "@lookup", "offset": "0x98", "u8": 1}]},
+    {"name": "normal missing lookup fails", "args": ["@player", "missing"], "callees": {"0x004b1435": {"name": "EQPlayer::get_player_guess", "conv": "thiscall", "args": ["cstr"], "ret": 0}}},
+    {"name": "target token uses current target name", "args": ["@player", "target"]},
+    {"name": "target token type 3 passes", "args": ["@player", "target"], "memory": [{"addr": "@current", "offset": "0x98", "u8": 3}]},
+    {"name": "target token type 1 fails", "args": ["@player", "target"], "memory": [{"addr": "@current", "offset": "0x98", "u8": 1}]},
+    {"name": "target token null target fails", "args": ["@player", "target"], "memory": [{"addr": "0x006e4dac", "u32": 0}]}
+  ],
+  "fuzz": {
+    "seed": 4870881,
+    "count": 32,
+    "args": [
+      {"choices": ["@player"]},
+      {"choices": ["a", "bob", "corpse", "unknown name", "NPC corpse", "targeted corpse"]}
+    ],
+    "memory": [
+      {"addr": "@lookup", "offset": "0x98", "type": "u8", "choices": [0, 1, 2, 3, 255]}
+    ]
+  }
+}

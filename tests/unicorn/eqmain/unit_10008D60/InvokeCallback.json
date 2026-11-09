@@ -1,0 +1,150 @@
+{
+  "function": "InvokeCallback_guess",
+  "original": "0x1000ba30",
+  "sources": [
+    "src/eqmain/unit_10008D60.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "value",
+      "type": "int"
+    },
+    {
+      "name": "rec",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "cb": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "rec": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x24",
+          "u32": "@cb"
+        },
+        {
+          "offset": "0x28",
+          "u32": "0x12345678"
+        }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "@cb": {
+      "name": "callback",
+      "conv": "cdecl",
+      "args": [
+        "int",
+        "int"
+      ],
+      "ret": "0x0badf00d"
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: callback gets the record's arg first, value second",
+      "args": [
+        1,
+        "@rec"
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        0,
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "negative value, all-ones record arg",
+      "args": [
+        -1,
+        "@rec"
+      ],
+      "memory": [
+        {
+          "addr": "@rec",
+          "offset": "0x28",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "value equals the record arg (order invisible to values, visible in the trace)",
+      "args": [
+        "0x12345678",
+        "@rec"
+      ]
+    },
+    {
+      "name": "callback returns -1 (its EAX is left as the result)",
+      "args": [
+        2,
+        "@rec"
+      ],
+      "callees": {
+        "@cb": {
+          "name": "callback",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "callback returns 0",
+      "args": [
+        3,
+        "@rec"
+      ],
+      "callees": {
+        "@cb": {
+          "name": "callback",
+          "conv": "cdecl",
+          "args": [
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 47664,
+    "count": 40,
+    "args": [
+      {},
+      {
+        "choices": [
+          "@rec"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rec",
+        "offset": "0x28",
+        "type": "int"
+      }
+    ]
+  }
+}

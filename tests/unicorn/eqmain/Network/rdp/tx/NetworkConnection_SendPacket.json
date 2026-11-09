@@ -1,0 +1,770 @@
+{
+  "function": "NetworkConnection_SendPacket_guess",
+  "original": "0x1002cd70",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    },
+    {
+      "name": "param_3",
+      "type": "int"
+    },
+    {
+      "name": "param_4",
+      "type": "int"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x73c",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "@rdp"
+        },
+        {
+          "offset": "0x4c",
+          "u32": 0
+        },
+        {
+          "offset": "0x474",
+          "u32": 305419896
+        },
+        {
+          "offset": "0x478",
+          "u16": 2
+        },
+        {
+          "offset": "0x48a",
+          "u16": 4660
+        },
+        {
+          "offset": "0x56c",
+          "u32": 256
+        },
+        {
+          "offset": "0x574",
+          "u32": 10000
+        },
+        {
+          "offset": "0x6d4",
+          "u32": 1
+        },
+        {
+          "offset": "0x6ec",
+          "u32": 1
+        }
+      ]
+    },
+    "rdp": {
+      "size": "0x1d8",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x118",
+          "u32": 305419896
+        },
+        {
+          "offset": "0x11c",
+          "u32": 2596069104
+        }
+      ]
+    },
+    "stats": {
+      "size": "0x360",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100498b4",
+      "u32": "@stats"
+    }
+  ],
+  "callees": {
+    "0x100322ae": {
+      "name": "htons",
+      "conv": "stdcall",
+      "args": [
+        "u16"
+      ],
+      "ret": [
+        4660,
+        22136
+      ]
+    },
+    "0x1002f2a0": {
+      "name": "NetworkConnection_pPrepareAcknowledgementHeader_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "mem:4"
+      ],
+      "ret": 8
+    },
+    "0x10030140": {
+      "name": "SendPacketWithCRC_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "mem:16",
+        "int",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x1002f8d0": {
+      "name": "SendPacketWithCRC_guess",
+      "conv": "cdecl",
+      "args": [
+        "u32",
+        "mem:16",
+        "int",
+        "ptr",
+        "u32",
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": 1234
+    },
+    "0x10030c30": {
+      "name": "UpdateBandwidthQuota_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    },
+    "0x1002c5b0": {
+      "name": "NetworkConnection_Disconnect_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@param_1",
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@param_1",
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "IPX not connected: 0x8000 flag, 0x30 counted, IPX success charges the quota",
+      "args": [
+        "@param_1",
+        0,
+        17,
+        64
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6d4",
+          "u32": 0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        }
+      ]
+    },
+    {
+      "name": "connected with timeout armed: 0x400 flag, IPX success, 0x30 counted",
+      "args": [
+        "@param_1",
+        0,
+        2,
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x4c",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        }
+      ]
+    },
+    {
+      "name": "not connected and timeout armed: the 0x8000 test wins, so no 0x400",
+      "args": [
+        "@param_1",
+        1,
+        0,
+        65535
+      ],
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x6d4",
+          "u32": 0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x4c",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        }
+      ]
+    },
+    {
+      "name": "socket send returns 5 with timeout flag: 0x38 counted, rate 0xffffffff (unsigned divide)",
+      "args": [
+        "@param_1",
+        1,
+        64,
+        256
+      ],
+      "callees": {
+        "0x1002f8d0": {
+          "name": "SendPacketWithCRC_guess",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "mem:16",
+            "int",
+            "ptr",
+            "u32",
+            "u32"
+          ],
+          "ret": 5
+        }
+      },
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x4c",
+          "u32": 1
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x574",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "IPX returns 5 with rate 0x80000000 (unsigned divide) and a negative param_2",
+      "args": [
+        "@param_1",
+        -1,
+        0,
+        0
+      ],
+      "callees": {
+        "0x10030140": {
+          "name": "SendPacketWithCRC_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:16",
+            "int",
+            "ptr"
+          ],
+          "ret": 5
+        }
+      },
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x574",
+          "u32": 2147483648
+        }
+      ]
+    },
+    {
+      "name": "IPX disconnect after a prior failure: no header counts, 0x350 counted",
+      "args": [
+        "@param_1",
+        0,
+        40,
+        16384
+      ],
+      "callees": {
+        "0x1002f2a0": {
+          "name": "NetworkConnection_pPrepareAcknowledgementHeader_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 0
+        },
+        "0x10030140": {
+          "name": "SendPacketWithCRC_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:16",
+            "int",
+            "ptr"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x358",
+          "u32": 1
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x35c",
+          "u32": 0
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x350",
+          "u32": 5
+        }
+      ]
+    },
+    {
+      "name": "UDP returns 2: failure recorded without a prior failure, no quota",
+      "args": [
+        "@param_1",
+        0,
+        27,
+        4660
+      ],
+      "callees": {
+        "0x1002f8d0": {
+          "name": "SendPacketWithCRC_guess",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "mem:16",
+            "int",
+            "ptr",
+            "u32",
+            "u32"
+          ],
+          "ret": 2
+        }
+      },
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x358",
+          "u32": 0
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x35c",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "UDP success after a failure: failure state cleared, quota by length, tx_serial wraps",
+      "args": [
+        "@param_1",
+        0,
+        -40,
+        96
+      ],
+      "callees": {
+        "0x1002f2a0": {
+          "name": "NetworkConnection_pPrepareAcknowledgementHeader_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 16
+        }
+      },
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x358",
+          "u32": 1
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x35c",
+          "u32": 0
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x48a",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "no ack header (length 0): no send counts, delayed ack cleared, quota by 4 + 0x1c + param_3",
+      "args": [
+        "@param_1",
+        1,
+        5,
+        0
+      ],
+      "callees": {
+        "0x1002f2a0": {
+          "name": "NetworkConnection_pPrepareAcknowledgementHeader_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "ptr",
+            "mem:4"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x6ec",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "0x30 counter carries from the low dword into the high dword",
+      "args": [
+        "@param_1",
+        0,
+        17,
+        64
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x30",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x34",
+          "u32": 7
+        }
+      ]
+    },
+    {
+      "name": "0x340 counter carries into 0x344",
+      "args": [
+        "@param_1",
+        1,
+        3,
+        3
+      ],
+      "memory": [
+        {
+          "addr": "@stats",
+          "offset": "0x340",
+          "u32": 4294967295
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x344",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "IPX returns 3 with only the high word of the failure flag set: 0x350 counted, flags masked to 16 bits",
+      "args": [
+        "@param_1",
+        0,
+        9,
+        74565
+      ],
+      "callees": {
+        "0x10030140": {
+          "name": "SendPacketWithCRC_guess",
+          "conv": "cdecl",
+          "args": [
+            "ptr",
+            "mem:16",
+            "int",
+            "ptr"
+          ],
+          "ret": 3
+        }
+      },
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 69
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x358",
+          "u32": 0
+        },
+        {
+          "addr": "@stats",
+          "offset": "0x35c",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "family 0x44 is not the serial family: socket send returns 1 and disconnects",
+      "args": [
+        "@param_1",
+        0,
+        2,
+        16
+      ],
+      "callees": {
+        "0x1002f8d0": {
+          "name": "SendPacketWithCRC_guess",
+          "conv": "cdecl",
+          "args": [
+            "u32",
+            "mem:16",
+            "int",
+            "ptr",
+            "u32",
+            "u32"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@param_1",
+          "offset": "0x478",
+          "u16": 68
+        },
+        {
+          "addr": "@param_1",
+          "offset": "0x4c",
+          "u32": 0
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 183664,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      },
+      {
+        "range": [
+          -2,
+          3
+        ]
+      },
+      {
+        "range": [
+          -40,
+          300
+        ]
+      },
+      {
+        "range": [
+          0,
+          65535
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@param_1",
+        "offset": "0x6d4",
+        "type": "int",
+        "choices": [
+          0,
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x4c",
+        "type": "int",
+        "choices": [
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x478",
+        "type": "u16",
+        "choices": [
+          69,
+          2,
+          68
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x48a",
+        "type": "u16",
+        "range": [
+          0,
+          65535
+        ]
+      },
+      {
+        "addr": "@param_1",
+        "offset": "0x574",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          9,
+          10,
+          2147483648,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x30",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295,
+          4294967294
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x34",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          7,
+          4294967295
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x38",
+        "type": "u32",
+        "choices": [
+          0,
+          4294967295,
+          4294967294
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x340",
+        "type": "u32",
+        "choices": [
+          0,
+          4294967295,
+          4294967294
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x344",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x350",
+        "type": "u32",
+        "choices": [
+          0,
+          4294967295
+        ],
+        "p": 0.5
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x358",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ],
+        "p": 0.7
+      },
+      {
+        "addr": "@stats",
+        "offset": "0x35c",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ],
+        "p": 0.7
+      }
+    ]
+  }
+}

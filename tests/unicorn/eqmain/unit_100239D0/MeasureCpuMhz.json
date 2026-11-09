@@ -1,0 +1,57 @@
+{
+  "function": "MeasureCpuMhz_guess",
+  "original": "0x10024320",
+  "sources": [
+    "src/eqmain/unit_100239D0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "u32",
+  "rdtsc": "0x0001c449333acc24",
+  "rdtsc_step": 2400000000,
+  "objects": {
+    "tg": {"size": "0x10"},
+    "tg_skip1": {"size": "0x10"},
+    "tg_skip2": {"size": "0x10"},
+    "tg_neg": {"size": "0x10"},
+    "tg_wrap": {"size": "0x10"},
+    "tg_edge": {"size": "0x10"}
+  },
+  "memory": [
+    {"addr": "0x10040244", "u32": "@tg"}
+  ],
+  "callees": {
+    "0x10024300": {"name": "FUN_10024300", "conv": "stdcall", "args": [], "passthrough": true},
+    "@tg": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 100, 101, 102, 102, 500, 1105]},
+    "@tg_skip1": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 102, 1103, 1105]},
+    "@tg_skip2": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 102, 1105]},
+    "@tg_neg": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [200, 100, 201, 202, 202, 1205]},
+    "@tg_wrap": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [4294967294, 1, 1003, 1004]},
+    "@tg_edge": {"name": "timeGetTime", "conv": "stdcall", "args": [], "ret": [100, 101, 102, 102, 1104, 1105]}
+  },
+  "cases": [
+    {"name": "nominal_two_loops", "args": [], "expect": {"ret": 2400}},
+    {"name": "first_loop_skipped", "args": [], "memory": [{"addr": "0x10040244", "u32": "@tg_skip1"}], "expect": {"ret": 2400}},
+    {"name": "second_loop_skipped", "args": [], "memory": [{"addr": "0x10040244", "u32": "@tg_skip2"}], "expect": {"ret": 2400}},
+    {"name": "negative_tick_difference", "args": [], "memory": [{"addr": "0x10040244", "u32": "@tg_neg"}], "expect": {"ret": 2400}},
+    {"name": "tick_32bit_wrap", "args": [], "memory": [{"addr": "0x10040244", "u32": "@tg_wrap"}], "expect": {"ret": 2400}},
+    {"name": "tick_loop_boundaries", "args": [], "memory": [{"addr": "0x10040244", "u32": "@tg_edge"}], "expect": {"ret": 2400}},
+    {"name": "cycle_step_zero", "args": [], "rdtsc_step": 0, "expect": {"ret": 0}},
+    {"name": "cycle_step_999999", "args": [], "rdtsc_step": 999999, "expect": {"ret": 0}},
+    {"name": "cycle_step_1000000", "args": [], "rdtsc_step": 1000000, "expect": {"ret": 1}},
+    {"name": "cycle_step_1999999", "args": [], "rdtsc_step": 1999999, "expect": {"ret": 1}},
+    {"name": "cycle_step_2000000", "args": [], "rdtsc_step": 2000000, "expect": {"ret": 2}},
+    {"name": "cycle_step_2147483648", "args": [], "rdtsc_step": 2147483648, "expect": {"ret": 2147}},
+    {"name": "cycle_step_max_32bit", "args": [], "rdtsc_step": 4294967295, "expect": {"ret": 4294}},
+    {"name": "cycle_counter_low_wrap", "args": [], "rdtsc": "0x00000000fffffff0", "expect": {"ret": 2400}},
+    {"name": "cycle_counter_low_zero", "args": [], "rdtsc": "0x0000000100000000", "expect": {"ret": 2400}}
+  ],
+  "fuzz": {
+    "seed": 148256,
+    "count": 30,
+    "args": [],
+    "memory": [
+      {"addr": "0x10040244", "type": "ptr", "choices": ["@tg", "@tg_skip1", "@tg_skip2", "@tg_neg", "@tg_wrap", "@tg_edge"]}
+    ]
+  }
+}

@@ -1,0 +1,410 @@
+{
+  "function": "connection_sendv_guess",
+  "original": "0x1002c050",
+  "sources": [
+    "src/eqmain/Network/rdp/tx.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "ptr"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "u32"},
+    {"name": "param_5", "type": "u32"}
+  ],
+  "ret": "int",
+  "objects": {
+    "conn": {
+      "size": "0x800",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xc", "u32": "@rdp"},
+        {"offset": "0x48c", "u16": 1},
+        {"offset": "0x57c", "u32": 65536},
+        {"offset": "0x6d4", "u32": 1}
+      ]
+    },
+    "rdp": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "vecs": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "u32": "@buf0"},
+        {"offset": 8, "u32": "@buf1"},
+        {"offset": 16, "u32": "@buf0"},
+        {"offset": 24, "u32": "@buf1"}
+      ]
+    },
+    "buf0": {
+      "size": "0xd000",
+      "fill": "random"
+    },
+    "buf1": {
+      "size": "0xd000",
+      "fill": "random"
+    },
+    "msg": {
+      "size": "0xd000",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1002e6e0": {
+      "name": "FUN_1002e6e0",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10028bf0": {
+      "name": "rdp_unlock_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x100288b0": {
+      "name": "fast_malloc_guess",
+      "conv": "cdecl",
+      "args": ["u32"],
+      "ret": "@msg"
+    },
+    "0x10030e30": {
+      "name": "bitarray_setbit_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32"],
+      "ret": 0
+    },
+    "0x1002f9f0": {
+      "name": "timeGetTime",
+      "conv": "stdcall",
+      "args": [],
+      "ret": [1000, 2000, 3000]
+    },
+    "0x10030f30": {
+      "name": "msg_outgoing_init_guess",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "0x1002bae0": {
+      "name": "tx_enqueue_outgoing_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10028ae0": {
+      "name": "rdp_resort_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "null connection",
+      "args": [0, "@vecs", 0, 0, 0],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "null vector with zero count",
+      "args": ["@conn", 0, 0, 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count, nonfragmented",
+      "args": ["@conn", "@vecs", 0, 0, 0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero count, fragmented",
+      "args": ["@conn", "@vecs", 0, 0, 1],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "sum exceeds fragmented maximum",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 51201}],
+      "expect": {"ret": 19}
+    },
+    {
+      "name": "fragmented maximum exactly",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 51200}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nonfragmented size one over limit",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 513}],
+      "expect": {"ret": 19}
+    },
+    {
+      "name": "nonfragmented size at limit",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 512}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nonfragmented two elements at limit",
+      "args": ["@conn", "@vecs", 2, 0, 0],
+      "memory": [
+        {"addr": "@vecs", "offset": 4, "u32": 256},
+        {"addr": "@vecs", "offset": 12, "u32": 256}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "nonfragmented two elements over limit",
+      "args": ["@conn", "@vecs", 2, 0, 0],
+      "memory": [
+        {"addr": "@vecs", "offset": 4, "u32": 257},
+        {"addr": "@vecs", "offset": 12, "u32": 256}
+      ],
+      "expect": {"ret": 19}
+    },
+    {
+      "name": "nonfragmented three elements",
+      "args": ["@conn", "@vecs", 3, 0, 0],
+      "memory": [
+        {"addr": "@vecs", "offset": 4, "u32": 64},
+        {"addr": "@vecs", "offset": 12, "u32": 64},
+        {"addr": "@vecs", "offset": 20, "u32": 64}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "invalid channel",
+      "args": ["@conn", "@vecs", 0, 256, 0],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "invalid flags",
+      "args": ["@conn", "@vecs", 0, 0, 2],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "invalid flags with bit 0 set",
+      "args": ["@conn", "@vecs", 0, 0, 3],
+      "expect": {"ret": 6}
+    },
+    {
+      "name": "channel 255 nonfragmented",
+      "args": ["@conn", "@vecs", 1, 255, 0],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 16}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "not connected",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 14}
+    },
+    {
+      "name": "0x6d8 set",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d8", "u32": 1},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 18}
+    },
+    {
+      "name": "0x6c8 set",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6c8", "u32": 1},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 17}
+    },
+    {
+      "name": "0x6d8 and 0x6c8 set",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d8", "u32": 1},
+        {"addr": "@conn", "offset": "0x6c8", "u32": 1},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 18}
+    },
+    {
+      "name": "not connected and 0x6d8 set",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x6d4", "u32": 0},
+        {"addr": "@conn", "offset": "0x6d8", "u32": 1},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 14}
+    },
+    {
+      "name": "window counters equal",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x488", "u16": 5},
+        {"addr": "@conn", "offset": "0x48c", "u16": 5}
+      ],
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "window of 1024 outstanding",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x488", "u16": 0},
+        {"addr": "@conn", "offset": "0x48c", "u16": 1024}
+      ],
+      "expect": {"ret": 16}
+    },
+    {
+      "name": "window of 1023 outstanding",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x488", "u16": 0},
+        {"addr": "@conn", "offset": "0x48c", "u16": 1023}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "window counters wrap",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x488", "u16": 65535},
+        {"addr": "@conn", "offset": "0x48c", "u16": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "queued bytes over 0x57c",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x57c", "u32": 10},
+        {"addr": "@conn", "offset": "0x568", "u32": 6},
+        {"addr": "@conn", "offset": "0x54c", "u32": 5},
+        {"addr": "@conn", "offset": "0x530", "u32": 0},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 15}
+    },
+    {
+      "name": "queued bytes equal 0x57c",
+      "args": ["@conn", "@vecs", 1, 0, 0],
+      "memory": [
+        {"addr": "@conn", "offset": "0x57c", "u32": 11},
+        {"addr": "@conn", "offset": "0x568", "u32": 6},
+        {"addr": "@conn", "offset": "0x54c", "u32": 5},
+        {"addr": "@conn", "offset": "0x530", "u32": 0},
+        {"addr": "@vecs", "offset": 4, "u32": 16}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented one chunk",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 256}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented 511 bytes",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 511}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented 512 bytes",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 512}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented 513 bytes",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 513}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented two chunks with channel bit",
+      "args": ["@conn", "@vecs", 1, 3, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 768}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented two elements",
+      "args": ["@conn", "@vecs", 2, 0, 1],
+      "memory": [
+        {"addr": "@vecs", "offset": 4, "u32": 384},
+        {"addr": "@vecs", "offset": 12, "u32": 640}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented chunk ends on element edge",
+      "args": ["@conn", "@vecs", 2, 0, 1],
+      "memory": [
+        {"addr": "@vecs", "offset": 4, "u32": 512},
+        {"addr": "@vecs", "offset": 12, "u32": 256}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented zero-length first element",
+      "args": ["@conn", "@vecs", 2, 0, 1],
+      "memory": [
+        {"addr": "@vecs", "offset": 4, "u32": 0},
+        {"addr": "@vecs", "offset": 12, "u32": 256}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented channel 66 over two chunks",
+      "args": ["@conn", "@vecs", 1, 66, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 1024}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "fragmented malloc failure",
+      "args": ["@conn", "@vecs", 1, 0, 1],
+      "memory": [{"addr": "@vecs", "offset": 4, "u32": 256}],
+      "callees": {
+        "0x100288b0": {
+          "name": "fast_malloc_guess",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": 0
+        }
+      },
+      "expect": {"ret": 2}
+    }
+  ],
+  "fuzz": {
+    "seed": 180304,
+    "count": 40,
+    "args": [
+      {"choices": ["@conn", "@conn", "@conn", 0]},
+      {"choices": ["@vecs", "@vecs", "@vecs", 0]},
+      {"range": [0, 4]},
+      {"choices": [0, 1, 256, 255, 5]},
+      {"choices": [0, 1, 2, 3]}
+    ],
+    "memory": [
+      {"addr": "@conn", "offset": "0x6d4", "type": "u32", "choices": [1, 1, 1, 0]},
+      {"addr": "@conn", "offset": "0x6d8", "type": "u32", "choices": [0, 0, 0, 1]},
+      {"addr": "@conn", "offset": "0x6c8", "type": "u32", "choices": [0, 0, 0, 1]},
+      {"addr": "@conn", "offset": "0x488", "type": "u16", "choices": [0, 1, 16, 65535]},
+      {"addr": "@conn", "offset": "0x48c", "type": "u16", "choices": [1, 2, 17, 1023, 1024, 257]},
+      {"addr": "@conn", "offset": "0x57c", "type": "u32", "choices": [0, 16, 65536]},
+      {"addr": "@conn", "offset": "0x568", "type": "u32", "choices": [0, 1, 256]},
+      {"addr": "@conn", "offset": "0x54c", "type": "u32", "choices": [0, 1]},
+      {"addr": "@conn", "offset": "0x530", "type": "u32", "choices": [0, 2]},
+      {"addr": "@vecs", "offset": 4, "type": "u32", "range": [0, 768]},
+      {"addr": "@vecs", "offset": 12, "type": "u32", "range": [0, 768]},
+      {"addr": "@vecs", "offset": 20, "type": "u32", "range": [0, 768]},
+      {"addr": "@vecs", "offset": 28, "type": "u32", "range": [0, 768]}
+    ]
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "function": "CEverQuest_GuildWar_guess::GuildWar",
+  "original": "0x004cb10b",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@ceverquest_guildwar",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "cstr"
+    },
+    {
+      "name": "param_2",
+      "type": "int"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "ceverquest_guildwar": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "profile": {
+      "size": "0x1fa4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0",
+          "cstr": "GuildLeader"
+        },
+        {
+          "offset": "0x103a",
+          "u16": 4660
+        },
+        {
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4da8",
+      "u32": "@profile"
+    },
+    {
+      "addr": "0x006b3194",
+      "u32": "0x00620000"
+    },
+    {
+      "addr": "0x006efe2c",
+      "u32": "@ceverquest_guildwar"
+    }
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "strcpy",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:72",
+        "u32",
+        "int"
+      ]
+    },
+    "0x005224fb": {
+      "name": "sprintf",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "varargs": "printf",
+      "passthrough": true
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "leader petition sends before printing formatted confirmation",
+      "args": [
+        "Alice",
+        3
+      ]
+    },
+    {
+      "name": "zero duration still sends but does not print",
+      "args": [
+        "Alice",
+        0
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "nonleader positive duration does not print",
+      "args": [
+        "Alice",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "rank zero positive duration does not print",
+      "args": [
+        "Alice",
+        1
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "leader negative duration prints the signed value",
+      "args": [
+        "Zed",
+        -1
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x103a",
+          "u16": 65535
+        },
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "leader prints for signed minimum duration",
+      "args": [
+        "Q",
+        -2147483648
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x103a",
+          "u16": 32768
+        },
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "leader prints for signed maximum duration",
+      "args": [
+        "",
+        2147483647
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x103a",
+          "u16": 32767
+        },
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "long in-bound petitioner name",
+      "args": [
+        "12345678901234567890123456789",
+        7
+      ]
+    },
+    {
+      "name": "empty profile name is copied into packet",
+      "args": [
+        "Tester",
+        4
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x0",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "rank byte other than two does not print",
+      "args": [
+        "Tester",
+        5
+      ],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 255
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5026059,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "",
+          "A",
+          "Bob",
+          "GuildMaster",
+          "12345678901234567890123456789"
+        ]
+      },
+      {
+        "choices": [
+          -2147483648,
+          -5,
+          -1,
+          0,
+          1,
+          2,
+          30,
+          2147483647
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@profile",
+        "offset": "0x103a",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          32767,
+          32768,
+          65535
+        ]
+      },
+      {
+        "addr": "@profile",
+        "offset": "0x104b",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          255
+        ]
+      }
+    ]
+  }
+}

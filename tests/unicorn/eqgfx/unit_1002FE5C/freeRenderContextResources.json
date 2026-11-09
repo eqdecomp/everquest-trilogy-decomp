@@ -1,0 +1,150 @@
+{
+  "function": "freeRenderContextResources_guess",
+  "original": "0x10031db0",
+  "sources": [
+    "src/eqgfx/unit_1002FE5C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x43c",
+      "fill": "zero"
+    },
+    "allocation": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@rendercontext",
+      "offset": "0x434",
+      "u32": "0x12345678"
+    },
+    {
+      "addr": "@rendercontext",
+      "offset": "0x438",
+      "u32": 0
+    }
+  ],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "writes": [
+        {
+          "addr": "@rendercontext+0x434",
+          "hex": "78563412"
+        },
+        {
+          "addr": "@rendercontext+0x438",
+          "hex": "efbeadde"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "zero allocation clears leading field without freeing",
+      "args": [
+        "@rendercontext"
+      ]
+    },
+    {
+      "name": "object allocation calls free and clears after return",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x438",
+          "u32": "@allocation"
+        }
+      ]
+    },
+    {
+      "name": "small nonzero allocation calls free",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x438",
+          "u32": 1
+        }
+      ]
+    },
+    {
+      "name": "high-bit allocation calls free",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x438",
+          "u32": "0x80000000"
+        }
+      ]
+    },
+    {
+      "name": "maximum allocation value calls free",
+      "args": [
+        "@rendercontext"
+      ],
+      "memory": [
+        {
+          "addr": "@rendercontext",
+          "offset": "0x438",
+          "u32": "0xffffffff"
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 204208,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@rendercontext",
+        "offset": "0x434",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x438",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          "0x80000000",
+          "0xffffffff",
+          "@allocation"
+        ]
+      }
+    ]
+  }
+}

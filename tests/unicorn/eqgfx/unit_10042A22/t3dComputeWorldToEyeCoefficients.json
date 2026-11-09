@@ -1,0 +1,338 @@
+{
+  "function": "t3dComputeWorldToEyeCoefficients",
+  "original": "0x1004333c",
+  "sources": [
+    "src/eqgfx/unit_10042A22.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "renderContext",
+      "type": "ptr"
+    },
+    {
+      "name": "viewParameters",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x480",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x198",
+          "f32": 0.75
+        },
+        {
+          "offset": "0x19c",
+          "f32": -1.25
+        }
+      ]
+    },
+    "viewparameters": {
+      "size": "0x28",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x14",
+          "f32": 12.5
+        },
+        {
+          "offset": "0x18",
+          "f32": -17.25
+        },
+        {
+          "offset": "0x1c",
+          "f32": 39.0
+        },
+        {
+          "offset": "0x20",
+          "f32": 45.0
+        },
+        {
+          "offset": "0x24",
+          "f32": 1.25
+        }
+      ]
+    },
+    "startup": {
+      "size": "0x7000",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x64c4",
+          "f32": 2.5
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x100f3ff4",
+      "u32": "@startup"
+    }
+  ],
+  "callees": {
+    "0x1004eea3": {
+      "name": "t3dFloatCosine",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": [
+        0.5,
+        0.75,
+        -0.25
+      ]
+    },
+    "0x1004ee37": {
+      "name": "t3dFloatSine",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": [
+        0.25,
+        -0.5,
+        0.75
+      ]
+    },
+    "0x1004ec36": {
+      "name": "t3dFloatTruncateToInt_guess",
+      "conv": "cdecl",
+      "args": [],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical valid angle: checks the full coefficient output and call order",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ]
+    },
+    {
+      "name": "smallest valid index 1",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 1.0
+        },
+        {
+          "addr": "@startup",
+          "offset": "0x60a4",
+          "f32": -0.75
+        }
+      ]
+    },
+    {
+      "name": "largest valid index 127",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 127.0
+        },
+        {
+          "addr": "@startup",
+          "offset": "0x6c7c",
+          "f32": 1.75
+        }
+      ]
+    },
+    {
+      "name": "index 0 returns the error without replacing output coefficients",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 0.0
+        }
+      ],
+      "expect": {
+        "ret": -8213
+      }
+    },
+    {
+      "name": "index 128 returns the error",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 128.0
+        }
+      ],
+      "expect": {
+        "ret": -8213
+      }
+    },
+    {
+      "name": "fraction below half rounds to invalid index 0",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 0.49
+        }
+      ],
+      "expect": {
+        "ret": -8213
+      }
+    },
+    {
+      "name": "fraction above half rounds to valid index 1",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 0.51
+        },
+        {
+          "addr": "@startup",
+          "offset": "0x60a4",
+          "f32": 0.875
+        }
+      ]
+    },
+    {
+      "name": "negative view angle yields an invalid unsigned index",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": -1.0
+        }
+      ],
+      "expect": {
+        "ret": -8213
+      }
+    },
+    {
+      "name": "negative cosine and sine results with a valid scale",
+      "args": [
+        "@rendercontext",
+        "@viewparameters"
+      ],
+      "memory": [
+        {
+          "addr": "@viewparameters",
+          "offset": "0x20",
+          "f32": 7.0
+        },
+        {
+          "addr": "@startup",
+          "offset": "0x6134",
+          "f32": 0.625
+        }
+      ],
+      "callees": {
+        "0x1004eea3": {
+          "name": "t3dFloatCosine",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": [
+            -0.125,
+            0.625,
+            -0.875
+          ]
+        },
+        "0x1004ee37": {
+          "name": "t3dFloatSine",
+          "conv": "cdecl",
+          "args": [
+            "float"
+          ],
+          "ret_float": [
+            -0.25,
+            0.5,
+            -0.75
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4333332,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@rendercontext"
+        ]
+      },
+      {
+        "choices": [
+          "@viewparameters"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@viewparameters",
+        "offset": "0x20",
+        "type": "float",
+        "range": [-4, 132]
+      },
+      {
+        "addr": "@viewparameters",
+        "offset": "0x24",
+        "type": "float",
+        "range": [-3, 3]
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x198",
+        "type": "float",
+        "range": [-2, 2]
+      },
+      {
+        "addr": "@rendercontext",
+        "offset": "0x19c",
+        "type": "float",
+        "range": [-2, 2]
+      },
+      {
+        "addr": "@startup",
+        "offset": "0x608c",
+        "type": "float",
+        "count": 128,
+        "stride": 24,
+        "range": [-3, 3]
+      }
+    ]
+  }
+}

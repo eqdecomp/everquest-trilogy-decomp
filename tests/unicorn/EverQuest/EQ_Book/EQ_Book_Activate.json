@@ -1,0 +1,78 @@
+{
+  "function": "EQ_Book_guess::Activate_guess",
+  "original": "0x00418a30",
+  "sources": ["src/EverQuest/EQ_Book.cpp"],
+  "conv": "thiscall",
+  "this": "@book",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "book": {
+      "size": "0x37b0",
+      "fill": "random",
+      "init": [{"offset": "0x37ac", "u32": "@page"}]
+    },
+    "page": {
+      "size": "0xb0",
+      "fill": "random",
+      "init": [{"offset": "0xac", "u8": 0}]
+    },
+    "mainwin": {
+      "size": "0x8fba8",
+      "fill": "random",
+      "init": [
+        {"offset": "0", "u32": "@vtable"},
+        {"offset": "0x8fba4", "u32": "0x12345678"},
+        {"offset": "0xeb8", "u32": "0x87654321"}
+      ]
+    },
+    "vtable": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [{"offset": "0x4", "u32": "@main_callback"}]
+    },
+    "setrect": {"size": "0x1", "fill": "zero"},
+    "main_callback": {"size": "0x1", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": "@mainwin"},
+    {"addr": "0x00534248", "u32": "@setrect"}
+  ],
+  "callees": {
+    "0x00450463": {"name": "EQ_Overlay::DelButtons", "conv": "thiscall", "args": []},
+    "0x00419010": {"name": "EQ_Book_FormatBookText_guess", "conv": "thiscall", "args": []},
+    "0x004503be": {
+      "name": "EQ_Overlay::AddButton_guess",
+      "conv": "thiscall",
+      "args": ["int", "ptr", "int", "int", "int", "int"]
+    },
+    "user32.dll!SetRect": {"name": "SetRect", "conv": "stdcall", "args": ["ptr", "int", "int", "int", "int"], "ret": 0},
+    "@setrect": {"name": "SetRect", "conv": "stdcall", "args": ["ptr", "int", "int", "int", "int"], "ret": 0},
+    "@main_callback": {"name": "main_window_callback", "conv": "thiscall", "args": [], "ret": 0}
+  },
+  "cases": [
+    {"name": "null-page-early-exit", "args": [], "memory": [{"addr": "@book", "offset": "0x37ac", "u32": 0}]},
+    {"name": "zero-page-flag-main-null", "args": [], "memory": [
+      {"addr": "@page", "offset": "0xac", "u8": 0}, {"addr": "0x006e4e44", "u32": 0}
+    ]},
+    {"name": "nonzero-page-flag-main-null", "args": [], "memory": [
+      {"addr": "@page", "offset": "0xac", "u8": 1}, {"addr": "0x006e4e44", "u32": 0}
+    ]},
+    {"name": "high-byte-page-flag-with-main", "args": [], "memory": [
+      {"addr": "@page", "offset": "0xac", "u8": 255}, {"addr": "0x006e4e44", "u32": "@mainwin"}
+    ]},
+    {"name": "middle-nonzero-page-flag-with-main", "args": [], "memory": [
+      {"addr": "@page", "offset": "0xac", "u8": 128}, {"addr": "0x006e4e44", "u32": "@mainwin"}
+    ]}
+  ],
+  "fuzz": {
+    "seed": 4295216,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "@book", "offset": "0x37ac", "type": "ptr", "choices": [0, "@page"]},
+      {"addr": "@page", "offset": "0xac", "type": "u8", "choices": [0, 1, 127, 128, 255]},
+      {"addr": "0x006e4e44", "type": "ptr", "choices": [0, "@mainwin"]}
+    ]
+  }
+}

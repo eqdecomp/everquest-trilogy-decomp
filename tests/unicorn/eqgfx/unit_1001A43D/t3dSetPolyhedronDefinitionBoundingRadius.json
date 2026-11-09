@@ -1,0 +1,113 @@
+{
+  "function": "t3dSetPolyhedronDefinitionBoundingRadius",
+  "original": "0x1001b0bb",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "polyhedronDef",
+      "type": "ptr"
+    },
+    {
+      "name": "radius",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "polyhedronDef": {
+      "size": "0x20",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@polyhedronDef",
+      "offset": "0x14",
+      "f32": 4.0
+    }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "typical radius overwrites old value and returns 0",
+      "args": ["@polyhedronDef", 1.5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "zero radius",
+      "args": ["@polyhedronDef", 0.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative radius stored as-is",
+      "args": ["@polyhedronDef", -2.5],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "same value as old still writes and returns 0",
+      "args": ["@polyhedronDef", 4.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "large radius",
+      "args": ["@polyhedronDef", 340282346638528859811704183484516925440.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "small denormal radius",
+      "args": ["@polyhedronDef", 1.401298464324817e-45],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "negative zero bit pattern stored",
+      "args": ["@polyhedronDef", -0.0],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "positive infinity stored",
+      "args": ["@polyhedronDef", 1e30],
+      "memory": [
+        {"addr": "@polyhedronDef", "offset": "0x14", "f32": 7.0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "old NaN overwritten by normal radius",
+      "args": ["@polyhedronDef", 3.0],
+      "memory": [
+        {"addr": "@polyhedronDef", "offset": "0x14", "hex": "0100c07f"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "neighbouring dwords keep seeded bytes, only 0x14 changes",
+      "args": ["@polyhedronDef", 9.25],
+      "memory": [
+        {"addr": "@polyhedronDef", "offset": "0x10", "u32": 305419896},
+        {"addr": "@polyhedronDef", "offset": "0x14", "u32": 3735928559},
+        {"addr": "@polyhedronDef", "offset": "0x18", "u32": 195948557}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 110779,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@polyhedronDef"]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "@polyhedronDef",
+        "offset": "0x14",
+        "type": "float"
+      }
+    ]
+  }
+}

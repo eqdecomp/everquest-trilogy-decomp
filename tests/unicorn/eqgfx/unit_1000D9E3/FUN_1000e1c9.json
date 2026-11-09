@@ -1,0 +1,250 @@
+{
+  "function": "_t3dFreeDictionaryEntry_guess",
+  "original": "0x1000e1c9",
+  "sources": [
+    "src/eqgfx/unit_1000D9E3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dict",
+      "type": "ptr"
+    },
+    {
+      "name": "key",
+      "type": "u32"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dict": {
+      "size": "0x40",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0c", "u32": "@buckets"},
+        {"offset": "0x2c", "u32": "@blocks"}
+      ]
+    },
+    "buckets": {
+      "size": "0x40",
+      "fill": "zero"
+    },
+    "blocks": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x00", "u32": "@block0"},
+        {"offset": "0x04", "u32": "@block1"},
+        {"offset": "0x08", "u32": "@block2"},
+        {"offset": "0x0c", "u32": "@block3"}
+      ]
+    },
+    "block0": {"size": "0x1000", "fill": "zero"},
+    "block1": {"size": "0x1000", "fill": "zero"},
+    "block2": {"size": "0x1000", "fill": "zero"},
+    "block3": {"size": "0x1000", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "@buckets", "offset": "0x0", "u32": "0xffffffff"},
+    {"addr": "@block0", "offset": "0x0", "u32": "0xffffffff"},
+    {"addr": "@block1", "offset": "0x0", "u32": "0xffffffff"},
+    {"addr": "@block2", "offset": "0x0", "u32": "0xffffffff"},
+    {"addr": "@block3", "offset": "0x0", "u32": "0xffffffff"}
+  ],
+  "callees": {
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "unlink chain head",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 33},
+        {"addr": "@block1", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 100},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "unlink behind the chain head",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 5},
+        {"addr": "@block0", "offset": "0x280", "u32": 33},
+        {"addr": "@block0", "offset": "0x284", "u32": 0},
+        {"addr": "@block1", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 100},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "key absent, chain ends",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 5},
+        {"addr": "@block0", "offset": "0x280", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 100},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "key absent, empty bucket",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 100},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "entry already free",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@block1", "offset": "0x84", "u32": "0xffffffff"},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 100},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "top entry, neighbour used, no shrink",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 33},
+        {"addr": "@block1", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@block1", "offset": "0x4", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "key 0, only block freed",
+      "args": ["@dict", 0],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 0},
+        {"addr": "@block0", "offset": "0x0", "u32": "0xffffffff"},
+        {"addr": "@block0", "offset": "0x4", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 1},
+        {"addr": "@dict", "offset": "0x20", "u32": 1},
+        {"addr": "@dict", "offset": "0x24", "u32": 1},
+        {"addr": "@dict", "offset": "0x30", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "shrink, free head in top block",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 33},
+        {"addr": "@block1", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@block1", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x400", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x404", "u32": 0},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 40}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "shrink, kept free head below the boundary",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 33},
+        {"addr": "@block1", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@block1", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@block0", "offset": "0x280", "u32": 40},
+        {"addr": "@block0", "offset": "0x284", "u32": 0},
+        {"addr": "@block1", "offset": "0x400", "u32": "0xffffffff"},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@dict", "offset": "0x24", "u32": 2},
+        {"addr": "@dict", "offset": "0x30", "u32": 5}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "shrink two top blocks",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@buckets", "offset": "0x0", "u32": 33},
+        {"addr": "@block1", "offset": "0x80", "u32": "0xffffffff"},
+        {"addr": "@block1", "offset": "0x84", "u32": 0},
+        {"addr": "@block1", "offset": "0x4", "u32": "0xffffffff"},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@dict", "offset": "0x24", "u32": 3},
+        {"addr": "@dict", "offset": "0x30", "u32": "0xffffffff"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "already free top entry",
+      "args": ["@dict", 33],
+      "memory": [
+        {"addr": "@block1", "offset": "0x84", "u32": "0xffffffff"},
+        {"addr": "@dict", "offset": "0x1c", "u32": 5},
+        {"addr": "@dict", "offset": "0x20", "u32": 34},
+        {"addr": "@dict", "offset": "0x24", "u32": 1},
+        {"addr": "@dict", "offset": "0x30", "u32": 7}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 57801,
+    "count": 40,
+    "args": [
+      {"choices": ["@dict"]},
+      {"choices": [0, 1, 5, 32, 33, 34, 40, 63, 64, 95, 100]}
+    ],
+    "memory": [
+      {"addr": "@dict", "offset": "0x1c", "type": "int", "range": [0, 8]},
+      {"addr": "@dict", "offset": "0x20", "type": "u32", "range": [0, 130]},
+      {"addr": "@dict", "offset": "0x24", "type": "u32", "choices": [1, 2, 3, 4]},
+      {"addr": "@dict", "offset": "0x30", "type": "u32", "choices": ["0xffffffff", 40, 64]},
+      {"addr": "@block0", "offset": "0x04", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block0", "offset": "0x84", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block0", "offset": "0x284", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block1", "offset": "0x004", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block1", "offset": "0x084", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block1", "offset": "0x404", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block2", "offset": "0x004", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block2", "offset": "0xF84", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block3", "offset": "0x204", "type": "int", "choices": [-1, 0]},
+      {"addr": "@block1", "offset": "0x400", "type": "u32", "choices": ["0xffffffff"]},
+      {"addr": "@block2", "offset": "0x000", "type": "u32", "choices": ["0xffffffff"]}
+    ]
+  }
+}

@@ -1,0 +1,320 @@
+{
+  "function": "t3dGetSphereListWorldXYZ",
+  "original": "0x1001b0c9",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    },
+    {
+      "name": "index",
+      "type": "u32"
+    },
+    {
+      "name": "worldXYZOut",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "object": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": "@scaleData"
+        },
+        {
+          "offset": "0x14",
+          "f32": 2.0
+        },
+        {
+          "offset": "0x18",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "worldxyzout": {
+      "size": "0xc",
+      "fill": "random"
+    },
+    "definition": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x18",
+          "u32": 4
+        },
+        {
+          "offset": "0x1c",
+          "u32": "@centers"
+        }
+      ]
+    },
+    "scaleData": {
+      "size": "0x8c",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "f32": 20.0
+        },
+        {
+          "offset": "0x14",
+          "f32": -10.0
+        },
+        {
+          "offset": "0x18",
+          "f32": 5.0
+        },
+        {
+          "offset": "0x34",
+          "f32": 1.5
+        },
+        {
+          "offset": "0x68",
+          "f32": 1.0
+        },
+        {
+          "offset": "0x78",
+          "f32": 1.0
+        },
+        {
+          "offset": "0x88",
+          "f32": 1.0
+        }
+      ]
+    },
+    "centers": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x0", "f32": 1.0 },
+        { "offset": "0x4", "f32": 2.0 },
+        { "offset": "0x8", "f32": 3.0 },
+        { "offset": "0xc", "f32": 4.0 },
+        { "offset": "0x10", "f32": 5.0 },
+        { "offset": "0x14", "f32": 6.0 },
+        { "offset": "0x18", "f32": 7.0 },
+        { "offset": "0x1c", "f32": 8.0 },
+        { "offset": "0x20", "f32": 9.0 },
+        { "offset": "0x24", "f32": 10.0 },
+        { "offset": "0x28", "f32": 11.0 },
+        { "offset": "0x2c", "f32": 12.0 }
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10035058": {
+      "name": "_t3dComputeObjectToWorldCoefficients_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "float",
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "typical",
+      "args": [
+        "@object",
+        1,
+        "@worldxyzout"
+      ]
+    },
+    {
+      "name": "zeros",
+      "args": [
+        "@object",
+        0,
+        "@worldxyzout"
+      ]
+    },
+    {
+      "name": "index equal to count is out of range",
+      "args": [
+        "@object",
+        4,
+        "@worldxyzout"
+      ]
+    },
+    {
+      "name": "last valid sphere index",
+      "args": [
+        "@object",
+        3,
+        "@worldxyzout"
+      ]
+    },
+    {
+      "name": "empty sphere list",
+      "args": [
+        "@object",
+        0,
+        "@worldxyzout"
+      ],
+      "memory": [
+        {
+          "addr": "@definition",
+          "offset": "0x18",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "largest unsigned index is out of range",
+      "args": [
+        "@object",
+        4294967295,
+        "@worldxyzout"
+      ]
+    },
+    {
+      "name": "missing world scale data",
+      "args": [
+        "@object",
+        0,
+        "@worldxyzout"
+      ],
+      "memory": [
+        {
+          "addr": "@object",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "negative helper status skips output",
+      "args": [
+        "@object",
+        1,
+        "@worldxyzout"
+      ],
+      "callees": {
+        "0x10035058": {
+          "ret": -1
+        }
+      }
+    },
+    {
+      "name": "positive helper status is returned",
+      "args": [
+        "@object",
+        1,
+        "@worldxyzout"
+      ],
+      "callees": {
+        "0x10035058": {
+          "ret": 7
+        }
+      }
+    },
+    {
+      "name": "x sum order preserves cancellation",
+      "args": [
+        "@object",
+        0,
+        "@worldxyzout"
+      ],
+      "memory": [
+        { "addr": "@object", "offset": "0x14", "f32": 1.0 },
+        { "addr": "@scaleData", "offset": "0x10", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x14", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x18", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x34", "f32": 1.0 },
+        { "addr": "@scaleData", "offset": "0x68", "f32": -1.2676506002282294e+30 },
+        { "addr": "@scaleData", "offset": "0x74", "f32": 8.673617379884035e-19 },
+        { "addr": "@scaleData", "offset": "0x80", "f32": 1.2676506002282294e+30 },
+        { "addr": "@centers", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@centers", "offset": "0x4", "f32": 1.0 },
+        { "addr": "@centers", "offset": "0x8", "f32": 1.0 }
+      ]
+    },
+    {
+      "name": "y sum order preserves cancellation",
+      "args": [
+        "@object",
+        0,
+        "@worldxyzout"
+      ],
+      "memory": [
+        { "addr": "@object", "offset": "0x14", "f32": 1.0 },
+        { "addr": "@scaleData", "offset": "0x10", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x14", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x18", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x34", "f32": 1.0 },
+        { "addr": "@scaleData", "offset": "0x6c", "f32": 1.2676506002282294e+30 },
+        { "addr": "@scaleData", "offset": "0x84", "f32": 8.673617379884035e-19 },
+        { "addr": "@scaleData", "offset": "0x78", "f32": -1.2676506002282294e+30 },
+        { "addr": "@centers", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@centers", "offset": "0x4", "f32": 1.0 },
+        { "addr": "@centers", "offset": "0x8", "f32": 1.0 }
+      ]
+    },
+    {
+      "name": "z sum order preserves cancellation",
+      "args": [
+        "@object",
+        0,
+        "@worldxyzout"
+      ],
+      "memory": [
+        { "addr": "@object", "offset": "0x14", "f32": 1.0 },
+        { "addr": "@scaleData", "offset": "0x10", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x14", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x18", "f32": 0.0 },
+        { "addr": "@scaleData", "offset": "0x34", "f32": 1.0 },
+        { "addr": "@scaleData", "offset": "0x70", "f32": 1.2676506002282294e+30 },
+        { "addr": "@scaleData", "offset": "0x88", "f32": 8.673617379884035e-19 },
+        { "addr": "@scaleData", "offset": "0x7c", "f32": -1.2676506002282294e+30 },
+        { "addr": "@centers", "offset": "0x0", "f32": 1.0 },
+        { "addr": "@centers", "offset": "0x4", "f32": 1.0 },
+        { "addr": "@centers", "offset": "0x8", "f32": 1.0 }
+      ]
+    },
+    {
+      "name": "output aliases the center list",
+      "args": [
+        "@object",
+        0,
+        "@centers"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 110793,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      },
+      {},
+      {
+        "choices": [
+          "@worldxyzout"
+        ]
+      }
+    ],
+    "memory": [
+      { "addr": "@object", "offset": "0x14", "type": "float", "range": [-4, 4] },
+      { "addr": "@definition", "offset": "0x18", "type": "u32", "range": [0, 8] },
+      { "addr": "@scaleData", "offset": "0x10", "type": "float", "count": 3, "range": [-10, 10] },
+      { "addr": "@scaleData", "offset": "0x34", "type": "float", "range": [-4, 4] },
+      { "addr": "@scaleData", "offset": "0x68", "type": "float", "count": 9, "range": [-4, 4] },
+      { "addr": "@centers", "type": "float", "count": 24, "range": [-16, 16] }
+    ]
+  }
+}

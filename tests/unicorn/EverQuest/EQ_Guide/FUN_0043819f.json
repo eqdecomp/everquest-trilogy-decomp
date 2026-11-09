@@ -1,0 +1,267 @@
+{
+  "function": "EQ_GuideAction_guess::Praise_guess",
+  "original": "0x0043819f",
+  "sources": [
+    "src/EverQuest/EQ_Guide.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eq_guideaction",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq_guideaction": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "eq": {
+      "size": "0x100",
+      "fill": "zero"
+    },
+    "pl": {
+      "size": "0x80",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@eq"
+    },
+    {
+      "addr": "0x006e4d8c",
+      "u32": "@pl"
+    },
+    {
+      "addr": "@pl",
+      "offset": "0x1",
+      "cstr": "Ranger"
+    }
+  ],
+  "callees": {
+    "0x004dbc84": {
+      "name": "CEverQuest::GrabFirstWord2_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "u32",
+        "mem:392",
+        "u32",
+        "int"
+      ]
+    },
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "valid-three-words",
+      "args": [
+        "Alice 123 hello there"
+      ]
+    },
+    {
+      "name": "empty",
+      "args": [
+        ""
+      ]
+    },
+    {
+      "name": "one-word-fallback",
+      "args": [
+        "Alice"
+      ]
+    },
+    {
+      "name": "two-words-no-remainder",
+      "args": [
+        "Alice 123"
+      ]
+    },
+    {
+      "name": "quoted-name",
+      "args": [
+        "\"Sir Lancelot\" 456 message text"
+      ]
+    },
+    {
+      "name": "tab-separators",
+      "args": [
+        "Alice\t123\twarning"
+      ]
+    },
+    {
+      "name": "state-four-blocks",
+      "args": [
+        "Alice 123 hello"
+      ],
+      "memory": [
+        {
+          "addr": "@eq_guideaction",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@eq_guideaction",
+          "offset": "0x8c",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "state-three-allows",
+      "args": [
+        "Alice 123 hello"
+      ],
+      "memory": [
+        {
+          "addr": "@eq_guideaction",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@eq_guideaction",
+          "offset": "0x8c",
+          "u32": 3
+        }
+      ]
+    },
+    {
+      "name": "zero-enabled-state-four-allows",
+      "args": [
+        "Alice 123 hello"
+      ],
+      "memory": [
+        {
+          "addr": "@eq_guideaction",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@eq_guideaction",
+          "offset": "0x8c",
+          "u32": 4
+        }
+      ]
+    },
+    {
+      "name": "max-remainder-254",
+      "args": [
+        "a b xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ]
+    },
+    {
+      "name": "remainder-255",
+      "args": [
+        "a b yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+      ]
+    },
+    {
+      "name": "remainder-over-255",
+      "args": [
+        "a b zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+      ]
+    },
+    {
+      "name": "player-name-31",
+      "args": [
+        "A 1 hi"
+      ],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x1",
+          "cstr": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+        }
+      ]
+    },
+    {
+      "name": "player-name-32-truncated",
+      "args": [
+        "A 1 hi"
+      ],
+      "memory": [
+        {
+          "addr": "@pl",
+          "offset": "0x1",
+          "cstr": "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ"
+        }
+      ]
+    },
+    {
+      "name": "word-buffers-31",
+      "args": [
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB hello"
+      ]
+    },
+    {
+      "name": "first-word-over-31",
+      "args": [
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 hi"
+      ]
+    },
+    {
+      "name": "first-word-leading-byte-one",
+      "args": [
+        "\u0001 1 hi"
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4424095,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "a b c",
+          "one two",
+          "",
+          "x y z",
+          "\"Sir Lancelot\" 43 hi",
+          "bad"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@eq_guideaction",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@eq_guideaction",
+        "offset": "0x8c",
+        "type": "u32",
+        "choices": [
+          0,
+          3,
+          4,
+          5
+        ]
+      }
+    ]
+  }
+}

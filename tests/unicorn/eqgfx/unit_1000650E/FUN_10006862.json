@@ -1,0 +1,155 @@
+{
+  "function": "s3dUpdateQuerySphereIntersection_guess",
+  "original": "0x10006862",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "query",
+      "type": "ptr"
+    },
+    {
+      "name": "center",
+      "type": "ptr"
+    },
+    {
+      "name": "radius",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "query": {
+      "size": "0x60",
+      "fill": "zero",
+      "init": [
+        { "offset": "0x30", "f32": 1.0 },
+        { "offset": "0x50", "f32": 3.0 },
+        { "offset": "0x5c", "u32": 99 }
+      ]
+    },
+    "center": {
+      "size": "0x0c",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    { "addr": "0x10076284", "f32": 0.0 }
+  ],
+  "callees": {
+    "0x1004ef68": {
+      "name": "t3dFloatSqrt",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 0.0
+    }
+  },
+  "cases": [
+    {
+      "name": "zero projection boundary",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@query", "offset": "0x24", "f32": 0.0 }
+      ]
+    },
+    {
+      "name": "positive projection",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 1.0 },
+        { "addr": "@query", "offset": "0x24", "f32": 1.0 }
+      ]
+    },
+    {
+      "name": "tangent discriminant boundary",
+      "args": ["@query", "@center", 0.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 }
+      ]
+    },
+    {
+      "name": "negative discriminant",
+      "args": ["@query", "@center", 0.5],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x04", "f32": 1.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 }
+      ]
+    },
+    {
+      "name": "candidate stores new distance and clears triangle",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 },
+        { "addr": "@query", "offset": "0x30", "f32": 1.0 },
+        { "addr": "@query", "offset": "0x50", "f32": 3.0 },
+        { "addr": "@query", "offset": "0x5c", "u32": 99 }
+      ]
+    },
+    {
+      "name": "candidate equals limit",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 },
+        { "addr": "@query", "offset": "0x30", "f32": 1.0 },
+        { "addr": "@query", "offset": "0x50", "f32": 2.0 }
+      ]
+    },
+    {
+      "name": "candidate exceeds limit",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 },
+        { "addr": "@query", "offset": "0x30", "f32": 1.0 },
+        { "addr": "@query", "offset": "0x50", "f32": 1.0 }
+      ]
+    },
+    {
+      "name": "negative candidate clamps to zero",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 },
+        { "addr": "@query", "offset": "0x30", "f32": -1.0 },
+        { "addr": "@query", "offset": "0x50", "f32": 0.1 },
+        { "addr": "@query", "offset": "0x5c", "u32": 99 }
+      ]
+    },
+    {
+      "name": "negative zero candidate preserves sign",
+      "args": ["@query", "@center", 1.0],
+      "memory": [
+        { "addr": "@query", "offset": "0x00", "f32": 2.0 },
+        { "addr": "@query", "offset": "0x24", "f32": -1.0 },
+        { "addr": "@query", "offset": "0x30", "f32": -0.0 },
+        { "addr": "@query", "offset": "0x50", "f32": 0.1 },
+        { "addr": "@query", "offset": "0x5c", "u32": 99 }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 26722,
+    "count": 50,
+    "args": [
+      { "choices": ["@query"] },
+      { "choices": ["@center"] },
+      { "range": [-2, 3] }
+    ],
+    "memory": [
+      { "addr": "@query", "offset": "0x00", "type": "float", "count": 3, "range": [-4, 4] },
+      { "addr": "@query", "offset": "0x24", "type": "float", "count": 3, "range": [-1, 1] },
+      { "addr": "@query", "offset": "0x30", "type": "float", "range": [-2, 2] },
+      { "addr": "@query", "offset": "0x50", "type": "float", "range": [-2, 8] },
+      { "addr": "@center", "offset": "0x00", "type": "float", "count": 3, "range": [-4, 4] }
+    ]
+  }
+}

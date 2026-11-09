@@ -1,0 +1,145 @@
+{
+  "function": "t3dDuplicate2DSprite",
+  "original": "0x10007d08",
+  "sources": [
+    "src/eqgfx/unit_1000650E.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "context", "type": "ptr"},
+    {"name": "source", "type": "ptr"},
+    {"name": "volume", "type": "ptr"}
+  ],
+  "ret": "ptr",
+  "objects": {
+    "context": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x8", "u32": 1000}]
+    },
+    "source": {
+      "size": "0x8c",
+      "fill": "random",
+      "init": [
+        {"offset": "0x6c", "u32": 250},
+        {"offset": "0x14", "u32": "@sourceVolume"},
+        {"offset": "0x88", "u32": "@frameSet"}
+      ]
+    },
+    "frameSet": {
+      "size": "0x14",
+      "fill": "zero",
+      "init": [{"offset": "0x10", "u32": 5}]
+    },
+    "sourceVolume": {"size": "0x10", "fill": "zero"},
+    "volume": {"size": "0x10", "fill": "zero"},
+    "duplicate": {"size": "0x10", "fill": "zero"},
+    "sprite": {"size": "0x8c", "fill": "zero"}
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": "@sprite"},
+    "0x1001d516": {"name": "t3dDuplicateVolume", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": "@duplicate"},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x1001564b": {"name": "_t3dAddItemToList_guess", "conv": "cdecl", "args": ["ptr", "mem:140"], "ret": 0},
+    "0x1001d5a1": {"name": "t3dDestroyVolume", "conv": "cdecl", "args": ["ptr", "ptr"]}
+  },
+  "cases": [
+    {
+      "name": "typical: explicit volume, every call succeeds",
+      "args": ["@context", "@source", "@volume"]
+    },
+    {
+      "name": "null volume takes the source's volume",
+      "args": ["@context", "@source", 0]
+    },
+    {
+      "name": "allocation fails with null arguments: nothing dereferenced",
+      "args": [0, 0, 0],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocation fails with live arguments: nothing copied",
+      "args": ["@context", "@source", "@volume"],
+      "callees": {
+        "0x10050c48": {"name": "t3dAllocateMemory", "conv": "cdecl", "args": ["u32"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "duplicate volume fails: sprite freed",
+      "args": ["@context", "@source", "@volume"],
+      "callees": {
+        "0x1001d516": {"name": "t3dDuplicateVolume", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "duplicate volume fails with null volume",
+      "args": ["@context", "@source", 0],
+      "callees": {
+        "0x1001d516": {"name": "t3dDuplicateVolume", "conv": "cdecl", "args": ["ptr", "ptr"], "ret": 0}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "initialize returns 1: volume destroyed, sprite freed",
+      "args": ["@context", "@source", "@volume"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "mem:140"], "ret": 1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "initialize returns -1: any nonzero result fails",
+      "args": ["@context", "@source", "@volume"],
+      "callees": {
+        "0x1001564b": {"name": "FUN_1001564b", "conv": "cdecl", "args": ["ptr", "mem:140"], "ret": -1}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "update time sum wraps",
+      "args": ["@context", "@source", "@volume"],
+      "memory": [
+        {"addr": "@context", "offset": "0x8", "u32": "0x80000000"},
+        {"addr": "@source", "offset": "0x6c", "u32": "0x7fffffff"}
+      ]
+    },
+    {
+      "name": "frame set count wraps to zero",
+      "args": ["@context", "@source", "@volume"],
+      "memory": [
+        {"addr": "@frameSet", "offset": "0x10", "u32": "0xffffffff"}
+      ]
+    },
+    {
+      "name": "copied entry, flags and use count are cleared, not copied",
+      "args": ["@context", "@source", "@volume"],
+      "memory": [
+        {"addr": "@source", "offset": "0x8", "u32": "@sourceVolume"},
+        {"addr": "@source", "offset": "0xc", "u32": "0xff"},
+        {"addr": "@source", "offset": "0x10", "u32": 3}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 32008,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]},
+      {"choices": ["@source"]},
+      {"choices": ["@volume", 0]}
+    ],
+    "memory": [
+      {"addr": "@context", "offset": "0x8", "type": "int", "range": [-100000, 100000]},
+      {"addr": "@source", "offset": "0x6c", "type": "int", "choices": [0, 1, -1, 250, 2147483647, -2147483648]},
+      {"addr": "@source", "offset": "0x10", "type": "int", "choices": [0, 1, -1, 2147483647]},
+      {"addr": "@source", "offset": "0x14", "type": "ptr", "choices": ["@sourceVolume", "@volume", 0]},
+      {"addr": "@frameSet", "offset": "0x10", "type": "int", "choices": [0, -1, 5, 2147483647]}
+    ]
+  }
+}

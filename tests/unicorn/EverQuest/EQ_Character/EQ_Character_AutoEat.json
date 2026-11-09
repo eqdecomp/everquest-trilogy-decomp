@@ -1,0 +1,290 @@
+{
+  "function": "EQ_Character_AutoEat_guess",
+  "original": "0x00428193",
+  "sources": [
+    "src/EverQuest/EQ_Character.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "self",
+      "type": "ptr"
+    },
+    {
+      "name": "unused_edx",
+      "type": "int"
+    },
+    {
+      "name": "param_2",
+      "type": "char"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "self": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x138", "u32": "@i_food"},
+        {"offset": "0x13c", "u32": "@i_drink"},
+        {"offset": "0x140", "u32": "@i_other"},
+        {"offset": "0x144", "u32": "@i_cont"},
+        {"offset": "0x14c", "u32": "@i_drink1"}
+      ]
+    },
+    "i_food": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 14}, {"offset": "0xda", "u8": 1}]
+    },
+    "i_drink": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 15}, {"offset": "0xda", "u8": 3}]
+    },
+    "i_drink1": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 15}, {"offset": "0xda", "u8": 1}]
+    },
+    "i_other": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 5}, {"offset": "0xda", "u8": 2}]
+    },
+    "i_cont": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 1},
+        {"offset": "0xd5", "u8": 3},
+        {"offset": "0xac", "u32": "@c_food"},
+        {"offset": "0xb0", "u32": "@c_drink"},
+        {"offset": "0xb4", "u32": "@c_other"}
+      ]
+    },
+    "c_food": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 14}, {"offset": "0xda", "u8": 2}]
+    },
+    "c_drink": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 15}, {"offset": "0xda", "u8": 1}]
+    },
+    "c_other": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [{"offset": "0x81", "u8": 0}, {"offset": "0xc2", "u8": 7}, {"offset": "0xda", "u8": 1}]
+    },
+    "e44": {
+      "size": "0x1000",
+      "fill": "zero"
+    },
+    "fn": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "vt": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [{"offset": "0x8", "u32": "@fn"}]
+    },
+    "gobj": {
+      "size": "0x200",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@vt"},
+        {"offset": "0x10", "u32": 1},
+        {"offset": "0x1f0", "u32": "@tgt"}
+      ]
+    },
+    "tgt": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [{"offset": "0x0", "u32": "@i_drink"}]
+    }
+  },
+  "memory": [
+    {"addr": "0x006e4e44", "u32": "@e44"},
+    {"addr": "0x006018c0", "u32": "@gobj"}
+  ],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:16", "u32", "int"]
+    },
+    "@fn": {
+      "name": "vcall_fn",
+      "conv": "fastcall",
+      "args": ["ptr"]
+    }
+  },
+  "cases": [
+    {
+      "name": "food in slot 22, one charge: deleted, hook not set",
+      "args": ["@self", 0, 1]
+    },
+    {
+      "name": "drink in slot 23 with the hook on it (tgt is it), param 0",
+      "args": ["@self", 0, 0]
+    },
+    {
+      "name": "food in container slot 25 (not hooked), slots 22-24 and 27 empty",
+      "args": ["@self", 0, 1],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@self", "offset": "0x13c", "u32": 0},
+        {"addr": "@self", "offset": "0x140", "u32": 0},
+        {"addr": "@self", "offset": "0x14c", "u32": 0}
+      ]
+    },
+    {
+      "name": "drink in container slot 25 (hooked), param 0, one charge: deleted",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@self", "offset": "0x13c", "u32": 0},
+        {"addr": "@self", "offset": "0x140", "u32": 0},
+        {"addr": "@self", "offset": "0x14c", "u32": 0},
+        {"addr": "@tgt", "u32": "@c_drink"}
+      ]
+    },
+    {
+      "name": "drink in container slot 25 (not hooked), param 0, one charge: deleted",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@self", "offset": "0x13c", "u32": 0},
+        {"addr": "@self", "offset": "0x140", "u32": 0},
+        {"addr": "@self", "offset": "0x14c", "u32": 0}
+      ]
+    },
+    {
+      "name": "food in container slot 25 (hooked), param 1",
+      "args": ["@self", 0, 1],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@self", "offset": "0x13c", "u32": 0},
+        {"addr": "@self", "offset": "0x140", "u32": 0},
+        {"addr": "@self", "offset": "0x14c", "u32": 0},
+        {"addr": "@tgt", "u32": "@c_food"}
+      ]
+    },
+    {
+      "name": "top-level food in slot 22 (hooked), param 1: deleted",
+      "args": ["@self", 0, 1],
+      "memory": [
+        {"addr": "@tgt", "u32": "@i_food"}
+      ]
+    },
+    {
+      "name": "nothing of the wanted kind: ret 0",
+      "args": ["@self", 0, 1],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@self", "offset": "0x13c", "u32": 0},
+        {"addr": "@self", "offset": "0x144", "u32": 0},
+        {"addr": "@self", "offset": "0x14c", "u32": 0}
+      ]
+    },
+    {
+      "name": "nothing of the drink kind (param 0), container with count 0 only",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@self", "offset": "0x13c", "u32": 0},
+        {"addr": "@self", "offset": "0x140", "u32": 0},
+        {"addr": "@self", "offset": "0x14c", "u32": 0},
+        {"addr": "@i_cont", "offset": "0xd5", "u8": 0}
+      ]
+    },
+    {
+      "name": "global at 0x006e4e44 null: no eb8 store",
+      "args": ["@self", 0, 1],
+      "memory": [
+        {"addr": "0x006e4e44", "u32": 0}
+      ]
+    },
+    {
+      "name": "global at 0x006018c0 null: no hook call",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "0x006018c0", "u32": 0}
+      ]
+    },
+    {
+      "name": "hook object with obj[4] == 0: no call",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "@gobj", "offset": "0x10", "u32": 0}
+      ]
+    },
+    {
+      "name": "hook object with obj[0x7c] == 0: no call",
+      "args": ["@self", 0, 0],
+      "memory": [
+        {"addr": "@gobj", "offset": "0x1f0", "u32": 0}
+      ]
+    },
+    {
+      "name": "param_2 = -1 counts as food (nonzero)",
+      "args": ["@self", 0, -1]
+    },
+    {
+      "name": "param_2 = 2 counts as food (nonzero), hooked top-level food",
+      "args": ["@self", 0, 2],
+      "memory": [
+        {"addr": "@tgt", "u32": "@i_food"}
+      ]
+    },
+    {
+      "name": "food in container slot 25 with 0x81 set (in use): not eaten, ret 0",
+      "args": ["@self", 0, 1],
+      "memory": [
+        {"addr": "@self", "offset": "0x138", "u32": 0},
+        {"addr": "@c_food", "offset": "0x81", "u8": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4358547,
+    "count": 40,
+    "args": [
+      {"choices": ["@self"]},
+      {},
+      {"choices": [0, 1, 2, -1]}
+    ],
+    "memory": [
+      {"addr": "@self", "offset": "0x138", "type": "ptr", "count": 8, "choices": ["@i_food", "@i_drink", "@i_other", "@i_cont", "@i_drink1", 0]},
+      {"addr": "@i_food", "offset": "0x81", "type": "u8", "choices": [0, 0, 1, 2]},
+      {"addr": "@i_food", "offset": "0xc2", "type": "u8", "choices": [14, 15, 5, 0]},
+      {"addr": "@i_food", "offset": "0xda", "type": "u8", "range": [0, 4]},
+      {"addr": "@i_drink", "offset": "0x81", "type": "u8", "choices": [0, 0, 1, 2]},
+      {"addr": "@i_drink", "offset": "0xc2", "type": "u8", "choices": [14, 15, 5, 0]},
+      {"addr": "@i_drink", "offset": "0xda", "type": "u8", "range": [0, 4]},
+      {"addr": "@i_drink1", "offset": "0x81", "type": "u8", "choices": [0, 0, 1]},
+      {"addr": "@i_drink1", "offset": "0xc2", "type": "u8", "choices": [14, 15, 5]},
+      {"addr": "@i_other", "offset": "0xc2", "type": "u8", "choices": [14, 15, 5]},
+      {"addr": "@i_cont", "offset": "0x81", "type": "u8", "choices": [0, 1, 1, 2]},
+      {"addr": "@i_cont", "offset": "0xd5", "type": "u8", "range": [0, 4]},
+      {"addr": "@c_food", "offset": "0xc2", "type": "u8", "choices": [14, 15, 7, 0]},
+      {"addr": "@c_food", "offset": "0xda", "type": "u8", "range": [0, 3]},
+      {"addr": "@c_drink", "offset": "0xc2", "type": "u8", "choices": [14, 15, 7, 0]},
+      {"addr": "@c_drink", "offset": "0xda", "type": "u8", "range": [0, 3]},
+      {"addr": "@c_other", "offset": "0xc2", "type": "u8", "choices": [14, 15, 7]},
+      {"addr": "0x006e4e44", "type": "ptr", "choices": [0, "@e44"]},
+      {"addr": "0x006018c0", "type": "ptr", "choices": [0, "@gobj"]},
+      {"addr": "@gobj", "offset": "0x10", "type": "u32", "choices": [0, 1]},
+      {"addr": "@gobj", "offset": "0x1f0", "type": "ptr", "choices": ["@tgt", 0]},
+      {"addr": "@tgt", "type": "ptr", "choices": ["@i_food", "@i_drink", "@i_drink1", "@i_other", "@i_cont", "@c_food", "@c_drink", "@c_other", 0]}
+    ]
+  }
+}

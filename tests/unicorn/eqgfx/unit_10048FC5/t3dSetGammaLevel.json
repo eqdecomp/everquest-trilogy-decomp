@@ -1,0 +1,186 @@
+{
+  "function": "t3dSetGammaLevel",
+  "original": "0x1004a0aa",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "level",
+      "type": "float"
+    }
+  ],
+  "ret": "int",
+  "max_insns": 400000,
+  "objects": {
+    "ddraw": {"size": "0x40", "init": [{"offset": "0x0", "u32": "@ddraw_vtbl"}]},
+    "ddraw_vtbl": {"size": "0x40", "init": [{"offset": "0x2c", "u32": "@getcaps"}]},
+    "surface": {"size": "0x40", "init": [{"offset": "0x0", "u32": "@surface_vtbl"}]},
+    "surface_vtbl": {"size": "0x40", "init": [{"offset": "0x0", "u32": "@qi"}]},
+    "getcaps": {"size": "0x10"},
+    "qi": {"size": "0x10"},
+    "setramp": {"size": "0x10"},
+    "release": {"size": "0x10"},
+    "gamma_rgb": {"size": "0x10"}
+  },
+  "memory": [
+    {"addr": "0x100FB8A8", "u32": 2},
+    {"addr": "0x100FBA2C", "u32": "@ddraw"},
+    {"addr": "0x100FBA88", "u32": "@surface"},
+    {"addr": "0x100F3FDC", "u32": "@gamma_rgb"},
+    {"addr": "0x100FBA4C", "u32": "0x3f800000"},
+    {"addr": "0x10000800", "u32": "0x10000900"},
+    {"addr": "0x10000908", "u32": "@release"},
+    {"addr": "0x10000910", "u32": "@setramp"}
+  ],
+  "callees": {
+    "0x10069dc9": {
+      "name": "FUN_10069dc9",
+      "conv": "cdecl",
+      "args": [
+        "double",
+        "double"
+      ],
+      "passthrough": true
+    },
+    "kernel32.dll!GetLastError": {"conv": "stdcall", "ret": 0},
+    "0x1004ec8d": {
+      "name": "t3dFloatRoundToInt_guess",
+      "conv": "cdecl",
+      "args": [
+        "float",
+        "ignore"
+      ],
+      "passthrough": true
+    },
+    "@gamma_rgb": {
+      "name": "_guGammaCorrectionRGB@12",
+      "conv": "stdcall",
+      "args": [
+        "float",
+        "float",
+        "float"
+      ]
+    },
+    "@getcaps": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ignore",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {"arg": 1, "offset": 8, "hex": "00000200"}
+      ]
+    },
+    "@qi": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "ptr",
+        "ignore"
+      ],
+      "ret": 0,
+      "writes": [
+        {"arg": 2, "offset": 0, "hex": "00080010"}
+      ]
+    },
+    "@setramp": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "mem:1536"
+      ],
+      "ret": 0
+    },
+    "@release": {
+      "conv": "stdcall",
+      "args": [
+        "ptr"
+      ],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {"name": "mode2 typical", "args": [1.5], "expect": {"ret": 0}},
+    {"name": "mode2 zero is raised to 0.0001", "args": [0.0], "expect": {"ret": 0}},
+    {"name": "mode2 negative is raised to 0.0001", "args": [-3.0], "expect": {"ret": 0}},
+    {"name": "mode2 NaN is raised to 0.0001", "args": ["nan"], "expect": {"ret": 0}},
+    {"name": "mode2 above 20 is capped", "args": [25.0], "expect": {"ret": 0}},
+    {"name": "mode2 exactly 20", "args": [20.0], "expect": {"ret": 0}},
+    {"name": "mode2 just under 20", "args": [19.5], "expect": {"ret": 0}},
+    {"name": "mode2 tiny", "args": [1e-30], "expect": {"ret": 0}},
+    {"name": "mode0 returns 0 and keeps the level", "args": [1.5], "memory": [{"addr": "0x100FB8A8", "u32": 0}], "expect": {"ret": 0}},
+    {"name": "mode3 returns 0 and keeps the level", "args": [1.5], "memory": [{"addr": "0x100FB8A8", "u32": 3}], "expect": {"ret": 0}},
+    {"name": "mode1 typical", "args": [1.5], "memory": [{"addr": "0x100FB8A8", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "mode1 zero is raised to 0.0001", "args": [0.0], "memory": [{"addr": "0x100FB8A8", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "mode1 NaN is raised to 0.0001", "args": ["nan"], "memory": [{"addr": "0x100FB8A8", "u32": 1}], "expect": {"ret": 0}},
+    {
+      "name": "mode1 negative is not clamped (pow(0, negative) is a CRT singularity: stubbed to 1.0)",
+      "args": [-2.0],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"0x10069dc9": {"name": "FUN_10069dc9", "conv": "cdecl", "args": ["double", "double"], "ret_float": 1.0}},
+      "expect": {"ret": 0}
+    },
+    {"name": "mode1 above 20 is not capped", "args": [25.0], "memory": [{"addr": "0x100FB8A8", "u32": 1}], "expect": {"ret": 0}},
+    {"name": "mode1 no gamma surface", "args": [1.5], "memory": [{"addr": "0x100FB8A8", "u32": 1}, {"addr": "0x100FBA88", "u32": 0}], "expect": {"ret": -49858}},
+    {
+      "name": "mode1 GetCaps fails after setting the gamma caps bit",
+      "args": [1.5],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"@getcaps": {"conv": "stdcall", "args": ["ptr", "ignore", "ignore"], "ret": -1, "writes": [{"arg": 1, "offset": 8, "hex": "00000200"}]}},
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "mode1 GetCaps fails",
+      "args": [1.5],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"@getcaps": {"conv": "stdcall", "args": ["ptr", "ignore", "ignore"], "ret": -1}},
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "mode1 no DDCAPS2 primary gamma",
+      "args": [1.5],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"@getcaps": {"conv": "stdcall", "args": ["ptr", "ignore", "ignore"], "ret": 0, "writes": [{"arg": 1, "offset": 8, "hex": "00000000"}]}},
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "mode1 QueryInterface fails",
+      "args": [1.5],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"@qi": {"conv": "stdcall", "args": ["ptr", "ptr", "ignore"], "ret": -1}},
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "mode1 SetGammaRamp fails",
+      "args": [1.5],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"@setramp": {"conv": "stdcall", "args": ["ptr", "int", "mem:1536"], "ret": -1}},
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "mode1 Release fails after SetGammaRamp",
+      "args": [1.5],
+      "memory": [{"addr": "0x100FB8A8", "u32": 1}],
+      "callees": {"@release": {"conv": "stdcall", "args": ["ptr"], "ret": -1}},
+      "expect": {"ret": -49858}
+    }
+  ],
+  "fuzz": {
+    "seed": 1004170,
+    "count": 60,
+    "args": [
+      {
+        "choices": [0.0, 0.0001, 0.5, 1.0, 1.5, 1.8, 2.2, 2.5, 3.0, 4.0, 10.0, 19.99, 20.0, 25.0, 1000.0]
+      }
+    ],
+    "memory": [
+      {"addr": "0x100FB8A8", "type": "u32", "choices": [1, 2, 2, 1, 0, 3]},
+      {"addr": "0x100FBA88", "type": "ptr", "choices": ["0x007a0200", "0x007a0200", "0x0"]}
+    ]
+  }
+}

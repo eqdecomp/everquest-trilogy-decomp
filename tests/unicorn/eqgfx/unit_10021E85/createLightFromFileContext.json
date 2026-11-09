@@ -1,0 +1,206 @@
+{
+  "function": "createTaggedLightFromFileContext_guess",
+  "original": "0x10024755",
+  "sources": [
+    "src/eqgfx/unit_10021E85.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x8068",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x4", "u32": "@dictionary"},
+        {"offset": "0x38", "u32": 256},
+        {"offset": "0x8044", "u32": "@fileDefinition"},
+        {"offset": "0x804c", "u32": "@pointerTable"},
+        {"offset": "0x8064", "u32": 0}
+      ]
+    },
+    "dictionary": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "fileDefinition": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 0},
+        {"offset": "0x4", "u32": -1}
+      ]
+    },
+    "pointerTable": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@lightDefinition"},
+        {"offset": "0x4", "u32": "@lightDefinition"},
+        {"offset": "0x8", "u32": "@lightDefinition"},
+        {"offset": "0xc", "u32": "@lightDefinition"}
+      ]
+    },
+    "lightDefinition": {
+      "size": "0x20",
+      "fill": "zero"
+    },
+    "light": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 26},
+        {"offset": "0xc", "u32": "0xa5a50000"}
+      ]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e7fe": {
+      "name": "t3dGetPointerFromDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "int"],
+      "ret": "@lightDefinition"
+    },
+    "0x100140f2": {
+      "name": "t3dCreateLight",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": "@light"
+    },
+    "0x100174b8": {
+      "name": "t3dSetObjectTag",
+      "args": ["ptr", "ptr", "int"],
+      "passthrough": true
+    },
+    "0x1000dc08": {
+      "name": "t3dAddEntryToDictionary",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "negative pointer offset uses dictionary and zero tag skips tag calls",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": 0},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": -1},
+        {"addr": "@context", "offset": "0x38", "u32": 256},
+        {"addr": "@context", "offset": "0x8064", "u32": 0}
+      ]
+    },
+    {
+      "name": "zero pointer offset with positive tag offset passes zero and adds on success",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": 1},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": 0}
+      ]
+    },
+    {
+      "name": "positive table index and negative tag offset",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": -1},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": 2},
+        {"addr": "@context", "offset": "0x38", "u32": 256},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    },
+    {
+      "name": "tag setter failure prevents dictionary insertion",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": -5},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": -1}
+      ],
+      "callees": {
+        "0x100174b8": {
+          "name": "t3dSetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "positive tag offset setter failure also skips insertion",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": 7},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": 1}
+      ],
+      "callees": {
+        "0x100174b8": {
+          "name": "t3dSetObjectTag",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr", "int"],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "null light skips tag and context flag work",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": -1},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": -1},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ],
+      "callees": {
+        "0x100140f2": {
+          "name": "t3dCreateLight",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "minimum offsets preserve signed branch behavior",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": -2147483648},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": -2147483648},
+        {"addr": "@context", "offset": "0x38", "u32": 0}
+      ]
+    },
+    {
+      "name": "maximum positive tag offset maps to zero",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": 2147483647},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": 1}
+      ]
+    },
+    {
+      "name": "zero tag offset with context flag sets light flag",
+      "args": ["@context"],
+      "memory": [
+        {"addr": "@fileDefinition", "offset": "0x0", "u32": 0},
+        {"addr": "@fileDefinition", "offset": "0x4", "u32": 1},
+        {"addr": "@context", "offset": "0x8064", "u32": 1}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 149333,
+    "count": 40,
+    "args": [
+      {"choices": ["@context"]}
+    ],
+    "memory": [
+      {"addr": "@fileDefinition", "offset": "0x0", "type": "int", "choices": [-2147483648, -16, -1, 0, 1, 16, 2147483647]},
+      {"addr": "@fileDefinition", "offset": "0x4", "type": "int", "choices": [-2147483648, -16, -1, 0, 1, 2]},
+      {"addr": "@context", "offset": "0x38", "type": "int", "choices": [0, 1, 256, 2147483647]},
+      {"addr": "@context", "offset": "0x8064", "type": "int", "choices": [0, 1]}
+    ]
+  }
+}

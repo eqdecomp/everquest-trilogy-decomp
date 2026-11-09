@@ -1,0 +1,85 @@
+{
+  "function": "EQ_Main_DisplayPopupItemName_guess",
+  "original": "0x0046d69c",
+  "sources": ["src/EverQuest/EQ_Overlay.cpp"],
+  "conv": "fastcall",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "unusedEdx", "type": "int"},
+    {"name": "param_2", "type": "cstr"},
+    {"name": "param_3", "type": "int"},
+    {"name": "param_4", "type": "int"}
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {
+      "size": "0x70000",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xfe0", "u8": 0},
+        {"offset": "0x6c910", "u32": 100},
+        {"offset": "0x6c914", "u32": 20},
+        {"offset": "0x6c920", "u32": 200},
+        {"offset": "0x6c924", "u32": 50},
+        {"offset": "0x6c930", "u32": 300},
+        {"offset": "0x6c934", "u32": 100}
+      ]
+    }
+  },
+  "callees": {
+    "0x0046d4da": {
+      "name": "EQ_Main::DisplayAutoHelpText_guess",
+      "conv": "thiscall",
+      "args": ["short", "short", "cstr", "int"]
+    }
+  },
+  "cases": [
+    {
+      "name": "null text skips all reads and call",
+      "args": [0, 123, 0, 0, 0]
+    },
+    {
+      "name": "equal boundary does not adjust coordinate",
+      "args": ["@param_1", 0, "popup", 1, 0]
+    },
+    {
+      "name": "less comparison adjusts coordinate",
+      "args": ["@param_1", 0, "popup", 0, 1]
+    },
+    {
+      "name": "comparison uses pre-add index",
+      "args": ["@param_1", 0, "popup", 2, -1]
+    },
+    {
+      "name": "signed byte and index addition order",
+      "args": ["@param_1", -2147483648, "popup", 400, 1],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xfe0", "u8": 255}
+      ]
+    },
+    {
+      "name": "short coordinate truncation",
+      "args": ["@param_1", 7, "item", 0, 0],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x6c910", "u32": 65571},
+        {"addr": "@param_1", "offset": "0x6c914", "u32": 32773}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4642460,
+    "count": 30,
+    "args": [
+      {"choices": ["@param_1"]},
+      {"range": [-2147483648, 2147483647]},
+      {"choices": [0, "text"]},
+      {"range": [-8, 8]},
+      {"range": [-8, 8]}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0xfe0", "type": "char", "choices": [0]},
+      {"addr": "@param_1", "offset": "0x6c810", "type": "u32", "range": [-100, 100], "count": 33, "stride": 16},
+      {"addr": "@param_1", "offset": "0x6c814", "type": "u32", "range": [-100, 100], "count": 33, "stride": 16}
+    ]
+  }
+}

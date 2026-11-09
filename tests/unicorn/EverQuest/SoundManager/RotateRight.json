@@ -1,0 +1,168 @@
+{
+  "function": "SoundTree_guess_RotateRight_guess",
+  "original": "0x004ef009",
+  "sources": [
+    "src/EverQuest/SoundManager.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@soundtree",
+  "args": [
+    {
+      "name": "node",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "soundtree": {
+      "size": 8,
+      "fill": "random",
+      "init": [
+        { "offset": 4, "u32": "@hdr" }
+      ]
+    },
+    "hdr": {
+      "size": 16,
+      "fill": "random",
+      "init": [
+        { "offset": 4, "u32": "@other" }
+      ]
+    },
+    "nil": {
+      "size": 16,
+      "fill": "random"
+    },
+    "parent": {
+      "size": 16,
+      "fill": "random",
+      "init": [
+        { "offset": 0, "u32": "@other" },
+        { "offset": 8, "u32": "@node" }
+      ]
+    },
+    "node": {
+      "size": 16,
+      "fill": "random",
+      "init": [
+        { "offset": 0, "u32": "@pivot" },
+        { "offset": 4, "u32": "@parent" },
+        { "offset": 8, "u32": "@nil" }
+      ]
+    },
+    "pivot": {
+      "size": 16,
+      "fill": "random",
+      "init": [
+        { "offset": 0, "u32": "@nil" },
+        { "offset": 4, "u32": "@nil" },
+        { "offset": 8, "u32": "@pivotright" }
+      ]
+    },
+    "pivotright": {
+      "size": 16,
+      "fill": "random",
+      "init": [
+        { "offset": 4, "u32": "@nil" }
+      ]
+    },
+    "other": {
+      "size": 16,
+      "fill": "random"
+    }
+  },
+  "memory": [
+    { "addr": "0x006EFEB4", "u32": "@nil" }
+  ],
+  "callees": {},
+  "cases": [
+    {
+      "name": "node is right child, pivot.right real",
+      "args": ["@node"]
+    },
+    {
+      "name": "node is left child",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@parent", "offset": 0, "u32": "@node" },
+        { "addr": "@parent", "offset": 8, "u32": "@other" }
+      ]
+    },
+    {
+      "name": "node is root",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@hdr", "offset": 4, "u32": "@node" }
+      ]
+    },
+    {
+      "name": "node is root and right child of parent: root wins",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@hdr", "offset": 4, "u32": "@node" }
+      ]
+    },
+    {
+      "name": "pivot.right is nil, node right child",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@pivot", "offset": 8, "u32": "@nil" }
+      ]
+    },
+    {
+      "name": "pivot.right is nil, node left child",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@pivot", "offset": 8, "u32": "@nil" },
+        { "addr": "@parent", "offset": 0, "u32": "@node" },
+        { "addr": "@parent", "offset": 8, "u32": "@other" }
+      ]
+    },
+    {
+      "name": "pivot.right is nil, node root",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@pivot", "offset": 8, "u32": "@nil" },
+        { "addr": "@hdr", "offset": 4, "u32": "@node" }
+      ]
+    },
+    {
+      "name": "parent neither child link points at node: falls to left",
+      "args": ["@node"],
+      "memory": [
+        { "addr": "@parent", "offset": 0, "u32": "@other" },
+        { "addr": "@parent", "offset": 8, "u32": "@other" }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5173257,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@node"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@hdr",
+        "offset": 4,
+        "type": "u32",
+        "choices": ["@node", "@other"]
+      },
+      {
+        "addr": "@parent",
+        "offset": 8,
+        "type": "u32",
+        "choices": ["@node", "@other"]
+      },
+      {
+        "addr": "@pivot",
+        "offset": 8,
+        "type": "u32",
+        "choices": ["@pivotright", "@nil"]
+      }
+    ]
+  }
+}

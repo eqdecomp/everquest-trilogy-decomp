@@ -1,0 +1,309 @@
+{
+  "function": "t3dOverlayClearArea",
+  "original": "0x100496b2",
+  "sources": [
+    "src/eqgfx/unit_10048FC5.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "overlay",
+      "type": "ptr"
+    },
+    {
+      "name": "rect",
+      "type": "ptr"
+    },
+    {
+      "name": "color",
+      "type": "u32"
+    }
+  ],
+  "ret": "void",
+  "void_ok": "no direct call sites to check and the last EAX write before each RET differs by path (render mode, Blt result, memset result): nothing reads a return value",
+  "objects": {
+    "overlay": {
+      "size": "0x10",
+      "fill": "random"
+    },
+    "rect": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": 2},
+        {"offset": "0x4", "u32": 1},
+        {"offset": "0x8", "u32": 6},
+        {"offset": "0xc", "u32": 3}
+      ]
+    },
+    "surface": {
+      "size": "0x4",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@surface_vtable"}
+      ]
+    },
+    "surface_vtable": {
+      "size": "0x18",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x14", "u32": "@blt"}
+      ]
+    },
+    "pixels": {
+      "size": "0x10000",
+      "fill": "random"
+    },
+    "blt": {
+      "size": "0x1",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "@overlay",
+      "offset": "0xc",
+      "u32": "@surface"
+    },
+    {
+      "addr": "0x100fb8a8",
+      "u32": 1
+    },
+    {
+      "addr": "0x100fba38",
+      "u32": 16
+    },
+    {
+      "addr": "0x100fba3c",
+      "u32": 1
+    }
+  ],
+  "callees": {
+    "0x100682d0": {
+      "name": "memset",
+      "conv": "cdecl",
+      "args": ["mem:100", "int", "u32"],
+      "passthrough": true
+    },
+    "0x10049504": {
+      "name": "t3dOverlayLock",
+      "conv": "cdecl",
+      "args": ["ptr", "ignore", "ptr"],
+      "ret": 0,
+      "writes": [
+        {"arg": 1, "offset": 0, "hex": "50000060"},
+        {"arg": 2, "offset": 0, "hex": "10000000"}
+      ]
+    },
+    "0x10049576": {
+      "name": "t3dOverlayUnlock",
+      "conv": "cdecl",
+      "args": ["ptr"],
+      "ret": 0
+    },
+    "@blt": {
+      "name": "surface_blt",
+      "conv": "stdcall",
+      "args": ["ptr", "ptr", "ptr", "ptr", "u32", "mem:100"],
+      "ret": -2005532097
+    }
+  },
+  "cases": [
+    {
+      "name": "565 clear with two rows",
+      "args": ["@overlay", "@rect", 723468]
+    },
+    {
+      "name": "555 clear",
+      "args": ["@overlay", "@rect", 1193046],
+      "memory": [
+        {"addr": "0x100fba3c", "u32": 0}
+      ]
+    },
+    {
+      "name": "non-16bpp clear",
+      "args": ["@overlay", "@rect", 16777215],
+      "memory": [
+        {"addr": "0x100fba38", "u32": 32},
+        {"addr": "0x100fba3c", "u32": 0}
+      ]
+    },
+    {
+      "name": "no surface returns early",
+      "args": ["@overlay", "@rect", 1],
+      "memory": [
+        {"addr": "@overlay", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "render mode zero returns early",
+      "args": ["@overlay", "@rect", 1],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 0}
+      ]
+    },
+    {
+      "name": "render mode huge returns early",
+      "args": ["@overlay", "@rect", 1],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 4294967295}
+      ]
+    },
+    {
+      "name": "render mode three returns early",
+      "args": ["@overlay", "@rect", 1],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 3}
+      ]
+    },
+    {
+      "name": "mode two clears",
+      "args": ["@overlay", "@rect", 255],
+      "memory": [
+        {"addr": "0x100fb8a8", "u32": 2},
+        {"addr": "0x100fba38", "u32": 16},
+        {"addr": "0x100fba3c", "u32": 1}
+      ]
+    },
+    {
+      "name": "blt not lost skips the lock",
+      "args": ["@overlay", "@rect", 723468],
+      "callees": {
+        "@blt": {
+          "name": "surface_blt",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "ptr", "ptr", "u32", "mem:100"],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "blt result below the fallback code",
+      "args": ["@overlay", "@rect", 723468],
+      "callees": {
+        "@blt": {
+          "name": "surface_blt",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "ptr", "ptr", "u32", "mem:100"],
+          "ret": -2005532098
+        }
+      }
+    },
+    {
+      "name": "blt result above the fallback code",
+      "args": ["@overlay", "@rect", 723468],
+      "callees": {
+        "@blt": {
+          "name": "surface_blt",
+          "conv": "stdcall",
+          "args": ["ptr", "ptr", "ptr", "ptr", "u32", "mem:100"],
+          "ret": -2005532096
+        }
+      }
+    },
+    {
+      "name": "empty rect clears no rows",
+      "args": ["@overlay", "@rect", 723468],
+      "memory": [
+        {"addr": "@rect", "offset": "0x4", "u32": 3},
+        {"addr": "@rect", "offset": "0xc", "u32": 3}
+      ]
+    },
+    {
+      "name": "zero width rows",
+      "args": ["@overlay", "@rect", 723468],
+      "memory": [
+        {"addr": "@rect", "offset": "0x0", "u32": 4},
+        {"addr": "@rect", "offset": "0x8", "u32": 4}
+      ]
+    },
+    {
+      "name": "left and top offsets",
+      "args": ["@overlay", "@rect", 723468],
+      "memory": [
+        {"addr": "@rect", "offset": "0x0", "u32": 3},
+        {"addr": "@rect", "offset": "0x4", "u32": 2},
+        {"addr": "@rect", "offset": "0x8", "u32": 8},
+        {"addr": "@rect", "offset": "0xc", "u32": 5}
+      ]
+    },
+    {
+      "name": "wider pitch moves the rows",
+      "args": ["@overlay", "@rect", 723468],
+      "callees": {
+        "0x10049504": {
+          "name": "t3dOverlayLock",
+          "conv": "cdecl",
+          "args": ["ptr", "ignore", "ptr"],
+          "ret": 0,
+          "writes": [
+            {"arg": 1, "offset": 0, "hex": "50000060"},
+            {"arg": 2, "offset": 0, "hex": "20000000"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero color",
+      "args": ["@overlay", "@rect", 0]
+    },
+    {
+      "name": "blue only color",
+      "args": ["@overlay", "@rect", 16711680]
+    }
+  ],
+  "fuzz": {
+    "seed": 300722,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@overlay"]
+      },
+      {
+        "choices": ["@rect"]
+      },
+      {}
+    ],
+    "memory": [
+      {
+        "addr": "0x100fb8a8",
+        "type": "int",
+        "choices": [-1, 0, 1, 2, 3, 2147483647]
+      },
+      {
+        "addr": "0x100fba38",
+        "type": "int",
+        "choices": [8, 15, 16, 17, 24, 32]
+      },
+      {
+        "addr": "0x100fba3c",
+        "type": "int",
+        "choices": [0, 1, -1]
+      },
+      {
+        "addr": "@rect",
+        "offset": "0x0",
+        "type": "int",
+        "range": [0, 4]
+      },
+      {
+        "addr": "@rect",
+        "offset": "0x4",
+        "type": "int",
+        "range": [0, 3]
+      },
+      {
+        "addr": "@rect",
+        "offset": "0x8",
+        "type": "int",
+        "range": [4, 8]
+      },
+      {
+        "addr": "@rect",
+        "offset": "0xc",
+        "type": "int",
+        "range": [3, 6]
+      }
+    ]
+  }
+}

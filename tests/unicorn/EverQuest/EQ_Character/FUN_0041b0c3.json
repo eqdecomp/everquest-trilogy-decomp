@@ -1,0 +1,323 @@
+{
+  "function": "ComputeStr_guess",
+  "original": "0x0041b0c3",
+  "sources": ["src/EverQuest/EQ_Character.cpp"],
+  "conv": "fastcall",
+  "args": [{"name": "param_1", "type": "ptr"}],
+  "ret": "int",
+  "objects": {
+    "param_1": {
+      "size": "0x1050",
+      "fill": "zero",
+      "init": [
+        {"offset": "0xa0", "u32": "@spawn"},
+        {"offset": "0x38", "u8": 99},
+        {"offset": "0x77", "u8": 40},
+        {"offset": "0x104c", "u16": 55}
+      ]
+    },
+    "spawn": {
+      "size": "0x9c",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x70", "u32": "@mount"},
+        {"offset": "0x98", "u8": 0}
+      ]
+    },
+    "mount": {
+      "size": "0x2f8",
+      "fill": "zero",
+      "init": [{"offset": "0x2f4", "u32": 1}]
+    },
+    "eq0": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 0},
+        {"offset": "0xac", "u8": 17},
+        {"offset": "0xc2", "u8": 14}
+      ]
+    },
+    "eq1": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 0},
+        {"offset": "0xac", "u8": 90},
+        {"offset": "0xc2", "u8": 14}
+      ]
+    },
+    "eq2": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 0},
+        {"offset": "0xac", "u8": 31},
+        {"offset": "0xc2", "u8": 13}
+      ]
+    },
+    "eq3": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 0},
+        {"offset": "0xac", "u8": -7},
+        {"offset": "0xc2", "u8": 14}
+      ]
+    },
+    "bag0": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x81", "u8": 1},
+        {"offset": "0xac", "u32": "@eq2"},
+        {"offset": "0xb0", "u32": "@eq3"},
+        {"offset": "0xd5", "u8": 2}
+      ]
+    }
+  },
+  "callees": {
+    "0x004238a2": {
+      "name": "EQ_Character::TotalSpellAffects_guess",
+      "conv": "thiscall",
+      "args": ["int"],
+      "ret": 0
+    },
+    "0x0041b9e0": {
+      "name": "ApplyFatigue_guess",
+      "conv": "thiscall",
+      "args": ["char"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "signed weights across first twenty inventory slots",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xa0", "u32": 0},
+        {"addr": "@param_1", "offset": "0xe4", "u32": "@eq0"},
+        {"addr": "@param_1", "offset": "0xe8", "u32": "@eq1"},
+        {"addr": "@eq0", "offset": "0xac", "u8": 40},
+        {"addr": "@eq1", "offset": "0xac", "u8": -80},
+        {"addr": "@eq2", "offset": "0xac", "u8": 127},
+        {"addr": "@param_1", "offset": "0xec", "u32": "@eq2"}
+      ]
+    },
+    {
+      "name": "direct slot 22 matching item stops before slot 23",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x138", "u32": "@eq0"},
+        {"addr": "@param_1", "offset": "0x13c", "u32": "@eq1"}
+      ]
+    },
+    {
+      "name": "wrong direct item continues to slot 23",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x138", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0xc2", "u8": 13},
+        {"addr": "@param_1", "offset": "0x13c", "u32": "@eq1"}
+      ]
+    },
+    {
+      "name": "container skips first child and adds matching second child",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x138", "u32": "@bag0"},
+        {"addr": "@param_1", "offset": "0x13c", "u32": "@eq1"}
+      ]
+    },
+    {
+      "name": "container without a match continues the outer scan",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x138", "u32": "@bag0"},
+        {"addr": "@bag0", "offset": "0xd5", "u8": 1},
+        {"addr": "@param_1", "offset": "0x13c", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0xc2", "u8": 14}
+      ]
+    },
+    {
+      "name": "one container child match stops before the later slot",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x138", "u32": "@bag0"},
+        {"addr": "@param_1", "offset": "0x13c", "u32": "@eq0"},
+        {"addr": "@bag0", "offset": "0xac", "u32": "@eq3"},
+        {"addr": "@bag0", "offset": "0xd5", "u8": 1}
+      ]
+    },
+    {
+      "name": "non equipment byte value is ignored",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x138", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0x81", "u8": 2},
+        {"addr": "@param_1", "offset": "0x13c", "u32": "@eq1"}
+      ]
+    },
+    {
+      "name": "low stat adds mount bonus",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x104c", "u16": 55},
+        {"addr": "@param_1", "offset": "0x38", "u8": 99}
+      ]
+    },
+    {
+      "name": "low stat does not add bonus without mount flag",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0x104c", "u16": 55},
+        {"addr": "@mount", "offset": "0x2f4", "u32": 0}
+      ]
+    },
+    {
+      "name": "non player skips stat contribution",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@spawn", "offset": "0x98", "u8": 1}]
+    },
+    {
+      "name": "stat threshold 56 adds one",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0x104c", "u16": 56}]
+    },
+    {
+      "name": "stat threshold 72 adds two",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0x104c", "u16": 72}]
+    },
+    {
+      "name": "stat divisor boundary at 71",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0x104c", "u16": 71}]
+    },
+    {
+      "name": "signed short below threshold",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0x104c", "u16": 65535}]
+    },
+    {
+      "name": "negative total clamps to one",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0xa0", "u32": 0}],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": -40},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 10}
+      }
+    },
+    {
+      "name": "second total reaches 256 and clamps to 255",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xa0", "u32": 0},
+        {"addr": "@param_1", "offset": "0xe4", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0xac", "u8": 56}
+      ],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 200}
+      }
+    },
+    {
+      "name": "third total reaches 256 and clamps to 255",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xa0", "u32": 0},
+        {"addr": "@param_1", "offset": "0xe4", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0xac", "u8": 1}
+      ],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": [0, 0, 255]}
+      }
+    },
+    {
+      "name": "final nonpositive total clamps to one",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0xa0", "u32": 0}],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 0}
+      }
+    },
+    {
+      "name": "interior result",
+      "args": ["@param_1"],
+      "memory": [{"addr": "@param_1", "offset": "0xa0", "u32": 0}],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 25}
+      }
+    },
+    {
+      "name": "first stamina low bit affects negative branch",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xa0", "u32": 0},
+        {"addr": "@param_1", "offset": "0xe4", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0xac", "u8": -1}
+      ],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": 0},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": [1, 20, 20]}
+      }
+    },
+    {
+      "name": "signed spell affect and item weight",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xa0", "u32": 0},
+        {"addr": "@param_1", "offset": "0xe4", "u32": "@eq0"},
+        {"addr": "@eq0", "offset": "0xac", "u8": -128}
+      ],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": -32768},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 255}
+      }
+    },
+    {
+      "name": "positive spell and inventory overflow",
+      "args": ["@param_1"],
+      "memory": [
+        {"addr": "@param_1", "offset": "0xa0", "u32": 0},
+        {"addr": "@param_1", "offset": "0xe4", "u32": "@eq0"},
+        {"addr": "@param_1", "offset": "0xe8", "u32": "@eq1"},
+        {"addr": "@eq0", "offset": "0xac", "u8": 127},
+        {"addr": "@eq1", "offset": "0xac", "u8": 127}
+      ],
+      "callees": {
+        "0x004238a2": {"name": "EQ_Character::TotalSpellAffects_guess", "conv": "thiscall", "args": ["int"], "ret": 32767},
+        "0x0041b9e0": {"name": "EQ_Character_Sta_guess", "conv": "thiscall", "args": ["char"], "ret": 255}
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 4305091,
+    "count": 50,
+    "args": [{"choices": ["@param_1"]}],
+    "memory": [
+      {"addr": "@param_1", "offset": "0xe4", "type": "ptr", "count": 20, "choices": [0, "@eq0", "@eq1", "@eq2", "@eq3", "@bag0"]},
+      {"addr": "@param_1", "offset": "0x138", "type": "ptr", "count": 8, "choices": [0, "@eq0", "@eq1", "@eq2", "@eq3", "@bag0"]},
+      {"addr": "@param_1", "offset": "0xa0", "type": "ptr", "choices": [0, "@spawn"]},
+      {"addr": "@param_1", "offset": "0x38", "type": "u8", "range": [0, 255]},
+      {"addr": "@param_1", "offset": "0x77", "type": "u8", "range": [0, 255]},
+      {"addr": "@param_1", "offset": "0x104c", "type": "short", "choices": [-32768, -1, 0, 39, 40, 55, 56, 71, 72, 32767]},
+      {"addr": "@spawn", "offset": "0x98", "type": "u8", "choices": [0, 1]},
+      {"addr": "@spawn", "offset": "0x70", "type": "ptr", "choices": [0, "@mount"]},
+      {"addr": "@mount", "offset": "0x2f4", "type": "u32", "choices": [0, 1]},
+      {"addr": "@eq0", "offset": "0xac", "type": "char", "range": [-128, 127]},
+      {"addr": "@eq0", "offset": "0xc2", "type": "u8", "choices": [0, 13, 14, 15, 255]},
+      {"addr": "@eq1", "offset": "0xac", "type": "char", "range": [-128, 127]},
+      {"addr": "@eq1", "offset": "0xc2", "type": "u8", "choices": [0, 13, 14, 15, 255]},
+      {"addr": "@eq2", "offset": "0xac", "type": "char", "range": [-128, 127]},
+      {"addr": "@eq2", "offset": "0xc2", "type": "u8", "choices": [0, 13, 14, 15, 255]},
+      {"addr": "@eq3", "offset": "0xac", "type": "char", "range": [-128, 127]},
+      {"addr": "@eq3", "offset": "0xc2", "type": "u8", "choices": [0, 13, 14, 15, 255]},
+      {"addr": "@bag0", "offset": "0xac", "type": "ptr", "count": 2, "choices": [0, "@eq0", "@eq1", "@eq2", "@eq3"]},
+      {"addr": "@bag0", "offset": "0xd5", "type": "u8", "range": [0, 2]}
+    ]
+  }
+}

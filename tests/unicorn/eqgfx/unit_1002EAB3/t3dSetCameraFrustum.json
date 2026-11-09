@@ -1,0 +1,192 @@
+{
+  "function": "t3dSetCameraFrustum",
+  "original": "0x1002f9a0",
+  "sources": [
+    "src/eqgfx/unit_1002EAB3.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "camera",
+      "type": "ptr"
+    },
+    {
+      "name": "frustum",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "camera": {
+      "size": "0x100",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "f32": 100.0},
+        {"offset": "0xc", "f32": -50.0},
+        {"offset": "0x10", "f32": 25.0},
+        {"offset": "0x20", "f32": 60.0},
+        {"offset": "0x24", "f32": 1.25},
+        {"offset": "0x28", "f32": 2.0},
+        {"offset": "0x30", "f32": 500.0},
+        {"offset": "0x6c", "f32": 1.0},
+        {"offset": "0x70", "f32": 0.0},
+        {"offset": "0x74", "f32": 0.0},
+        {"offset": "0x78", "f32": 0.0},
+        {"offset": "0x7c", "f32": 1.0},
+        {"offset": "0x80", "f32": 0.0},
+        {"offset": "0x84", "f32": 0.0},
+        {"offset": "0x88", "f32": 0.0},
+        {"offset": "0x8c", "f32": 1.0}
+      ]
+    },
+    "frustum": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10069b84": {
+      "name": "FUN_10069b84",
+      "conv": "cdecl",
+      "args": [
+        "double"
+      ],
+      "passthrough": true
+    },
+    "0x1002f8c9": {
+      "name": "t3dComputePlaneFromPoints_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr",
+        "ptr",
+        "ptr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {
+      "name": "typical: identity transform, 60 degrees, 5:4",
+      "args": [
+        "@camera",
+        "@frustum"
+      ]
+    },
+    {
+      "name": "rotated 90 degrees about z and moved",
+      "args": [
+        "@camera",
+        "@frustum"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x8", "f32": -300.0},
+            {"offset": "0xc", "f32": 40.0},
+            {"offset": "0x10", "f32": 7.5},
+            {"offset": "0x20", "f32": 90.0},
+            {"offset": "0x24", "f32": 1.6},
+            {"offset": "0x28", "f32": 0.5},
+            {"offset": "0x30", "f32": 800.0},
+            {"offset": "0x6c", "f32": 0.0},
+            {"offset": "0x70", "f32": -1.0},
+            {"offset": "0x74", "f32": 0.0},
+            {"offset": "0x78", "f32": 1.0},
+            {"offset": "0x7c", "f32": 0.0},
+            {"offset": "0x80", "f32": 0.0},
+            {"offset": "0x84", "f32": 0.0},
+            {"offset": "0x88", "f32": 0.0},
+            {"offset": "0x8c", "f32": 1.0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero view angle (tangent 0: every half width 0)",
+      "args": [
+        "@camera",
+        "@frustum"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x8", "f32": 3.0},
+            {"offset": "0xc", "f32": -4.0},
+            {"offset": "0x10", "f32": 5.0},
+            {"offset": "0x24", "f32": 1.0},
+            {"offset": "0x28", "f32": 1.0},
+            {"offset": "0x30", "f32": 10.0},
+            {"offset": "0x6c", "f32": 1.0},
+            {"offset": "0x7c", "f32": 1.0},
+            {"offset": "0x8c", "f32": 1.0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "zero camera with aspect 1 (zero transform, degenerate planes)",
+      "args": [
+        "@camera",
+        "@frustum"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x100",
+          "fill": "zero",
+          "init": [
+            {"offset": "0x24", "f32": 1.0}
+          ]
+        }
+      }
+    },
+    {
+      "name": "far closer than near, wide angle, narrow aspect",
+      "args": [
+        "@camera",
+        "@frustum"
+      ],
+      "objects": {
+        "camera": {
+          "size": "0x100",
+          "fill": "random",
+          "init": [
+            {"offset": "0x20", "f32": 120.0},
+            {"offset": "0x24", "f32": 0.5},
+            {"offset": "0x28", "f32": 5.0},
+            {"offset": "0x30", "f32": 1.0}
+          ]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 194976,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@camera"
+        ]
+      },
+      {
+        "choices": [
+          "@frustum"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@camera", "offset": "0x20", "type": "float", "range": [1, 170]},
+      {"addr": "@camera", "offset": "0x24", "type": "float", "choices": [0.25, 0.5, 0.75, 1.0, 1.25, 1.333333, 1.6, 1.777778, 2.0, 2.5, 3.0, 4.0]},
+      {"addr": "@camera", "offset": "0x28", "type": "float", "choices": [0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0]},
+      {"addr": "@camera", "offset": "0x30", "type": "float", "range": [50, 20000]},
+      {"addr": "@camera", "offset": "0x8", "type": "float", "count": 3, "range": [-1000, 1000]},
+      {"addr": "@camera", "offset": "0x6c", "type": "float", "count": 9, "p": 0.5, "choices": [-1.0, -0.5, -0.25, 0.0, 0.25, 0.5, 1.0, 0.7071067811865476, -0.7071067811865476]}
+    ]
+  }
+}

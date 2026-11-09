@@ -1,0 +1,178 @@
+{
+  "function": "AppendWideChar_guess",
+  "original": "0x00404a7f",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "obj",
+      "type": "ptr"
+    },
+    {
+      "name": "unusedEdx",
+      "type": "int"
+    },
+    {
+      "name": "ch",
+      "type": "u16"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "obj": {
+      "size": "0x40",
+      "fill": "random",
+      "init": [
+        {"offset": 4, "u32": "@old"},
+        {"offset": 8, "u32": 8},
+        {"offset": "0xc", "u32": 2}
+      ]
+    },
+    "old": {
+      "size": "0x100",
+      "fill": "zero",
+      "init": [
+        {"offset": 0, "hex": "41004200"}
+      ]
+    },
+    "blk": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218c6": {
+      "name": "operator_new",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": "@blk"
+    },
+    "0x0052278c": {
+      "name": "_wcscpy",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "rewrite_aliases": {},
+  "cases": [
+    {
+      "name": "typical: capacity 8, length 2 (room left, no growth)",
+      "args": ["@obj", 1, 88]
+    },
+    {
+      "name": "boundary: capacity == length + 2 (equal, no growth)",
+      "args": ["@obj", 1, 88],
+      "memory": [
+        {"addr": "@obj", "offset": "0x8", "u32": 4}
+      ]
+    },
+    {
+      "name": "boundary: capacity == length + 1 (one short, grows to 19)",
+      "args": ["@obj", 1, 88],
+      "memory": [
+        {"addr": "@obj", "offset": "0x8", "u32": 3}
+      ]
+    },
+    {
+      "name": "empty old string, capacity 0, length 0 (grows, copies NUL only)",
+      "args": ["@obj", 0, 65],
+      "memory": [
+        {"addr": "@old", "hex": "0000"},
+        {"addr": "@obj", "offset": "0x8", "u32": 0},
+        {"addr": "@obj", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "growth copies a full old string 'ABC' (length == capacity == 3)",
+      "args": ["@obj", 0, 68],
+      "memory": [
+        {"addr": "@old", "hex": "410042004300"},
+        {"addr": "@obj", "offset": "0x8", "u32": 3},
+        {"addr": "@obj", "offset": "0xc", "u32": 3}
+      ]
+    },
+    {
+      "name": "growth from capacity 0x20 (alloc 2*0x30+2 = 98 bytes)",
+      "args": ["@obj", 0, 88],
+      "memory": [
+        {"addr": "@obj", "offset": "0x8", "u32": 32},
+        {"addr": "@obj", "offset": "0xc", "u32": 30}
+      ]
+    },
+    {
+      "name": "one growth only: capacity 0, length 17 (write past 2*16 nominal, still one +16 step)",
+      "args": ["@obj", 0, 88],
+      "memory": [
+        {"addr": "@obj", "offset": "0x8", "u32": 0},
+        {"addr": "@obj", "offset": "0xc", "u32": 17}
+      ]
+    },
+    {
+      "name": "unsigned witness: capacity 0x80000000, length 0 (no growth; signed compare would grow)",
+      "args": ["@obj", 0, 90],
+      "memory": [
+        {"addr": "@obj", "offset": "0x8", "u32": 2147483648},
+        {"addr": "@obj", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "unsigned witness: capacity 0xFFFFFFFF, length 0 (no growth)",
+      "args": ["@obj", 0, 90],
+      "memory": [
+        {"addr": "@obj", "offset": "0x8", "u32": 4294967295},
+        {"addr": "@obj", "offset": "0xc", "u32": 0}
+      ]
+    },
+    {
+      "name": "ch 0 written: NUL at index length, then NUL at length + 1",
+      "args": ["@obj", 0, 0]
+    },
+    {
+      "name": "ch 0xFFFF written as-is (the high bits of the stack dword are not used)",
+      "args": ["@obj", 0, 65535]
+    },
+    {
+      "name": "length 0, typical capacity: first char then length becomes 1",
+      "args": ["@obj", 0, 88],
+      "memory": [
+        {"addr": "@obj", "offset": "0xc", "u32": 0}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 7340033,
+    "count": 50,
+    "args": [
+      {
+        "choices": [
+          "@obj"
+        ]
+      },
+      {},
+      {
+        "choices": [0, 1, 65, 88, 127, 128, 256, 19982, 65535]
+      }
+    ],
+    "memory": [
+      {"addr": "@obj+0x8", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 8, 16, 32, 2147483647, 2147483648, 4294967295]},
+      {"addr": "@obj+0xc", "type": "u32", "choices": [0, 1, 2, 3, 4, 5, 6, 7, 9, 14, 16, 17, 30, 40]},
+      {"addr": "@old", "type": "u16", "count": 8, "choices": [0, 0, 65, 66, 67, 68, 19982]}
+    ]
+  }
+}

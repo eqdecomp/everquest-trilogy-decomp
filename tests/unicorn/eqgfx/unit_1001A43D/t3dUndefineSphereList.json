@@ -1,0 +1,387 @@
+{
+  "function": "t3dUndefineSphereList",
+  "original": "0x1001af77",
+  "sources": [
+    "src/eqgfx/unit_1001A43D.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "dictionary",
+      "type": "ptr"
+    },
+    {
+      "name": "instance",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "dictionary": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "instance": {
+      "size": "0x28",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x1c",
+          "u32": "0x0a000300"
+        },
+        {
+          "offset": "0x20",
+          "u32": "0x0a000400"
+        },
+        {
+          "offset": "0x24",
+          "u32": "@definition"
+        }
+      ]
+    },
+    "definition": {
+      "size": "0x24",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": [
+        111,
+        222
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "state zero returns the error without touching nested fields",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "state two is not eligible for undefinition",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": 2
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "whole dword state comparison rejects 0x10001",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": "0x00010001"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "negative state returns the error",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ],
+      "expect": {
+        "ret": -49858
+      }
+    },
+    {
+      "name": "state one frees arrays unconditionally and returns the second unlink result",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 222
+      }
+    },
+    {
+      "name": "definition flag removes and frees its nonzero key before the definition",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x8",
+          "u32": "0x0a000501"
+        },
+        {
+          "addr": "@definition",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 222
+      }
+    },
+    {
+      "name": "instance flag removes and frees its nonzero key after the arrays",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x8",
+          "u32": "0x0a000502"
+        },
+        {
+          "addr": "@instance",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ],
+      "expect": {
+        "ret": 222
+      }
+    },
+    {
+      "name": "both dictionary flags remove entries even when keys are null and arrays are still freed",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x1c",
+          "u32": 0
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x20",
+          "u32": 0
+        },
+        {
+          "addr": "@definition",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 222
+      }
+    },
+    {
+      "name": "child and parent cleanup preserve free order for aliased pointers",
+      "args": [
+        "@dictionary",
+        "@instance"
+      ],
+      "memory": [
+        {
+          "addr": "@instance",
+          "offset": "0x8",
+          "u32": "0x0a000601"
+        },
+        {
+          "addr": "@instance",
+          "offset": "0xc",
+          "u8": 1
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x1c",
+          "u32": "0x0a000601"
+        },
+        {
+          "addr": "@instance",
+          "offset": "0x20",
+          "u32": "0x0a000601"
+        },
+        {
+          "addr": "@definition",
+          "offset": "0x8",
+          "u32": "0x0a000601"
+        },
+        {
+          "addr": "@definition",
+          "offset": "0xc",
+          "u8": 1
+        }
+      ],
+      "expect": {
+        "ret": 222
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 110455,
+    "count": 32,
+    "args": [
+      {
+        "choices": [
+          "@dictionary"
+        ]
+      },
+      {
+        "choices": [
+          "@instance"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@instance",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000801",
+          "0x0a000802"
+        ]
+      },
+      {
+        "addr": "@instance",
+        "offset": "0xc",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          255
+        ]
+      },
+      {
+        "addr": "@instance",
+        "offset": "0x10",
+        "type": "int",
+        "choices": [
+          -1,
+          0,
+          1,
+          2,
+          65537
+        ]
+      },
+      {
+        "addr": "@instance",
+        "offset": "0x1c",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000803",
+          "0x0a000804"
+        ]
+      },
+      {
+        "addr": "@instance",
+        "offset": "0x20",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000805",
+          "0x0a000806"
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0x8",
+        "type": "ptr",
+        "choices": [
+          0,
+          "0x0a000807",
+          "0x0a000808"
+        ]
+      },
+      {
+        "addr": "@definition",
+        "offset": "0xc",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          2,
+          255
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "function": "ConsiderTarget_guess",
+  "original": "0x004a6a08",
+  "sources": ["src/EverQuest/EQMisc.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "param_1", "type": "ptr"},
+    {"name": "param_2", "type": "cstr"}
+  ],
+  "ret": "void",
+  "objects": {
+    "param_1": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x80", "u32": 4369}, {"offset": "0x98", "u8": 0}, {"offset": "0x9a", "u16": 1}]},
+    "target": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x80", "u32": 8738}, {"offset": "0x98", "u8": 0}, {"offset": "0x9a", "u16": 2}]},
+    "local": {"size": "0x134", "fill": "zero", "init": [{"offset": "0x80", "u32": 13107}]},
+    "everquest": {"size": "0x100", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x006E4DAC", "u32": "@target"},
+    {"addr": "0x006E4D8C", "u32": "@local"},
+    {"addr": "0x006EFE2C", "u32": "@everquest"}
+  ],
+  "callees": {
+    "0x004e1c45": {
+      "name": "send_message_guess",
+      "conv": "cdecl",
+      "args": ["ptr", "u32", "mem:8", "u32", "int"]
+    },
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": ["cstr"]
+    }
+  },
+  "cases": [
+    {"name": "explicit player target sends spawn ids", "args": ["@param_1", "abc"]},
+    {"name": "null target global is null", "args": [0, "abc"], "memory": [{"addr": "0x006E4DAC", "u32": 0}]},
+    {"name": "null argument falls back to target global", "args": [0, "abc"]},
+    {"name": "empty text falls back to target global", "args": ["@param_1", ""]},
+    {"name": "null global after empty text", "args": ["@param_1", ""], "memory": [{"addr": "0x006E4DAC", "u32": 0}]},
+    {"name": "type zero sends", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x98", "u8": 0}]},
+    {"name": "type one sends", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x98", "u8": 1}]},
+    {"name": "type two is dead", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x98", "u8": 2}]},
+    {"name": "type three is dead", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x98", "u8": 3}]},
+    {"name": "race 0x48 cannot be considered", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x9a", "u16": 72}]},
+    {"name": "race 0x8d cannot be considered", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x9a", "u16": 141}]},
+    {"name": "race 0x49 cannot be considered", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x9a", "u16": 73}]},
+    {"name": "race 0x72 cannot be considered", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x9a", "u16": 114}]},
+    {"name": "adjacent ordinary race sends", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x9a", "u16": 71}]},
+    {"name": "ordinary race above special race sends", "args": ["@param_1", "x"], "memory": [{"addr": "@param_1", "offset": "0x9a", "u16": 115}]},
+    {"name": "fallback target special race", "args": [0, "x"], "memory": [{"addr": "0x006E4DAC", "u32": "@target"}, {"addr": "@target", "offset": "0x9a", "u16": 141}]},
+    {"name": "explicit argument takes precedence over special global target", "args": ["@param_1", "x"], "memory": [{"addr": "0x006E4DAC", "u32": "@target"}, {"addr": "@target", "offset": "0x9a", "u16": 72}]},
+    {"name": "fallback target type two is dead", "args": [0, "x"], "memory": [{"addr": "0x006E4DAC", "u32": "@target"}, {"addr": "@target", "offset": "0x98", "u8": 2}]}
+  ],
+  "fuzz": {
+    "seed": 4876808,
+    "count": 40,
+    "args": [
+      {"choices": ["@param_1", 0]},
+      {}
+    ],
+    "memory": [
+      {"addr": "@param_1", "offset": "0x98", "type": "u8", "range": [0, 3]},
+      {"addr": "@param_1", "offset": "0x9a", "type": "u16", "range": [0, 220]},
+      {"addr": "@target", "offset": "0x98", "type": "u8", "range": [0, 3]},
+      {"addr": "@target", "offset": "0x9a", "type": "u16", "choices": [0, 71, 72, 73, 114, 115, 141, 220]},
+      {"addr": "0x006E4DAC", "type": "ptr", "choices": [0, "@target"]}
+    ]
+  }
+}

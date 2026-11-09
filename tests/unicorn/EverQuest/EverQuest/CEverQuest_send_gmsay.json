@@ -1,0 +1,67 @@
+{
+  "function": "CEverQuest_send_gmsay_guess_class::send_gmsay_guess",
+  "original": "0x004cf28c",
+  "rewrite": "CEverQuest_send_gmsay_guess_class::send_gmsay_guess",
+  "sources": [
+    "src/EverQuest/EverQuest.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@game",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "game": {
+      "size": "0x1000",
+      "fill": "zero"
+    },
+    "player": {
+      "size": "0x100",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {"addr": "0x006B752A", "u8": 0},
+    {"addr": "0x006E4E70", "u32": 0},
+    {"addr": "0x006E4E6C", "u32": 0},
+    {"addr": "0x006B63F8", "u8": 0},
+    {"addr": "0x006B6494", "u32": 0},
+    {"addr": "0x006E4D8C", "u32": "@player"},
+    {"addr": "@player", "offset": "0x1", "cstr": "Namey"},
+    {"addr": "@game", "offset": "0xBA8", "cstr": "hello"}
+  ],
+  "callees": {
+    "0x004d0d77": {"name": "CEverQuest_SendNewText_guess", "conv": "thiscall", "args": ["int", "int", "cstr"]},
+    "0x004d055e": {"name": "CEverQuest::dsp_chat_guess", "conv": "thiscall", "args": ["cstr", "int"]}
+  },
+  "cases": [
+    {"name": "all gates clear: GM say, then echo", "args": []},
+    {"name": "gate 0x006B752A set (byte)", "memory": [{"addr": "0x006B752A", "u8": 1}], "args": []},
+    {"name": "gate 0x006E4E70 set (dword)", "memory": [{"addr": "0x006E4E70", "u32": 1}], "args": []},
+    {"name": "gate 0x006E4E6C set (dword)", "memory": [{"addr": "0x006E4E6C", "u32": 1}], "args": []},
+    {"name": "gate 0x006B63F8 set (byte)", "memory": [{"addr": "0x006B63F8", "u8": 1}], "args": []},
+    {"name": "gate 0x006B6494 set (dword)", "memory": [{"addr": "0x006B6494", "u32": 1}], "args": []},
+    {"name": "byte gate 0x006B752A: only the upper bytes set, so it passes", "memory": [{"addr": "0x006B752A", "u32": 256}], "args": []},
+    {"name": "byte gate 0x006B63F8: only the upper bytes set, so it passes", "memory": [{"addr": "0x006B63F8", "u32": 256}], "args": []},
+    {"name": "dword gate 0x006E4E70: upper bytes set, so it fails", "memory": [{"addr": "0x006E4E70", "u32": 256}], "args": []},
+    {"name": "dword gate 0x006E4E70: only its top byte set, so it fails", "memory": [{"addr": "0x006E4E70", "u32": 16777216}], "args": []},
+    {"name": "dword gate 0x006B6494: high bit set, so it fails", "memory": [{"addr": "0x006B6494", "u32": 2147483648}], "args": []},
+    {"name": "two gates set", "memory": [{"addr": "0x006E4E6C", "u32": 1}, {"addr": "0x006B63F8", "u8": 1}], "args": []},
+    {"name": "empty petition", "memory": [{"addr": "@game", "offset": "0xBA8", "u8": 0}], "args": []},
+    {"name": "empty player name", "memory": [{"addr": "@player", "offset": "0x1", "u8": 0}], "args": []},
+    {"name": "petition with format characters is only copied", "memory": [{"addr": "@game", "offset": "0xBA8", "cstr": "50%d%s%n"}], "args": []}
+  ],
+  "fuzz": {
+    "seed": 5042828,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x006B752A", "type": "u8", "choices": [0, 0, 1, 2, 128, 255], "p": 0.25},
+      {"addr": "0x006E4E70", "type": "u32", "choices": [0, 0, 1, 256, 65536, 4294967295], "p": 0.25},
+      {"addr": "0x006E4E6C", "type": "u32", "choices": [0, 0, 1, 256, 2147483648], "p": 0.25},
+      {"addr": "0x006B63F8", "type": "u8", "choices": [0, 0, 1, 128, 255], "p": 0.25},
+      {"addr": "0x006B6494", "type": "u32", "choices": [0, 0, 1, 256, 4294967295], "p": 0.25},
+      {"addr": "@player", "offset": "0x1", "size": 32},
+      {"addr": "@game", "offset": "0xBA8", "size": 64}
+    ]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "function": "destroy_global_flagcontainer_guess",
+  "original": "0x1000e6d0",
+  "sources": [
+    "src/eqmain/unit_1000E5B0.cpp"
+  ],
+  "conv": "stdcall",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "head": {"size": "0x10", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@node_b"},
+      {"offset": "0x4", "u32": "@node_a"},
+      {"offset": "0x8", "u32": "@node_a"}
+    ]},
+    "node_a": {"size": "0x20", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@node_b"},
+      {"offset": "0x4", "u32": "@head"},
+      {"offset": "0x8", "u32": "@nil"}
+    ]},
+    "node_b": {"size": "0x20", "fill": "zero", "init": [
+      {"offset": "0x0", "u32": "@nil"},
+      {"offset": "0x4", "u32": "@node_a"},
+      {"offset": "0x8", "u32": "@nil"}
+    ]},
+    "nil": {"size": "0x20", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004cefc", "u32": "@head"},
+    {"addr": "0x1004cf04", "u32": 0},
+    {"addr": "0x1004cf14", "u32": "@nil"},
+    {"addr": "0x1004cf10", "u32": 1}
+  ],
+  "callees": {
+    "0x1000fca0": {
+      "name": "PackFsTree_guess::erase_guess",
+      "conv": "thiscall",
+      "args": ["int"]
+    },
+    "0x10010c70": {
+      "name": "SuiteDefaultsElement_guess::ScalarDeletingDtor_guess",
+      "conv": "thiscall",
+      "args": ["int"]
+    },
+    "0x10033800": {
+      "name": "FUN_10033800",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x100105b0": {
+      "name": "FUN_100105b0",
+      "conv": "thiscall",
+      "args": ["ptr"],
+      "passthrough": true
+    },
+    "0x10010310": {
+      "name": "PackFsTreeIterator_guess::increment_guess",
+      "conv": "thiscall",
+      "args": [],
+      "passthrough": true
+    },
+    "0x1000f6b0": {
+      "name": "RedBlackTree_removeNodeFromRedBlackTree_guess",
+      "conv": "thiscall",
+      "args": ["ptr", "ptr"]
+    },
+    "0x1003e980": {
+      "name": "std::_Lockit::_Lockit",
+      "conv": "thiscall",
+      "args": []
+    },
+    "0x1003ea1c": {
+      "name": "FUN_1003ea1c",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {"name": "flag clear, two nodes removed in order (B then A); refs 1 -> 0 frees the nil node", "args": []},
+    {"name": "flag clear, empty list (leftmost is the head): no removal", "args": [], "memory": [{"addr": "@head", "u32": "@head"}]},
+    {"name": "flag clear, single node: one increment reaches the head", "args": [], "memory": [{"addr": "@head", "u32": "@node_a"}, {"addr": "@node_a", "u32": "@nil"}]},
+    {"name": "flag set, two nodes: left chain erased (A then B)", "args": [], "memory": [{"addr": "0x1004cf04", "u32": 1}]},
+    {"name": "flag set to 2: still non-zero, same erase walk", "args": [], "memory": [{"addr": "0x1004cf04", "u32": 2}]},
+    {"name": "flag high bit set: non-zero", "args": [], "memory": [{"addr": "0x1004cf04", "u32": 2147483648}]},
+    {"name": "flag all ones: non-zero", "args": [], "memory": [{"addr": "0x1004cf04", "u32": 4294967295}]},
+    {"name": "flag set, empty tree (root is nil): no erase, head reset only", "args": [], "memory": [{"addr": "0x1004cf04", "u32": 1}, {"addr": "@head", "offset": "0x4", "u32": "@nil"}]},
+    {"name": "flag set, single node (left is nil): one erase", "args": [], "memory": [{"addr": "0x1004cf04", "u32": 1}, {"addr": "@node_a", "u32": "@nil"}]},
+    {"name": "refs 2 -> 1: nil node kept", "args": [], "memory": [{"addr": "0x1004cf10", "u32": 2}]},
+    {"name": "refs 0 -> 0xffffffff: not zero, nil node kept", "args": [], "memory": [{"addr": "0x1004cf10", "u32": 0}]},
+    {"name": "refs 1 -> 0 with the nil pointer null: nothing freed", "args": [], "memory": [{"addr": "0x1004cf14", "u32": 0}, {"addr": "0x1004cf04", "u32": 1}]}
+  ],
+  "fuzz": {
+    "seed": 59088,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x1004cf04", "type": "u32", "choices": [0, 0, 1, 2, 2147483648, 4294967295]},
+      {"addr": "0x1004cf10", "type": "u32", "choices": [0, 1, 1, 2, 3, 4294967295]},
+      {"addr": "@head", "type": "u32", "choices": ["@node_b", "@head"]},
+      {"addr": "@head", "offset": "0x4", "type": "u32", "choices": ["@node_a", "@nil"]},
+      {"addr": "@node_a", "type": "u32", "choices": ["@node_b", "@nil"]}
+    ]
+  }
+}

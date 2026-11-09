@@ -1,0 +1,73 @@
+{
+  "function": "cmd_reversesound_guess",
+  "original": "0x004aa033",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "args",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eq": {
+      "size": "0x40",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "0x006efe2c", "u32": "@eq"},
+    {"addr": "0x006b6f08", "u32": 0}
+  ],
+  "callees": {
+    "0x004d05b7": {
+      "name": "CEverQuest::print_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr"
+      ]
+    },
+    "0x004cf3e1": {
+      "name": "CEverQuest::saveOptions2_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {"name": "empty, flag 0: help + NORMAL", "args": [1, ""]},
+    {"name": "empty, flag 1: help + REVERSED", "args": [1, ""], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "empty, flag 2: help + NORMAL (only ==1 is reversed)", "args": [1, ""], "memory": [{"addr": "0x006b6f08", "u32": 2}]},
+    {"name": "normal, flag 1: cleared", "args": [0, "normal"], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "NORM uppercase, flag 7: cleared", "args": [0, "NORM"], "memory": [{"addr": "0x006b6f08", "u32": 7}]},
+    {"name": "nor (3 chars) flag 1: not norm, not rev -> REVERSED kept", "args": [0, "nor"], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "normx prefix flag 0xffffffff: cleared", "args": [0, "normx"], "memory": [{"addr": "0x006b6f08", "u32": 4294967295}]},
+    {"name": "reverse, flag 0: set", "args": [0, "reverse"]},
+    {"name": "REV, flag 5: set", "args": [0, "REV"], "memory": [{"addr": "0x006b6f08", "u32": 5}]},
+    {"name": "reverse, flag 0xffffffff: the store writes 1 over all four bytes", "args": [0, "reverse"], "memory": [{"addr": "0x006b6f08", "u32": 4294967295}]},
+    {"name": "re (2 chars), flag 0: unchanged NORMAL", "args": [0, "re"]},
+    {"name": "re (2 chars), flag 1: unchanged REVERSED", "args": [0, "re"], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "abc, flag 3: unchanged NORMAL", "args": [0, "abc"], "memory": [{"addr": "0x006b6f08", "u32": 3}]},
+    {"name": "revx, flag 1: stays 1", "args": [0, "revx"], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "space then norm: no match", "args": [0, " norm"], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "nopq: n matches, rest not", "args": [0, "nopq"], "memory": [{"addr": "0x006b6f08", "u32": 1}]},
+    {"name": "rew: r,e match, w not", "args": [0, "rew"]}
+  ],
+  "fuzz": {
+    "seed": 4890675,
+    "count": 40,
+    "args": [
+      {},
+      {"choices": ["", "norm", "Normal", "nor", "rev", "Reverse", "re", "x", "revers", "NORMx", "rex", "nprm"]}
+    ],
+    "memory": [
+      {"addr": "0x006b6f08", "type": "u32", "choices": [0, 1, 2, 4294967295, 256]}
+    ]
+  }
+}

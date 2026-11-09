@@ -1,0 +1,181 @@
+{
+  "function": "EQMain_StartupCheck_guess",
+  "original": "0x100178e0",
+  "sources": [
+    "src/eqmain/unit_10016480.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "param_1",
+      "type": "ptr"
+    }
+  ],
+  "ret": "char",
+  "objects": {
+    "param_1": {"size": "0x10", "fill": "random"},
+    "msg_first": {"size": "0x40", "fill": "zero"},
+    "msg_last": {"size": "0x40", "fill": "zero"},
+    "label": {"size": "0x40", "fill": "zero"},
+    "obj": {"size": "0x40", "fill": "zero"},
+    "src_a": {"size": "0x40", "fill": "zero"},
+    "src_b": {"size": "0x40", "fill": "zero"},
+    "src_c": {"size": "0x40", "fill": "zero"},
+    "src_d": {"size": "0x40", "fill": "zero"},
+    "src_e": {"size": "0x40", "fill": "zero"},
+    "src_f": {"size": "0x40", "fill": "zero"},
+    "src_g": {"size": "0x40", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x1004F88C", "u8": 0},
+    {"addr": "0x10055968", "u32": "@msg_first"},
+    {"addr": "0x10055978", "u32": "@msg_last"},
+    {"addr": "0x10055974", "u32": "@src_c"},
+    {"addr": "0x10055888", "u32": "@label"},
+    {"addr": "0x1004CEB8", "u32": "@obj"},
+    {"addr": "@msg_first", "cstr": "first line"},
+    {"addr": "@msg_last", "cstr": "last line"},
+    {"addr": "@label", "cstr": "label"},
+    {"addr": "@src_a", "cstr": ""},
+    {"addr": "@src_b", "cstr": "a"},
+    {"addr": "@src_c", "cstr": "abc"},
+    {"addr": "@src_d", "cstr": "abcd"},
+    {"addr": "@src_e", "cstr": "abcdefg"},
+    {"addr": "@src_f", "cstr": "abcdefgh"},
+    {"addr": "@src_g", "cstr": "0123456789a"}
+  ],
+  "callees": {
+    "0x10020ae0": {"name": "FUN_10020ae0", "conv": "cdecl", "args": ["cstr"], "ret": 0},
+    "0x100216f0": {"name": "CleanupSetup_guess", "conv": "fastcall", "args": ["ignore"], "ret": 0},
+    "0x100211f0": {"name": "FUN_100211f0", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10021a60": {"name": "FUN_10021a60", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 0},
+    "0x10001ff0": {"name": "FUN_10001ff0", "conv": "cdecl", "args": ["ptr", "mem:16", "cstr", "ptr"], "ret": 0},
+    "0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 0}
+  },
+  "cases": [
+    {
+      "name": "flag set: returns the flag, no calls, status untouched",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x1004F88C", "u8": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "flag set to 2: returned as is",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x1004F88C", "u8": 2}],
+      "expect": {"ret": 2}
+    },
+    {
+      "name": "flag set with a null status pointer: no write",
+      "args": [0],
+      "memory": [{"addr": "0x1004F88C", "u8": 1}],
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "first check passes: flag set, returns 1, status untouched",
+      "args": ["@param_1"],
+      "callees": {"0x10021a60": {"name": "FUN_10021a60", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "first check passes with a null status pointer: no write",
+      "args": [0],
+      "callees": {"0x10021a60": {"name": "FUN_10021a60", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "first check returns 0x101: only AL counts, still passes",
+      "args": ["@param_1"],
+      "callees": {"0x10021a60": {"name": "FUN_10021a60", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 257}},
+      "expect": {"ret": 1}
+    },
+    {
+      "name": "first check returns 0x100: AL is 0, check fails",
+      "args": ["@param_1"],
+      "callees": {"0x10021a60": {"name": "FUN_10021a60", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 256}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, empty source: second check fails, status 7",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_a"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, 1-char source, second check passes: status 0x12",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_b"}],
+      "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, 3-char source (copy is one dword): status 7",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_c"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, 4-char source (one dword and a byte): status 7",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_d"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, 7-char source (two dwords): status 7",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_e"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, 8-char source (two dwords and a byte): status 7",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_f"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "check fails, 11-char source (three dwords): status 7",
+      "args": ["@param_1"],
+      "memory": [{"addr": "0x10055974", "u32": "@src_g"}],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "second check returns 1: status stays 0x12",
+      "args": ["@param_1"],
+      "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "second check returns 0x100: low byte 0, status 7",
+      "args": ["@param_1"],
+      "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 256}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "second check returns 0xff: low byte nonzero, status 0x12",
+      "args": ["@param_1"],
+      "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": 255}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "second check returns 0x80000000: low byte 0, status 7",
+      "args": ["@param_1"],
+      "callees": {"0x10021ac0": {"name": "FUN_10021ac0", "conv": "cdecl", "args": ["ptr", "ptr", "ptr"], "ret": "0x80000000"}},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 96480,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@param_1"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "0x1004F88C", "type": "u8", "choices": [0, 0, 0, 1, 2, 128, 255]},
+      {"addr": "0x10055974", "type": "ptr", "choices": ["@src_a", "@src_b", "@src_c", "@src_d", "@src_e", "@src_f", "@src_g"]}
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "function": "s3dDisableActorDupRemoval",
+  "original": "0x10019bb7",
+  "sources": [
+    "src/eqgfx/unit_1001935D.c"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "int",
+  "objects": {
+    "table": {"size": "0x10", "fill": "random"},
+    "fn": {"size": "0x10", "fill": "zero"}
+  },
+  "memory": [
+    {"addr": "0x100aadd4", "u32": "@table"},
+    {"addr": "0x100aadd8", "u32": 5},
+    {"addr": "0x100760c4", "u32": "@fn"}
+  ],
+  "callees": {
+    "@fn": {"name": "OutputDebugStringA", "conv": "stdcall", "args": ["cstr"], "ret": 0},
+    "0x10019c0c": {"name": "clearMemoryAndResetPointers_guess", "conv": "fastcall", "args": ["ptr"]},
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x10067992": {"name": "sprintf", "args": ["ignore", "cstr"], "varargs": "printf", "passthrough": true}
+  },
+  "cases": [
+    {"name": "typical", "args": []},
+    {"name": "zero table", "args": [], "memory": [{"addr": "0x100aadd4", "u32": 0}]},
+    {"name": "zero table, hits set", "args": [], "memory": [{"addr": "0x100aadd4", "u32": 0}, {"addr": "0x100aadd8", "u32": 77}]},
+    {"name": "zero hits", "args": [], "memory": [{"addr": "0x100aadd8", "u32": 0}]},
+    {"name": "negative hits", "args": [], "memory": [{"addr": "0x100aadd8", "u32": "0xffffffff"}]},
+    {"name": "table cleared during the log call", "args": [],
+     "callees": {"@fn": {"name": "OutputDebugStringA", "conv": "stdcall", "args": ["cstr"], "ret": 0,
+                         "writes": [{"addr": "0x100aadd4", "hex": "00000000"}]}}}
+  ],
+  "fuzz": {
+    "seed": 105399,
+    "count": 40,
+    "args": [],
+    "memory": [
+      {"addr": "0x100aadd4", "type": "ptr", "choices": ["@table", 0]},
+      {"addr": "0x100aadd8", "type": "int", "range": [-4, 40]}
+    ]
+  }
+}

@@ -1,0 +1,716 @@
+{
+  "function": "EQ_Book_AutoHelp_guess",
+  "original": "0x00418bc5",
+  "sources": [
+    "src/EverQuest/EQ_Book.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "book",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "book": {
+      "size": "0x37b0",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x10",
+          "u32": 1
+        },
+        {
+          "offset": "0x70",
+          "u32": "@node1"
+        },
+        {
+          "offset": "0x37ac",
+          "u32": "@bookstate"
+        }
+      ]
+    },
+    "bookstate": {
+      "size": "0xad",
+      "fill": "zero"
+    },
+    "main": {
+      "size": "0xec4",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0xec2",
+          "u16": 3
+        },
+        {
+          "offset": "0xebc",
+          "u16": 4660
+        }
+      ]
+    },
+    "node1": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "hex": "64000000c8000000c9000000ca000000"
+        },
+        {
+          "offset": "0x14",
+          "u16": 0
+        },
+        {
+          "offset": "0x20",
+          "u32": "@node2"
+        }
+      ]
+    },
+    "node2": {
+      "size": "0x24",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "hex": "c800000064000000ca000000c9000000"
+        },
+        {
+          "offset": "0x14",
+          "u16": 1
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006b6864",
+      "u32": 1
+    },
+    {
+      "addr": "0x006e4e44",
+      "u32": "@main"
+    },
+    {
+      "addr": "0x006b6414",
+      "u16": 100
+    },
+    {
+      "addr": "0x006b6416",
+      "u16": 200
+    }
+  ],
+  "callees": {
+    "0x005219c0": {
+      "name": "strcpy",
+      "conv": "cdecl",
+      "args": [
+        "ignore",
+        "cstr"
+      ],
+      "passthrough": true
+    },
+    "user32.dll!PtInRect": {
+      "name": "PtInRect",
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "int",
+        "int"
+      ],
+      "ret": 0
+    },
+    "0x0046d4da": {
+      "name": "EQ_Main::DisplayAutoHelpText_guess",
+      "conv": "thiscall",
+      "args": [
+        "int",
+        "int",
+        "cstr",
+        "int"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "inactive gate avoids reading main",
+      "args": [
+        "@book"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b6864",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4e44",
+          "u32": "0xdead0000"
+        }
+      ]
+    },
+    {
+      "name": "main page mode below threshold",
+      "args": [
+        "@book"
+      ],
+      "memory": [
+        {
+          "addr": "@main",
+          "offset": "0xec2",
+          "u16": 2
+        }
+      ]
+    },
+    {
+      "name": "book is not active",
+      "args": [
+        "@book"
+      ],
+      "memory": [
+        {
+          "addr": "@book",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "book activity gate reads exactly offset 0x10",
+      "args": [
+        "@book"
+      ],
+      "memory": [
+        {
+          "addr": "@book",
+          "offset": "0x10",
+          "u32": 0
+        },
+        {
+          "addr": "@book",
+          "offset": "0x0f",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "empty hit list stores minus one",
+      "args": [
+        "@book"
+      ],
+      "memory": [
+        {
+          "addr": "@book",
+          "offset": "0x70",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "single rectangle miss stores minus one",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 0
+        }
+      },
+      "memory": [
+        {
+          "addr": "@book",
+          "offset": "0x70",
+          "u32": "@node2"
+        },
+        {
+          "addr": "0x006b6414",
+          "u16": 0
+        },
+        {
+          "addr": "0x006b6416",
+          "u16": 0
+        }
+      ]
+    },
+    {
+      "name": "first rectangle hit stops list traversal",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      }
+    },
+    {
+      "name": "second rectangle hit uses second button",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": [
+            0,
+            1
+          ]
+        }
+      },
+      "memory": [
+        {
+          "addr": "0x006b6414",
+          "u16": 32767
+        },
+        {
+          "addr": "0x006b6416",
+          "u16": 32768
+        }
+      ]
+    },
+    {
+      "name": "note close button displays close note",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 0
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "note non-close button displays with an empty label",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 1
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "note last button id displays with an empty label",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 2
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "note below zero button displays with an empty label",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 65534
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "note first invalid button id displays with an empty label",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 3
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "book previous page",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 0
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "book next page",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 1
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "book close button",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 2
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "unknown book button clears reported id",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 3
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "minus one button is the no-hit sentinel",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 65535
+        }
+      ]
+    },
+    {
+      "name": "below zero button is unknown",
+      "args": [
+        "@book"
+      ],
+      "callees": {
+        "user32.dll!PtInRect": {
+          "name": "PtInRect",
+          "conv": "stdcall",
+          "args": [
+            "ptr",
+            "int",
+            "int"
+          ],
+          "ret": 1
+        }
+      },
+      "memory": [
+        {
+          "addr": "@node1",
+          "offset": "0x14",
+          "u16": 65534
+        },
+        {
+          "addr": "@bookstate",
+          "offset": "0xac",
+          "u8": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4295621,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@book"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006b6864",
+        "type": "u32",
+        "choices": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      {
+        "addr": "@main",
+        "offset": "0xec2",
+        "type": "short",
+        "range": [
+          -2,
+          5
+        ]
+      },
+      {
+        "addr": "@book",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          1
+        ]
+      },
+      {
+        "addr": "@book",
+        "offset": "0x70",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@node1",
+          "@node2"
+        ]
+      },
+      {
+        "addr": "@node1",
+        "offset": "0x14",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          65535
+        ]
+      },
+      {
+        "addr": "@node2",
+        "offset": "0x14",
+        "type": "u16",
+        "choices": [
+          0,
+          1,
+          2,
+          3,
+          65535
+        ]
+      },
+      {
+        "addr": "@bookstate",
+        "offset": "0xac",
+        "type": "u8",
+        "choices": [
+          0,
+          1,
+          255
+        ]
+      },
+      {
+        "addr": "0x006b6414",
+        "type": "short",
+        "range": [
+          -32768,
+          32767
+        ]
+      },
+      {
+        "addr": "0x006b6416",
+        "type": "short",
+        "range": [
+          -32768,
+          32767
+        ]
+      }
+    ]
+  }
+}

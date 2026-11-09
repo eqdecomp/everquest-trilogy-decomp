@@ -1,0 +1,251 @@
+{
+  "function": "t3dCalculateNormalToEdgePolygon",
+  "original": "0x10011aea",
+  "sources": [
+    "src/eqgfx/unit_10011AC6.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "polygon",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "polygon": {
+      "size": "0x20",
+      "fill": "random"
+    },
+    "list": {
+      "size": "0x40",
+      "fill": "random"
+    },
+    "startPos": {
+      "size": "0xc",
+      "fill": "random"
+    },
+    "cornerPos": {
+      "size": "0xc",
+      "fill": "random"
+    },
+    "endPos": {
+      "size": "0xc",
+      "fill": "random"
+    }
+  },
+  "memory": [
+    {"addr": "@polygon", "offset": "0x4", "u32": 3},
+    {"addr": "@polygon", "offset": "0x8", "u32": "@list"},
+    {"addr": "@list", "offset": "0x4", "u32": "@startPos"},
+    {"addr": "@list", "offset": "0x18", "u32": "@cornerPos"},
+    {"addr": "@list", "offset": "0x2c", "u32": "@endPos"}
+  ],
+  "callees": {
+    "0x1004efda": {
+      "name": "t3dFloatInvSqrt_C",
+      "conv": "cdecl",
+      "args": [
+        "float"
+      ],
+      "ret_float": 1.0
+    }
+  },
+  "cases": [
+    {"name": "count 0: rejected, -1", "args": ["@polygon"],
+     "memory": [{"addr": "@polygon", "offset": "0x4", "u32": 0}],
+     "expect": {"ret": -1}},
+    {"name": "count 1: rejected, -1 (boundary)", "args": ["@polygon"],
+     "memory": [{"addr": "@polygon", "offset": "0x4", "u32": 1}],
+     "expect": {"ret": -1}},
+    {"name": "count 2: first accepted value, axis triangle", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 2},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 0.0}
+     ],
+     "expect": {"ret": 1}},
+    {"name": "count 3: accepted axis triangle, exact normal (0,0,1)", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 0.0}
+     ],
+     "expect": {"ret": 1}},
+    {"name": "count 0xffffffff: unsigned compare still accepts", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 4294967295},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 0.0}
+     ],
+     "expect": {"ret": 1}},
+    {"name": "count 0x80000000: sign bit set, still accepted", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 2147483648},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 0.0}
+     ],
+     "expect": {"ret": 1}},
+    {"name": "count 0x7fffffff: accepted", "args": ["@polygon"],
+     "memory": [{"addr": "@polygon", "offset": "0x4", "u32": 2147483647}],
+     "expect": {"ret": 1}},
+    {"name": "negative scale -2: normal and distance flip sign", "args": ["@polygon"],
+     "callees": {"0x1004efda": {"name": "t3dFloatInvSqrt_C", "conv": "cdecl",
+                                "args": ["float"], "ret_float": -2.0}},
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 0.0}
+     ],
+     "expect": {"ret": 1}},
+    {"name": "messy coordinates: rounding/ordering witness", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.1},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.2},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.3},
+       {"addr": "@startPos", "offset": "0x0", "f32": 170000.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": -3.3},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.7},
+       {"addr": "@endPos", "offset": "0x0", "f32": -2.5},
+       {"addr": "@endPos", "offset": "0x4", "f32": 8.125},
+       {"addr": "@endPos", "offset": "0x8", "f32": 100000.0}
+     ]},
+    {"name": "start aliases corner: zero-length edge", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@list", "offset": "0x4", "u32": "@cornerPos"},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 2.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 3.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 4.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 5.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 6.0}
+     ]},
+    {"name": "corner position inside the polygon's output fields: reads before stores",
+     "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@list", "offset": "0x18", "u32": "@polygon+0xc"},
+       {"addr": "@polygon", "offset": "0xc", "f32": 5.0},
+       {"addr": "@polygon", "offset": "0x10", "f32": 6.0},
+       {"addr": "@polygon", "offset": "0x14", "f32": 7.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 0.0}
+     ]},
+    {"name": "NaN coordinate propagates through both edges", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": NaN},
+       {"addr": "@startPos", "offset": "0x4", "f32": 2.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": 3.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 4.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 5.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 6.0}
+     ]},
+    {"name": "infinite coordinate with zero scale: 0 * inf = NaN", "args": ["@polygon"],
+     "callees": {"0x1004efda": {"name": "t3dFloatInvSqrt_C", "conv": "cdecl",
+                                "args": ["float"], "ret_float": 0.0}},
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 1e999},
+       {"addr": "@startPos", "offset": "0x8", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": 1.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": 1.0}
+     ]},
+    {"name": "negative zero coordinates: sign witnesses", "args": ["@polygon"],
+     "memory": [
+       {"addr": "@polygon", "offset": "0x4", "u32": 3},
+       {"addr": "@cornerPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@cornerPos", "offset": "0x8", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x0", "f32": -0.0},
+       {"addr": "@startPos", "offset": "0x4", "f32": 0.0},
+       {"addr": "@startPos", "offset": "0x8", "f32": -0.0},
+       {"addr": "@endPos", "offset": "0x0", "f32": 0.0},
+       {"addr": "@endPos", "offset": "0x4", "f32": -0.0},
+       {"addr": "@endPos", "offset": "0x8", "f32": -0.0}
+     ]},
+    {"name": "random object bytes, typical count", "args": ["@polygon"]}
+  ],
+  "fuzz": {
+    "seed": 72426,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@polygon"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@polygon", "offset": "0x4", "type": "u32",
+       "choices": [0, 1, 2, 3, 4, 5, 100, 2147483647, 2147483648, 4294967295, 4294967294]},
+      {"addr": "@startPos", "offset": "0x0", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@startPos", "offset": "0x4", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@startPos", "offset": "0x8", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@cornerPos", "offset": "0x0", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@cornerPos", "offset": "0x4", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@cornerPos", "offset": "0x8", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@endPos", "offset": "0x0", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@endPos", "offset": "0x4", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]},
+      {"addr": "@endPos", "offset": "0x8", "type": "float",
+       "choices": [0.0, -0.0, 1.0, -1.0, 0.1, -2.5, 3.25, 1e-8, -1e-8, 65536.0, 1e8, -1e8, 0.5, 7.0, 1e20]}
+    ]
+  }
+}

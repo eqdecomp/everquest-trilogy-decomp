@@ -1,0 +1,177 @@
+{
+  "function": "WhoTarget_guess",
+  "original": "0x004ab008",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "command",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "command": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "target": {
+      "size": "0x134",
+      "fill": "zero"
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006e4dac",
+      "u32": "@target"
+    },
+    {
+      "addr": "@target",
+      "offset": "0x01",
+      "cstr": "WhoTarget"
+    }
+  ],
+  "callees": {
+    "0x004a5480": {
+      "name": "cmd_who_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "cstr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "target present forwards command then target name",
+      "args": [
+        "@command"
+      ]
+    },
+    {
+      "name": "null target skips helper",
+      "args": [
+        "@command"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "neighbor byte after null pointer does not make a target",
+      "args": [
+        "@command"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4db0",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "neighbor byte before null pointer does not make a target",
+      "args": [
+        "@command"
+      ],
+      "memory": [
+        {
+          "addr": "0x006e4dac",
+          "u32": 0
+        },
+        {
+          "addr": "0x006e4dab",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "empty target name is forwarded",
+      "args": [
+        "@command"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x01",
+          "cstr": ""
+        }
+      ]
+    },
+    {
+      "name": "one character target name",
+      "args": [
+        "@command+0x10"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x01",
+          "cstr": "A"
+        }
+      ]
+    },
+    {
+      "name": "maximum 29 character target name",
+      "args": [
+        "@command+0x20"
+      ],
+      "memory": [
+        {
+          "addr": "@target",
+          "offset": "0x01",
+          "cstr": "12345678901234567890123456789"
+        }
+      ]
+    },
+    {
+      "name": "null command pointer is forwarded",
+      "args": [
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4894728,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          0,
+          "@command",
+          "@command+0x10",
+          "@command+0x20"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006e4dac",
+        "type": "ptr",
+        "choices": [
+          0,
+          "@target"
+        ]
+      },
+      {
+        "addr": "@target",
+        "offset": "0x01",
+        "type": "u8",
+        "count": 29,
+        "range": [
+          0,
+          127
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "function": "t3dDestroyRenderContext",
+  "original": "0x10042e65",
+  "sources": ["src/eqgfx/unit_10042A22.c"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "unused", "type": "int"},
+    {"name": "renderContext", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "rendercontext": {
+      "size": "0x630",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x138", "u32": "0x22222222"},
+        {"offset": "0x16c", "u32": "0x11111111"},
+        {"offset": "0x284", "u32": "0x66666666"},
+        {"offset": "0x420", "u32": "0x33333333"},
+        {"offset": "0x42c", "u32": "0x44444444"},
+        {"offset": "0x430", "u32": "0x55555555"},
+        {"offset": "0x518", "u32": "0xeeeeeeee"},
+        {"offset": "0x610", "u32": "0xaaaaaaaa"},
+        {"offset": "0x614", "u32": "0xbbbbbbbb"},
+        {"offset": "0x618", "u32": "0x77777777"},
+        {"offset": "0x61c", "u32": "0x88888888"},
+        {"offset": "0x620", "u32": "0x99999999"},
+        {"offset": "0x624", "u32": "0xcccccccc"},
+        {"offset": "0x628", "u32": "0xdddddddd"}
+      ]
+    }
+  },
+  "callees": {
+    "0x10050cbb": {"name": "t3dFreeMemory", "conv": "cdecl", "args": ["ptr"]},
+    "0x10042a9b": {"name": "prepareRenderContext", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x1002fd99": {"name": "freeRenderBuffers", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10031db0": {"name": "freeRenderContextResources", "conv": "cdecl", "args": ["ptr"], "ret": 0},
+    "0x10042b2d": {"name": "releaseRenderContextResources", "conv": "cdecl", "args": ["ptr"], "ret": 0}
+  },
+  "cases": [
+    {"name": "null context", "args": [1, 0], "expect": {"ret": 1}},
+    {"name": "all allocation slots populated", "args": [1, "@rendercontext"], "expect": {"ret": 0}},
+    {
+      "name": "empty allocation slots still free final slot",
+      "args": [0, "@rendercontext"],
+      "objects": {"rendercontext": {"size": "0x630", "fill": "zero"}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first status negative boundary",
+      "args": [1, "@rendercontext"],
+      "callees": {"0x10042a9b": {"name": "prepareRenderContext", "conv": "cdecl", "args": ["ptr"], "ret": -1}},
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "buffer status negative boundary",
+      "args": [1, "@rendercontext"],
+      "callees": {"0x1002fd99": {"name": "freeRenderBuffers", "conv": "cdecl", "args": ["ptr"], "ret": -1}},
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "resource status negative boundary",
+      "args": [1, "@rendercontext"],
+      "callees": {"0x10031db0": {"name": "freeRenderContextResources", "conv": "cdecl", "args": ["ptr"], "ret": -1}},
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "final status negative boundary",
+      "args": [1, "@rendercontext"],
+      "callees": {"0x10042b2d": {"name": "releaseRenderContextResources", "conv": "cdecl", "args": ["ptr"], "ret": -1}},
+      "expect": {"ret": -1}
+    },
+    {
+      "name": "positive statuses continue",
+      "args": [1, "@rendercontext"],
+      "callees": {
+        "0x10042a9b": {"name": "prepareRenderContext", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x1002fd99": {"name": "freeRenderBuffers", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x10031db0": {"name": "freeRenderContextResources", "conv": "cdecl", "args": ["ptr"], "ret": 1},
+        "0x10042b2d": {"name": "releaseRenderContextResources", "conv": "cdecl", "args": ["ptr"], "ret": 1}
+      },
+      "expect": {"ret": 1}
+    }
+  ],
+  "fuzz": {
+    "seed": 274021,
+    "count": 30,
+    "args": [{}, {"choices": ["@rendercontext"]}],
+    "memory": [
+      {"addr": "@rendercontext", "offset": "0x138", "type": "ptr", "choices": [0, "0x22222222"]},
+      {"addr": "@rendercontext", "offset": "0x16c", "type": "ptr", "choices": [0, "0x11111111"]},
+      {"addr": "@rendercontext", "offset": "0x284", "type": "ptr", "choices": [0, "0x66666666"]},
+      {"addr": "@rendercontext", "offset": "0x420", "type": "ptr", "choices": [0, "0x33333333"]},
+      {"addr": "@rendercontext", "offset": "0x42c", "type": "ptr", "choices": [0, "0x44444444"]},
+      {"addr": "@rendercontext", "offset": "0x430", "type": "ptr", "choices": [0, "0x55555555"]},
+      {"addr": "@rendercontext", "offset": "0x518", "type": "ptr", "choices": [0, "0xeeeeeeee"]},
+      {"addr": "@rendercontext", "offset": "0x610", "type": "ptr", "choices": [0, "0xaaaaaaaa"]},
+      {"addr": "@rendercontext", "offset": "0x614", "type": "ptr", "choices": [0, "0xbbbbbbbb"]},
+      {"addr": "@rendercontext", "offset": "0x618", "type": "ptr", "choices": [0, "0x77777777"]},
+      {"addr": "@rendercontext", "offset": "0x61c", "type": "ptr", "choices": [0, "0x88888888"]},
+      {"addr": "@rendercontext", "offset": "0x620", "type": "ptr", "choices": [0, "0x99999999"]},
+      {"addr": "@rendercontext", "offset": "0x624", "type": "ptr", "choices": [0, "0xcccccccc"]},
+      {"addr": "@rendercontext", "offset": "0x628", "type": "ptr", "choices": [0, "0xdddddddd"]}
+    ]
+  }
+}

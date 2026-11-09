@@ -1,0 +1,229 @@
+{
+  "function": "t3dGetActorsPositionedInZone",
+  "original": "0x100208c6",
+  "sources": [
+    "src/eqgfx/unit_100205AE.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {"name": "zone", "type": "ptr"},
+    {"name": "region", "type": "ptr"},
+    {"name": "referenceList", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "zone": {
+      "size": "0x180",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x24", "u32": "@regionreferences"},
+        {"offset": "0x17c", "u32": "@actors"}
+      ]
+    },
+    "region": {"size": "0x20", "fill": "zero"},
+    "referencelist": {"size": "0x20", "fill": "zero"},
+    "regionreferences": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@candidate_refs0"},
+        {"offset": "0x4", "u32": "@candidate_refs1"}
+      ]
+    },
+    "candidate_refs0": {"size": "0x20", "fill": "zero"},
+    "candidate_refs1": {"size": "0x20", "fill": "zero"},
+    "actors": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x0", "u32": "@actor0"},
+        {"offset": "0x4", "u32": "@actor1"}
+      ]
+    },
+    "actor0": {
+      "size": "0x68",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x28", "u32": 0},
+        {"offset": "0x64", "u32": "@owner0"}
+      ]
+    },
+    "actor1": {
+      "size": "0x68",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x28", "u32": 1},
+        {"offset": "0x64", "u32": "@owner1"}
+      ]
+    },
+    "owner0": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [{"offset": "0x28", "u32": "@actor0"}]
+    },
+    "owner1": {
+      "size": "0x2c",
+      "fill": "zero",
+      "init": [{"offset": "0x28", "u32": "@actor1"}]
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1001905a": {
+      "name": "t3dClearReferenceList",
+      "conv": "cdecl",
+      "args": ["ptr"]
+    },
+    "0x100190b6": {
+      "name": "t3dFindReferenceInSortedList",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr", "ptr"],
+      "ret": 0
+    },
+    "0x10019065": {
+      "name": "t3dAddReferenceToList",
+      "conv": "cdecl",
+      "args": ["ptr", "ptr"],
+      "ret": 0
+    }
+  },
+  "cases": [
+    {
+      "name": "zero actors returns after clearing",
+      "args": ["@zone", "@region", "@referencelist"],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "actor value below the count is skipped",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 1},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "actors": {"init": [{"offset": "0x0", "u32": 0}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "actor value equal to the count is skipped",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 1},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "actors": {"init": [{"offset": "0x0", "u32": 1}]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "owner points back to actor so it is skipped",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 1},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]}
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "reference lookup miss skips actor",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 1},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "owner0": {"init": [{"offset": "0x28", "u32": "@actor1"}]}
+      },
+      "callees": {"0x100190b6": {"ret": 0}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lookup hit adds actor and reaches end",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 1},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "owner0": {"init": [{"offset": "0x28", "u32": "@actor1"}]}
+      },
+      "callees": {"0x100190b6": {"ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "lookup hit followed by add failure returns error",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 1},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "owner0": {"init": [{"offset": "0x28", "u32": "@actor1"}]}
+      },
+      "callees": {
+        "0x100190b6": {"ret": 1},
+        "0x10019065": {"ret": 1}
+      },
+      "expect": {"ret": -49858}
+    },
+    {
+      "name": "first entry filtered, second entry found in order",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 2},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "owner0": {"init": [{"offset": "0x28", "u32": "@actor0"}]}
+      },
+      "callees": {"0x100190b6": {"ret": 1}},
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "first lookup miss then second lookup hit",
+      "args": ["@zone", "@region", "@referencelist"],
+      "objects": {
+        "zone": {"init": [
+          {"offset": "0x24", "u32": "@regionreferences"},
+          {"offset": "0x174", "u32": 2},
+          {"offset": "0x17c", "u32": "@actors"}
+        ]},
+        "owner0": {"init": [{"offset": "0x28", "u32": "@actor1"}]},
+        "owner1": {"init": [{"offset": "0x28", "u32": "@actor0"}]}
+      },
+      "callees": {"0x100190b6": {"ret": [0, 1]}},
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 1002086,
+    "count": 50,
+    "args": [
+      {"choices": ["@zone"]},
+      {"choices": ["@region"]},
+      {"choices": ["@referencelist"]}
+    ],
+    "memory": [
+      {"addr": "@zone", "offset": "0x174", "type": "u32", "range": [0, 2]},
+      {"addr": "@actors", "offset": "0x0", "type": "ptr", "choices": ["@actor0", "@actor1", 0]},
+      {"addr": "@actors", "offset": "0x4", "type": "ptr", "choices": ["@actor0", "@actor1", 0]},
+      {"addr": "@actor0", "offset": "0x28", "type": "u32", "range": [0, 1]},
+      {"addr": "@actor1", "offset": "0x28", "type": "u32", "range": [0, 1]},
+      {"addr": "@actor0", "offset": "0x64", "type": "ptr", "choices": ["@owner0", "@owner1"]},
+      {"addr": "@actor1", "offset": "0x64", "type": "ptr", "choices": ["@owner0", "@owner1"]},
+      {"addr": "@owner0", "offset": "0x28", "type": "ptr", "choices": ["@actor0", "@actor1", 0]},
+      {"addr": "@owner1", "offset": "0x28", "type": "ptr", "choices": ["@actor0", "@actor1", 0]}
+    ]
+  }
+}

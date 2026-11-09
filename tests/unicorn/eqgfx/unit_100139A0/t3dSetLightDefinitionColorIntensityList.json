@@ -1,0 +1,206 @@
+{
+  "function": "t3dSetLightDefinitionColorIntensityList",
+  "original": "0x10014080",
+  "sources": [
+    "src/eqgfx/unit_100139A0.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "definition",
+      "type": "ptr"
+    },
+    {
+      "name": "colorIntensityList",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "definition": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {"offset": "0x10", "u32": 77},
+        {"offset": "0x14", "u32": 2},
+        {"offset": "0x18", "u32": "@decoy"},
+        {"offset": "0x1c", "u32": "@existing"}
+      ]
+    },
+    "colorintensitylist": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "alternateSource": {
+      "size": "0x400",
+      "fill": "random"
+    },
+    "existing": {
+      "size": "0x400",
+      "fill": "zero"
+    },
+    "allocated": {
+      "size": "0x400",
+      "fill": "zero"
+    },
+    "decoy": {
+      "size": "0x400",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10050c48": {
+      "name": "t3dAllocateMemory",
+      "conv": "cdecl",
+      "args": [
+        "u32"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "null input and null color list do nothing",
+      "args": ["@definition", 0],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 3},
+        {"addr": "@definition", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "null input frees existing color list without clearing its field",
+      "args": ["@definition", 0],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 2},
+        {"addr": "@definition", "offset": "0x1c", "u32": "@existing"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "existing list receives one frame from the second argument",
+      "args": ["@definition", "@colorintensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 9},
+        {"addr": "@definition", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x1c", "u32": "@existing"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "existing list copies two frames to the +1c field, not the +18 decoy",
+      "args": ["@definition", "@colorintensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 2},
+        {"addr": "@definition", "offset": "0x18", "u32": "@decoy"},
+        {"addr": "@definition", "offset": "0x1c", "u32": "@existing"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "frame count comes from +14 rather than +10",
+      "args": ["@definition", "@alternateSource"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 7},
+        {"addr": "@definition", "offset": "0x14", "u32": 3},
+        {"addr": "@definition", "offset": "0x1c", "u32": "@existing"}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "empty list still requests a zero-byte allocation and copy",
+      "args": ["@definition", "@colorintensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 0},
+        {"addr": "@definition", "offset": "0x1c", "u32": 0}
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@allocated"
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "missing list allocates 12 bytes for one frame and copies it",
+      "args": ["@definition", "@colorintensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 1},
+        {"addr": "@definition", "offset": "0x1c", "u32": 0}
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@allocated"
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "missing list allocates 36 bytes for three frames and stores the result",
+      "args": ["@definition", "@alternateSource"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 3},
+        {"addr": "@definition", "offset": "0x1c", "u32": 0}
+      ],
+      "callees": {
+        "0x10050c48": {
+          "name": "t3dAllocateMemory",
+          "conv": "cdecl",
+          "args": ["u32"],
+          "ret": "@allocated"
+        }
+      },
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "allocation failure returns invalid light and skips the copy",
+      "args": ["@definition", "@colorintensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 2},
+        {"addr": "@definition", "offset": "0x1c", "u32": 0}
+      ],
+      "expect": {"ret": 4294917438}
+    },
+    {
+      "name": "eighty frames copy 960 bytes at the supported list boundary",
+      "args": ["@definition", "@colorintensitylist"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x14", "u32": 80},
+        {"addr": "@definition", "offset": "0x1c", "u32": "@existing"}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 82048,
+    "count": 40,
+    "args": [
+      {
+        "choices": ["@definition"]
+      },
+      {
+        "choices": ["@colorintensitylist", "@alternateSource"]
+      }
+    ],
+    "memory": [
+      {"addr": "@definition", "offset": "0x10", "type": "u32", "range": [0, 100]},
+      {"addr": "@definition", "offset": "0x14", "type": "u32", "range": [0, 80]},
+      {"addr": "@definition", "offset": "0x18", "type": "u32", "choices": ["@decoy"]},
+      {"addr": "@definition", "offset": "0x1c", "type": "u32", "choices": [0, "@existing"]}
+    ]
+  }
+}

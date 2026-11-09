@@ -1,0 +1,306 @@
+{
+  "function": "destroyFileQueueOwner_guess",
+  "original": "0x10028e20",
+  "sources": [
+    "src/eqgfx/unit_10026569.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "owner",
+      "type": "ptr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "owner": {
+      "size": "0x20",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x0c",
+          "u32": "@entry1"
+        },
+        {
+          "offset": "0x10",
+          "u32": "@block"
+        }
+      ]
+    },
+    "entry1": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "@releaseEntry"
+        },
+        {
+          "offset": "0x08",
+          "u32": "@entry2"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@file1"
+        }
+      ]
+    },
+    "entry2": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "@releaseEntry"
+        },
+        {
+          "offset": "0x08",
+          "u32": "@entry3"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@file2"
+        }
+      ]
+    },
+    "entry3": {
+      "size": "0x10",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x04",
+          "u32": "@releaseEntry"
+        },
+        {
+          "offset": "0x0c",
+          "u32": "@file3"
+        }
+      ]
+    },
+    "file1": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "file2": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "file3": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "block": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "releaseEntry": {
+      "size": "0x10",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x10028fb4": {
+      "name": "advanceFileQueue_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "passthrough": true
+    },
+    "0x1002642d": {
+      "name": "closeFileHandle_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10026411": {
+      "name": "freeObjectAndData_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "@releaseEntry": {
+      "name": "releaseEntry",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    },
+    "kernel32.dll!HeapFree": {
+      "conv": "stdcall",
+      "args": [
+        "ptr",
+        "u32",
+        "ptr"
+      ],
+      "ret": 1
+    }
+  },
+  "cases": [
+    {
+      "name": "typical-two-loops-with-block",
+      "args": [
+        "@owner"
+      ]
+    },
+    {
+      "name": "last-entry-no-block",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0c",
+          "u32": "@entry3"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "last-entry-with-block",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0c",
+          "u32": "@entry3"
+        }
+      ]
+    },
+    {
+      "name": "one-loop-no-block",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0c",
+          "u32": "@entry2"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "two-loops-no-block",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 0
+        }
+      ]
+    },
+    {
+      "name": "block-high-bit-boundary",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0c",
+          "u32": "@entry3"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": "0xffffffff"
+        }
+      ]
+    },
+    {
+      "name": "block-one-boundary",
+      "args": [
+        "@owner"
+      ],
+      "memory": [
+        {
+          "addr": "@owner",
+          "offset": "0x0c",
+          "u32": "@entry3"
+        },
+        {
+          "addr": "@owner",
+          "offset": "0x10",
+          "u32": 1
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 1002842,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@owner"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "@owner",
+        "offset": "0x0c",
+        "type": "u32",
+        "choices": [
+          "@entry1",
+          "@entry2",
+          "@entry3"
+        ]
+      },
+      {
+        "addr": "@owner",
+        "offset": "0x10",
+        "type": "u32",
+        "choices": [
+          0,
+          "@block",
+          "0xffffffff"
+        ]
+      },
+      {
+        "addr": "@entry1",
+        "offset": "0x08",
+        "type": "u32",
+        "choices": [
+          "@entry2",
+          0
+        ]
+      },
+      {
+        "addr": "@entry2",
+        "offset": "0x08",
+        "type": "u32",
+        "choices": [
+          "@entry3",
+          0
+        ]
+      }
+    ]
+  }
+}

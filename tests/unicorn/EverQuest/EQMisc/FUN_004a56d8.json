@@ -1,0 +1,234 @@
+{
+  "function": "BeginGuildDisbandConfirmation_guess",
+  "original": "0x004a56d8",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [],
+  "ret": "void",
+  "objects": {
+    "everquest": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "profile": {
+      "size": "0x1050",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    "dialog": {
+      "size": "0x239",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0x0",
+          "u32": "@dialog_vtable"
+        }
+      ]
+    },
+    "dialog_vtable": {
+      "size": "0x8",
+      "fill": "zero",
+      "init": [
+        {
+          "offset": "0x4",
+          "u32": "@dialog_activate"
+        }
+      ]
+    },
+    "dialog_activate": {
+      "size": "0x10",
+      "fill": "zero"
+    },
+    "display": {
+      "size": "0xc0",
+      "fill": "random",
+      "init": [
+        {
+          "offset": "0xbc",
+          "u32": 1000
+        }
+      ]
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006efe2c",
+      "u32": "@everquest"
+    },
+    {
+      "addr": "0x006e4da8",
+      "u32": "@profile"
+    },
+    {
+      "addr": "0x006e4e20",
+      "u32": "@dialog"
+    },
+    {
+      "addr": "0x006e4de0",
+      "u32": "@display"
+    }
+  ],
+  "callees": {
+    "0x004d055e": {
+      "name": "CEverQuest::dsp_chat_guess",
+      "conv": "thiscall",
+      "args": [
+        "cstr",
+        "int"
+      ]
+    },
+    "@dialog_activate": {
+      "name": "GuildDialog_vfunc1_guess",
+      "conv": "thiscall",
+      "args": []
+    }
+  },
+  "cases": [
+    {
+      "name": "rank zero denies",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 0
+        }
+      ]
+    },
+    {
+      "name": "rank one denies",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "rank two confirms",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        }
+      ]
+    },
+    {
+      "name": "rank above threshold",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 3
+        }
+      ]
+    },
+    {
+      "name": "high bit rank is unsigned",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 128
+        }
+      ]
+    },
+    {
+      "name": "maximum rank byte",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 255
+        }
+      ]
+    },
+    {
+      "name": "timer wraps to zero",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        },
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 4294947296
+        }
+      ]
+    },
+    {
+      "name": "timer wraps past maximum",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        },
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 4294967295
+        }
+      ]
+    },
+    {
+      "name": "timer crosses signed boundary",
+      "args": [],
+      "memory": [
+        {
+          "addr": "@profile",
+          "offset": "0x104b",
+          "u8": 2
+        },
+        {
+          "addr": "@display",
+          "offset": "0xbc",
+          "u32": 2147483647
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4871896,
+    "count": 32,
+    "args": [],
+    "memory": [
+      {
+        "addr": "@profile",
+        "offset": "0x104b",
+        "type": "u8",
+        "range": [
+          0,
+          255
+        ]
+      },
+      {
+        "addr": "@display",
+        "offset": "0xbc",
+        "type": "u32",
+        "range": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "function": "EQFloat3Output_guess::ParseCommaList_guess",
+  "original": "0x004041f9",
+  "sources": [
+    "src/EverQuest/utf8.cpp"
+  ],
+  "conv": "thiscall",
+  "this": "@eqfloat3output",
+  "args": [
+    {
+      "name": "text",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {
+    "eqfloat3output": {
+      "size": "0x0c",
+      "fill": "zero"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x00521ab0": {
+      "name": "atof",
+      "conv": "cdecl",
+      "args": [
+        "cstr"
+      ],
+      "passthrough": true
+    }
+  },
+  "cases": [
+    {"name": "empty string", "args": [""]},
+    {"name": "single value", "args": ["12.5"]},
+    {"name": "one separator", "args": ["1.5,-2.25"]},
+    {"name": "two separators", "args": ["1,2,3"]},
+    {"name": "leading separator", "args": [",2,3"]},
+    {"name": "trailing separator", "args": ["1,2,"]},
+    {"name": "repeated separator", "args": ["1,,3"]},
+    {"name": "third separator consumes third value", "args": ["1,2,3,4"]},
+    {"name": "cap before reading fourth token", "args": ["1,2,3,4,5"]},
+    {"name": "third separator at end", "args": ["1,2,3,"]},
+    {"name": "atof whitespace and prefix", "args": ["  -4.5tail, +2.25 ,7e1"]},
+    {"name": "invalid token", "args": ["not-a-number,3x,?"]},
+    {"name": "15 byte token boundary", "args": ["123456789012345"]},
+    {
+      "name": "input overlaps output, parse before writes",
+      "args": ["@eqfloat3output"],
+      "memory": [
+        {"addr": "@eqfloat3output", "cstr": "1.25,-2.5,3.75"}
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4211193,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "0",
+          "1,2",
+          "-1.25,3.5,6",
+          "1,,3",
+          ",,",
+          "1,2,3,4",
+          "1,2,3,4,5",
+          " 2.5 , -3.75 ",
+          "8e1,0.125,-.5",
+          "garbage,2,3",
+          "123456789012345",
+          "0,",
+          "-0.0,+0.0,1.0"
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

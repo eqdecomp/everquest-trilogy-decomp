@@ -1,0 +1,187 @@
+{
+  "function": "SetCommandToggle_guess",
+  "original": "0x004ab0bc",
+  "sources": [
+    "src/EverQuest/EQMisc.cpp"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "unused",
+      "type": "int"
+    },
+    {
+      "name": "command",
+      "type": "cstr"
+    }
+  ],
+  "ret": "void",
+  "objects": {},
+  "callees": {
+    "0x004a49bd": {
+      "name": "allowslashcommand",
+      "conv": "cdecl",
+      "args": [],
+      "ret": 1
+    }
+  },
+  "memory": [
+    {
+      "addr": "0x006b710d",
+      "u8": 0
+    },
+    {
+      "addr": "0x006b710c",
+      "u8": 0
+    },
+    {
+      "addr": "0x0055b250",
+      "hex": "517a005861624300"
+    }
+  ],
+  "cases": [
+    {
+      "name": "slash command check rejects and preserves both flags",
+      "args": [
+        1,
+        "ABC"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b710d",
+          "u8": 3
+        },
+        {
+          "addr": "0x006b710c",
+          "u8": 7
+        }
+      ],
+      "callees": {
+        "0x004a49bd": {
+          "name": "allowslashcommand_guess",
+          "conv": "cdecl",
+          "args": [],
+          "ret": 0
+        }
+      }
+    },
+    {
+      "name": "first prefix matches ignoring case",
+      "args": [
+        0,
+        "AbCtail"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b710d",
+          "u8": 9
+        },
+        {
+          "addr": "0x006b710c",
+          "u8": 11
+        }
+      ]
+    },
+    {
+      "name": "second prefix matches after first comparison fails",
+      "args": [
+        4,
+        "qZ"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b710d",
+          "u8": 8
+        },
+        {
+          "addr": "0x006b710c",
+          "u8": 10
+        }
+      ]
+    },
+    {
+      "name": "two byte input does not match three byte first prefix",
+      "args": [
+        9,
+        "ab"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b710d",
+          "u8": 5
+        },
+        {
+          "addr": "0x006b710c",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "fallback toggles byte state from one to zero",
+      "args": [
+        -1,
+        "other"
+      ],
+      "memory": [
+        {
+          "addr": "0x006b710d",
+          "u8": 255
+        },
+        {
+          "addr": "0x006b710c",
+          "u8": 1
+        }
+      ]
+    },
+    {
+      "name": "fallback toggles byte state from non-one to one",
+      "args": [
+        7,
+        ""
+      ],
+      "memory": [
+        {
+          "addr": "0x006b710d",
+          "u8": 4
+        },
+        {
+          "addr": "0x006b710c",
+          "u8": 255
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 4894908,
+    "count": 40,
+    "args": [
+      {
+        "range": [-8, 64]
+      },
+      {
+        "choices": [
+          "",
+          "a",
+          "ab",
+          "ABC",
+          "abcTail",
+          "qz",
+          "QZanything",
+          "other"
+        ]
+      }
+    ],
+    "memory": [
+      {
+        "addr": "0x006b710d",
+        "type": "u8",
+        "range": [0, 255]
+      },
+      {
+        "addr": "0x006b710c",
+        "type": "u8",
+        "range": [0, 255]
+      }
+    ]
+  }
+}

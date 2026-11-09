@@ -1,0 +1,85 @@
+{
+  "function": "CDisplay::IsActorCollidable_guess",
+  "original": "0x004141c6",
+  "sources": ["src/EverQuest/Display.cpp"],
+  "conv": "cdecl",
+  "args": [
+    {"name": "actor", "type": "ptr"},
+    {"name": "player", "type": "ptr"}
+  ],
+  "ret": "int",
+  "objects": {
+    "actor": {"size": "0x80", "fill": "random"},
+    "other_actor": {"size": "0x80", "fill": "random"},
+    "player": {"size": "0x80", "fill": "random"},
+    "player_actor_info": {"size": 16, "fill": "random"},
+    "collision_volume": {"size": 4, "fill": "random"},
+    "user_data": {"size": 4, "fill": "random"},
+    "get_collision_volume": {"size": 16},
+    "get_actor_user_data": {"size": 16}
+  },
+  "memory": [
+    {"addr": "@player", "offset": "0x70", "u32": "@player_actor_info"},
+    {"addr": "@player_actor_info", "offset": "0x0", "u32": "@actor"},
+    {"addr": "@collision_volume", "offset": "0x0", "u32": 46},
+    {"addr": "@user_data", "offset": "0x0", "u8": 0},
+    {"addr": "0x006e526c", "u32": "@get_collision_volume"},
+    {"addr": "0x006e528c", "u32": "@get_actor_user_data"}
+  ],
+  "callees": {
+    "@get_collision_volume": {"name": "t3dGetActorCollisionVolume", "conv": "cdecl", "args": ["ptr"], "ret": "@collision_volume"},
+    "@get_actor_user_data": {"name": "t3dGetActorUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@user_data"},
+    "@get_collision_volume+0x8": {"name": "switchedActorUserData", "conv": "cdecl", "args": ["ptr"], "ret": "@user_data"}
+  },
+  "cases": [
+    {"name": "null user data and valid empty volume", "args": ["@actor", 0], "callees": {"@get_actor_user_data": {"ret": 0}}, "expect": {"ret": 1}},
+    {"name": "boundary pointer 0x10 skips dereference", "args": ["@actor", 0], "callees": {"@get_actor_user_data": {"ret": 16}}, "memory": [{"addr": "@collision_volume", "offset": "0x0", "u32": 7}], "expect": {"ret": 0}},
+    {"name": "data type one is rejected", "args": ["@actor", 0], "memory": [{"addr": "@user_data", "offset": "0x0", "u8": 1}, {"addr": "@collision_volume", "offset": "0x0", "u32": 46}], "expect": {"ret": 0}},
+    {"name": "type two checks empty volume", "args": ["@actor", 0], "memory": [{"addr": "@user_data", "offset": "0x0", "u8": 2}, {"addr": "@collision_volume", "offset": "0x0", "u32": 46}], "expect": {"ret": 1}},
+    {"name": "type three without player checks empty volume", "args": ["@actor", 0], "memory": [{"addr": "@user_data", "offset": "0x0", "u8": 3}, {"addr": "@collision_volume", "offset": "0x0", "u32": 46}], "expect": {"ret": 1}},
+    {"name": "type three actor matches player actor", "args": ["@actor", "@player"], "memory": [{"addr": "@user_data", "offset": "0x0", "u8": 3}, {"addr": "@player_actor_info", "offset": "0x0", "u32": "@actor"}, {"addr": "@collision_volume", "offset": "0x0", "u32": 46}], "expect": {"ret": 0}},
+    {"name": "type three actor differs from player actor", "args": ["@actor", "@player"], "memory": [{"addr": "@user_data", "offset": "0x0", "u8": 3}, {"addr": "@player_actor_info", "offset": "0x0", "u32": "@other_actor"}, {"addr": "@collision_volume", "offset": "0x0", "u32": 46}], "expect": {"ret": 1}},
+    {"name": "null volume is collidable", "args": ["@actor", 0], "callees": {"@get_collision_volume": {"ret": 0}}, "expect": {"ret": 1}},
+    {"name": "other volume type is not collidable", "args": ["@actor", 0], "memory": [{"addr": "@collision_volume", "offset": "0x0", "u32": 45}], "expect": {"ret": 0}},
+    {"name": "pointer 17 is dereferenced after the unsigned boundary", "args": ["@actor", 0], "callees": {"@get_actor_user_data": {"name": "t3dGetActorUserData", "conv": "cdecl", "args": ["ptr"], "ret": 17}}},
+    {"name": "high unsigned pointer is dereferenced", "args": ["@actor", 0], "callees": {"@get_actor_user_data": {"name": "t3dGetActorUserData", "conv": "cdecl", "args": ["ptr"], "ret": "0x80000020"}}},
+    {
+      "name": "volume type is read after the userdata helper mutates it",
+      "args": ["@actor", 0],
+      "memory": [{"addr": "@actor", "offset": "0x0", "u32": 46}],
+      "callees": {
+        "@get_collision_volume": {"name": "t3dGetActorCollisionVolume", "conv": "cdecl", "args": ["ptr"], "ret": "@actor"},
+        "@get_actor_user_data": {
+          "name": "t3dGetActorUserData",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": "@user_data",
+          "writes": [{"arg": 0, "offset": 0, "hex": "2d000000"}]
+        }
+      }
+    },
+    {
+      "name": "first helper changes the userdata function slot",
+      "args": ["@actor", 0],
+      "callees": {
+        "@get_collision_volume": {
+          "name": "t3dGetActorCollisionVolume",
+          "conv": "cdecl",
+          "args": ["ptr"],
+          "ret": ["@collision_volume", "@user_data"],
+          "writes": [{"addr": "0x006e528c", "hex": "b8010060"}]
+        }
+      }
+    }
+  ],
+  "fuzz": {
+    "seed": 87506,
+    "count": 30,
+    "args": [{"choices": ["@actor", "@other_actor"]}, {"choices": [0, "@player"]}],
+    "memory": [
+      {"addr": "@user_data", "offset": "0x0", "type": "u8", "range": [0, 4]},
+      {"addr": "@collision_volume", "offset": "0x0", "type": "u32", "choices": [0, 46, 45]},
+      {"addr": "@player_actor_info", "offset": "0x0", "type": "ptr", "choices": ["@actor", "@other_actor"]}
+    ]
+  }
+}

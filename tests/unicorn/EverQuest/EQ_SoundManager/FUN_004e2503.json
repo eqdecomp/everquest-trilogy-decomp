@@ -1,0 +1,128 @@
+{
+  "function": "DeleteObjectIfFlagged_guess",
+  "original": "0x004e2503",
+  "sources": [
+    "src/EverQuest/EQ_SoundManager.cpp"
+  ],
+  "conv": "fastcall",
+  "args": [
+    {
+      "name": "object",
+      "type": "ptr"
+    },
+    {
+      "name": "edxValue",
+      "type": "int"
+    },
+    {
+      "name": "flags",
+      "type": "u8"
+    }
+  ],
+  "ret": "ptr",
+  "objects": {
+    "object": {
+      "size": "0x100",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x005218bb": {
+      "name": "operator_delete_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ],
+      "writes": [
+        {
+          "arg": 0,
+          "offset": 0,
+          "hex": "dec0adde"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "bit0 set: vtable store precedes free",
+      "args": [
+        "@object",
+        0,
+        1
+      ]
+    },
+    {
+      "name": "zero flags: no free",
+      "args": [
+        "@object",
+        0,
+        0
+      ]
+    },
+    {
+      "name": "bit1 alone: no free",
+      "args": [
+        "@object",
+        0,
+        2
+      ]
+    },
+    {
+      "name": "high bits without bit0: no free",
+      "args": [
+        "@object",
+        -1,
+        254
+      ]
+    },
+    {
+      "name": "all bits set: free",
+      "args": [
+        "@object",
+        1,
+        255
+      ]
+    },
+    {
+      "name": "edx ignored when freeing",
+      "args": [
+        "@object",
+        -2147483648,
+        1
+      ]
+    },
+    {
+      "name": "edx ignored without freeing",
+      "args": [
+        "@object",
+        2147483647,
+        0
+      ]
+    }
+  ],
+  "fuzz": {
+    "seed": 5121283,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@object"
+        ]
+      },
+      {
+        "range": [
+          -2147483648,
+          2147483647
+        ]
+      },
+      {
+        "range": [
+          0,
+          255
+        ]
+      }
+    ],
+    "memory": []
+  }
+}

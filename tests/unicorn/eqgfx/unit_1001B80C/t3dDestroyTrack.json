@@ -1,0 +1,257 @@
+{
+  "function": "t3dDestroyTrack",
+  "original": "0x1001cd7c",
+  "sources": [
+    "src/eqgfx/unit_1001B80C.c"
+  ],
+  "conv": "cdecl",
+  "args": [
+    {
+      "name": "context",
+      "type": "ptr"
+    },
+    {
+      "name": "track",
+      "type": "ptr"
+    }
+  ],
+  "ret": "int",
+  "objects": {
+    "context": {
+      "size": "0x100",
+      "fill": "random"
+    },
+    "track": {
+      "size": "0x38",
+      "fill": "random",
+      "init": [
+        {"offset": "0x8", "u32": "@key_block"},
+        {"offset": "0xc", "u8": 0},
+        {"offset": "0x10", "u32": 0},
+        {"offset": "0x14", "u32": "@definition"}
+      ]
+    },
+    "definition": {
+      "size": "0x20",
+      "fill": "random",
+      "init": [
+        {"offset": "0x10", "u32": 5}
+      ]
+    },
+    "key_block": {
+      "size": "0x10",
+      "fill": "random"
+    }
+  },
+  "memory": [],
+  "callees": {
+    "0x1000e334": {
+      "name": "t3dRemoveEntryFromDictionary",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ]
+    },
+    "0x10015d81": {
+      "name": "t3dFreeObjectPoolSlot_guess",
+      "conv": "cdecl",
+      "args": [
+        "ptr",
+        "ptr"
+      ],
+      "ret": 0
+    },
+    "0x10050cbb": {
+      "name": "t3dFreeMemory",
+      "conv": "cdecl",
+      "args": [
+        "ptr"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "in use: use count 1",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0x10", "u32": 1}
+      ],
+      "expect": {"ret": -49851}
+    },
+    {
+      "name": "in use: use count all ones",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0x10", "u32": 4294967295}
+      ],
+      "expect": {"ret": -49851}
+    },
+    {
+      "name": "in use: top bit only, flags set",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0x10", "u32": 2147483648},
+        {"addr": "@track", "offset": "0xc", "u8": 33}
+      ],
+      "expect": {"ret": -49851}
+    },
+    {
+      "name": "plain free: no dictionary entry, no keep",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary entry removed before FUN_10015d81",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "keep memory: nothing freed",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 32}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary entry and keep memory",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 33}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "no key block: only the track is freed",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0x8", "u32": 0},
+        {"addr": "@track", "offset": "0xc", "u8": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "dictionary entry, no key block",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0x8", "u32": 0},
+        {"addr": "@track", "offset": "0xc", "u8": 1}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "keep memory, no key block",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0x8", "u32": 0},
+        {"addr": "@track", "offset": "0xc", "u8": 32}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "junk in bytes 0x0d-0x0f stays out of the flags test",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 0},
+        {"addr": "@track", "offset": "0xd", "u8": 255},
+        {"addr": "@track", "offset": "0xe", "u8": 255},
+        {"addr": "@track", "offset": "0xf", "u8": 255}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "FUN_10015d81 returns -2, passed through",
+      "args": ["@context", "@track"],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": -2
+        }
+      },
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 0}
+      ],
+      "expect": {"ret": -2}
+    },
+    {
+      "name": "FUN_10015d81 returns the in-use value, passed through",
+      "args": ["@context", "@track"],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": -49851
+        }
+      },
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 1}
+      ],
+      "expect": {"ret": -49851}
+    },
+    {
+      "name": "FUN_10015d81 returns 0x12345678, passed through",
+      "args": ["@context", "@track"],
+      "callees": {
+        "0x10015d81": {
+          "name": "FUN_10015d81",
+          "conv": "cdecl",
+          "args": ["ptr", "ptr"],
+          "ret": 305419896
+        }
+      },
+      "memory": [
+        {"addr": "@track", "offset": "0xc", "u8": 32}
+      ],
+      "expect": {"ret": 305419896}
+    },
+    {
+      "name": "definition use count 0 wraps to all ones",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 0}
+      ],
+      "expect": {"ret": 0}
+    },
+    {
+      "name": "definition use count all ones",
+      "args": ["@context", "@track"],
+      "memory": [
+        {"addr": "@definition", "offset": "0x10", "u32": 4294967295}
+      ],
+      "expect": {"ret": 0}
+    }
+  ],
+  "fuzz": {
+    "seed": 118140,
+    "count": 40,
+    "args": [
+      {
+        "choices": [
+          "@context"
+        ]
+      },
+      {
+        "choices": [
+          "@track"
+        ]
+      }
+    ],
+    "memory": [
+      {"addr": "@track", "offset": "0x8", "type": "ptr", "choices": ["@key_block", 0]},
+      {"addr": "@track", "offset": "0xc", "type": "u8", "range": [0, 255]},
+      {"addr": "@track", "offset": "0xd", "size": 3},
+      {"addr": "@track", "offset": "0x10", "type": "u32", "choices": [0, 0, 0, 0, 0, 0, 1, 4294967295]},
+      {"addr": "@definition", "offset": "0x10", "type": "u32", "choices": [0, 1, 5, 4294967295]}
+    ]
+  }
+}
