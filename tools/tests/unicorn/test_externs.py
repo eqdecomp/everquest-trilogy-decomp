@@ -62,7 +62,7 @@ def test_resolve_own_markers_win_and_disagreeing_markers_cancel():
 
 def test_header_markers_and_marked(tmp_path):
     write(tmp_path / "inc" / "trilogy" / "item.h", "// EXTERNAL: TRILOGY 0x004A02E5 Item_guess::Item_guess\n")
-    write(tmp_path / "inc" / "trilogy" / "...", "// EXTERNAL: TRILOGY 0x00401000 Other::Other\n")
+    write(tmp_path / "inc" / "trilogy" / "other.txt", "// EXTERNAL: TRILOGY 0x00401000 Other::Other\n")
     marks = externs.header_markers([tmp_path / "inc"], "TRILOGY")
     assert [e.name for e in marks] == ["Item_guess::Item_guess"]
     assert externs.header_markers([tmp_path / "inc"], "EQGFX") == []
