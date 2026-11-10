@@ -72,7 +72,7 @@ def test_cflags_append_without_level(tmp_path):
 def test_cflags_refuses_non_codegen_options(tmp_path, bad):
     src = tmp_path / "d.c"
     src.write_text(f"// CFLAGS: {bad}\n")
-    with pytest.raises(BuildError, match="..."):
+    with pytest.raises(BuildError, match="not allow"):
         source_cflags(src)
 
 
